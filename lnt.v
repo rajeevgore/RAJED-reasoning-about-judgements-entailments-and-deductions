@@ -139,8 +139,6 @@ with dercsl_ind_mut := Induction for dercsl Sort Prop.
 Check dercl_ind_mut.
 Check dercsl_ind_mut.
 
-Abort.
-
 Reset derrec_derrec.
 
 Theorem derrec_derrec: forall (X : Set) rules prems (concl : X),
@@ -155,18 +153,11 @@ Check (derrec (derl rules) prems concl).
 Check (@derrec_ind_mut X rules (derrec rules prems)).
 Check (derrec_ind_mut (rules := rules) (prems := derrec rules prems)).
 Check (derrec_ind_mut (rules := derl rules)).
-Check (derrec_ind_mut (derrec rules prems)).
-Check (derrec rules prems : X -> Prop).
-Check (derrec rules prems : forall x : X, Prop).
 
 Check (derl rules).
 Check (derl (derl rules)).
 Check (@derl_ind_mut X (derl rules)).
 Check (derl_ind_mut (rules := derl rules)).
-
-Check (derrec_ind_mut (rules := rules) (prems := derrec rules prems)
-  (fun x : X => fun _ => derrec rules prems x)
-  (fun xs : list X => fun _ => dersrec rules prems xs)).
 
 apply (derrec_ind_mut (rules := rules) (prems := derrec rules prems)
   (fun x : X => fun _ => derrec rules prems x)
@@ -251,8 +242,40 @@ eapply (dercl_ind_mut (rules := rules)
     forall qss, dercsl rules qss pss -> dercsl rules pss cs)).
 *)
 
+Lemma dersrec_all: forall (X : Set) rules prems (cs : list X),
+  dersrec rules prems cs <-> Forall (derrec rules prems) cs.
+intros. 
+induction cs ; unfold iff ; apply conj ; intro.
+apply Forall_nil. apply dlNil.
+inversion H. apply Forall_cons. assumption. tauto.
+inversion H. apply dlCons.  assumption. tauto.
+Qed.
+
+Lemma eq_TrueI: forall (P : Prop), (P -> (P <-> True)).
+intros. unfold iff. apply conj ; intro.  apply I. assumption.
+Qed.
+
+Lemma Forall_cons_inv: forall (A : Set) (P : A -> Prop) (x : A) (l : list A),
+  Forall P (x :: l) -> P x /\ Forall P l.
+Proof. intros. inversion H. tauto. Qed.
+
+Lemma Forall_cons_iff: forall (A : Set) (P : A -> Prop) (x : A) (l : list A),
+  Forall P (x :: l) <-> P x /\ Forall P l.
+Proof.  intros. unfold iff. apply conj ; intro. 
+apply Forall_cons_inv. assumption.
+inversion H.  apply Forall_cons ; assumption.
+Qed.
+
+Lemma Forall_append: forall (X : Set) P (xs ys: list X),
+  Forall P (xs ++ ys) <-> Forall P xs /\ Forall P ys.
+Proof.
+intros.  induction xs.  easy.
+simpl.  rewrite !Forall_cons_iff.  rewrite IHxs.  tauto.
+Qed.
+
 Theorem derl_derrec_trans: forall (X : Set) rules prems rps (concl : X),
   derl rules rps concl -> dersrec rules prems rps -> derrec rules prems concl.
+Proof. 
 intros.
 
 eapply (derl_ind_mut (rules := rules) 
@@ -264,6 +287,12 @@ eapply (derl_ind_mut (rules := rules)
 intros.  inversion H1. assumption.
 intros. eapply derI. eassumption. tauto.
 tauto.
-intros. eapply dlCons.
-(* need lemma for dersrec rules prems (ps ++ pss), or drs.all *)
+intros. rewrite dersrec_all in H3.
+rewrite Forall_append in H3.
+rewrite <- !dersrec_all in H3.
+inversion H3.  eapply dlCons ; tauto.
+eassumption.  assumption.
+Qed.
 
+Check derrec_derrec.
+Check derl_derrec_trans.
