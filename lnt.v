@@ -295,7 +295,37 @@ intros. apply dlCons ; assumption.
 assumption.
 Qed.
 
+Lemma dersl_cons: forall (X : Set) rules qs p (ps : list X), 
+  dersl rules qs (p :: ps) -> exists qsa qsb, qs = qsa ++ qsb /\
+    derl rules qsa p /\ dersl rules qsb ps.
+Proof.
+intros.
+inversion H.
+eapply ex_intro.  eapply ex_intro.  apply conj.  reflexivity.
+tauto.
+Qed.
+
+Lemma dersl_append: forall (X : Set) rules (psa psb : list X) qs, 
+  dersl rules qs (psa ++ psb) -> exists qsa qsb, qs = qsa ++ qsb /\
+    dersl rules qsa psa /\ dersl rules qsb psb.
+Proof.
+intro.  intro.  intro.  intro.
+induction psa.
+intros. eapply ex_intro.  eapply ex_intro.  apply conj.
+apply eq_sym. eapply app_nil_l.
+simpl in H. apply conj. apply dtNil. assumption.
+
+simpl. intros. apply dersl_cons in H.
+inversion H.  inversion H0.  pose (IHpsa x0).  inversion H1.  inversion H3.
+pose (e H5).  inversion e0.  inversion H6.
+eapply ex_intro.  eapply ex_intro.  inversion H7.
+rewrite H8 in H2.  rewrite app_assoc in H2.
+inversion H9.  apply conj.  apply H2.  apply conj.
+apply dtCons. assumption.  assumption.  assumption.
+Qed.
+
 Check derrec_derrec.
 Check derl_derrec_trans.
 Check derrec_derl.
+Check dersl_append.
 
