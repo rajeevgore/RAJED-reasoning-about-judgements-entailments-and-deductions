@@ -172,25 +172,6 @@ apply dlCons. assumption.  assumption.
 assumption.
 Qed.
 
-Reset derrec_derl.
-
-Theorem derrec_derl: forall (X : Set) rules prems (concl : X),
-  derrec (derl rules) prems concl -> derrec rules prems concl.
-
-Proof.
-Restart. 
-intros.
-
-apply (derrec_ind_mut (rules := derl rules) (prems := prems)
-  (fun x : X => fun _ => derrec rules prems x)
-  (fun xs : list X => fun _ => dersrec rules prems xs)).
-
-apply dpI.
-intros.
-eapply derI.
-(* doesn't work, requires rules ?ps concl *)
-Abort.
-
 Theorem dersl_derl: forall (X : Set) rules prems (concls : list X),
   dersl (derl rules) prems concls -> dersl rules prems concls.
 
@@ -294,5 +275,27 @@ inversion H3.  eapply dlCons ; tauto.
 eassumption.  assumption.
 Qed.
 
+Reset derrec_derl.
+
+Theorem derrec_derl: forall (X : Set) rules prems (concl : X),
+  derrec (derl rules) prems concl -> derrec rules prems concl.
+
+Proof.
+Restart. 
+intros.
+
+apply (derrec_ind_mut (rules := derl rules) (prems := prems)
+  (fun x : X => fun _ => derrec rules prems x)
+  (fun xs : list X => fun _ => dersrec rules prems xs)).
+
+apply dpI.
+intros. eapply derl_derrec_trans in r. eassumption.  assumption.
+apply dlNil.
+intros. apply dlCons ; assumption.
+assumption.
+Qed.
+
 Check derrec_derrec.
 Check derl_derrec_trans.
+Check derrec_derl.
+
