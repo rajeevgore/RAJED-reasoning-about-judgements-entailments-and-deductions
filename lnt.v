@@ -305,22 +305,29 @@ eapply ex_intro.  eapply ex_intro.  apply conj.  reflexivity.
 tauto.
 Qed.
 
+Reset dersl_append.
+
 Lemma dersl_append: forall (X : Set) rules (psa psb : list X) qs, 
   dersl rules qs (psa ++ psb) -> exists qsa qsb, qs = qsa ++ qsb /\
     dersl rules qsa psa /\ dersl rules qsb psb.
 Proof.
 intro.  intro.  intro.  intro.
 induction psa.
-intros. eapply ex_intro.  eapply ex_intro.  apply conj.
-apply eq_sym. eapply app_nil_l.
+intros. 
+apply ex_intro with [].
+apply ex_intro with qs.
+apply conj. trivial.
 simpl in H. apply conj. apply dtNil. assumption.
 
 simpl. intros. apply dersl_cons in H.
-inversion H.  inversion H0.  pose (IHpsa x0).  inversion H1.  inversion H3.
-pose (e H5).  inversion e0.  inversion H6.
-eapply ex_intro.  eapply ex_intro.  inversion H7.
-rewrite H8 in H2.  rewrite app_assoc in H2.
-inversion H9.  apply conj.  apply H2.  apply conj.
+inversion_clear H.  inversion_clear H0. 
+inversion_clear H.  inversion_clear H1.
+pose (IHpsa x0 H2).
+inversion_clear e.  inversion_clear H1.
+inversion_clear H3.  inversion_clear H4.
+eapply ex_intro.  eapply ex_intro. 
+rewrite H1 in H0.  rewrite app_assoc in H0.
+ apply conj.  apply H0.  apply conj.
 apply dtCons. assumption.  assumption.  assumption.
 Qed.
 
