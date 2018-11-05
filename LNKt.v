@@ -331,6 +331,16 @@ Proof.
   generalize dependent H1.
   rewrite H2. auto.
 Qed.
+
+Ltac finish_ht_admis_ex1 := simpl; apply le_n_S;  assumption.
+Ltac finish_ht_admis_ex2 := simpl; apply le_n_S;
+                            eapply (Nat.le_trans _ _ _ _ _);
+                            assumption.
+Ltac find_trans_solve :=      match goal with
+               | [ H1 : ?n1 <= ?n2, H2 : ?n2 <= ?n3 |- ?n1 <= ?n3] =>
+                 apply (Nat.le_trans n1 n2 n3 H1 H2) end.
+Ltac finish_ht_admis_ex3 :=  simpl; apply le_n_S; find_trans_solve.
+
   
 (* Weakening for ImpR *)
 Lemma ht_admis_ex1_ImpR : forall n G H Γ1 Γ2 Δ  A B δ
@@ -364,45 +374,44 @@ Proof.
     rewrite <- app_assoc. rewrite <- app_cons_single.
     intros D2 HD2. rewrite <- app_assoc. simpl.
     exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
-    simpl. apply le_n_S. assumption.
+    finish_ht_admis_ex1.
   + subst G0 H0. inversion P4 as [[P5 P6 P7]].
     subst δ0 Δ. apply partition_2_3 in P5.
     destruct P5 as [ [P5 PP5] | [ [l5 [P5 PP5]] | [[P5 PP5] | [[P5 PP5] | [l5 [P5 PP5]]]]]].
     * subst Γ3 Γ4.
       generalize dependent D1. rewrite (app_cons_single _ _ E).
-      intros D1 HD1. pose proof HD1 as HD1'.
-      apply Nat.eq_le_incl in HD1.
-      destruct (IHn _ HD1 _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
+      intros D1 IHn. 
+      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
+                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
       generalize dependent D2. rewrite <- app_assoc.
       simpl. intros D2 HD2. exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
-      simpl. apply le_n_S.  rewrite <- HD1'. assumption.    
+      finish_ht_admis_ex1.
     * subst Γ1 Γ4. generalize dependent D1.
       rewrite (app_cons_single Γ3).
-      rewrite (app_assoc _ l5). intros D1 HD1.
-      pose proof HD1 as HD1'.
-      apply Nat.eq_le_incl in HD1.
-      destruct (IHn _ HD1 _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
-      rewrite HD1' in HD2.
-      generalize dependent D2. do 3  rewrite <- app_assoc.
-      simpl. intros D2 HD2. exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
-      simpl. apply le_n_S. assumption.
+      rewrite (app_assoc _ l5). intros D1 IHn.
+      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
+                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
+      generalize dependent D2. do 2 rewrite <- app_assoc.
+      simpl. intros D2 HD2. rewrite <- app_assoc.
+      exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
+      finish_ht_admis_ex1.
     * subst Γ3 Γ4. generalize dependent D1.
       rewrite <- app_assoc. simpl.
-      intros D1 HD1. pose proof HD1 as HD1'.
-      apply Nat.eq_le_incl in HD1.
-      destruct (IHn _ HD1 _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
+      intros D1 IHn.
+      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
+                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
       generalize dependent D2. rewrite (app_cons_single _ _ E).
-      intros D2 HD2. rewrite  HD1' in HD2.
-      destruct (IHn _ HD2 _ _ _ _ _ _ _ _ D2 eq_refl) as [D3 HD3].
+      intros D2 HD2.
+      destruct (IHn _ HD2  _ _ _ _ _ _ _ _ D2 eq_refl) as [D3 HD3].
       generalize dependent D3. rewrite <- app_assoc.
       simpl. intros D3 HD3.
       exists (LNImpR _ _ _ _ _ _ _ _ _ D3).
-      simpl. apply le_n_S. apply (Nat.le_trans _ _ _ HD3 HD2).
+      finish_ht_admis_ex3.
     * subst Γ3 Γ4.
       generalize dependent D1. rewrite <- app_assoc.
-      simpl. intros D1 HD1. pose proof HD1 as HD1'.
-      apply Nat.eq_le_incl in HD1.
-      destruct (IHn _ HD1 _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
+      simpl. intros D1 IHn. 
+      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
+                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
       generalize dependent D2.
       rewrite (app_cons_single _ _ B).
       rewrite (app_cons_single _ _ A).
@@ -410,12 +419,12 @@ Proof.
       rewrite (app_cons_single _ _ B).
       rewrite (app_cons_single _ _ A).
       exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
-      simpl. apply le_n_S. apply (Nat.le_trans _ _ _ HD2 HD1).
+      finish_ht_admis_ex1.
     * subst Γ3 Γ2.  generalize dependent D1.
       rewrite <- app_assoc. simpl.
-      intros D1 HD1. pose proof HD1 as HD1'.
-      apply Nat.eq_le_incl in HD1.
-      destruct (IHn _ HD1 _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
+      intros D1 IHn. 
+      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
+                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
       generalize dependent D2.
       rewrite (app_cons_single _ _ B).
       rewrite (app_cons_single _ _ A).
@@ -424,12 +433,11 @@ Proof.
       rewrite (app_cons_single _ _ A).      
       rewrite (app_assoc _ l5).
       exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
-      simpl. apply le_n_S. apply (Nat.le_trans _ _ _ HD2 HD1).
+      finish_ht_admis_ex1.
   + subst G0 H. generalize dependent D1.
-    rewrite <- app_assoc. simpl. intros D1 HD1.
-    pose proof HD1 as HD1'.
-    apply Nat.eq_le_incl in HD1.
-    destruct (IHn _ HD1 _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
+    rewrite <- app_assoc. simpl. intros D1 IHn.
+    destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
+                  _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
     generalize dependent D2.
     rewrite (app_cons_single G).
     rewrite (app_assoc _ l5).
@@ -437,7 +445,7 @@ Proof.
     rewrite (app_cons_single G).
     rewrite (app_assoc _ l5).
     exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
-    simpl. apply le_n_S. apply (Nat.le_trans _ _ _ HD2 HD1).
+    finish_ht_admis_ex1.
 Qed.
 
 (*
