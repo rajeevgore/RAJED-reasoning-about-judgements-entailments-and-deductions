@@ -124,6 +124,78 @@ Proof.
       (repeat eexists; try apply conj; try apply Ht').
 Qed.
 
+Require Import List_lemmas.
+Lemma LN_eq_sub_ht : forall G1 G2 (D1 : LN|- G1),
+    G1 = G2  ->
+    exists (D2 : LN|- G2), LNheight D1 = LNheight D2.
+Proof.
+  intros G1 G2 D1. apply subst_dep.
+Qed.
+
+(* Some tactics for the following proofs. *)
+
+Ltac LN_rewrite_ht1 D1 D1' Ht1' := 
+    destruct (LN_eq_sub_ht D1
+               (list_rearr1 _ _ _ _ )) as [D1' Ht1'];
+    rewrite Ht1' in *; clear Ht1'.
+
+Ltac LN_rewrite_ht2 D1 D1' Ht1' := 
+    destruct (LN_eq_sub_ht D1
+               (list_rearr2 _ _ _ _ )) as [D1' Ht1'];
+    rewrite Ht1' in *; clear Ht1'.
+
+Ltac LN_rewrite_ht4 D1 D1' Ht1' := 
+      destruct (LN_eq_sub_ht D1
+               (list_rearr4 _ _ _ _ _ _ _ _ _ )) as [D1' Ht1'];
+      rewrite Ht1' in *; clear Ht1'.
+
+Ltac LN_rewrite_ht5 D1 D1' Ht1' := 
+      destruct (LN_eq_sub_ht D1
+               (list_rearr5 _ _ _ _ _ _ _ _)) as [D1' Ht1'];
+      rewrite Ht1' in *; clear Ht1'.
+
+Ltac ht_admis_ex1_ImpR_IH IHn D1 D2 HD2 :=
+      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
+                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
+
+Ltac LN_rewrite_ht6 D1 D1' Ht1' := 
+          destruct (LN_eq_sub_ht D1
+               (list_rearr6 _ _ _ _ _ _ _ _)) as [D1' Ht1'];
+          rewrite Ht1' in *; clear Ht1'.
+
+Ltac LN_rewrite_ht7 D2 D2' Ht2' := 
+      destruct (LN_eq_sub_ht D2
+               (list_rearr7 _ _ _ _ _ _ _ _)) as [D2' Ht2'];
+      rewrite Ht2' in *; clear Ht2'.
+
+Ltac LN_rewrite_ht8 D1 D1' Ht1' := 
+      destruct (LN_eq_sub_ht D1
+               (list_rearr8 _ _ _ _ _ _ _ _)) as [D1' Ht1'];
+      rewrite Ht1' in *; clear Ht1'.
+
+Ltac LN_rewrite_ht9 D2 D2' Ht2' := 
+      destruct (LN_eq_sub_ht D2
+               (list_rearr9 _ _ _ _ _ _ _ _)) as [D2' Ht2'];
+      rewrite Ht2' in *; clear Ht2'.
+
+Ltac LN_rewrite_ht10 D1 D1' Ht1' := 
+destruct (LN_eq_sub_ht D1
+               (list_rearr10 _ _ _ _ _ _ _ _ _)) as [D1' Ht1'];
+        rewrite Ht1' in *; clear Ht1'.
+
+Ltac LN_rewrite_ht11 D2 D2' Ht2' := 
+      destruct (LN_eq_sub_ht D2
+               (list_rearr11 _ _ _ _ _ _ _ _ _ )) as [D2' Ht2'];
+      rewrite Ht2' in *; clear Ht2'.
+
+Ltac LN_rewrite_ht12 D1 D1' Ht1' :=
+  destruct (LN_eq_sub_ht D1 (app_assoc_reverse _ _ _)) as [D1' Ht1'];
+  rewrite Ht1' in *; clear Ht1'.
+
+Ltac LN_rewrite_ht13 D2 D2' Ht2' := 
+    destruct (LN_eq_sub_ht D2
+              (list_rearr13 _ _ _ _)) as [D2' Ht2'].
+
 (* Height admissible exchange on the left *)
 
 (* Lemma for the base cases. *)
@@ -324,24 +396,6 @@ Proof.
     apply Nat.max_le_compat; assumption.
 Qed.
 
-Lemma checking : forall G1 G2,
-   ( LN|- G1) -> G1 = G2  ->  LN|- G2.
-Proof.
-  intros G1 G2 H1 H2.
-  generalize dependent H1.
-  rewrite H2. auto.
-Qed.
-
-Ltac finish_ht_admis_ex1 := simpl; apply le_n_S;  assumption.
-Ltac finish_ht_admis_ex2 := simpl; apply le_n_S;
-                            eapply (Nat.le_trans _ _ _ _ _);
-                            assumption.
-Ltac find_trans_solve :=      match goal with
-               | [ H1 : ?n1 <= ?n2, H2 : ?n2 <= ?n3 |- ?n1 <= ?n3] =>
-                 apply (Nat.le_trans n1 n2 n3 H1 H2) end.
-Ltac finish_ht_admis_ex3 :=  simpl; apply le_n_S; find_trans_solve.
-
-  
 (* Weakening for ImpR *)
 Lemma ht_admis_ex1_ImpR : forall n G H Γ1 Γ2 Δ  A B δ
 (  D : LN|- G ++ (Γ1 ++ A :: B :: Γ2, Δ, δ) :: H),
@@ -363,90 +417,66 @@ exists D2 : LN|- G ++ (Γ1 ++ B :: A :: Γ2, Δ, δ) :: H, LNheight D2 <= S n.
 Proof.
   intros n G H Γ1 Γ2 Δ A B δ D IHn
          [E [F [Γ3 [Γ4 [Δ1 [Δ2 [δ0 [G0 [H0 [D1 [P1 P2]]]]]]]]]]].
-  apply partition_2_2 in P1. subst n.
-  destruct P1 as [ [l5 [P3 P4]] | [ [P3 [P4 P5]] |  [l5 [P3 P4]]]].
-  + subst G H0. pose proof (checking ).
-    generalize dependent D1.
-    rewrite app_cons_single.
-    rewrite app_assoc. intros D1 IHn.
-    destruct (IHn _  (Nat.eq_le_incl _ _ eq_refl)  _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
-    generalize dependent D2.
-    rewrite <- app_assoc. rewrite <- app_cons_single.
-    intros D2 HD2. rewrite <- app_assoc. simpl.
-    exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
+  subst n. ap_part_2_2 P1 l5 P3 P4 P5.  
+  + subst G H0.
+    LN_rewrite_ht1 D1 D1' Ht1'.
+    ht_admis_ex1_ImpR_IH IHn D1' D2 HD2.
+    LN_rewrite_ht2 D2 D2' Ht2'.
+    rewrite <- app_assoc. simpl.
+    exists (LNImpR _ _ _ _ _ _ _ _ _ D2').
     finish_ht_admis_ex1.
   + subst G0 H0. inversion P4 as [[P5 P6 P7]].
-    subst δ0 Δ. apply partition_2_3 in P5.
-    destruct P5 as [ [P5 PP5] | [ [l5 [P5 PP5]] | [[P5 PP5] | [[P5 PP5] | [l5 [P5 PP5]]]]]].
+    subst δ0 Δ. ap_part_2_3 P5 l5 P55.
     * subst Γ3 Γ4.
-      generalize dependent D1. rewrite (app_cons_single _ _ E).
-      intros D1 IHn. 
-      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
-                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
-      generalize dependent D2. rewrite <- app_assoc.
-      simpl. intros D2 HD2. exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
+      LN_rewrite_ht4 D1 D1' Ht1'.
+      ht_admis_ex1_ImpR_IH IHn D1' D2 HD2.
+      LN_rewrite_ht5 D2 D2' Ht2'.
+      exists (LNImpR _ _ _ _ _ _ _ _ _ D2').  
       finish_ht_admis_ex1.
-    * subst Γ1 Γ4. generalize dependent D1.
-      rewrite (app_cons_single Γ3).
-      rewrite (app_assoc _ l5). intros D1 IHn.
-      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
-                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
-      generalize dependent D2. do 2 rewrite <- app_assoc.
-      simpl. intros D2 HD2. rewrite <- app_assoc.
-      exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
+    * subst Γ1 Γ4.
+      LN_rewrite_ht6 D1 D1' Ht1'.
+      ht_admis_ex1_ImpR_IH IHn D1' D2 HD2.
+      LN_rewrite_ht7 D2 D2' Ht2'.
+      rewrite <- app_assoc.
+      exists (LNImpR _ _ _ _ _ _ _ _ _ D2').
       finish_ht_admis_ex1.
-    * subst Γ3 Γ4. generalize dependent D1.
-      rewrite <- app_assoc. simpl.
-      intros D1 IHn.
-      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
-                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
-      generalize dependent D2. rewrite (app_cons_single _ _ E).
-      intros D2 HD2.
-      destruct (IHn _ HD2  _ _ _ _ _ _ _ _ D2 eq_refl) as [D3 HD3].
-      generalize dependent D3. rewrite <- app_assoc.
-      simpl. intros D3 HD3.
-      exists (LNImpR _ _ _ _ _ _ _ _ _ D3).
+    * subst Γ3 Γ4.
+      LN_rewrite_ht5 D1 D1' Ht1'.
+      ht_admis_ex1_ImpR_IH IHn D1' D2 HD2.
+      LN_rewrite_ht4 D2 D2' Ht2'.
+      destruct (IHn _ HD2
+                    _ _ _ _ _ _ _ _ D2' eq_refl) as [D3 HD3].
+      LN_rewrite_ht5 D3 D3' Ht3'.
+      exists (LNImpR _ _ _ _ _ _ _ _ _ D3').
       finish_ht_admis_ex3.
     * subst Γ3 Γ4.
-      generalize dependent D1. rewrite <- app_assoc.
-      simpl. intros D1 IHn. 
-      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
-                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
-      generalize dependent D2.
+      LN_rewrite_ht8 D1 D1' Ht1'.
+      ht_admis_ex1_ImpR_IH IHn D1' D2 HD2.
+      LN_rewrite_ht9 D2 D2' Ht2'.
       rewrite (app_cons_single _ _ B).
       rewrite (app_cons_single _ _ A).
-      intros D2 HD2. 
-      rewrite (app_cons_single _ _ B).
-      rewrite (app_cons_single _ _ A).
-      exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
+      exists (LNImpR _ _ _ _ _ _ _ _ _ D2').
       finish_ht_admis_ex1.
-    * subst Γ3 Γ2.  generalize dependent D1.
-      rewrite <- app_assoc. simpl.
-      intros D1 IHn. 
-      destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
-                    _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
-      generalize dependent D2.
-      rewrite (app_cons_single _ _ B).
-      rewrite (app_cons_single _ _ A).
-      rewrite (app_assoc _ l5). intros D2 HD2.
+    * subst Γ3 Γ2.
+      LN_rewrite_ht10 D1 D1' Ht1'.
+      ht_admis_ex1_ImpR_IH IHn D1' D2 HD2.
+      LN_rewrite_ht11 D2 D2' Ht2'.
       rewrite (app_cons_single _ _ B).
       rewrite (app_cons_single _ _ A).      
       rewrite (app_assoc _ l5).
-      exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
+      exists (LNImpR _ _ _ _ _ _ _ _ _ D2').
       finish_ht_admis_ex1.
-  + subst G0 H. generalize dependent D1.
-    rewrite <- app_assoc. simpl. intros D1 IHn.
-    destruct (IHn _ (Nat.eq_le_incl _ _ eq_refl)
-                  _ _ _ _ _ _ _ _ D1 eq_refl) as [D2 HD2].
-    generalize dependent D2.
-    rewrite (app_cons_single G).
-    rewrite (app_assoc _ l5).
-    intros D2 HD2.
-    rewrite (app_cons_single G).
-    rewrite (app_assoc _ l5).
-    exists (LNImpR _ _ _ _ _ _ _ _ _ D2).
-    finish_ht_admis_ex1.
+  + subst G0 H.
+    LN_rewrite_ht12 D1 D1' Ht1'.
+    ht_admis_ex1_ImpR_IH IHn D1' D2 HD2.
+    LN_rewrite_ht13 D2 D2' Ht2'.
+    rewrite list_rearr13.
+    exists (LNImpR _ _ _ _ _ _ _ _ _ D2').
+    simpl.  apply le_n_S. rewrite <- Ht2'.
+    assumption.
 Qed.
+
+(* Old proof. *)
 
 (*
 Proof.

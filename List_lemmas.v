@@ -1,4 +1,4 @@
-Require Import List.
+Require Import List Omega.
 Import ListNotations.
 
 Ltac app_assoc_solve G := rewrite <- (app_assoc G); reflexivity.
@@ -128,3 +128,102 @@ Proof.
       app_assoc_hyp_inv l1 H2. simpl in *. inversion H2. subst.
       exists l5.  apply conj; reflexivity.
 Qed.
+
+Lemma subst_dep : forall (T : Type) (G1 G2 : T) P (P2 : forall (G : T), P G  -> nat)  (D1 : P G1),
+    G1 = G2  ->
+    exists (D2 : P G2), P2 G1 D1 = P2 G2 D2.
+Proof.
+  intros T G1 G2 P P2 D1 Heq.
+  generalize dependent D1. subst.
+  intros D1. exists D1. reflexivity.
+Qed.
+
+Ltac finish_ht_admis_ex1 := simpl; apply le_n_S;  assumption.
+Ltac finish_ht_admis_ex2 := simpl; apply le_n_S;
+                            eapply (Nat.le_trans _ _ _ _ _);
+                            assumption.
+Ltac find_trans_solve :=      match goal with
+               | [ H1 : ?n1 <= ?n2, H2 : ?n2 <= ?n3 |- ?n1 <= ?n3] =>
+                 apply (Nat.le_trans n1 n2 n3 H1 H2) end.
+Ltac finish_ht_admis_ex3 :=  simpl; apply le_n_S; find_trans_solve.
+Ltac ap_part_2_2 P1 l5 P3 P4 P5 :=
+  apply partition_2_2 in P1;
+  destruct P1 as [ [l5 [P3 P4]] | [ [P3 [P4 P5]] |  [l5 [P3 P4]]]].
+
+Ltac ap_part_2_3 P5 l5 P55 := apply partition_2_3 in P5;
+    destruct P5 as [ [P5 PP5] | [ [l5 [P5 PP5]]
+                                | [[P5 PP5] | [[P5 PP5] | [l5 [P5 PP5]]]]]].
+
+Lemma list_rearr1 : forall {A : Type} (a : A) G0 l5 H,
+      (G0 ++ a :: l5 ++ H) =
+           (((G0 ++ [a]) ++ l5) ++  H).
+Proof.
+  intros.     rewrite app_cons_single.
+  rewrite app_assoc. reflexivity.
+Qed.
+
+Lemma list_rearr2 : forall {A : Type} (a : A) G0 l5 H,
+  ((G0 ++ [a]) ++ l5) ++ H =  G0 ++ a :: l5 ++ H.
+Proof. intros. do 2 rewrite <- app_assoc. reflexivity. Qed.
+
+Lemma list_rearr4 : forall {T1 T2 T3 : Type} G (A B E : T1) (Δ : list T2)
+                           Γ1 Γ2 (δ : T3) H,
+    G ++ (Γ1 ++ E :: A :: B :: Γ2, Δ, δ) :: H =
+    G ++ ((Γ1 ++ [E]) ++ A :: B :: Γ2, Δ, δ) :: H.
+Proof. intros. rewrite <- app_assoc.  reflexivity. Qed.
+
+Lemma list_rearr5 : forall {T1 T2 T3 : Type} G (E B : T1)
+                           Γ1 Γ2 (Δ : list T2) (δ : T3) H,
+    G ++ ((Γ1 ++ [E]) ++ B :: Γ2, Δ, δ) :: H =
+    G ++ (Γ1 ++ E :: B :: Γ2, Δ, δ) :: H.
+Proof. intros. rewrite <- app_assoc. reflexivity. Qed.
+
+Lemma list_rearr6 : forall {T1 T2 T3 : Type} (E : T1) G l5 Γ3 Γ2
+                           (Δ : list T2) (δ : T3) H,
+    G ++ (Γ3 ++ E :: l5 ++ Γ2, Δ, δ) :: H =
+    G ++ (((Γ3 ++ [E]) ++ l5) ++ Γ2, Δ, δ) :: H.
+Proof. intros. rewrite (app_cons_single Γ3).
+       rewrite (app_assoc _ l5). reflexivity.
+Qed.
+
+Lemma list_rearr7 : forall {T1 T2 T3 : Type} G (E : T1) l5 Γ3 Γ2
+                           (Δ : list T2) (δ : T3) H,
+G ++ (((Γ3 ++ [E]) ++ l5) ++ Γ2, Δ, δ) :: H =
+      G ++ (Γ3 ++ E :: l5 ++ Γ2, Δ, δ) :: H.
+Proof. intros.  do 2 rewrite <- app_assoc. reflexivity. Qed.
+
+Lemma list_rearr8 : forall {T1 T2 T3 : Type} G Γ1 Γ2 (A B : T1)
+                           (Δ : list T2) (δ : T3) H,
+ G ++ ((Γ1 ++ [A; B]) ++ Γ2, Δ, δ) :: H =
+      G ++ (Γ1 ++ A :: B :: Γ2, Δ, δ) :: H.
+Proof. intros. rewrite <- app_assoc. reflexivity. Qed.
+
+Lemma list_rearr9 : forall {T1 T2 T3 : Type} G Γ1 Γ2 (A B : T1)
+                           (Δ : list T2) (δ : T3) H,
+G ++ (Γ1 ++ B :: A :: Γ2, Δ, δ) :: H =
+G ++ (((Γ1 ++ [B]) ++ [A]) ++ Γ2, Δ, δ) :: H.
+Proof. intros.   rewrite (app_cons_single _ _ B);
+  rewrite (app_cons_single _ _ A). reflexivity.
+Qed.
+
+Lemma list_rearr10 : forall {T1 T2 T3 : Type} G Γ1 Γ4 (A B : T1) l5
+                           (Δ : list T2) (δ : T3) H,
+G ++ ((Γ1 ++ [A; B] ++ l5) ++ Γ4, Δ, δ) :: H =
+       G ++ (Γ1 ++ A :: B :: l5 ++ Γ4, Δ, δ) :: H.
+Proof. intros. rewrite <- app_assoc. reflexivity. Qed.
+
+Lemma list_rearr11 : forall {T1 T2 T3 : Type} G Γ1 Γ4 (A B : T1) l5
+                           (Δ : list T2) (δ : T3) H,
+G ++ (Γ1 ++ B :: A :: l5 ++ Γ4, Δ, δ) :: H =
+      G ++ ((((Γ1 ++ [B]) ++ [A]) ++ l5) ++ Γ4, Δ, δ) :: H.
+Proof.
+  intros. rewrite (app_cons_single _ _ B).
+  rewrite (app_cons_single _ _ A).
+  rewrite (app_assoc _ l5). reflexivity.
+Qed.
+
+Lemma list_rearr13 : forall {T : Type} a (G l5 H : list T),
+     G ++ a :: l5 ++ H = (G ++ a :: l5) ++ H.
+Proof.
+  intros. rewrite app_comm_cons. rewrite app_assoc.
+  reflexivity. Qed.
