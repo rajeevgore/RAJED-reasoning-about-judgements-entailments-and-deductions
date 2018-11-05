@@ -320,6 +320,7 @@ apply conj. trivial.
 simpl in H. apply conj. apply dtNil. assumption.
 
 simpl. intros. apply dersl_cons in H.
+(* see below *)
 inversion_clear H.  inversion_clear H0. 
 inversion_clear H.  inversion_clear H1.
 pose (IHpsa x0 H2).
@@ -335,4 +336,19 @@ Check derrec_derrec.
 Check derl_derrec_trans.
 Check derrec_derl.
 Check dersl_append.
+
+(* or at this point 
+generalize H.
+apply ex_ind. intro. apply ex_ind. intro.
+apply and_ind.   intro.  apply and_ind.   intro. intro.
+pose (IHpsa x0 H2).
+generalize e.
+apply ex_ind. intro. apply ex_ind. intro.
+apply and_ind.   intro.  apply and_ind.   intro. intro.
+eapply ex_intro.  eapply ex_intro.
+rewrite H3 in H0.  rewrite app_assoc in H0.
+ apply conj.  apply H0.  apply conj.
+apply dtCons. assumption.  assumption.  assumption.
+Qed.
+*)
 
