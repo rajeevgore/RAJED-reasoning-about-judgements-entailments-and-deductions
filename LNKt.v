@@ -194,7 +194,8 @@ Ltac LN_rewrite_ht12 D1 D1' Ht1' :=
 
 Ltac LN_rewrite_ht13 D2 D2' Ht2' := 
     destruct (LN_eq_sub_ht D2
-              (list_rearr13 _ _ _ _)) as [D2' Ht2'].
+              (list_rearr13 _ _ _ _)) as [D2' Ht2'];
+      rewrite Ht2' in *; clear Ht2'.
 
 (* Height admissible exchange on the left *)
 
@@ -472,8 +473,7 @@ Proof.
     LN_rewrite_ht13 D2 D2' Ht2'.
     rewrite list_rearr13.
     exists (LNImpR _ _ _ _ _ _ _ _ _ D2').
-    simpl.  apply le_n_S. rewrite <- Ht2'.
-    assumption.
+    finish_ht_admis_ex1.
 Qed.
 
 (* Old proof. *)
