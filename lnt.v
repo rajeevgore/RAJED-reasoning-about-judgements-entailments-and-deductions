@@ -64,6 +64,12 @@ Inductive seqrule (V : Set) :
      (mkseq (Gamma1 ++ B :: A :: Gamma2) Delta)
 .
 
+Ltac cE :=
+  repeat match goal with
+    | [ H : _ /\ _ |- _ ] => inversion_clear H
+    | [ H : ex _ |- _ ] => inversion_clear H
+    end.
+
 (* note, this doesn't work Type replaced by Prop,
   although the actual version used allows prems : X -> Prop 
 Reset derrec.
@@ -320,7 +326,14 @@ apply conj. trivial.
 simpl in H. apply conj. apply dtNil. assumption.
 
 simpl. intros. apply dersl_cons in H.
-(* see below *)
+cE.  pose (IHpsa x0 H2).  cE.
+eapply ex_intro.  eapply ex_intro. 
+rewrite H1 in H0.  rewrite app_assoc in H0.
+ apply conj.  apply H0.  apply conj.
+apply dtCons. assumption.  assumption.  assumption.
+Qed.
+
+(* old version
 inversion_clear H.  inversion_clear H0. 
 inversion_clear H.  inversion_clear H1.
 pose (IHpsa x0 H2).
@@ -331,6 +344,7 @@ rewrite H1 in H0.  rewrite app_assoc in H0.
  apply conj.  apply H0.  apply conj.
 apply dtCons. assumption.  assumption.  assumption.
 Qed.
+*)
 
 Check derrec_derrec.
 Check derl_derrec_trans.
@@ -338,7 +352,7 @@ Check derrec_derl.
 Check dersl_append.
 
 (* or at this point 
-generalize H.
+generalize H. (* or revert H. *)
 apply ex_ind. intro. apply ex_ind. intro.
 apply and_ind.   intro.  apply and_ind.   intro. intro.
 pose (IHpsa x0 H2).
