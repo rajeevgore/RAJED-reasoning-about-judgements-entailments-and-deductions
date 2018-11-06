@@ -346,11 +346,6 @@ apply dtCons. assumption.  assumption.  assumption.
 Qed.
 *)
 
-Check derrec_derrec.
-Check derl_derrec_trans.
-Check derrec_derl.
-Check dersl_append.
-
 (* or at this point 
 generalize H. (* or revert H. *)
 apply ex_ind. intro. apply ex_ind. intro.
@@ -365,4 +360,32 @@ rewrite H3 in H0.  rewrite app_assoc in H0.
 apply dtCons. assumption.  assumption.  assumption.
 Qed.
 *)
+
+(*
+Lemma derl_dersl: forall (X : Set) (rules : list X -> X -> Prop) 
+         (prems : X -> Prop) (pss : list X) (rps : list X) (concl : X),
+    derl rules rps concl -> dersl rules pss rps -> derl rules pss concl.
+Proof.
+intros.
+
+eapply (derl_ind_mut (rules := rules) 
+  (fun ps : list X => fun c => fun _ =>
+    forall pss, dersl rules pss ps -> derl rules pss c)
+  (fun ps cs : list X => fun _ => 
+    forall pss, dersl rules pss ps -> dersl rules pss cs)).
+
+intros. inversion_clear H1. inversion_clear H3.
+rewrite app_nil_r.  assumption.
+next line fails 
+intros. pose (H1 H2). eapply dtderI. eassumption. assumption.
+trivial.
+intros.
+
+*)
+
+
+Check derrec_derrec.
+Check derl_derrec_trans.
+Check derrec_derl.
+Check dersl_append.
 
