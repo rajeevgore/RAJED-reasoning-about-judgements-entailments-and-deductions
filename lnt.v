@@ -343,6 +343,7 @@ eapply ex_intro.  eapply ex_intro.
 rewrite H1 in H0.  rewrite app_assoc in H0.
  apply conj.  apply H0.  apply conj.
 apply dtCons. assumption.  assumption.  assumption.
+
 Qed.
 *)
 
@@ -361,9 +362,8 @@ apply dtCons. assumption.  assumption.  assumption.
 Qed.
 *)
 
-(*
 Lemma derl_dersl: forall (X : Set) (rules : list X -> X -> Prop) 
-         (prems : X -> Prop) (pss : list X) (rps : list X) (concl : X),
+          (pss : list X) (rps : list X) (concl : X),
     derl rules rps concl -> dersl rules pss rps -> derl rules pss concl.
 Proof.
 intros.
@@ -376,16 +376,72 @@ eapply (derl_ind_mut (rules := rules)
 
 intros. inversion_clear H1. inversion_clear H3.
 rewrite app_nil_r.  assumption.
-next line fails 
-intros. pose (H1 H2). eapply dtderI. eassumption. assumption.
-trivial.
+intros. apply H1 in H2.
+eapply dtderI. eassumption. assumption.
+intros. assumption.
+intros.  apply dersl_append in H3. cE. rewrite H4. apply dtCons.
+apply H1. assumption. apply H2. assumption.
+eassumption. assumption. 
+Qed.
+
+Lemma dersl_dersl: forall (X : Set) (rules : list X -> X -> Prop)
+          (pss : list X) (rps : list X) (cs : list X),
+    dersl rules rps cs -> dersl rules pss rps -> dersl rules pss cs.
+Proof.
 intros.
 
-*)
+(* can use same proof as for derl_dersl *)
+eapply (dersl_ind_mut (rules := rules) 
+  (fun ps : list X => fun c => fun _ =>
+    forall pss, dersl rules pss ps -> derl rules pss c)
+  (fun ps cs : list X => fun _ => 
+    forall pss, dersl rules pss ps -> dersl rules pss cs)).
 
+intros. inversion_clear H1. inversion_clear H3.
+rewrite app_nil_r.  assumption.
+intros. apply H1 in H2.
+eapply dtderI. eassumption. assumption.
+intros. assumption.
+intros.  apply dersl_append in H3. cE. rewrite H4. apply dtCons.
+apply H1. assumption. apply H2. assumption.
+eassumption. assumption. 
+Qed.
+
+(* alternatively, just induction on the list of conclusions *)
+Lemma dersl_dersl_alt: forall (X : Set) (rules : list X -> X -> Prop)
+           (cs rps : list X), dersl rules rps cs ->
+	 forall (pss : list X), dersl rules pss rps -> dersl rules pss cs.
+Proof.
+intro.  intro.  intro.  
+
+induction cs.
+intros. inversion H. subst. assumption.
+intros.  apply dersl_cons in H. cE. subst.
+apply dersl_append in H0. cE. subst.
+apply dtCons. eapply derl_dersl. eassumption. assumption.
+firstorder.
+Qed.
+
+Theorem derl_derl: forall (X : Set) rules prems (concl : X),
+  derl (derl rules) prems concl -> derl rules prems concl.
+intros.
+
+apply (derl_ind_mut (rules := derl rules) 
+  (fun ps : list X => fun c : X => fun _ => derl rules ps c)
+  (fun ps cs : list X => fun _ => dersl rules ps cs)).
+
+intro. apply asmI.
+intros. eapply derl_dersl. eassumption.  assumption.
+apply dtNil.
+intros.  apply dtCons.  assumption.  assumption.
+assumption.  
+Qed.
 
 Check derrec_derrec.
 Check derl_derrec_trans.
 Check derrec_derl.
 Check dersl_append.
+Check derl_dersl.
+Check dersl_dersl.
+Check derl_derl.
 
