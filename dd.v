@@ -92,9 +92,9 @@ with dercsl_ind_mut := Induction for dercsl Sort Prop.
 Check dercl_ind_mut.
 Check dercsl_ind_mut.
 
-Reset derrec_derrec.
+Reset derrec_trans_imp.
 
-Theorem derrec_derrec: forall (X : Set) rules prems (concl : X),
+Theorem derrec_trans_imp: forall (X : Set) rules prems (concl : X),
   derrec rules (derrec rules prems) concl -> derrec rules prems concl.
 
 Proof.
@@ -140,7 +140,7 @@ eapply dtderI.
 Abort.
 
 (* need transitivity ones first *)
-Theorem derl_dersl: forall (X : Set) rules pss prems (concl : X),
+Theorem derl_trans: forall (X : Set) rules pss prems (concl : X),
   derl rules prems concl -> dersl rules pss prems -> derl rules pss concl.
 intros.
 
@@ -228,9 +228,9 @@ inversion H3.  eapply dlCons ; tauto.
 eassumption.  assumption.
 Qed.
 
-Reset derrec_derl.
+Reset derrec_derl_deriv.
 
-Theorem derrec_derl: forall (X : Set) rules prems (concl : X),
+Theorem derrec_derl_deriv: forall (X : Set) rules prems (concl : X),
   derrec (derl rules) prems concl -> derrec rules prems concl.
 
 Proof.
@@ -258,9 +258,9 @@ eapply ex_intro.  eapply ex_intro.  apply conj.  reflexivity.
 tauto.
 Qed.
 
-Reset dersl_append.
+Reset dersl_app_eq.
 
-Lemma dersl_append: forall (X : Set) rules (psa psb : list X) qs, 
+Lemma dersl_app_eq: forall (X : Set) rules (psa psb : list X) qs, 
   dersl rules qs (psa ++ psb) -> exists qsa qsb, qs = qsa ++ qsb /\
     dersl rules qsa psa /\ dersl rules qsb psb.
 Proof.
@@ -309,7 +309,7 @@ apply dtCons. assumption.  assumption.  assumption.
 Qed.
 *)
 
-Lemma derl_dersl: forall (X : Set) (rules : list X -> X -> Prop) 
+Lemma derl_trans: forall (X : Set) (rules : list X -> X -> Prop) 
           (pss : list X) (rps : list X) (concl : X),
     derl rules rps concl -> dersl rules pss rps -> derl rules pss concl.
 Proof.
@@ -326,18 +326,18 @@ rewrite app_nil_r.  assumption.
 intros. apply H1 in H2.
 eapply dtderI. eassumption. assumption.
 intros. assumption.
-intros.  apply dersl_append in H3. cE. rewrite H4. apply dtCons.
+intros.  apply dersl_app_eq in H3. cE. rewrite H4. apply dtCons.
 apply H1. assumption. apply H2. assumption.
 eassumption. assumption. 
 Qed.
 
-Lemma dersl_dersl: forall (X : Set) (rules : list X -> X -> Prop)
+Lemma dersl_trans: forall (X : Set) (rules : list X -> X -> Prop)
           (pss : list X) (rps : list X) (cs : list X),
     dersl rules rps cs -> dersl rules pss rps -> dersl rules pss cs.
 Proof.
 intros.
 
-(* can use same proof as for derl_dersl *)
+(* can use same proof as for derl_trans *)
 eapply (dersl_ind_mut (rules := rules) 
   (fun ps : list X => fun c => fun _ =>
     forall pss, dersl rules pss ps -> derl rules pss c)
@@ -349,13 +349,13 @@ rewrite app_nil_r.  assumption.
 intros. apply H1 in H2.
 eapply dtderI. eassumption. assumption.
 intros. assumption.
-intros.  apply dersl_append in H3. cE. rewrite H4. apply dtCons.
+intros.  apply dersl_app_eq in H3. cE. rewrite H4. apply dtCons.
 apply H1. assumption. apply H2. assumption.
 eassumption. assumption. 
 Qed.
 
 (* alternatively, just induction on the list of conclusions *)
-Lemma dersl_dersl_alt: forall (X : Set) (rules : list X -> X -> Prop)
+Lemma dersl_trans_alt: forall (X : Set) (rules : list X -> X -> Prop)
            (cs rps : list X), dersl rules rps cs ->
 	 forall (pss : list X), dersl rules pss rps -> dersl rules pss cs.
 Proof.
@@ -364,12 +364,12 @@ intro.  intro.  intro.
 induction cs.
 intros. inversion H. subst. assumption.
 intros.  apply dersl_cons in H. cE. subst.
-apply dersl_append in H0. cE. subst.
-apply dtCons. eapply derl_dersl. eassumption. assumption.
+apply dersl_app_eq in H0. cE. subst.
+apply dtCons. eapply derl_trans. eassumption. assumption.
 firstorder.
 Qed.
 
-Theorem derl_derl: forall (X : Set) rules prems (concl : X),
+Theorem derl_deriv: forall (X : Set) rules prems (concl : X),
   derl (derl rules) prems concl -> derl rules prems concl.
 intros.
 
@@ -378,17 +378,17 @@ apply (derl_ind_mut (rules := derl rules)
   (fun ps cs : list X => fun _ => dersl rules ps cs)).
 
 intro. apply asmI.
-intros. eapply derl_dersl. eassumption.  assumption.
+intros. eapply derl_trans. eassumption.  assumption.
 apply dtNil.
 intros.  apply dtCons.  assumption.  assumption.
 assumption.  
 Qed.
 
-Check derrec_derrec.
+Check derrec_trans_imp.
 Check derl_derrec_trans.
-Check derrec_derl.
-Check dersl_append.
-Check derl_dersl.
-Check dersl_dersl.
-Check derl_derl.
+Check derrec_derl_deriv.
+Check dersl_app_eq.
+Check derl_trans.
+Check dersl_trans.
+Check derl_deriv.
 
