@@ -56,6 +56,48 @@ with dersrec_ind_mut := Induction for dersrec Sort Prop.
 Check derrec_ind_mut.
 Check dersrec_ind_mut.
 
+(* this should be a more useful induction principle for derrec *)
+Definition dim_all X rules prems Q := 
+  @derrec_ind_mut X rules prems (fun y => fun _ => Q y) 
+  (fun ys => fun _ => Forall Q ys).
+
+(* this doesn't work
+Check (dim_all _ _ (Forall_nil X Q)).
+*)
+(* here is how to get the tautologies out of dim_all *)
+Definition dim_all3 X rules prems Q h1 h2 := 
+  @dim_all X rules prems Q h1 h2 (Forall_nil Q).
+
+Definition fce3 X Q D Ds seq seqs (d : D seq) qs (ds : Ds seqs) qss :=
+  @Forall_cons X Q seq seqs qs qss.
+
+Definition dim_all4 X rules prems Q h1 h2 := 
+  @dim_all3 X rules prems Q h1 h2 
+  (@fce3 X Q (derrec rules prems) (dersrec rules prems)).
+
+(* can't get this one to work
+Definition dim_all5 X rules prems Q h1 h2 := 
+  @dim_all3 X rules prems Q h1 h2 
+  (fun X Q seq seqs _ qs _ qss => @Forall_cons X Q seq seqs qs qss).
+  *)
+
+(* so dim_all4 is the same as derrec_all_ind below *)
+
+Lemma derrec_all_ind:
+  forall (X : Set) (rules : list X -> X -> Prop) (prems Q : X -> Prop),
+     (forall concl : X, prems concl -> Q concl) ->
+     (forall (ps : list X) (concl : X),
+      rules ps concl -> dersrec rules prems ps -> Forall Q ps -> Q concl) ->
+     forall y : X, derrec rules prems y -> Q y.
+Proof.
+intros.
+eapply dim_all. exact H. exact H0.
+apply Forall_nil.
+intros.
+apply Forall_cons. assumption.  assumption.
+assumption.
+Qed.
+
 Inductive derl (X : Set) (rules : list X -> X -> Prop) :
   list X -> X -> Prop := 
   | asmI : forall p, derl rules [p] p
@@ -125,6 +167,7 @@ apply dlCons. assumption.  assumption.
 assumption.
 Qed.
 
+
 Theorem dersl_derl: forall (X : Set) rules prems (concls : list X),
   dersl (derl rules) prems concls -> dersl rules prems concls.
 
@@ -183,6 +226,17 @@ induction cs ; unfold iff ; apply conj ; intro.
 apply Forall_nil. apply dlNil.
 inversion H. apply Forall_cons. assumption. tauto.
 inversion H. apply dlCons.  assumption. tauto.
+Qed.
+
+(* try using the induction principle derrec_all_ind *)
+Theorem derrec_trans_imp_alt: forall (X : Set) rules prems (concl : X),
+  derrec rules (derrec rules prems) concl -> derrec rules prems concl.
+Proof.
+intros.
+revert H. 
+eapply derrec_all_ind. tauto.
+intros. eapply derI. eassumption.
+rewrite dersrec_all.  assumption.
 Qed.
 
 Lemma eq_TrueI: forall (P : Prop), (P -> (P <-> True)).

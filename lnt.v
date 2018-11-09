@@ -26,8 +26,11 @@ Inductive PropF (V : Set): Set :=
  | BDia : PropF V -> PropF V
 .
 
+(* statement of exchL fails if using Type here 
 Definition rel (W : Type) : Type := prod W W.
-Definition rules (W : Type) : Type := list W -> W -> Prop.  
+*)
+Definition rel (W : Set) : Set := prod W W.
+Definition rls (W : Type) : Type := list W -> W -> Prop.  
 Definition trf (W : Type) : Type := W -> W.  
 
 (*
@@ -70,7 +73,7 @@ Inductive seqrule (V : Set) :
 .
 *)
 
-Inductive princrule (V : Set) : rules (rel (list (PropF V))) :=
+Inductive princrule (V : Set) : rls (rel (list (PropF V))) :=
   | Id : forall A, princrule [] (pair [A] [A])
   | ImpR : forall A B, princrule [pair [A] [B]] (pair [] [Imp A B])
   | ImpL : forall A B, princrule
@@ -80,16 +83,16 @@ Inductive princrule (V : Set) : rules (rel (list (PropF V))) :=
 Definition seqext (W : Set) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
   match seq with | pair U V => pair (Γ1 ++ U ++ Γ2) (Δ1 ++ V ++ Δ2) end.
 
-Inductive seqrule (W : Set) (pr : rules (rel (list W))) : 
-    rules (rel (list W)) := 
+Inductive seqrule (W : Set) (pr : rls (rel (list W))) : 
+    rls (rel (list W)) := 
   | Sctxt : forall ps c Γ1 Γ2 Δ1 Δ2, pr ps c -> 
     seqrule pr (map (seqext Γ1 Γ2 Δ1 Δ2) ps) (seqext Γ1 Γ2 Δ1 Δ2 c).
 
 (* w : Set fails *)
 Definition nsext (W : Type) G H (d : dir) (seq : W) := G ++ (seq, d) :: H.
 
-Inductive nsrule (W : Set) (sr : rules (rel (list W))) : 
-    rules (list (rel (list W) * dir)) :=
+Inductive nsrule (W : Set) (sr : rls (rel (list W))) : 
+    rls (list (rel (list W) * dir)) :=
   | NSctxt : forall ps c G H d, sr ps c -> 
     nsrule sr (map (nsext G H d) ps) (nsext G H d c).
 
@@ -98,4 +101,16 @@ Check seqext.
 Check seqrule.
 Check nsext.
 Check nsrule.
+
+Definition can_exchL (V : Set) 
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
+  forall G H seq (d : dir) Γ1 (A B : PropF V) Γ2 Δ, 
+  ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ A :: B :: Γ2) Δ ->
+  derrec rules (fun _ => False) (G ++ (pair (Γ1 ++ A :: B :: Γ2) Δ, d) :: H).
+
+Lemma exchL: forall (V : Set) ns (D : derrec (nsrule (seqrule (@princrule V))) 
+  (fun _ => False) ns) G H seq d Γ1 A B Γ2 Δ, 
+  ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ A :: B :: Γ2) Δ ->
+  derrec (nsrule (seqrule (@princrule V))) (fun _ => False) 
+    (G ++ (pair (Γ1 ++ A :: B :: Γ2) Δ, d) :: H).
 
