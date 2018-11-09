@@ -36,6 +36,14 @@ with dersrec (X : Set) (rules : list X -> X -> Prop) :
     .
     *)
 
+(* definition using Forall, but I don't understand the resulting aderrec_ind *)
+Inductive aderrec (X : Set) (rules : list X -> X -> Prop) :
+  (X -> Type) -> X -> Prop := 
+  | adpI : forall prems concl,
+    prems concl -> aderrec rules prems concl
+  | aderI : forall ps prems concl, rules ps concl ->
+    Forall (aderrec rules prems) ps -> aderrec rules prems concl.
+
 Inductive derrec (X : Set) (rules : list X -> X -> Prop) (prems : X -> Prop) :
   X -> Prop := 
   | dpI : forall concl,
@@ -75,13 +83,11 @@ Definition dim_all4 X rules prems Q h1 h2 :=
   @dim_all3 X rules prems Q h1 h2 
   (@fce3 X Q (derrec rules prems) (dersrec rules prems)).
 
-(* can't get this one to work
-Definition dim_all5 X rules prems Q h1 h2 := 
+Definition dim_all8 X rules prems Q h1 h2 := 
   @dim_all3 X rules prems Q h1 h2 
-  (fun X Q seq seqs _ qs _ qss => @Forall_cons X Q seq seqs qs qss).
-  *)
-
-(* so dim_all4 is the same as derrec_all_ind below *)
+  (fun seq seqs _ qs _ qss => @Forall_cons X Q seq seqs qs qss).
+    
+(* so dim_all4, or dim_all8 better, is the same as derrec_all_ind below *)
 
 Lemma derrec_all_ind:
   forall (X : Set) (rules : list X -> X -> Prop) (prems Q : X -> Prop),
