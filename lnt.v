@@ -106,11 +106,30 @@ Definition can_exchL (V : Set)
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
   forall G H seq (d : dir) Γ1 (A B : PropF V) Γ2 Δ, 
   ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ A :: B :: Γ2) Δ ->
-  derrec rules (fun _ => False) (G ++ (pair (Γ1 ++ A :: B :: Γ2) Δ, d) :: H).
+  derrec rules (fun _ => False) (G ++ (pair (Γ1 ++ B :: A :: Γ2) Δ, d) :: H).
 
+(*
 Lemma exchL: forall (V : Set) ns (D : derrec (nsrule (seqrule (@princrule V))) 
   (fun _ => False) ns) G H seq d Γ1 A B Γ2 Δ, 
   ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ A :: B :: Γ2) Δ ->
   derrec (nsrule (seqrule (@princrule V))) (fun _ => False) 
-    (G ++ (pair (Γ1 ++ A :: B :: Γ2) Δ, d) :: H).
+    (G ++ (pair (Γ1 ++ B :: A :: Γ2) Δ, d) :: H).
+intro.  intro.  intro.
+Check derrec_all_ind.
+eapply derrec_all_ind in D.
+(* eexact D. fails - why? *)
+*)
+Lemma exchL: forall (V : Set) ns 
+  (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
+  can_exchL (nsrule (seqrule (@princrule V))) ns.
+intro.  intro.  intro.
+eapply derrec_all_ind in D.
+exact D. tauto.
+
+(* or, which doesn't work without using can_exchL
+intro.  intro.
+eapply derrec_all_ind.
+tauto.
+*)
+
 
