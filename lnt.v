@@ -2,6 +2,7 @@
 Require Export List.
 Set Implicit Arguments.
 Export ListNotations.
+Require Import dd.
 
 Parameter PropVars : Set.
 
