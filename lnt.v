@@ -4,6 +4,11 @@ Set Implicit Arguments.
 Export ListNotations.
 Require Import dd.
 
+(* need
+Load dd.
+Load List_lemmas.
+*)
+
 Parameter PropVars : Set.
 
 (* Indicates the direction connecting sequents look. *)
@@ -91,6 +96,11 @@ Inductive seqrule (W : Set) (pr : rls (rel (list W))) :
 
 (* w : Set fails *)
 Definition nsext (W : Type) G H (d : dir) (seq : W) := G ++ (seq, d) :: H.
+Lemma nsext_def: forall (W : Type) G H d seq, 
+  @nsext W G H (d : dir) (seq : W) = G ++ (seq, d) :: H.
+Proof.
+unfold nsext. reflexivity.
+Qed.
 
 Inductive nsrule (W : Set) (sr : rls (rel (list W))) : 
     rls (list (rel (list W) * dir)) :=
@@ -126,6 +136,39 @@ Lemma exchL: forall (V : Set) ns
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
 exact D. tauto.
+intros. inversion H.  unfold nsext in H5.
+unfold can_exchL.  intros. 
+unfold nsext in H7.
+(* cases of where the exchange occurs vs where the last rule applied *)
+apply partition_2_2 in H7.
+decompose [or] H7. clear H7.  cE.
+(* there must be an easier way than this to name an expression *)
+assert (exists seqe, seqe = (Γ1 ++ B :: A :: Γ2, Δ)).
+eapply ex_intro. reflexivity. cE. (* gets called x0 *)
+assert (exists Ge, Ge = G0 ++ (x0, d0) :: x).
+eapply ex_intro. reflexivity. cE. (* gets called x1 *)
+assert (exists pse, pse = map (nsext x1 H2 d) ps0).
+eapply ex_intro. reflexivity. cE. (* gets called x2 *)
+
+apply derI with x2. subst x2. subst H6.
+rewrite app_comm_cons.  rewrite app_assoc.
+(* it must be easier than this
+  to rewrite using the inverse of the definition of nsext *)
+rewrite <- nsext_def.  subst x0.  rewrite <- H12.
+apply NSctxt. assumption.
+
+rewrite dersrec_all.
+rewrite Forall_forall.
+intros.  subst x2.  rewrite in_map_iff in H7. cE.
+subst x3.  clear H0 H.  subst ps.
+rewrite Forall_forall in H1.
+eapply in_map in H14. pose (H1 _ H14).
+unfold can_exchL in c0.
+unfold nsext. subst x1. subst x0.
+rewrite <- app_assoc.  rewrite <- app_comm_cons. 
+eapply c0. 2:reflexivity.
+unfold nsext. subst G. subst seq.
+rewrite app_comm_cons.  rewrite app_assoc. reflexivity.
 
 (* or, which doesn't work without using can_exchL
 intro.  intro.
