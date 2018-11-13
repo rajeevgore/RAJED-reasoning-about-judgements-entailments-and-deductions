@@ -2,13 +2,8 @@
 Require Export List.
 Set Implicit Arguments.
 Export ListNotations.
-(* doesn't work 
 Require Import dd.
-*)
-
-(* need these *)
-Load dd.
-Load List_lemmas.
+Require Import List_lemmas.
 
 Parameter PropVars : Set.
 
@@ -132,6 +127,7 @@ eapply derrec_all_ind in D.
 (* eexact D. fails - why? *)
 *)
 
+(*
 Lemma exchL: forall (V : Set) ns 
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_exchL (nsrule (seqrule (@princrule V))) ns.
@@ -156,7 +152,7 @@ assert (exists pse, pse = map (nsext x1 H2 d) ps0).
 eapply ex_intro. reflexivity. cE. (* gets called x2 *)
 
 apply derI with x2. subst x2. subst H6.
-rewrite app_comm_cons.  rewrite app_assoc.
+rewrite list_rearr14.
 (* it must be easier than this
   to rewrite using the inverse of the definition of nsext *)
 rewrite <- nsext_def.  subst x.  rewrite <- H12.
@@ -169,10 +165,10 @@ rewrite Forall_forall in H1.
 eapply in_map in H14. pose (H1 _ H14).
 unfold can_exchL in c0.
 unfold nsext. subst x1. subst x.
-rewrite <- app_assoc.  rewrite <- app_comm_cons. 
+rewrite <- list_rearr14.
 eapply c0. 2:reflexivity.
 unfold nsext. subst G. subst seq.
-rewrite app_comm_cons.  rewrite app_assoc. reflexivity.
+rewrite list_rearr14.  reflexivity.
 
 all : revgoals. clear H7. cE.
 (* now the case where the rule is applied in a sequent to the left
@@ -183,7 +179,7 @@ assert (exists pse, pse = map (nsext G x1 d) ps0).
 eapply ex_intro. reflexivity. cE. (* gets called x2 *)
 
 apply derI with x2. subst x2. subst G0.
-rewrite <- app_assoc.  rewrite <- app_comm_cons. 
+rewrite <- list_rearr14.
 (* it must be easier than this
   to rewrite using the inverse of the definition of nsext *)
 rewrite <- nsext_def.  subst x.  rewrite <- H12.
@@ -196,19 +192,25 @@ rewrite Forall_forall in H1.
 eapply in_map in H14. pose (H1 _ H14).
 unfold can_exchL in c0.
 unfold nsext. subst x1. subst x.
-rewrite app_comm_cons.  rewrite app_assoc.
+rewrite list_rearr14.
 
 eapply c0. 2:reflexivity.
 unfold nsext. subst H2. subst seq.
-rewrite app_comm_cons.  rewrite app_assoc. reflexivity.
+apply list_rearr14.
 
 (* now case where exchange and rule application occur in the same sequent *)
+cE. clear H7. inversion_clear H11.
+inversion H3.  subst. unfold seqext in H15.
+destruct c0. inversion H15. clear H15.
+
+apply app_eq_app in H4.  
 
 
 
 
 
 
+*)
 
 (* or, which doesn't work without using can_exchL
 intro.  intro.

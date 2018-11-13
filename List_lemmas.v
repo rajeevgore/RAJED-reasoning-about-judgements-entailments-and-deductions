@@ -227,3 +227,44 @@ Lemma list_rearr13 : forall {T : Type} a (G l5 H : list T),
 Proof.
   intros. rewrite app_comm_cons. rewrite app_assoc.
   reflexivity. Qed.
+
+Lemma list_rearr14 : forall {T : Type} a b (F G H : list T),
+  F ++ a :: (G ++ b :: H) = (F ++ a :: G) ++ b :: H.
+Proof.
+  intros. rewrite app_comm_cons. rewrite app_assoc.
+  reflexivity. Qed.
+
+Lemma cons_eq_app: forall (A : Type) (x y z : list A) (a : A),
+  a :: x = y ++ z -> y = [] /\ z = a :: x \/
+  exists (y' : list A), y = a :: y' /\ x = y' ++ z.
+Proof.
+intros.
+destruct y. simpl in H. subst. tauto.
+simpl in H.
+injection H.
+intros. right. subst.
+exists y. tauto.
+Qed.
+
+Lemma app_eq_app: forall (A : Type) (w x y z : list A),
+  w ++ x = y ++ z -> exists (m : list A),
+    w = y ++ m /\ z = m ++ x \/ y = w ++ m /\ x = m ++ z.
+Proof.
+intro. intro.
+induction w.
+simpl. intros.
+exists y. rewrite H. tauto.
+intros. simpl in H.
+apply cons_eq_app in H.
+destruct H.  destruct H.  rewrite H. simpl.
+exists (a :: w).  rewrite H0. simpl. tauto.
+destruct H.  destruct H.
+apply IHw in H0.  destruct H0.  destruct H0. destruct H0.
+rewrite H.  rewrite H0.  rewrite H1.  simpl.
+exists x1. tauto.
+destruct H0.
+rewrite H.  rewrite H0.  rewrite H1.  simpl.
+exists x1. tauto.
+Qed.
+
+

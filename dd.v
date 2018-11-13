@@ -17,6 +17,13 @@ Ltac cE :=
     | [ H : ex _ |- _ ] => inversion_clear H
     end.
 
+Ltac sE :=
+  repeat match goal with
+    | [ H : _ /\ _ |- _ ] => inversion_clear H
+    | [ H : _ \/ _ |- _ ] => inversion_clear H
+    | [ H : ex _ |- _ ] => inversion_clear H
+    end.
+
 (* note, this doesn't work Type replaced by Prop,
   although the actual version used allows prems : X -> Prop 
 Reset derrec.
@@ -36,12 +43,12 @@ with dersrec (X : Set) (rules : list X -> X -> Prop) :
     .
     *)
 
-(* definition using Forall, but I don't understand the resulting aderrec_ind *)
-Inductive aderrec (X : Set) (rules : list X -> X -> Prop) :
-  (X -> Type) -> X -> Prop := 
-  | adpI : forall prems concl,
+(* definition using Forall, seems equivalent *)
+Inductive aderrec (X : Set) (rules : list X -> X -> Prop) 
+  (prems : X -> Prop) : X -> Prop := 
+  | adpI : forall concl,
     prems concl -> aderrec rules prems concl
-  | aderI : forall ps prems concl, rules ps concl ->
+  | aderI : forall ps concl, rules ps concl ->
     Forall (aderrec rules prems) ps -> aderrec rules prems concl.
 
 Inductive derrec (X : Set) (rules : list X -> X -> Prop) (prems : X -> Prop) :
