@@ -2,12 +2,13 @@
 Require Export List.
 Set Implicit Arguments.
 Export ListNotations.
+(* doesn't work 
 Require Import dd.
+*)
 
-(* need
+(* need these *)
 Load dd.
 Load List_lemmas.
-*)
 
 Parameter PropVars : Set.
 
@@ -130,9 +131,11 @@ Check derrec_all_ind.
 eapply derrec_all_ind in D.
 (* eexact D. fails - why? *)
 *)
+
 Lemma exchL: forall (V : Set) ns 
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_exchL (nsrule (seqrule (@princrule V))) ns.
+Proof.
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
 exact D. tauto.
@@ -141,11 +144,13 @@ unfold can_exchL.  intros.
 unfold nsext in H7.
 (* cases of where the exchange occurs vs where the last rule applied *)
 apply partition_2_2 in H7.
-decompose [or] H7. clear H7.  cE.
 (* there must be an easier way than this to name an expression *)
 assert (exists seqe, seqe = (Γ1 ++ B :: A :: Γ2, Δ)).
-eapply ex_intro. reflexivity. cE. (* gets called x0 *)
-assert (exists Ge, Ge = G0 ++ (x0, d0) :: x).
+eapply ex_intro. reflexivity. cE. (* gets called x *)
+decompose [or] H7. clear H7.  cE.
+(* case where the rule is applied in a sequent to the right
+  of where the exchange takes place *)
+assert (exists Ge, Ge = G0 ++ (x, d0) :: x0).
 eapply ex_intro. reflexivity. cE. (* gets called x1 *)
 assert (exists pse, pse = map (nsext x1 H2 d) ps0).
 eapply ex_intro. reflexivity. cE. (* gets called x2 *)
@@ -154,21 +159,56 @@ apply derI with x2. subst x2. subst H6.
 rewrite app_comm_cons.  rewrite app_assoc.
 (* it must be easier than this
   to rewrite using the inverse of the definition of nsext *)
-rewrite <- nsext_def.  subst x0.  rewrite <- H12.
+rewrite <- nsext_def.  subst x.  rewrite <- H12.
 apply NSctxt. assumption.
 
-rewrite dersrec_all.
-rewrite Forall_forall.
+rewrite dersrec_all.  rewrite Forall_forall.
 intros.  subst x2.  rewrite in_map_iff in H7. cE.
 subst x3.  clear H0 H.  subst ps.
 rewrite Forall_forall in H1.
 eapply in_map in H14. pose (H1 _ H14).
 unfold can_exchL in c0.
-unfold nsext. subst x1. subst x0.
+unfold nsext. subst x1. subst x.
 rewrite <- app_assoc.  rewrite <- app_comm_cons. 
 eapply c0. 2:reflexivity.
 unfold nsext. subst G. subst seq.
 rewrite app_comm_cons.  rewrite app_assoc. reflexivity.
+
+all : revgoals. clear H7. cE.
+(* now the case where the rule is applied in a sequent to the left
+  of where the exchange takes place *)
+assert (exists He, He = x0 ++ (x, d0) :: H6).
+eapply ex_intro. reflexivity. cE. (* gets called x1 *)
+assert (exists pse, pse = map (nsext G x1 d) ps0).
+eapply ex_intro. reflexivity. cE. (* gets called x2 *)
+
+apply derI with x2. subst x2. subst G0.
+rewrite <- app_assoc.  rewrite <- app_comm_cons. 
+(* it must be easier than this
+  to rewrite using the inverse of the definition of nsext *)
+rewrite <- nsext_def.  subst x.  rewrite <- H12.
+apply NSctxt. assumption.
+
+rewrite dersrec_all.  rewrite Forall_forall.
+intros.  subst x2.  rewrite in_map_iff in H7. cE.
+subst x3.  clear H0 H.  subst ps.
+rewrite Forall_forall in H1.
+eapply in_map in H14. pose (H1 _ H14).
+unfold can_exchL in c0.
+unfold nsext. subst x1. subst x.
+rewrite app_comm_cons.  rewrite app_assoc.
+
+eapply c0. 2:reflexivity.
+unfold nsext. subst H2. subst seq.
+rewrite app_comm_cons.  rewrite app_assoc. reflexivity.
+
+(* now case where exchange and rule application occur in the same sequent *)
+
+
+
+
+
+
 
 (* or, which doesn't work without using can_exchL
 intro.  intro.
