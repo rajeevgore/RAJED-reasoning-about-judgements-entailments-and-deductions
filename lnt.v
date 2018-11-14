@@ -140,31 +140,28 @@ unfold can_exchL.  intros.
 unfold nsext in H7.
 (* cases of where the exchange occurs vs where the last rule applied *)
 apply partition_2_2 in H7.
-(* there must be an easier way than this to name an expression *)
-assert (exists seqe, seqe = (Γ1 ++ B :: A :: Γ2, Δ)).
-eapply ex_intro. reflexivity. cE. (* gets called x *)
+remember (Γ1 ++ B :: A :: Γ2, Δ) as seqe.
+
 decompose [or] H7. clear H7.  cE.
 (* case where the rule is applied in a sequent to the right
   of where the exchange takes place *)
-assert (exists Ge, Ge = G0 ++ (x, d0) :: x0).
-eapply ex_intro. reflexivity. cE. (* gets called x1 *)
-assert (exists pse, pse = map (nsext x1 H2 d) ps0).
-eapply ex_intro. reflexivity. cE. (* gets called x2 *)
+remember (G0 ++ (seqe, d0) :: x) as Ge.
+remember (map (nsext Ge H2 d) ps0) as pse.
 
-apply derI with x2. subst x2. subst H6.
+apply derI with pse. subst pse. subst H6.
 rewrite list_rearr14.
 (* it must be easier than this
   to rewrite using the inverse of the definition of nsext *)
-rewrite <- nsext_def.  subst x.  rewrite <- H12.
+rewrite <- nsext_def.  subst seqe.  rewrite <- HeqGe.
 apply NSctxt. assumption.
 
 rewrite dersrec_all.  rewrite Forall_forall.
-intros.  subst x2.  rewrite in_map_iff in H7. cE.
-subst x3.  clear H0 H.  subst ps.
+intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
+subst q.  clear H0 H.  subst ps.
 rewrite Forall_forall in H1.
-eapply in_map in H14. pose (H1 _ H14).
+rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
 unfold can_exchL in c0.
-unfold nsext. subst x1. subst x.
+unfold nsext. subst Ge. subst seqe.
 rewrite <- list_rearr14.
 eapply c0. 2:reflexivity.
 unfold nsext. subst G. subst seq.
@@ -173,25 +170,23 @@ rewrite list_rearr14.  reflexivity.
 all : revgoals. clear H7. cE.
 (* now the case where the rule is applied in a sequent to the left
   of where the exchange takes place *)
-assert (exists He, He = x0 ++ (x, d0) :: H6).
-eapply ex_intro. reflexivity. cE. (* gets called x1 *)
-assert (exists pse, pse = map (nsext G x1 d) ps0).
-eapply ex_intro. reflexivity. cE. (* gets called x2 *)
+remember (x ++ (seqe, d0) :: H6) as He.
+remember (map (nsext G He d) ps0) as pse.
 
-apply derI with x2. subst x2. subst G0.
+apply derI with pse. subst pse. subst G0.
 rewrite <- list_rearr14.
 (* it must be easier than this
   to rewrite using the inverse of the definition of nsext *)
-rewrite <- nsext_def.  subst x.  rewrite <- H12.
+rewrite <- nsext_def.  subst seqe.  rewrite <- HeqHe.
 apply NSctxt. assumption.
 
 rewrite dersrec_all.  rewrite Forall_forall.
-intros.  subst x2.  rewrite in_map_iff in H7. cE.
-subst x3.  clear H0 H.  subst ps.
+intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
+subst q.  clear H0 H.  subst ps.
 rewrite Forall_forall in H1.
-eapply in_map in H14. pose (H1 _ H14).
+rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
 unfold can_exchL in c0.
-unfold nsext. subst x1. subst x.
+unfold nsext. subst He. subst seqe.
 rewrite list_rearr14.
 
 eapply c0. 2:reflexivity.
@@ -199,11 +194,13 @@ unfold nsext. subst H2. subst seq.
 apply list_rearr14.
 
 (* now case where exchange and rule application occur in the same sequent *)
-cE. clear H7. inversion_clear H11.
-inversion H3.  subst. unfold seqext in H15.
-destruct c0. inversion H15. clear H15.
+(* these need fixing 
+cE. clear H7. inversion_clear H10.
+inversion H3.  subst.  clear H.
+unfold seqext in H3.
 
-apply app_eq_app in H4.  
+apply app_eq_app in .  
+*)
 
 
 

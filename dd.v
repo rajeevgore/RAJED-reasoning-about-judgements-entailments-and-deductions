@@ -1,5 +1,5 @@
 
-(* derrec, derl, etc *)
+(* derrec, derl, etc, other useful stuff *)
 
 Require Export List.
 Set Implicit Arguments.
@@ -10,6 +10,11 @@ Proof.  tauto.  Qed.
 
 Lemma appl: forall (A B : Prop), (A -> B) -> A -> B.
 Proof.  tauto.  Qed.
+
+Ltac rename_last name :=
+  match goal with
+    | [ K : _ |- _ ] => rename K into name
+    end.
 
 Ltac cE :=
   repeat match goal with
