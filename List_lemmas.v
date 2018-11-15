@@ -246,6 +246,9 @@ intros. right. subst.
 exists y. tauto.
 Qed.
 
+Definition app_eq_cons (A : Type) (x y z : list A) (a : A) p :=
+  @cons_eq_app A x y z a (eq_sym p).
+
 Lemma app_eq_app: forall (A : Type) (w x y z : list A),
   w ++ x = y ++ z -> exists (m : list A),
     w = y ++ m /\ z = m ++ x \/ y = w ++ m /\ x = m ++ z.

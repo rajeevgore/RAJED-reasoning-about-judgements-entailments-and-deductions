@@ -88,7 +88,7 @@ Definition seqext (W : Set) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
 Inductive seqrule (W : Set) (pr : rls (rel (list W))) : 
     rls (rel (list W)) := 
   | Sctxt : forall ps c Γ1 Γ2 Δ1 Δ2, pr ps c -> 
-                                     seqrule pr (map (seqext Γ1 Γ2 Δ1 Δ2) ps) (seqext Γ1 Γ2 Δ1 Δ2 c).
+    seqrule pr (map (seqext Γ1 Γ2 Δ1 Δ2) ps) (seqext Γ1 Γ2 Δ1 Δ2 c).
 
 Lemma seqext_def : forall (W : Set) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) U V,
       @seqext W Γ1 Γ2 Δ1 Δ2 (U,V) =  ((Γ1 ++ U ++ Γ2),(Δ1 ++ V ++ Δ2)).
@@ -129,8 +129,18 @@ intro.  intro.  intro.
 Check derrec_all_ind.
 eapply derrec_all_ind in D.
 (* eexact D. fails - why? *)
+or, which doesn't work without using can_exchL
+intro.  intro.
+eapply derrec_all_ind.
+tauto.
 *)
 
+Ltac acacE :=
+  repeat match goal with
+    | [ H : _ |- _ ] => apply app_eq_app in H ; sE
+    | [ H : _ |- _ ] => apply cons_eq_app in H ; sE
+    | [ H : _ |- _ ] => apply app_eq_cons in H ; sE
+    end.
 
 Lemma exchL: forall (V : Set) ns 
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
@@ -198,13 +208,12 @@ unfold nsext. subst H2. subst seq.
 apply list_rearr14.
 
 (* now case where exchange and rule application occur in the same sequent *)
-(* these need fixing 
-cE. clear H7. inversion_clear H10.
-inversion H3.  subst.  clear H.
-unfold seqext in H3.
+cE. clear H7. inversion H10. clear H10.
+inversion H3. rename_last sec.  subst.  clear H.
+unfold seqext in sec. destruct c0.
+inversion sec.  clear sec.  subst. rename_last secl.
 
-apply app_eq_app in .  
-*)
+acacE ; subst ; inversion H7 ; clear H7.
 Admitted.
 
 Lemma princrule_L : forall {V : Set} ps Γ Δ,
@@ -260,7 +269,7 @@ Qed.
 (* An intermediate rewrite lemma that gets around annoyances with type checker.
 Will figure out a cleaner way to do this. *)
 Lemma rewrite_lem : forall V Γ1 E B A Γ2 Δ3 F Δ4,
-            seqrule (princrule (V:=V)) [(Γ1 ++ E :: B :: A :: Γ2, Δ3 ++ F :: Δ4)]
+	  seqrule (princrule (V:=V)) [(Γ1 ++ E :: B :: A :: Γ2, Δ3 ++ F :: Δ4)]
                   (Γ1 ++ B :: A :: Γ2, Δ3 ++ Imp E F :: Δ4) =
   seqrule (princrule (V:=V)) (map (seqext Γ1 (B :: A :: Γ2) Δ3 Δ4) [([E], [F])])
     (seqext Γ1 (B :: A :: Γ2) Δ3 Δ4 ([], [Imp E F])).
@@ -410,7 +419,6 @@ Total number of (significant) cases: 9.
         unfold can_exchL in P3. unfold nsext. 
         edestruct Forall_forall as [fwd rev].
         pose proof (fwd P3) as H. clear fwd rev. simpl.
-        Print dersrec.
         apply dlCons. 2 :constructor. rewrite (app_cons_single _ _ E).
         eapply H. 3 :reflexivity. simpl. left. reflexivity.
         unfold nsext. rewrite <- app_cons_single. reflexivity.
@@ -483,12 +491,5 @@ Total number of (significant) cases: 9.
 (* Go back and solve admitted goals. 
 Qed.*)
 Admitted.
-
-
-(* or, which doesn't work without using can_exchL
-intro.  intro.
-eapply derrec_all_ind.
-tauto.
-*)
 
 
