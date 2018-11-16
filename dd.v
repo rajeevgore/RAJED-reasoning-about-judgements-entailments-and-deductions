@@ -22,11 +22,24 @@ Ltac cE :=
     | [ H : ex _ |- _ ] => inversion_clear H
     end.
 
+Ltac cD :=
+  repeat match goal with
+    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
+    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    end.
+
 Ltac sE :=
   repeat match goal with
     | [ H : _ /\ _ |- _ ] => inversion_clear H
     | [ H : _ \/ _ |- _ ] => inversion_clear H
     | [ H : ex _ |- _ ] => inversion_clear H
+    end.
+
+Ltac sD :=
+  repeat match goal with
+    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
+    | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
+    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
     end.
 
 (* note, this doesn't work Type replaced by Prop,

@@ -164,6 +164,13 @@ Ltac acacE :=
     | [ H : _ |- _ ] => apply app_eq_cons in H ; sE
     end.
 
+Ltac acacD :=
+  repeat match goal with
+    | [ H : _ |- _ ] => apply app_eq_app in H ; sD
+    | [ H : _ |- _ ] => apply cons_eq_app in H ; sD
+    | [ H : _ |- _ ] => apply app_eq_cons in H ; sD
+    end.
+
 Lemma exchL: forall (V : Set) ns 
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_exchL (nsrule (seqrule (@princrule V))) ns.
@@ -241,7 +248,7 @@ inversion pr. (* only rule is ImpR, for say Imp A0 B0 *)
 (* just realised this won't work as in the premise, A0 may get 
   inserted between the A abd B which are to be exchanged *)
 
-acacE ; subst.
+acacD ; subst.
 Admitted.
 
 Lemma Partition_0_2 : forall {T : Type} l1 l2 l3 (A B : T),
