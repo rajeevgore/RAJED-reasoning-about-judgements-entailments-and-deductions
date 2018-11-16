@@ -113,6 +113,28 @@ Check seqrule.
 Check nsext.
 Check nsrule.
 
+Lemma princrule_L : forall {V : Set} ps Γ Δ,
+    @princrule V ps (Γ, Δ) ->
+    Γ = [] \/ exists E, Γ = [E].
+Proof.
+  intros V ps Γ Δ P.
+  inversion P as [ A P2| P2 | A B P2 | P2];
+                       try (left; reflexivity).
+  right. exists A. reflexivity.
+  right. exists (Imp A B). reflexivity.
+  right. exists (Bot V). reflexivity.
+Qed.
+
+Lemma princrule_R : forall {V : Set} ps Γ Δ,
+    @princrule V ps (Γ, Δ) ->
+    Δ = [] \/ exists E, Δ = [E].
+Proof.
+  intros V ps Γ Δ P. inversion P as [ A P2| A B P2 | P2 | P2];
+                       try (left; reflexivity).
+  right. exists A. reflexivity.
+  right. exists (Imp A B). reflexivity.
+Qed.
+
 Definition can_exchL (V : Set) 
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
   forall G H seq (d : dir) Γ1 (A B : PropF V) Γ2 Δ, 
@@ -208,35 +230,19 @@ unfold nsext. subst H2. subst seq.
 apply list_rearr14.
 
 (* now case where exchange and rule application occur in the same sequent *)
-cE. clear H7. inversion H10. clear H10.
-inversion H3. rename_last sec.  subst.  clear H.
+cE. clear H7. injection H10 as. 
+inversion H3 as [? ? ? ? ? ? pr ms sec].  subst.  clear H.
 unfold seqext in sec. destruct c0.
-inversion sec.  clear sec.  subst. rename_last secl.
+injection sec as sl sr. subst. 
 
-acacE ; subst ; inversion H7 ; clear H7.
+pose (princrule_L pr) ; sE ; subst ; simpl in sl.
+(* case where principal rule has no formula on the left *)
+inversion pr. (* only rule is ImpR, for say Imp A0 B0 *)
+(* just realised this won't work as in the premise, A0 may get 
+  inserted between the A abd B which are to be exchanged *)
+
+acacE ; subst.
 Admitted.
-
-Lemma princrule_L : forall {V : Set} ps Γ Δ,
-    @princrule V ps (Γ, Δ) ->
-    Γ = [] \/ exists E, Γ = [E].
-Proof.
-  intros V ps Γ Δ P.
-  inversion P as [ A P2| P2 | A B P2 | P2];
-                       try (left; reflexivity).
-  right. exists A. reflexivity.
-  right. exists (Imp A B). reflexivity.
-  right. exists (Bot V). reflexivity.
-Qed.
-
-Lemma princrule_R : forall {V : Set} ps Γ Δ,
-    @princrule V ps (Γ, Δ) ->
-    Δ = [] \/ exists E, Δ = [E].
-Proof.
-  intros V ps Γ Δ P. inversion P as [ A P2| A B P2 | P2 | P2];
-                       try (left; reflexivity).
-  right. exists A. reflexivity.
-  right. exists (Imp A B). reflexivity.
-Qed.
 
 Lemma Partition_0_2 : forall {T : Type} l1 l2 l3 (A B : T),
     l1 ++ l2 = A :: B :: l3 ->
