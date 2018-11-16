@@ -76,11 +76,11 @@ Inductive seqrule (V : Set) :
 *)
 
 Inductive princrule (V : Set) : rls (rel (list (PropF V))) :=
-  | Id : forall A, princrule [] (pair [A] [A])
-  | ImpR : forall A B, princrule [pair [A] [B]] (pair [] [Imp A B])
-  | ImpL : forall A B, princrule
+  | Id' : forall A, princrule [] (pair [A] [A])
+  | ImpR' : forall A B, princrule [pair [A] [B]] (pair [] [Imp A B])
+  | ImpL' : forall A B, princrule
     [pair [B] [] ; pair [] [A]] (pair [Imp A B] [])
-  | BotL : princrule [] (pair [Bot V] []).
+  | BotL' : princrule [] (pair [Bot V] []).
 
 Definition seqext (W : Set) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
   match seq with | pair U V => pair (Γ1 ++ U ++ Γ2) (Δ1 ++ V ++ Δ2) end.
@@ -113,6 +113,8 @@ Check seqrule.
 Check nsext.
 Check nsrule.
 
+(* problem with the seqrule/princrule approach, try this instead *)
+
 Lemma princrule_L : forall {V : Set} ps Γ Δ,
     @princrule V ps (Γ, Δ) ->
     Γ = [] \/ exists E, Γ = [E].
@@ -135,6 +137,17 @@ Proof.
   right. exists (Imp A B). reflexivity.
 Qed.
 
+Inductive proprule (V : Set) : rls (rel (list (PropF V))) :=
+  | Id : forall U Φ1 Φ2 Ψ1 Ψ2, 
+    proprule [] (pair (Φ1 ++ U :: Φ2) (Ψ1 ++ U :: Ψ2))
+  | ImpR : forall U W Φ Ψ1 Ψ2, 
+    proprule [pair (U :: Φ) (Ψ1 ++ W :: Ψ2)] (pair Φ (Ψ1 ++ Imp U W :: Ψ2))
+  | ImpL : forall U W Φ1 Φ2 Ψ, 
+    proprule [pair (Φ1 ++ W :: Φ2) Ψ ; pair (Φ1 ++ Φ2) (U :: Ψ)]
+      (pair (Φ1 ++ Imp U W :: Φ2) Ψ)
+  | BotL : forall Φ1 Φ2 Ψ, proprule [] (pair (Φ1 ++ (Bot V) :: Φ2) Ψ)
+.
+
 Definition can_exchL (V : Set) 
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
   forall G H seq (d : dir) Γ1 (A B : PropF V) Γ2 Δ, 
@@ -142,10 +155,10 @@ Definition can_exchL (V : Set)
   derrec rules (fun _ => False) (G ++ (pair (Γ1 ++ B :: A :: Γ2) Δ, d) :: H).
 
 (*
-Lemma exchL: forall (V : Set) ns (D : derrec (nsrule (seqrule (@princrule V))) 
+Lemma exchL: forall (V : Set) ns (D : derrec (nsrule (@proprule V)) 
   (fun _ => False) ns) G H seq d Γ1 A B Γ2 Δ, 
   ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ A :: B :: Γ2) Δ ->
-  derrec (nsrule (seqrule (@princrule V))) (fun _ => False) 
+  derrec (nsrule (@proprule V)) (fun _ => False) 
     (G ++ (pair (Γ1 ++ B :: A :: Γ2) Δ, d) :: H).
 intro.  intro.  intro.
 Check derrec_all_ind.
@@ -169,11 +182,12 @@ Ltac acacD :=
     | [ H : _ |- _ ] => apply app_eq_app in H ; sD
     | [ H : _ |- _ ] => apply cons_eq_app in H ; sD
     | [ H : _ |- _ ] => apply app_eq_cons in H ; sD
+    | [ H : _ :: _ = _ :: _ |- _ ] => injection H as ?H ?H 
     end.
 
 Lemma exchL: forall (V : Set) ns 
-  (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
-  can_exchL (nsrule (seqrule (@princrule V))) ns.
+  (D : derrec (nsrule (@proprule V)) (fun _ => False) ns),
+  can_exchL (nsrule (@proprule V)) ns.
 Proof.
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
@@ -238,9 +252,11 @@ apply list_rearr14.
 
 (* now case where exchange and rule application occur in the same sequent *)
 cE. clear H7. injection H10 as. 
-inversion H3 as [? ? ? ? ? ? pr ms sec].  subst.  clear H.
-unfold seqext in sec. destruct c0.
-injection sec as sl sr. subst. 
+inversion H3.  subst. rename_last eqll. 
+(* case of Id rule *)
+injection eqll as eql eqr. subst. 
+xxx.
+acacD ; subst.
 
 pose (princrule_L pr) ; sE ; subst ; simpl in sl.
 (* case where principal rule has no formula on the left *)
