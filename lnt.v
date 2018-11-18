@@ -107,6 +107,10 @@ Inductive nsrule (W : Set) (sr : rls (rel (list W))) :
   | NSctxt : forall ps c G H d, sr ps c -> 
     nsrule sr (map (nsext G H d) ps) (nsext G H d c).
 
+Lemma NSctxt_nil: forall (W : Set) sr G H d c, (sr [] c : Prop) ->
+  @nsrule W sr [] (nsext G H d c).
+Proof.  intros.  eapply NSctxt in H0.  simpl in H0. exact H0.  Qed.
+
 Check princrule.
 Check seqext.
 Check seqrule.
@@ -255,16 +259,24 @@ cE. clear H7. injection H10 as.
 inversion H3.  subst. rename_last eqll. 
 (* case of Id rule *)
 injection eqll as eql eqr. subst. 
-xxx.
-acacD ; subst.
+apply derI with [].  2: apply dlNil.
+rewrite <- nsext_def. apply NSctxt_nil.
+acacD ; subst ;
+  repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
+  repeat (apply Id || rewrite list_rearr17 || rewrite list_rearr15).
 
-pose (princrule_L pr) ; sE ; subst ; simpl in sl.
-(* case where principal rule has no formula on the left *)
-inversion pr. (* only rule is ImpR, for say Imp A0 B0 *)
-(* just realised this won't work as in the premise, A0 may get 
-  inserted between the A abd B which are to be exchanged *)
+all : revgoals.
+(* case of BotL rule *)
+subst. rename_last eqll.
+injection eqll as eql eqr. subst. 
+apply derI with [].  2: apply dlNil.
+rewrite <- nsext_def. apply NSctxt_nil.
+acacD ; subst ;
+  repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
+  repeat (apply BotL || rewrite list_rearr16 || rewrite list_rearr15).
 
-acacD ; subst.
+all : revgoals. (* ImpL and ImpR rules remain *)
+
 Admitted.
 
 Lemma Partition_0_2 : forall {T : Type} l1 l2 l3 (A B : T),

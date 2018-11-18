@@ -234,6 +234,14 @@ Proof.
   intros. rewrite app_comm_cons. rewrite app_assoc.
   reflexivity. Qed.
 
+Lemma list_rearr15 : forall {T Xt : Type} (F G H : list T) (X : Xt),
+  (F ++ (G ++ H), X) = ((F ++ G) ++ H, X).
+Proof.  intros. rewrite app_assoc.  reflexivity. Qed.
+
+Lemma list_rearr16 : forall {T Xt : Type} (F G : list T) (a : T) (X : Xt),
+  (F ++ (a :: G), X) = ((F ++ [a]) ++ G, X).
+Proof.  intros. rewrite <- app_assoc. simpl.  reflexivity. Qed.
+
 Lemma cons_eq_app: forall (A : Type) (x y z : list A) (a : A),
   a :: x = y ++ z -> y = [] /\ z = a :: x \/
   exists (y' : list A), y = a :: y' /\ x = y' ++ z.
