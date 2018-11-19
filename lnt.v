@@ -263,12 +263,11 @@ apply derI with [].  2: apply dlNil.
 rewrite <- nsext_def. apply NSctxt_nil.
 acacD ; subst ;
   repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
-  repeat (apply Id || rewrite list_rearr17 || rewrite list_rearr15).
+  repeat (apply Id || rewrite list_rearr16 || rewrite list_rearr15).
 
 all : revgoals.
 (* case of BotL rule *)
-subst. rename_last eqll.
-injection eqll as eql eqr. subst. 
+subst. rename_last eqll.  injection eqll as eql eqr. subst. 
 apply derI with [].  2: apply dlNil.
 rewrite <- nsext_def. apply NSctxt_nil.
 acacD ; subst ;
@@ -276,6 +275,87 @@ acacD ; subst ;
   repeat (apply BotL || rewrite list_rearr16 || rewrite list_rearr15).
 
 all : revgoals. (* ImpL and ImpR rules remain *)
+(* case of ImpR rule *)
+subst. rename_last eqll.  injection eqll as eql eqr. subst. 
+clear H H0 H3.
+eapply derI.  rewrite <- nsext_def. apply NSctxt.  apply ImpR.
+rewrite dersrec_all. rewrite Forall_forall. intros.
+rewrite Forall_forall in H1. simpl in H1. simpl in H. sD.
+subst.  unfold can_exchL in H1. unfold nsext. rewrite app_comm_cons.
+eapply H1.
+left. reflexivity.
+apply nsext_def. 
+rewrite app_comm_cons.  reflexivity.
+
+(*
+(* now for the ImpL rule *)
+subst. rename_last eqll.  injection eqll as eql eqr. subst.
+clear H H3. (* not H0 in this case as will need non-exchanged premises *)
+rewrite dersrec_all in H0.  rewrite Forall_forall in *.
+unfold can_exchL in H1. simpl in *.  
+(* rewrite <- nsext_def in H1. fails, why? *)
+rewrite <- nsext_def.
+(* can't apply derI right away as premises will vary *)
+acacD ; subst ; eapply derI ;
+  try (apply NSctxt ;
+    repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
+    repeat (apply ImpL || rewrite list_rearr16 || rewrite list_rearr15)) ;
+  rewrite dersrec_all ; rewrite Forall_forall ; intros p inps ;
+  simpl in inps ; sD ; subst ; 
+  rewrite ?app_nil_r in * ; 
+  rewrite ?app_nil_r ; rewrite <- ?list_rearr16'.
+
+(*
+Check (or_introl (nsext_def _ _ _ _)).
+Check (H0 _ (or_introl (nsext_def _ _ _ _))).
+pose (H0 _ (or_introl (nsext_def _ _ _ _))) as H0l.
+Check (or_intror (or_introl (nsext_def _ _ _ _))).
+pose (H0 _ (or_intror (or_introl (nsext_def _ _ _ _)))) as H0r.
+pose (H0 _ (or_intror (or_introl eq_refl))) as H0re.
+pose (H1 _ (or_intror (or_introl eq_refl))) as H1re.
+pose (H1 _ (or_introl eq_refl)) as H1le.
+Check (H1re _ _ _ _ _ _ _ _ _ eq_refl).
+Check (H1le _ _ _ _ _ _ _ _ _ eq_refl).
+(* pose (H1re _ _ _ _ _ _ _ _ _ eq_refl) as H1ree. fails *)
+(* pose (H1le _ _ _ _ _ _ _ _ _ eq_refl) as H1lee. fails *)
+*)
+
+
+ eapply H1. left. reflexivity. apply nsext_def.
+reflexivity.
+apply H0. tauto.
+eapply H1. left. reflexivity. apply nsext_def.
+rewrite <- list_rearr16. reflexivity.
+apply H0. rewrite <- !list_rearr16. tauto.
+
+rewrite <- !list_rearr16'. unfold nsext.
+
+rewrite <- !app_assoc.  rewrite <- !app_comm_cons. 
+eapply H1.  left. reflexivity. apply nsext_def.
+rewrite <- !app_assoc.  rewrite <- !app_comm_cons. reflexivity.
+
+rewrite <- !app_assoc.  rewrite <- !app_comm_cons. 
+eapply H1. right. left. reflexivity. apply nsext_def.
+rewrite <- !app_assoc.  rewrite <- !app_comm_cons. reflexivity.
+
+(* TO FINISH *)
+rewrite <- !list_rearr16'. unfold nsext.
+rewrite <- !app_assoc. rewrite <- !app_comm_cons.
+eapply H1. right. left. reflexivity. apply nsext_def.
+rewrite <- !app_assoc. rewrite <- !app_comm_cons.  reflexivity.
+rewrite app_nil_r. rewrite <- !list_rearr16'. unfold nsext.
+eapply H1. left. reflexivity. apply nsext_def. reflexivity.
+rewrite app_nil_r.  rewrite <- list_rearr16'.
+apply H0. tauto.
+rewrite !app_comm_cons.  rewrite !app_assoc.
+eapply H1. left. reflexivity. apply nsext_def.
+rewrite <- !app_assoc. rewrite <- !app_comm_cons.  reflexivity.
+rewrite !app_assoc.
+eapply H1. right. left. reflexivity. apply nsext_def.
+rewrite <- !app_assoc.  reflexivity.
+*)
+
+
 
 Admitted.
 

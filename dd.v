@@ -20,12 +20,14 @@ Ltac cE :=
   repeat match goal with
     | [ H : _ /\ _ |- _ ] => inversion_clear H
     | [ H : ex _ |- _ ] => inversion_clear H
+    | [ H : False |- _ ] => contradiction H
     end.
 
 Ltac cD :=
   repeat match goal with
     | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
     | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    | [ H : False |- _ ] => contradiction H
     end.
 
 Ltac sE :=
@@ -33,6 +35,7 @@ Ltac sE :=
     | [ H : _ /\ _ |- _ ] => inversion_clear H
     | [ H : _ \/ _ |- _ ] => inversion_clear H
     | [ H : ex _ |- _ ] => inversion_clear H
+    | [ H : False |- _ ] => contradiction H
     end.
 
 Ltac sD :=
@@ -40,6 +43,7 @@ Ltac sD :=
     | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
     | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
     | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    | [ H : False |- _ ] => contradiction H
     end.
 
 (* note, this doesn't work Type replaced by Prop,

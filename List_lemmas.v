@@ -238,6 +238,10 @@ Lemma list_rearr15 : forall {T Xt : Type} (F G H : list T) (X : Xt),
   (F ++ (G ++ H), X) = ((F ++ G) ++ H, X).
 Proof.  intros. rewrite app_assoc.  reflexivity. Qed.
 
+Lemma list_rearr16' : forall {T : Type} (F G : list T) (a : T),
+  F ++ (a :: G) = (F ++ [a]) ++ G.
+Proof.  intros. rewrite <- app_assoc. simpl.  reflexivity. Qed.
+
 Lemma list_rearr16 : forall {T Xt : Type} (F G : list T) (a : T) (X : Xt),
   (F ++ (a :: G), X) = ((F ++ [a]) ++ G, X).
 Proof.  intros. rewrite <- app_assoc. simpl.  reflexivity. Qed.
