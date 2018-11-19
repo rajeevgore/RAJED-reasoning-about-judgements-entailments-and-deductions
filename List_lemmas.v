@@ -9,6 +9,11 @@ Ltac eapp_assoc_solve2 G H := erewrite <- (app_assoc G); simpl;
 Ltac app_assoc_hyp G H := rewrite <- (app_assoc G) in H.
 Ltac app_assoc_hyp_inv G H := rewrite <- (app_assoc G) in H; apply app_inv_head in H.
 
+Ltac list_assoc_l := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
+Ltac list_assoc_r := 
+  repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons).
+Ltac list_eq_assoc := list_assoc_r ; reflexivity.
+
 Lemma partition_2_2 : forall {A : Type} (l1 l2 l3 l4 : list A) a b,
 l1 ++ a :: l2 = l3 ++ b :: l4 ->
   (exists l5, l1 = l3 ++ b :: l5 /\ l4 = l5 ++ a :: l2) \/

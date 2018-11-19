@@ -287,7 +287,6 @@ left. reflexivity.
 apply nsext_def. 
 rewrite app_comm_cons.  reflexivity.
 
-(*
 (* now for the ImpL rule *)
 subst. rename_last eqll.  injection eqll as eql eqr. subst.
 clear H H3. (* not H0 in this case as will need non-exchanged premises *)
@@ -295,6 +294,7 @@ rewrite dersrec_all in H0.  rewrite Forall_forall in *.
 unfold can_exchL in H1. simpl in *.  
 (* rewrite <- nsext_def in H1. fails, why? *)
 rewrite <- nsext_def.
+pose (H0 _ (or_intror (or_introl eq_refl))) as H0re.
 (* can't apply derI right away as premises will vary *)
 acacD ; subst ; eapply derI ;
   try (apply NSctxt ;
@@ -311,53 +311,44 @@ Check (H0 _ (or_introl (nsext_def _ _ _ _))).
 pose (H0 _ (or_introl (nsext_def _ _ _ _))) as H0l.
 Check (or_intror (or_introl (nsext_def _ _ _ _))).
 pose (H0 _ (or_intror (or_introl (nsext_def _ _ _ _)))) as H0r.
-pose (H0 _ (or_intror (or_introl eq_refl))) as H0re.
 pose (H1 _ (or_intror (or_introl eq_refl))) as H1re.
 pose (H1 _ (or_introl eq_refl)) as H1le.
+pose (H1 _ (or_introl eq_refl)) as H1le.
 Check (H1re _ _ _ _ _ _ _ _ _ eq_refl).
-Check (H1le _ _ _ _ _ _ _ _ _ eq_refl).
+pose (H1le G H6) as H1lee.
+Check (H1le G H6 _ d0 _ _ _ _ _ (nsext_def _ _ _ _)).
+pose (H1le G H6 _ d0 _ _ _ _ _ (nsext_def _ _ _ _)).
 (* pose (H1re _ _ _ _ _ _ _ _ _ eq_refl) as H1ree. fails *)
 (* pose (H1le _ _ _ _ _ _ _ _ _ eq_refl) as H1lee. fails *)
 *)
 
+eapply H1. left. reflexivity. apply nsext_def.  reflexivity.
 
- eapply H1. left. reflexivity. apply nsext_def.
-reflexivity.
-apply H0. tauto.
+exact H0re.
+
 eapply H1. left. reflexivity. apply nsext_def.
 rewrite <- list_rearr16. reflexivity.
-apply H0. rewrite <- !list_rearr16. tauto.
 
-rewrite <- !list_rearr16'. unfold nsext.
+rewrite <- !list_rearr16 in H0re. exact H0re.
 
-rewrite <- !app_assoc.  rewrite <- !app_comm_cons. 
-eapply H1.  left. reflexivity. apply nsext_def.
-rewrite <- !app_assoc.  rewrite <- !app_comm_cons. reflexivity.
+list_assoc_r.  eapply H1.  left. reflexivity. apply nsext_def.  list_eq_assoc.
 
-rewrite <- !app_assoc.  rewrite <- !app_comm_cons. 
+list_assoc_r. 
 eapply H1. right. left. reflexivity. apply nsext_def.
-rewrite <- !app_assoc.  rewrite <- !app_comm_cons. reflexivity.
+list_eq_assoc.
 
-(* TO FINISH *)
-rewrite <- !list_rearr16'. unfold nsext.
-rewrite <- !app_assoc. rewrite <- !app_comm_cons.
-eapply H1. right. left. reflexivity. apply nsext_def.
-rewrite <- !app_assoc. rewrite <- !app_comm_cons.  reflexivity.
-rewrite app_nil_r. rewrite <- !list_rearr16'. unfold nsext.
-eapply H1. left. reflexivity. apply nsext_def. reflexivity.
-rewrite app_nil_r.  rewrite <- list_rearr16'.
-apply H0. tauto.
-rewrite !app_comm_cons.  rewrite !app_assoc.
-eapply H1. left. reflexivity. apply nsext_def.
-rewrite <- !app_assoc. rewrite <- !app_comm_cons.  reflexivity.
-rewrite !app_assoc.
-eapply H1. right. left. reflexivity. apply nsext_def.
-rewrite <- !app_assoc.  reflexivity.
-*)
+eapply H1.  left. reflexivity. apply nsext_def.  reflexivity.
 
+exact H0re.
 
+list_assoc_l.  eapply H1. left. reflexivity. apply nsext_def.  list_eq_assoc.
 
-Admitted.
+list_assoc_l. eapply H1. right. left. reflexivity. apply nsext_def.
+list_eq_assoc.
+
+Qed.
+
+Check exchL.
 
 Lemma Partition_0_2 : forall {T : Type} l1 l2 l3 (A B : T),
     l1 ++ l2 = A :: B :: l3 ->
