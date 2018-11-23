@@ -243,6 +243,10 @@ Lemma list_rearr15 : forall {T Xt : Type} (F G H : list T) (X : Xt),
   (F ++ (G ++ H), X) = ((F ++ G) ++ H, X).
 Proof.  intros. rewrite app_assoc.  reflexivity. Qed.
 
+Lemma list_rearr15_R : forall {T Xt : Type} (F G H : list T) (X : Xt),
+  (X, F ++ (G ++ H)) = (X, (F ++ G) ++ H).
+Proof.  intros. rewrite app_assoc.  reflexivity. Qed.
+
 Lemma list_rearr16' : forall {T : Type} (F G : list T) (a : T),
   F ++ (a :: G) = (F ++ [a]) ++ G.
 Proof.  intros. rewrite <- app_assoc. simpl.  reflexivity. Qed.
@@ -250,6 +254,15 @@ Proof.  intros. rewrite <- app_assoc. simpl.  reflexivity. Qed.
 Lemma list_rearr16 : forall {T Xt : Type} (F G : list T) (a : T) (X : Xt),
   (F ++ (a :: G), X) = ((F ++ [a]) ++ G, X).
 Proof.  intros. rewrite <- app_assoc. simpl.  reflexivity. Qed.
+
+Lemma list_rearr16_R : forall {T Xt : Type} (F G : list T) (a : T) (X : Xt),
+  (X, F ++ (a :: G)) = (X, (F ++ [a]) ++ G).
+Proof.  intros. rewrite <- app_assoc. simpl.  reflexivity. Qed.
+
+Lemma list_rearr17_R : forall {T1 T2 : Type} (Φ : T2) Δ1 (B A : T1) eqr3 U Ψ2,
+(Φ, Δ1 ++ B :: A :: eqr3 ++ U :: Ψ2) =
+(Φ, (Δ1 ++ B :: A :: eqr3) ++ U :: Ψ2).
+Proof. intros. rewrite <- app_assoc. reflexivity. Qed.
 
 Lemma cons_eq_app: forall (A : Type) (x y z : list A) (a : A),
   a :: x = y ++ z -> y = [] /\ z = a :: x \/
@@ -286,5 +299,7 @@ destruct H0.
 rewrite H.  rewrite H0.  rewrite H1.  simpl.
 exists x1. tauto.
 Qed.
+
+
 
 

@@ -348,5 +348,159 @@ list_eq_assoc.
 
 Qed.
 
-Check exchL.
+Ltac nsrule_rewrites :=  (match goal with
+                          | [ |- nsrule ?a ?b ?c ] => apply NSctxt;
+(match goal with
+| [ |- proprule ?a (?Γ, ?Δ1 ++ ?B :: Imp ?U ?W :: ?Δ2)] =>
+  rewrite list_rearr16_R
+| [ |- proprule ?a (?Γ, ?Δ1 ++ ?B :: ?A :: ?eqr3 ++ Imp ?U ?W :: ?Ψ2)] =>
+  rewrite list_rearr17_R
+| [ |- proprule ?ps (?Γ, (?Ψ1 ++ Imp ?U ?W :: ?eqr1) ++ ?B :: ?A :: ?Δ2)] =>
+  rewrite <- list_rearr15_R; simpl
+| _ => trivial end); apply ImpR
+| _ => trivial end).
 
+
+Definition can_exchR (V : Set) 
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
+  forall G H seq (d : dir) Γ Δ1 (A B : PropF V) Δ2 ,
+  ns = G ++ (seq, d) :: H -> seq = pair Γ (Δ1 ++ A :: B :: Δ2) ->
+  derrec rules (fun _ => False) (G ++ (pair Γ (Δ1 ++ B :: A :: Δ2), d) :: H).
+
+Lemma exchR: forall (V : Set) ns 
+  (D : derrec (nsrule (@proprule V)) (fun _ => False) ns),
+  can_exchR (nsrule (@proprule V)) ns.
+Proof.
+intros.
+eapply derrec_all_ind in D.
+exact D. tauto.
+intros. inversion H.  unfold nsext in H5.
+unfold can_exchR.  intros. 
+unfold nsext in H7.
+(* cases of where the exchange occurs vs where the last rule applied *)
+apply partition_2_2 in H7.
+remember (Γ, Δ1 ++ B :: A :: Δ2) as seqe.
+
+decompose [or] H7. clear H7.  cE.
+(* case where the rule is applied in a sequent to the right
+  of where the exchange takes place *)
+remember (G0 ++ (seqe, d0) :: x) as Ge.
+remember (map (nsext Ge H2 d) ps0) as pse.
+
+apply derI with pse. subst pse. subst H6.
+rewrite list_rearr14.
+(* it must be easier than this
+  to rewrite using the inverse of the definition of nsext *)
+rewrite <- nsext_def.  subst seqe.  rewrite <- HeqGe.
+apply NSctxt. assumption.
+
+rewrite dersrec_all.  rewrite Forall_forall.
+intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
+subst q.  clear H0 H.  subst ps.
+rewrite Forall_forall in H1.
+rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
+unfold can_exchR in c0.
+unfold nsext. subst Ge. subst seqe.
+rewrite <- list_rearr14.
+eapply c0. 2:reflexivity.
+unfold nsext. subst G. subst seq.
+rewrite list_rearr14.  reflexivity.
+
+all : revgoals. clear H7. cE.
+(* now the case where the rule is applied in a sequent to the left
+  of where the exchange takes place *)
+remember (x ++ (seqe, d0) :: H6) as He.
+remember (map (nsext G He d) ps0) as pse.
+
+apply derI with pse. subst pse. subst G0.
+rewrite <- list_rearr14.
+(* it must be easier than this
+  to rewrite using the inverse of the definition of nsext *)
+rewrite <- nsext_def.  subst seqe.  rewrite <- HeqHe.
+apply NSctxt. assumption.
+
+rewrite dersrec_all.  rewrite Forall_forall.
+intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
+subst q.  clear H0 H.  subst ps.
+rewrite Forall_forall in H1.
+rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
+unfold can_exchR in c0.
+unfold nsext. subst He. subst seqe.
+rewrite list_rearr14.
+
+eapply c0. 2:reflexivity.
+unfold nsext. subst H2. subst seq.
+apply list_rearr14.
+
+(* now case where exchange and rule application occur in the same sequent *)
+cE. clear H7. injection H10 as. 
+inversion H3.  subst. rename_last eqll. 
+(* case of Id rule *)
+injection eqll as eql eqr. subst. 
+apply derI with [].  2: apply dlNil.
+rewrite <- nsext_def. apply NSctxt_nil.
+acacD ; subst ;
+  repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
+  repeat (apply Id || rewrite list_rearr16 || rewrite list_rearr15).
+
+all : revgoals.
+(* case of BotL rule *)
+subst. rename_last eqll.  injection eqll as eql eqr. subst. 
+apply derI with [].  2: apply dlNil.
+rewrite <- nsext_def. apply NSctxt_nil.
+acacD ; subst ;
+  repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
+  repeat (apply BotL || rewrite list_rearr16 || rewrite list_rearr15).
+
+all : revgoals. (* ImpL and ImpR rules remain *)
+(* case of ImpR rule *)
+1-3:(rewrite <- list_rearr15; simpl;
+     (rewrite list_rearr17_R || rewrite list_rearr16_R));
+  constructor.
+
+subst. rename_last eqll.  injection eqll as eql eqr. subst. 
+rewrite dersrec_all in H0.  rewrite Forall_forall in *.
+unfold can_exchL in H1. simpl in *.  
+(* rewrite <- nsext_def in H1. fails, why? *)
+rewrite <- nsext_def.
+pose (H0 _ ( (or_introl eq_refl))) as H0re.
+(* can't apply derI right away as premises will vary *)
+
+acacD; subst; eapply derI; nsrule_rewrites;
+  try (rewrite dersrec_all ; rewrite Forall_forall ; intros p inps ;
+  simpl in inps ; sD ; subst ; 
+  rewrite ?app_nil_r in * ; 
+  rewrite ?app_nil_r ; rewrite <- ?list_rearr16'; unfold can_exchR in H1).
+
+ eapply H1. left. reflexivity.
+unfold nsext. reflexivity. reflexivity.
+
+eapply H1. left. reflexivity.
+unfold nsext. reflexivity.  rewrite <- app_assoc. reflexivity.
+
+rewrite <- app_assoc. simpl.
+eapply H1. left. reflexivity. reflexivity.
+rewrite <- app_assoc. reflexivity.
+
+eapply H1. left. reflexivity. reflexivity. reflexivity.
+
+rewrite list_rearr16_R. rewrite app_assoc.
+eapply H1. left. reflexivity. reflexivity. rewrite <- app_assoc.
+rewrite <- list_rearr16_R. reflexivity.
+
+(* now for the ImpL rule *)
+subst. rename_last eqll.  injection eqll as eql eqr. subst. 
+clear H H0 H3.
+eapply derI.  rewrite <- nsext_def. apply NSctxt.  apply ImpL.
+rewrite dersrec_all. rewrite Forall_forall. intros.
+rewrite Forall_forall in H1. simpl in H1. simpl in H. sD.
+subst.  unfold can_exchR in H1. unfold nsext. 
+eapply H1.
+left. reflexivity.
+apply nsext_def. reflexivity.
+
+subst.
+unfold can_exchR in H1. rewrite app_comm_cons. 
+eapply H1.
+right. left. reflexivity. apply nsext_def. reflexivity.
+Qed.
