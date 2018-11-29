@@ -87,11 +87,11 @@ Definition seqext (W : Set) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
 
 Inductive seqrule (W : Set) (pr : rls (rel (list W))) : 
     rls (rel (list W)) := 
-  | Sctxt : forall ps c Γ1 Γ2 Δ1 Δ2, pr ps c -> 
-    seqrule pr (map (seqext Γ1 Γ2 Δ1 Δ2) ps) (seqext Γ1 Γ2 Δ1 Δ2 c).
+  | Sctxt : forall ps c Φ1 Φ2 Ψ1 Ψ2, pr ps c -> 
+    seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 
-Lemma seqext_def : forall (W : Set) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) U V,
-      @seqext W Γ1 Γ2 Δ1 Δ2 (U,V) =  ((Γ1 ++ U ++ Γ2),(Δ1 ++ V ++ Δ2)).
+Lemma seqext_def : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 (seq : rel (list W)) U V,
+      @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = ((Φ1 ++ U ++ Φ2),(Ψ1 ++ V ++ Ψ2)).
 Proof. reflexivity. Qed.
 
 (* w : Set fails *)

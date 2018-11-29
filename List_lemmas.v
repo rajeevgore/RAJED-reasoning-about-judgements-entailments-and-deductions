@@ -12,6 +12,11 @@ Ltac app_assoc_hyp_inv G H := rewrite <- (app_assoc G) in H; apply app_inv_head 
 Ltac list_assoc_l := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
 Ltac list_assoc_r := 
   repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons).
+Ltac list_app_nil := repeat (rewrite !app_nil_l || rewrite !app_nil_r).
+Ltac list_assoc_l_simp := repeat
+  (rewrite !app_assoc || rewrite !app_comm_cons || list_app_nil).
+Ltac list_assoc_r_simp := repeat
+  (rewrite <- !app_assoc || rewrite <- !app_comm_cons || list_app_nil).
 Ltac list_eq_assoc := list_assoc_r ; reflexivity.
 
 Lemma partition_2_2 : forall {A : Type} (l1 l2 l3 l4 : list A) a b,
