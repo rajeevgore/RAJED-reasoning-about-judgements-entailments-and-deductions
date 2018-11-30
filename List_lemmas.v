@@ -17,6 +17,12 @@ Ltac list_assoc_l_simp := repeat
   (rewrite !app_assoc || rewrite !app_comm_cons || list_app_nil).
 Ltac list_assoc_r_simp := repeat
   (rewrite <- !app_assoc || rewrite <- !app_comm_cons || list_app_nil).
+Ltac list_assoc_l_simp' := repeat
+  (rewrite !app_assoc || rewrite !app_comm_cons || rewrite !app_nil_l
+  || rewrite !app_nil_r).
+Ltac list_assoc_r_simp' := repeat
+  (rewrite <- !app_assoc || rewrite <- !app_comm_cons || rewrite !app_nil_l
+  || rewrite !app_nil_r).
 Ltac list_eq_assoc := list_assoc_r ; reflexivity.
 
 Lemma partition_2_2 : forall {A : Type} (l1 l2 l3 l4 : list A) a b,

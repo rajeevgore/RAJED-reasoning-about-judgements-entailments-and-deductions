@@ -1,16 +1,16 @@
 
 (* try non-adjacent exchange, for system with princrule and seqrule *)
 
+Require Import dd.
 Require Import lnt.
+Require Import List_lemmas.
 
-Definition can_gen_exchL (V : Set)
+Definition can_gen_exchL {V : Set}
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
   forall G H seq (d : dir) Γ1 Γ2 Γ3 (A B : PropF V) Δ,
   ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ A :: Γ2 ++ B :: Γ3) Δ ->
   derrec rules (fun _ => False) 
     (G ++ (pair (Γ1 ++ B :: Γ2 ++ A :: Γ3) Δ, d) :: H).
-
-
 
 Lemma gen_exchL: forall (V : Set) ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
@@ -89,7 +89,7 @@ subst.  inversion pr. subst.
 (* case of Id rule *)
 apply derI with [].  2: apply dlNil.
 rewrite <- nsext_def. apply NSctxt_nil.
-acacD ; subst ; list_assoc_r_simp ; list_app_nil.
+acacD' ; subst ; list_assoc_r_simp'.
 
 
 

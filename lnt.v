@@ -94,6 +94,18 @@ Lemma seqext_def : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 (seq : rel (list W)) U V,
       @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = ((Φ1 ++ U ++ Φ2),(Ψ1 ++ V ++ Ψ2)).
 Proof. reflexivity. Qed.
 
+Lemma Sctxt_nil: forall (W : Set) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Prop) ->
+  @seqrule W pr [] (seqext Γ1 Γ2 Δ1 Δ2 c).
+Proof.  intros.  eapply Sctxt in H.  simpl in H. exact H.  Qed.
+
+Definition Sctxt_Id' V A Γ1 Γ2 Δ1 Δ2 :=
+  @Sctxt_nil (PropF V) (@princrule V) ([A], [A]) Γ1 Γ2 Δ1 Δ2 (Id' A).
+
+Lemma Sctxt_Id :
+  forall (V : Set) (A : PropF V) (Γ1 Γ2 Δ1 Δ2 : list (PropF V)),
+  seqrule (princrule (V:=V)) [] (Γ1 ++ A :: Γ2, Δ1 ++ A :: Δ2).
+to be completed.
+
 (* w : Set fails *)
 Definition nsext (W : Type) G H (d : dir) (seq : W) := G ++ (seq, d) :: H.
 Lemma nsext_def: forall (W : Type) G H d seq, 
@@ -187,6 +199,17 @@ Ltac acacD :=
     | [ H : _ |- _ ] => apply cons_eq_app in H ; sD
     | [ H : _ |- _ ] => apply app_eq_cons in H ; sD
     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as ?H ?H 
+    end.
+
+Ltac acacD' :=
+  repeat match goal with
+    | [ H : _ |- _ ] => apply app_eq_app in H ; sD
+    | [ H : _ |- _ ] => apply cons_eq_app in H ; sD
+    | [ H : _ |- _ ] => apply app_eq_cons in H ; sD
+    | [ H : _ :: _ = _ :: _ |- _ ] => injection H as ?H ?H 
+    | [ H : (_, _) = (_, _) |- _ ] => injection H as ?H ?H 
+    | [ H : _ :: _ = [] |- _ ] => discriminate H
+    | [ H : [] = _ :: _ |- _ ] => discriminate H
     end.
 
 Lemma exchL: forall (V : Set) ns 
