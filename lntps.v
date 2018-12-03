@@ -85,7 +85,31 @@ unfold seqext in se.
 subst.  clear H. clear H3.
 destruct c0. unfold seqext in se.
 injection se as sel ser.
-subst.  inversion pr. subst.
+subst.
+(* do as much as possible for all rules at once *)
+acacD'. subst.
+
+(* case where exchange in other parts *)
+rewrite app_nil_r in *.
+eapply derI.
+rewrite <- nsext_def. apply NSctxt.
+
+eapply Sctxt in pr.
+unfold seqext in pr.
+simpl in pr.
+apply pr.
+rewrite dersrec_all.  rewrite Forall_forall.
+intros q qin. rewrite in_map_iff in qin. cD.
+rewrite in_map_iff in qin1. cD.
+destruct qin1. subst.
+
+
+
+
+
+(*
+
+inversion pr. subst.
 (* case of Id rule *)
 apply derI with [].  2: apply dlNil.
 rewrite <- nsext_def. apply NSctxt_nil.
@@ -96,6 +120,7 @@ acacD' ; subst ; list_assoc_r_simp'.
   repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
   repeat (apply Id || rewrite list_rearr16 || rewrite list_rearr15).
 
+*)
 
 
 
