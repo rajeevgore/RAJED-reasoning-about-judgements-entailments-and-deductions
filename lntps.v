@@ -87,9 +87,10 @@ destruct c0. unfold seqext in se.
 injection se as sel ser.
 subst.
 (* do as much as possible for all rules at once *)
-acacD'. subst.
+acacD'. (* gives 15 subgoals *)
 
-(* case where exchange in other parts *)
+(* sg 1 of 15 *)
+subst.
 rewrite app_nil_r in *.
 eapply derI.
 rewrite <- nsext_def. apply NSctxt.
@@ -102,6 +103,43 @@ rewrite dersrec_all.  rewrite Forall_forall.
 intros q qin. rewrite in_map_iff in qin. cD.
 rewrite in_map_iff in qin1. cD.
 destruct qin1. subst.
+rewrite Forall_forall in H1.
+eapply in_map in qin3.
+eapply in_map in qin3.
+apply H1 in qin3.
+unfold can_gen_exchL in qin3.
+
+(* try this instead *)
+unfold nsext.
+rewrite (app_assoc Γ1). (* need to do this more generally *)
+eapply qin3.
+apply nsext_def.
+rewrite seqext_def.
+list_eq_assoc.
+apply (l,l1).
+
+(* following ??? 
+edestruct qin3. (* this gives odd result *)
+apply nsext_def.
+unfold seqext.
+apply f_equal2.
+instantiate (4:=A).
+instantiate (2:=B).
+rewrite (app_assoc Γ1). (* need to do this more generally *)
+reflexivity.
+reflexivity.
+contradiction. 
+*)
+
+(* sg 2-4 of 15 *)
+(* A is principal formula *)
+all: cycle 1.
+all: cycle 1.
+all: cycle 1.
+
+(* sg 5 of 15 *)
+subst.
+rewrite app_nil_r in *.
 
 
 
