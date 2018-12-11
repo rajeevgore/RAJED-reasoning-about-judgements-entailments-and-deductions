@@ -101,10 +101,12 @@ Proof.  intros.  eapply Sctxt in H.  simpl in H. exact H.  Qed.
 Definition Sctxt_Id' V A Γ1 Γ2 Δ1 Δ2 :=
   @Sctxt_nil (PropF V) (@princrule V) ([A], [A]) Γ1 Γ2 Δ1 Δ2 (Id' A).
 
+(*
 Lemma Sctxt_Id :
   forall (V : Set) (A : PropF V) (Γ1 Γ2 Δ1 Δ2 : list (PropF V)),
   seqrule (princrule (V:=V)) [] (Γ1 ++ A :: Γ2, Δ1 ++ A :: Δ2).
 to be completed.
+*)
 
 (* w : Set fails *)
 Definition nsext (W : Type) G H (d : dir) (seq : W) := G ++ (seq, d) :: H.
