@@ -12,6 +12,33 @@ Definition can_gen_exchL {V : Set}
   derrec rules (fun _ => False) 
     (G ++ (pair (Γ1 ++ B :: Γ2 ++ A :: Γ3) Δ, d) :: H).
 
+Ltac stage1 pr := 
+subst ;
+rewrite ?app_nil_r in * ;
+eapply derI ; [
+rewrite <- nsext_def ; apply NSctxt ;
+eapply Sctxt in pr ;
+unfold seqext in pr ;
+simpl in pr | idtac ].
+
+Ltac stage2 H1 qin1 qin3 := 
+rewrite dersrec_all ;  rewrite Forall_forall ;
+intros q qin ; rewrite in_map_iff in qin ; cD ;
+rename_last qin1 ;
+rewrite in_map_iff in qin1 ; cD ;
+rename_last qin3 ;
+destruct qin1 ; subst ;
+rewrite Forall_forall in H1 ;
+eapply in_map in qin3 ;
+eapply in_map in qin3 ;
+apply H1 in qin3 ;
+unfold can_gen_exchL in qin3 ;
+unfold nsext.
+
+Ltac stage3 qin3 l l1 := 
+eapply qin3 ; [ apply nsext_def |
+rewrite seqext_def ; [ list_eq_assoc | apply (l,l1) ] ].
+
 Lemma gen_exchL: forall (V : Set) ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_gen_exchL (nsrule (seqrule (@princrule V))) ns.
@@ -90,46 +117,13 @@ subst.
 acacD'. (* gives 15 subgoals *)
 
 (* sg 1 of 15 *)
-subst.
-rewrite app_nil_r in *.
-eapply derI.
-rewrite <- nsext_def. apply NSctxt.
+stage1 pr.
 
-eapply Sctxt in pr.
-unfold seqext in pr.
-simpl in pr.
-apply pr.
-rewrite dersrec_all.  rewrite Forall_forall.
-intros q qin. rewrite in_map_iff in qin. cD.
-rewrite in_map_iff in qin1. cD.
-destruct qin1. subst.
-rewrite Forall_forall in H1.
-eapply in_map in qin3.
-eapply in_map in qin3.
-apply H1 in qin3.
-unfold can_gen_exchL in qin3.
+apply pr. (* solves one sg *)
 
-(* try this instead *)
-unfold nsext.
+stage2 H1 qin1 qin3.
 rewrite (app_assoc Γ1). (* need to do this more generally *)
-eapply qin3.
-apply nsext_def.
-rewrite seqext_def.
-list_eq_assoc.
-apply (l,l1).
-
-(* following ??? 
-edestruct qin3. (* this gives odd result *)
-apply nsext_def.
-unfold seqext.
-apply f_equal2.
-instantiate (4:=A).
-instantiate (2:=B).
-rewrite (app_assoc Γ1). (* need to do this more generally *)
-reflexivity.
-reflexivity.
-contradiction. 
-*)
+stage3 qin3 l l1.
 
 (* sg 2-4 of 15 *)
 (* A is principal formula *)
@@ -138,151 +132,87 @@ all: cycle 1.
 all: cycle 1.
 
 (* sg 5 of 15 *)
-subst.
-rewrite app_nil_r in *.
-eapply derI.
-rewrite <- nsext_def. apply NSctxt.
-
-eapply Sctxt in pr.
-unfold seqext in pr.
-simpl in pr.
-
+stage1 pr.
 
 (* need to get Φ1 ++ sel3 ++ Φ2 *)
 repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
 repeat (apply pr || rewrite list_rearr16 || rewrite list_rearr15).
 
-rewrite dersrec_all.  rewrite Forall_forall.
-intros q qin. rewrite in_map_iff in qin. cD.
-rewrite in_map_iff in qin1. cD.
-destruct qin1. subst.
-rewrite Forall_forall in H1.
-eapply in_map in qin3.
-eapply in_map in qin3.
-apply H1 in qin3.
-unfold can_gen_exchL in qin3.
+stage2 H1 qin1 qin3.
 
-unfold nsext.
 rewrite <- !app_assoc. (* need to do this more generally *)
 simpl.
 rewrite app_assoc.
-eapply qin3.
-apply nsext_def.
-rewrite seqext_def.
-list_eq_assoc.
-apply (l,l1).
+stage3 qin3 l l1.
 
 (* B is principal formula *)
 all: cycle 1.
 
 (* sg 7 of 15 *)
-subst.
-rewrite ?app_nil_r in *.
-eapply derI.
-rewrite <- nsext_def. apply NSctxt.
-
-eapply Sctxt in pr.
-unfold seqext in pr.
-simpl in pr.
+stage1 pr.
 
 (* need to get Φ1 ++ sel3 ++ Φ2 *)
 repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
 repeat (apply pr || rewrite list_rearr16 || rewrite list_rearr15).
 
-rewrite dersrec_all.  rewrite Forall_forall.
-intros q qin. rewrite in_map_iff in qin. cD.
-rewrite in_map_iff in qin1. cD.
-destruct qin1. subst.
-rewrite Forall_forall in H1.
-eapply in_map in qin3.
-eapply in_map in qin3.
-apply H1 in qin3.
-unfold can_gen_exchL in qin3.
+stage2 H1 qin1 qin3.
 
-unfold nsext.
 rewrite <- !app_assoc. (* need to do this more generally *)
 simpl.
 rewrite app_assoc.
-eapply qin3.
-apply nsext_def.
-rewrite seqext_def.
-list_eq_assoc.
-apply (l,l1).
+rewrite app_assoc.
+stage3 qin3 l l1.
 
 (* sg 8 of 15 *)
 (* l = [] *)
-subst.
-rewrite ?app_nil_r in *.
-eapply derI.
-rewrite <- nsext_def. apply NSctxt.
-
-eapply Sctxt in pr.
-unfold seqext in pr.
-simpl in pr.
+stage1 pr.
 
 rewrite app_comm_cons.
 rewrite app_assoc.
 apply pr.
 
-rewrite dersrec_all.  rewrite Forall_forall.
-intros q qin. rewrite in_map_iff in qin. cD.
-rewrite in_map_iff in qin1. cD.
-destruct qin1. subst.
-rewrite Forall_forall in H1.
-eapply in_map in qin3.
-eapply in_map in qin3.
-apply H1 in qin3.
-unfold can_gen_exchL in qin3.
+stage2 H1 qin1 qin3.
 
-unfold nsext.
 rewrite <- !app_assoc. (* need to do this more generally *)
 rewrite <- !app_comm_cons. (* need to do this more generally *)
 rewrite app_assoc.
-eapply qin3.
-apply nsext_def.
-rewrite seqext_def.
-list_eq_assoc.
-apply (l,l1).
+stage3 qin3 l l1.
 
 (* B principal formula *)
 all: cycle 1.
 
 (* sg 10 of 15 *)
-subst.
-rewrite ?app_nil_r in *.
-eapply derI.
-rewrite <- nsext_def. apply NSctxt.
+stage1 pr.
 
-eapply Sctxt in pr.
-unfold seqext in pr.
-simpl in pr.
+repeat (rewrite !app_assoc || rewrite !app_comm_cons).
 
-rewrite !app_assoc. (* need to do this more generally *)
-rewrite <- !app_comm_cons. (* need to do this more generally *)
-rewrite !app_assoc. (* need to do this more generally *)
+rewrite <- (app_assoc _ l). (* need to do this more generally *)
 rewrite <- (app_assoc _ l0). (* need to do this more generally *)
 apply pr. 
 
-rewrite dersrec_all.  rewrite Forall_forall.
-intros q qin. rewrite in_map_iff in qin. cD.
-rewrite in_map_iff in qin1. cD.
-destruct qin1. subst.
-rewrite Forall_forall in H1.
-eapply in_map in qin3.
-eapply in_map in qin3.
-apply H1 in qin3.
-unfold can_gen_exchL in qin3.
+stage2 H1 qin1 qin3.
 
-unfold nsext.
 rewrite <- !app_assoc. (* need to do this more generally *)
 rewrite <- !app_comm_cons. (* need to do this more generally *)
-eapply qin3.
-apply nsext_def.
-rewrite seqext_def.
-list_eq_assoc.
-apply (l,l1).
+stage3 qin3 l l1.
 
 (* sg 11 of 15 *)
+stage1 pr.
+
+rewrite <- !app_assoc. (* need to do this more generally *)
+apply pr. 
+
+stage2 H1 qin1 qin3.
+
+rewrite (app_assoc _ l). (* need to do this more generally *)
+stage3 qin3 l l1.
+
+(* A in principal formula *)
+all: cycle 1.
+all: cycle 1.
+all: cycle 1.
+
+(* sg 15 of 15 *)
 subst.
 rewrite ?app_nil_r in *.
 eapply derI.
@@ -291,5 +221,27 @@ rewrite <- nsext_def. apply NSctxt.
 eapply Sctxt in pr.
 unfold seqext in pr.
 simpl in pr.
+
+rewrite <- !app_assoc. (* need to do this more generally *)
+apply pr. 
+
+stage2 H1 qin1 qin3.
+
+rewrite !app_assoc. (* need to do this more generally *)
+rewrite  <- (app_assoc _ l1). (* need to do this more generally *)
+stage3 qin3 l l1.
+
+(* now the cases where the principal formula contains A or B *)
+all: apply princrule_L in pr.
+
+sE.
+subst.
+discriminate.
+subst.
+injection sel3 as.
+subst.
+simpl.
+rewrite ?app_nil_r in *.
+
 
 
