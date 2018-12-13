@@ -256,12 +256,17 @@ eapply (dercl_ind_mut (rules := rules)
 
 Lemma dersrec_all: forall (X : Set) rules prems (cs : list X),
   dersrec rules prems cs <-> Forall (derrec rules prems) cs.
+Proof.
 intros. 
 induction cs ; unfold iff ; apply conj ; intro.
 apply Forall_nil. apply dlNil.
 inversion H. apply Forall_cons. assumption. tauto.
 inversion H. apply dlCons.  assumption. tauto.
 Qed.
+
+Lemma dersrec_nil: forall (X : Set) rules prems,
+  dersrec rules prems ([] : list X).
+Proof.  intros.  rewrite dersrec_all ; apply Forall_nil. Qed.
 
 (* try using the induction principle derrec_all_ind *)
 Theorem derrec_trans_imp_alt: forall (X : Set) rules prems (concl : X),

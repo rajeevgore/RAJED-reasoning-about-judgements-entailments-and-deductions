@@ -1,44 +1,17 @@
 
-(* try non-adjacent exchange, for system with princrule and seqrule *)
-
-(* this doesn't work for
-
-Γ1 B Γ2 |- Δ1 Δ2    Γ1 Γ2 |- Δ1 A Δ2
-----------------------------------------
-Γ1 A->B Γ2 |- Δ1 Δ2
-
-because in this case, interchanging A->B with some Q
-in either Γ1 or Γ2 requires, in the right premise, moving that Q
-to in between Γ1 and Γ2, ie
-
-Γ1 B Γ2' Q Γ2" |- Δ1 Δ2    Γ1 Γ2' Q Γ2" |- Δ1 A Δ2
-------------------------------------------------------
-Γ1 A->B Γ2' Q Γ2" |- Δ1 Δ2
-
-becomes
-
-Γ1 B Γ2' Q Γ2" |- Δ1 Δ2    Γ1 Γ2' Q Γ2" |- Δ1 A Δ2
-------------------------------------------------------
-Γ1 A->B Γ2' Q Γ2" |- Δ1 Δ2
-
-Γ1 Q Γ2' B Γ2" |- Δ1 Δ2    Γ1 Q Γ2' Γ2" |- Δ1 A Δ2
-------------------------------------------------------
-Γ1 Q Γ2' A->B Γ2" |- Δ1 Δ2
-
-that is, in the right premise, we have to just move Q,
-not swap it with something else.
-*)
+(* try non-adjacent move of a single formula,
+  for system with princrule and seqrule *)
 
 Require Import dd.
 Require Import lnt.
 Require Import List_lemmas.
 
-Definition can_gen_exchL {V : Set}
+Definition can_gen_moveL {V : Set}
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
-  forall G H seq (d : dir) Γ1 Γ2 Γ3 (Q R : PropF V) Δ,
-  ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ Q :: Γ2 ++ R :: Γ3) Δ ->
+  forall G H seq (d : dir) Γ1 Γ2 Γ3 (Q : PropF V) Δ,
+  ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ Q :: Γ2 ++ Γ3) Δ ->
   derrec rules (fun _ => False) 
-    (G ++ (pair (Γ1 ++ R :: Γ2 ++ Q :: Γ3) Δ, d) :: H).
+    (G ++ (pair (Γ1 ++ Γ2 ++ Q :: Γ3) Δ, d) :: H).
 
 Ltac stage1 pr := 
 subst ;
@@ -60,31 +33,31 @@ rewrite Forall_forall in H1 ;
 eapply in_map in qin3 ;
 eapply in_map in qin3 ;
 apply H1 in qin3 ;
-unfold can_gen_exchL in qin3 ;
+unfold can_gen_moveL in qin3 ;
 unfold nsext.
 
 Ltac stage3 qin3 l l1 := 
 eapply qin3 ; [ apply nsext_def |
 rewrite seqext_def ; [ list_eq_assoc | apply (l,l1) ] ].
 
-Lemma gen_exchL: forall (V : Set) ns
+Lemma gen_moveL: forall (V : Set) ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
-  can_gen_exchL (nsrule (seqrule (@princrule V))) ns.
+  can_gen_moveL (nsrule (seqrule (@princrule V))) ns.
 
 Proof.
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
 exact D. tauto.
 intros. inversion H.  unfold nsext in H5.
-unfold can_gen_exchL.  intros.
+unfold can_gen_moveL.  intros.
 unfold nsext in H7.
-(* cases of where the exchange occurs vs where the last rule applied *)
+(* cases of where the move occurs vs where the last rule applied *)
 apply partition_2_2 in H7.
-remember (Γ1 ++ R :: Γ2 ++ Q :: Γ3, Δ) as seqe.
+remember (Γ1 ++ Γ2 ++ Q :: Γ3, Δ) as seqe.
 
 decompose [or] H7. clear H7.  cE.
 (* case where the rule is applied in a sequent to the right
-  of where the exchange takes place *)
+  of where the move takes place *)
 remember (G0 ++ (seqe, d0) :: x) as Ge.
 remember (map (nsext Ge H2 d) ps0) as pse.
 
@@ -100,7 +73,7 @@ intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
 rewrite Forall_forall in H1.
 rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
-unfold can_gen_exchL in c0.
+unfold can_gen_moveL in c0.
 unfold nsext. subst Ge. subst seqe.
 rewrite <- list_rearr14.
 eapply c0. 2:reflexivity.
@@ -109,7 +82,7 @@ list_eq_assoc.
 
 all : revgoals. clear H7. cE.
 (* now the case where the rule is applied in a sequent to the left
-  of where the exchange takes place *)
+  of where the move takes place *)
 remember (x ++ (seqe, d0) :: H6) as He.
 remember (map (nsext G He d) ps0) as pse.
 
@@ -125,7 +98,7 @@ intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
 rewrite Forall_forall in H1.
 rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
-unfold can_exchL in c0.
+unfold can_moveL in c0.
 unfold nsext. subst He. subst seqe.
 rewrite list_rearr14.
 
@@ -133,7 +106,7 @@ eapply c0. 2:reflexivity.
 unfold nsext. subst H2. subst seq.
 apply list_rearr14.
 
-(* now case where exchange and rule application occur in the same sequent *)
+(* now case where move and rule application occur in the same sequent *)
 cE. clear H7. injection H10 as.
 inversion H3 as [? ? ? ? ? ? pr mse se].
 unfold seqext in se.
@@ -142,7 +115,7 @@ destruct c0. unfold seqext in se.
 injection se as sel ser.
 subst.
 (* do as much as possible for all rules at once *)
-acacD'. (* gives 15 subgoals *)
+acacD'. (* gives 10 subgoals *)
 
 (* sg 1 of 15 *)
 stage1 pr.
