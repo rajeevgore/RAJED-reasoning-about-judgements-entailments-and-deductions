@@ -11,6 +11,21 @@ Proof.  tauto.  Qed.
 Lemma appl: forall (A B : Prop), (A -> B) -> A -> B.
 Proof.  tauto.  Qed.
 
+Lemma gen_cong: forall T U f g, f = g -> 
+  forall x y, x = y -> (f (x : U) : T) = g y.
+Proof. intros. subst. reflexivity. Qed.
+
+Lemma fun_cong: forall T U f g, f = g -> 
+  forall x, (f (x : U) : T) = g x.
+Proof. intros. subst. reflexivity. Qed.
+
+Lemma arg_cong: forall T U f x y, x = y -> (f (x : U) : T) = f y.
+Proof. intros. subst. reflexivity. Qed.
+
+(* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
+
+Check (gen_cong _ _ _ _ _ _ eq_refl).
+
 Ltac rename_last name :=
   match goal with
     | [ K : _ |- _ ] => rename K into name
@@ -253,6 +268,14 @@ eapply (dercl_ind_mut (rules := rules)
   (fun pss : list (list X) => fun cs : list X => fun _ => ???? types
     forall qss, dercsl rules qss pss -> dercsl rules pss cs)).
 *)
+
+Lemma derrec_same: forall (X : Set) rules prems (c c' : X),
+  derrec rules prems c -> c = c' -> derrec rules prems c'.
+Proof. intros. subst. assumption. Qed.
+
+Lemma seqrule_same: forall (W : Set) pr ps (c c' : rel (list W)),
+  seqrule pr ps c -> c = c' -> seqrule pr ps c'.
+Proof. intros. subst. assumption. Qed.
 
 Lemma dersrec_all: forall (X : Set) rules prems (cs : list X),
   dersrec rules prems cs <-> Forall (derrec rules prems) cs.

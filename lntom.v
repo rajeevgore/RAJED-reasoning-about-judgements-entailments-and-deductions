@@ -117,12 +117,47 @@ subst.
 (* do as much as possible for all rules at once *)
 acacD'. (* gives 10 subgoals *)
 
-(* sg 1 of 15 *)
+(* sg 1 of 10 *)
 stage1 pr.
-
+(* normally need to rearrange *)
 apply pr. (* solves one sg *)
 
 stage2 H1 qin1 qin3.
+eapply derrec_same.
+eapply qin3.
+apply nsext_def.
+unfold seqext.
+f_equal.
+apply app_assoc. (* need to generalise this *)
+list_eq_assoc.
+
+(* sg 2 of 10 *)
+all: cycle 1.
+all: cycle 1.
+
+(* sg 4 of 10 *)
+
+stage1 pr.
+repeat (rewrite !app_assoc || rewrite !app_comm_cons).
+eapply seqrule_same. eexact pr.
+f_equal.
+apply app_assoc.
+apply app_assoc.
+
+stage2 H1 qin1 qin3.
+eapply derrec_same.
+eapply qin3.
+apply nsext_def.
+unfold seqext.
+(* need non-instantiating rewriting here *)
+
+
+
+Undo.
+
+following is from attempted proof of gen_exch 
+
+
 rewrite (app_assoc Γ1). (* need to do this more generally *)
 stage3 qin3 l l1.
 
