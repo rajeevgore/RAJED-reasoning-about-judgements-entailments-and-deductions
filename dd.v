@@ -24,7 +24,7 @@ Proof. intros. subst. reflexivity. Qed.
 
 (* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
 
-Check (gen_cong _ _ _ _ _ _ eq_refl).
+Check (gen_cong eq_refl).
 
 Ltac rename_last name :=
   match goal with
@@ -271,10 +271,6 @@ eapply (dercl_ind_mut (rules := rules)
 
 Lemma derrec_same: forall (X : Set) rules prems (c c' : X),
   derrec rules prems c -> c = c' -> derrec rules prems c'.
-Proof. intros. subst. assumption. Qed.
-
-Lemma seqrule_same: forall (W : Set) pr ps (c c' : rel (list W)),
-  seqrule pr ps c -> c = c' -> seqrule pr ps c'.
 Proof. intros. subst. assumption. Qed.
 
 Lemma dersrec_all: forall (X : Set) rules prems (cs : list X),

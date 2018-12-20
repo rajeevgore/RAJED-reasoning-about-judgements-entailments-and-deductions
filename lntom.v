@@ -137,20 +137,59 @@ all: cycle 1.
 
 (* sg 4 of 10 *)
 
-stage1 pr.
-repeat (rewrite !app_assoc || rewrite !app_comm_cons).
-eapply seqrule_same. eexact pr.
-f_equal.
-apply app_assoc.
-apply app_assoc.
+(* problem here, Q between sel3 and sel5,
+  but one of sel3 and sel5 must be empty due to princrule_L *)
 
+pose pr as pr'.
+apply princrule_L in pr'.
+sD ; subst.
+apply app_eq_nil in pr'. cD. subst.
+simpl in pr.
+simpl.
+rewrite app_nil_r.
+
+stage1 pr. (* will need to move Q around sel1 *)
+
+rewrite app_assoc.
+rewrite list_rearr16.
+apply pr.
 stage2 H1 qin1 qin3.
-eapply derrec_same.
+rewrite <- app_assoc.
+simpl.
+rewrite <- app_assoc.
 eapply qin3.
 apply nsext_def.
 unfold seqext.
-(* need non-instantiating rewriting here *)
+list_eq_assoc.
 
+apply app_eq_unit in pr'0.
+sD ; subst.
+simpl in pr. simpl.
+rewrite app_nil_r.
+stage1 pr. (* will need to move Q around sel1 *)
+rewrite app_assoc.
+rewrite list_rearr16.
+apply pr.
+stage2 H1 qin1 qin3.
+rewrite <- app_assoc.
+simpl.
+rewrite <- app_assoc.
+eapply qin3.
+apply nsext_def.
+unfold seqext.
+list_eq_assoc.
+
+rewrite app_nil_r in pr.
+simpl.
+stage1 pr.
+rewrite <- app_assoc.
+simpl.
+rewrite app_assoc.
+apply pr.
+stage2 H1 qin1 qin3.
+
+ 
+DONE TO HERE
 
 
 Undo.

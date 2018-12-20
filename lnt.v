@@ -94,6 +94,10 @@ Lemma seqext_def : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 (seq : rel (list W)) U V,
       @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = ((Φ1 ++ U ++ Φ2),(Ψ1 ++ V ++ Ψ2)).
 Proof. reflexivity. Qed.
 
+Lemma seqrule_same: forall (W : Set) pr ps (c c' : rel (list W)),
+  seqrule pr ps c -> c = c' -> seqrule pr ps c'.
+Proof. intros. subst. assumption. Qed.  
+
 Lemma Sctxt_nil: forall (W : Set) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Prop) ->
   @seqrule W pr [] (seqext Γ1 Γ2 Δ1 Δ2 c).
 Proof.  intros.  eapply Sctxt in H.  simpl in H. exact H.  Qed.
