@@ -98,7 +98,7 @@ intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
 rewrite Forall_forall in H1.
 rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
-unfold can_moveL in c0.
+unfold can_gen_moveL in c0.
 unfold nsext. subst He. subst seqe.
 rewrite list_rearr14.
 
@@ -157,10 +157,7 @@ stage2 H1 qin1 qin3.
 rewrite <- app_assoc.
 simpl.
 rewrite <- app_assoc.
-eapply qin3.
-apply nsext_def.
-unfold seqext.
-list_eq_assoc.
+eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 
 apply app_eq_unit in pr'0.
 sD ; subst.
@@ -174,10 +171,7 @@ stage2 H1 qin1 qin3.
 rewrite <- app_assoc.
 simpl.
 rewrite <- app_assoc.
-eapply qin3.
-apply nsext_def.
-unfold seqext.
-list_eq_assoc.
+eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 
 rewrite app_nil_r in pr.
 simpl.
@@ -187,10 +181,51 @@ simpl.
 rewrite app_assoc.
 apply pr.
 stage2 H1 qin1 qin3.
-
+rewrite <- app_assoc.
+rewrite (app_assoc _ l).
+eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
  
-DONE TO HERE
+stage1 pr.
+(* need to rearrange appends to get ... ++ l ++ ... *)
+rewrite <- !app_assoc.
+rewrite app_assoc.
+apply pr.
+stage2 H1 qin1 qin3.
+(*
+pose (qin3 G H6 _ _ Γ1 (sel1 ++ l1 ++ sel5)).
+*)
+(*
+eapply derrec_same.
+eapply qin3.
+apply nsext_def.
+unfold seqext.
+the above would work if we could rewrite without instantiating *)
+assert ((Γ1 ++ sel1) ++ l1 ++ sel5 ++ Q :: Γ3 = 
+  Γ1 ++ (sel1 ++ l1 ++ sel5) ++ Q :: Γ3).
+list_eq_assoc.
+rewrite H.
+eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 
+stage1 pr.
+(* just need to get l in the middle *)
+rewrite app_assoc.
+rewrite app_comm_cons.
+rewrite app_assoc.
+apply pr.
+stage2 H1 qin1 qin3.
+repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons).
+eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+
+stage1 pr.
+rewrite <- !app_assoc.
+apply pr.
+stage2 H1 qin1 qin3.
+rewrite app_assoc.
+eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+
+stage1 pr.
+xxx.
+doesn't work at this point
 
 Undo.
 
