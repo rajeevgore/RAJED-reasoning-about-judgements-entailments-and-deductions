@@ -2,6 +2,7 @@
 (* try non-adjacent move of a single formula,
   for system with princrule and seqrule *)
 
+Require Import gen.
 Require Import dd.
 Require Import lnt.
 Require Import List_lemmas.
@@ -223,157 +224,69 @@ stage2 H1 qin1 qin3.
 rewrite app_assoc.
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 
-stage1 pr.
-xxx.
-doesn't work at this point
-
-Undo.
-
-following is from attempted proof of gen_exch 
-
-
-rewrite (app_assoc Γ1). (* need to do this more generally *)
-stage3 qin3 l l1.
-
-(* sg 2-4 of 15 *)
-(* Q is principal formula *)
-all: cycle 1.
+(* subgoal has Q (formula to be moved) in principal formula *)
 all: cycle 1.
 all: cycle 1.
 
-(* sg 5 of 15 *)
 stage1 pr.
-
-(* need to get Φ1 ++ sel3 ++ Φ2 *)
-repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
-repeat (apply pr || rewrite list_rearr16 || rewrite list_rearr15).
-
-stage2 H1 qin1 qin3.
-
-rewrite <- !app_assoc. (* need to do this more generally *)
-simpl.
-rewrite app_assoc.
-stage3 qin3 l l1.
-
-(* R is principal formula *)
-all: cycle 1.
-
-(* sg 7 of 15 *)
-stage1 pr.
-
-(* need to get Φ1 ++ sel3 ++ Φ2 *)
-repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons) ;
-repeat (apply pr || rewrite list_rearr16 || rewrite list_rearr15).
-
-stage2 H1 qin1 qin3.
-
-rewrite <- !app_assoc. (* need to do this more generally *)
-simpl.
-rewrite app_assoc.
-rewrite app_assoc.
-stage3 qin3 l l1.
-
-(* sg 8 of 15 *)
-(* l = [] *)
-stage1 pr.
-
-rewrite app_comm_cons.
-rewrite app_assoc.
+rewrite <- !app_assoc.
 apply pr.
-
 stage2 H1 qin1 qin3.
+rewrite !app_assoc.
+(* why doesn't this work?
+rewrite app_assoc in qin3. *)
+rewrite <- (app_assoc _ Γ2).
+eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 
-rewrite <- !app_assoc. (* need to do this more generally *)
-rewrite <- !app_comm_cons. (* need to do this more generally *)
-rewrite app_assoc.
-stage3 qin3 l l1.
+(* four remaining subgoals have Q (formula to be moved) in principal formula *)
 
-(* R principal formula *)
-all: cycle 1.
-
-(* sg 10 of 15 *)
-stage1 pr.
-
-repeat (rewrite !app_assoc || rewrite !app_comm_cons).
-
-rewrite <- (app_assoc _ l). (* need to do this more generally *)
-rewrite <- (app_assoc _ l0). (* need to do this more generally *)
-apply pr. 
-
-stage2 H1 qin1 qin3.
-
-rewrite <- !app_assoc. (* need to do this more generally *)
-rewrite <- !app_comm_cons. (* need to do this more generally *)
-stage3 qin3 l l1.
-
-(* sg 11 of 15 *)
-stage1 pr.
-
-rewrite <- !app_assoc. (* need to do this more generally *)
-apply pr. 
-
-stage2 H1 qin1 qin3.
-
-rewrite (app_assoc _ l). (* need to do this more generally *)
-stage3 qin3 l l1.
-
-(* Q in principal formula *)
-all: cycle 1.
-all: cycle 1.
-all: cycle 1.
-
-(* sg 15 of 15 *)
+pose pr as Qpr.
+apply princrule_L in Qpr.
+sD.
 subst.
-rewrite ?app_nil_r in *.
-eapply derI.
-rewrite <- nsext_def. apply NSctxt.
-
-eapply Sctxt in pr.
-unfold seqext in pr.
-simpl in pr.
-
-rewrite <- !app_assoc. (* need to do this more generally *)
-apply pr. 
-
-stage2 H1 qin1 qin3.
-
-rewrite !app_assoc. (* need to do this more generally *)
-rewrite  <- (app_assoc _ l1). (* need to do this more generally *)
-stage3 qin3 l l1.
-
-(* now the cases where the principal formula contains Q or R *)
-all: subst.
-all: pose pr as qr.
-all: apply princrule_L in qr. (* this destroys qr *)
-
-sD. (* 2 subgoals *)
+discriminate.
 subst.
-discriminate. (* solves first goal *)
-injection qr0 as.
+injection Qpr0 as.
 subst.
 simpl.
 rewrite ?app_nil_r in *.
 
-inversion pr ; subst ; simpl.
-(* Id' rule *)
 stage1 pr.
-rewrite app_comm_cons. (* need to do this more generally *)
 rewrite app_assoc.
 apply pr.
-simpl ; apply dersrec_nil.
+(* doesn't work, need to use the ps1 in the goal here is that
+  given by princrule ps1 ([Qpr], l0)
+stage2 H1 qin1 qin3. *)
+destruct pr. (* case pr. or elim pr. don't put value of ps1 into premises *)
+simpl.
+intros.
+rewrite dersrec_all.
+apply Forall_nil.
+simpl.
+intros.
+rewrite dersrec_all.
+rewrite Forall_forall.
+intros.
+apply in_inv in H.
+sD.
+subst.
 
-(* Impl' rule *)
-stage1 pr.
-rewrite app_comm_cons. (* need to do this more generally *)
-rewrite app_assoc.
-apply pr. 
-rewrite dersrec_all ;  rewrite Forall_forall ; intros q qin.
-simpl in qin. sD. subst.
+rewrite Forall_forall in H1 ;
+simpl in H1.
+rewrite or_false in H1.
+
+Lemma all_eq_imp: forall (T : Type) (y : T) (z : T -> Prop),
+  (forall (x : T), y = x \/ False -> z x) <-> z y.
+Proof. firstorder. subst.  assumption. Qed.
+
+eapply in_inv in H1.
+
+eapply in_map in qin3 ;
+eapply in_map in qin3 ;
+apply H1 in qin3 ;
+unfold can_gen_moveL in qin3 ;
+unfold nsext.
 
 
-
-
-
-Undo.
 
 

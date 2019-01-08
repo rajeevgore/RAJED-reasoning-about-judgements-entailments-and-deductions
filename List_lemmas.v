@@ -275,6 +275,11 @@ Lemma list_rearr17_R : forall {T1 T2 : Type} (Φ : T2) Δ1 (B A : T1) eqr3 U Ψ2
 (Φ, (Δ1 ++ B :: A :: eqr3) ++ U :: Ψ2).
 Proof. intros. rewrite <- app_assoc. reflexivity. Qed.
 
+(* not sure if we ever need this *)
+Lemma list_rearr18 : forall {T : Type} (F G H : list T) (a : T),
+  (F ++ G ++ a :: H) = (F ++ G) ++ a :: H.
+Proof.  intros. apply app_assoc. Qed.
+
 Lemma cons_eq_app: forall (A : Type) (x y z : list A) (a : A),
   a :: x = y ++ z -> y = [] /\ z = a :: x \/
   exists (y' : list A), y = a :: y' /\ x = y' ++ z.
