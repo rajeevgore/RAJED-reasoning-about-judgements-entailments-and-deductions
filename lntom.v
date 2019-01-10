@@ -7,6 +7,10 @@ Require Import dd.
 Require Import lnt.
 Require Import List_lemmas.
 
+Lemma all_eq_imp: forall (T : Type) (y : T) (z : T -> Prop),
+  (forall (x : T), y = x \/ False -> z x) <-> z y.
+Proof. firstorder. subst.  assumption. Qed.
+
 Definition can_gen_moveL {V : Set}
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
   forall G H seq (d : dir) Γ1 Γ2 Γ3 (Q : PropF V) Δ,
@@ -271,21 +275,59 @@ apply in_inv in H.
 sD.
 subst.
 
-rewrite Forall_forall in H1 ;
+rewrite Forall_forall in H1.
 simpl in H1.
-rewrite or_false in H1.
+(* various solutions to dealing with hypothesis forall x, A x -> B x 
+  see emails 8-9 Jan 
+evar (z : list (rel (list (PropF V)) * dir)).
+specialize (H1 z).
+subst z. (* subst. alone doesn't work *)
 
-Lemma all_eq_imp: forall (T : Type) (y : T) (z : T -> Prop),
-  (forall (x : T), y = x \/ False -> z x) <-> z y.
-Proof. firstorder. subst.  assumption. Qed.
+match type of H1 with
+| ?A -> _ =>
+  assert (I : A); [| apply H1 in I ]
+  end. 
 
-eapply in_inv in H1.
+apply (fun G2 G1 => G1 (H1 G2)). 
 
-eapply in_map in qin3 ;
-eapply in_map in qin3 ;
-apply H1 in qin3 ;
-unfold can_gen_moveL in qin3 ;
+eassert _ as I%H1.
+
+or 
+eassert _ ; [ apply H1 | ].
+eassert _ as I ; [ | apply H1 in I ].
+
+all : cycle 1. Show. 
+Undo. Show. 
+*)
+
+rewrite all_eq_imp in H1.
+unfold can_gen_moveL in H1.
 unfold nsext.
+rewrite <- app_assoc.
+eapply H1.
+unfold nsext.
+reflexivity.
+reflexivity.
+apply in_nil in H.
+contradiction.
+
+simpl.
+rewrite dersrec_all.
+rewrite Forall_forall.
+intros.
+apply in_inv in H.
+sD ; subst. (* 2 sgs *)
+
+rewrite Forall_forall in H1.
+simpl in H1.
+specialize_full H1.
+left. reflexivity.
+
+
+
+
+
+
 
 
 
