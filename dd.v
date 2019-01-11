@@ -5,61 +5,7 @@ Require Export List.
 Set Implicit Arguments.
 Export ListNotations.
 
-Lemma rappl: forall (A B : Prop), A -> (A -> B) -> B.
-Proof.  tauto.  Qed.
-
-Lemma appl: forall (A B : Prop), (A -> B) -> A -> B.
-Proof.  tauto.  Qed.
-
-Lemma gen_cong: forall T U f g, f = g -> 
-  forall x y, x = y -> (f (x : U) : T) = g y.
-Proof. intros. subst. reflexivity. Qed.
-
-Lemma fun_cong: forall T U f g, f = g -> 
-  forall x, (f (x : U) : T) = g x.
-Proof. intros. subst. reflexivity. Qed.
-
-Lemma arg_cong: forall T U f x y, x = y -> (f (x : U) : T) = f y.
-Proof. intros. subst. reflexivity. Qed.
-
-(* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
-
-Check (gen_cong eq_refl).
-
-Ltac rename_last name :=
-  match goal with
-    | [ K : _ |- _ ] => rename K into name
-    end.
-
-Ltac cE :=
-  repeat match goal with
-    | [ H : _ /\ _ |- _ ] => inversion_clear H
-    | [ H : ex _ |- _ ] => inversion_clear H
-    | [ H : False |- _ ] => contradiction H
-    end.
-
-Ltac cD :=
-  repeat match goal with
-    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
-    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
-    | [ H : False |- _ ] => contradiction H
-    end.
-
-Ltac sE :=
-  repeat match goal with
-    | [ H : _ /\ _ |- _ ] => inversion_clear H
-    | [ H : _ \/ _ |- _ ] => inversion_clear H
-    | [ H : ex _ |- _ ] => inversion_clear H
-    | [ H : False |- _ ] => contradiction H
-    end.
-
-Ltac sD :=
-  repeat match goal with
-    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
-    | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
-    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
-    | [ H : False |- _ ] => contradiction H
-    end.
+Require Import gen.
 
 (* note, this doesn't work Type replaced by Prop,
   although the actual version used allows prems : X -> Prop 

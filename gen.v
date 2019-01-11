@@ -6,6 +6,60 @@ Lemma false_or: forall P : Prop, iff (or False P) P. Proof. tauto. Qed.
 Lemma and_true: forall P : Prop, iff (and P True) P. Proof. tauto. Qed.
 Lemma true_and: forall P : Prop, iff (and True P) P. Proof. tauto. Qed.
 
+Lemma rappl: forall (A B : Prop), A -> (A -> B) -> B.
+Proof.  tauto.  Qed.
+
+Lemma appl: forall (A B : Prop), (A -> B) -> A -> B.
+Proof.  tauto.  Qed.
+
+Lemma gen_cong: forall T U f g, f = g -> 
+  forall x y, x = y -> (f (x : U) : T) = g y.
+Proof. intros. subst. reflexivity. Qed.
+
+Lemma fun_cong: forall T U f g, f = g -> 
+  forall x, (f (x : U) : T) = g x.
+Proof. intros. subst. reflexivity. Qed.
+
+Lemma arg_cong: forall T U f x y, x = y -> (f (x : U) : T) = f y.
+Proof. intros. subst. reflexivity. Qed.
+
+(* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
+
+Ltac rename_last name :=
+  match goal with
+    | [ K : _ |- _ ] => rename K into name
+    end.
+
+Ltac cE :=
+  repeat match goal with
+    | [ H : _ /\ _ |- _ ] => inversion_clear H
+    | [ H : ex _ |- _ ] => inversion_clear H
+    | [ H : False |- _ ] => contradiction H
+    end.
+
+Ltac cD :=
+  repeat match goal with
+    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
+    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    | [ H : False |- _ ] => contradiction H
+    end.
+
+Ltac sE :=
+  repeat match goal with
+    | [ H : _ /\ _ |- _ ] => inversion_clear H
+    | [ H : _ \/ _ |- _ ] => inversion_clear H
+    | [ H : ex _ |- _ ] => inversion_clear H
+    | [ H : False |- _ ] => contradiction H
+    end.
+
+Ltac sD :=
+  repeat match goal with
+    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
+    | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
+    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    | [ H : False |- _ ] => contradiction H
+    end.
+
 (* tactics from Lily Chung <ikdc@mit.edu> Tue, 8 Jan 2019
   https://gist.github.com/ichung/032b849da0c3c5e3987c83f835d111ee *) 
 
