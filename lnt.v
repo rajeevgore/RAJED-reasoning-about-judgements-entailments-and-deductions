@@ -95,6 +95,10 @@ Lemma seqext_def : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 (seq : rel (list W)) U V,
       @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = ((Φ1 ++ U ++ Φ2),(Ψ1 ++ V ++ Ψ2)).
 Proof. reflexivity. Qed.
 
+Lemma seqext_def' : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 U V,
+      @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = ((Φ1 ++ U ++ Φ2),(Ψ1 ++ V ++ Ψ2)).
+Proof. reflexivity. Qed.
+
 Lemma seqrule_same: forall (W : Set) pr ps (c c' : rel (list W)),
   seqrule pr ps c -> c = c' -> seqrule pr ps c'.
 Proof. intros. subst. assumption. Qed.  

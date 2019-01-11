@@ -263,6 +263,7 @@ apply pr.
 stage2 H1 qin1 qin3. *)
 destruct pr. (* case pr. or elim pr. don't put value of ps1 into premises *)
 simpl.
+(* or apply dlNil. here *)
 intros.
 rewrite dersrec_all.
 apply Forall_nil.
@@ -323,8 +324,152 @@ simpl in H1.
 specialize_full H1.
 left. reflexivity.
 
+unfold can_gen_moveL in H1.
+unfold nsext.
+rewrite <- app_assoc.
+eapply H1.
+unfold nsext.
+reflexivity.
+reflexivity.
 
+simpl in H.
+sE.
+subst.
+unfold nsext.
+(* this one needs the dersrec hyp with no move *)
+simpl in H0.
+rewrite dersrec_all in H0.
+rewrite Forall_forall in H0.
+simpl in H0.
+erequire H0.
+apply H0.
+unfold nsext.
+rewrite <- app_assoc.
+tauto.
 
+simpl. apply dlNil.
+
+(* next remaining subgoal with Q (formula to be moved) in principal formula *)
+subst.
+rewrite app_nil_r in *.
+pose pr as Qpr.
+apply princrule_L in Qpr.
+sD.
+discriminate.
+injection Qpr0 as.
+apply app_eq_nil in H2.
+cD.
+subst.
+simpl.
+simpl in pr.
+(* doesn't seem to require any move, or cases of the rule *)
+eapply derI.
+rewrite <- nsext_def.
+apply NSctxt.
+rewrite app_cons_single.
+rewrite <- app_assoc.
+rewrite <- seqext_def'.
+apply Sctxt.
+eassumption.
+assumption.
+
+(* next remaining subgoal with Q (formula to be moved) in principal formula *)
+subst.
+pose pr as Qpr.
+apply princrule_L in Qpr.
+sD.
+apply app_eq_nil in Qpr.
+cD.
+discriminate.
+apply list_eq_single in Qpr0.
+cD. subst.
+simpl.
+simpl in pr.
+rewrite app_nil_r.
+stage1 pr.
+rewrite app_assoc.
+apply pr.
+destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
+
+rewrite Forall_forall in H1.
+simpl in H1.
+specialize_full H1.
+left. reflexivity.
+unfold can_gen_moveL in H1.
+unfold nsext.
+rewrite <- app_assoc.
+eapply H1.
+unfold nsext.
+reflexivity.
+reflexivity.
+
+rewrite Forall_forall in H1.
+simpl in H1.
+specialize_full H1.
+left. reflexivity.
+unfold can_gen_moveL in H1.
+unfold nsext.
+rewrite <- app_assoc.
+eapply H1.
+unfold nsext.
+reflexivity.
+reflexivity.
+
+rewrite dersrec_all in H0.
+rewrite Forall_forall in H0.
+simpl in H0.
+specialize_full H0.
+right. left. reflexivity.
+rewrite <- app_assoc.
+assumption.
+
+(* next remaining subgoal with Q (formula to be moved) in principal formula *)
+
+subst.
+pose pr as Qpr.
+apply princrule_L in Qpr.
+sD.
+apply app_eq_nil in Qpr.
+cD.
+discriminate.
+
+apply list_eq_single in Qpr0.
+cD. 
+apply app_eq_nil in Qpr1.
+cD.
+subst.
+simpl.
+simpl in pr.
+rewrite app_nil_r.
+
+stage1 pr.
+apply pr.
+destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
+
+rewrite dersrec_all in H0.
+rewrite Forall_forall in H0.
+simpl in H0.
+specialize_full H0.
+left. reflexivity.
+assumption.
+
+rewrite dersrec_all in H0.
+rewrite Forall_forall in H0.
+simpl in H0.
+specialize_full H0.
+left. reflexivity.
+assumption.
+
+rewrite dersrec_all in H0.
+rewrite Forall_forall in H0.
+simpl in H0.
+specialize_full H0.
+right. left. reflexivity.
+assumption.
+
+Qed.
+
+Check gen_moveL.
 
 
 

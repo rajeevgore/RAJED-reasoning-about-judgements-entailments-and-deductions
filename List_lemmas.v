@@ -1,6 +1,8 @@
 Require Import List Omega.
 Import ListNotations.
 
+Require Import gen.
+
 Ltac app_assoc_solve G := rewrite <- (app_assoc G); reflexivity.
 Ltac app_assoc_solve2 G H := rewrite <- (app_assoc G); simpl;
                              rewrite <- (app_assoc H); reflexivity.
@@ -314,6 +316,19 @@ exists x1. tauto.
 destruct H0.
 rewrite H.  rewrite H0.  rewrite H1.  simpl.
 exists x1. tauto.
+Qed.
+
+Lemma list_eq_single: forall (A : Type) (x y : list A) (u v : A),
+  x ++ u :: y = [v] -> x = [] /\ y = [] /\ u = v.
+Proof.
+intros.
+apply app_eq_cons in H.
+sD.
+injection H0 as.
+subst.
+tauto.
+apply app_cons_not_nil in H1.
+contradiction.
 Qed.
 
 
