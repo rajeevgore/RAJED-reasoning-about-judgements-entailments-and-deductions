@@ -11,24 +11,25 @@ because in this case, interchanging A->B with some Q
 in either Γ1 or Γ2 requires, in the right premise, moving that Q
 to in between Γ1 and Γ2, ie
 
-Γ1 B Γ2' Q Γ2" |- Δ1 Δ2    Γ1 Γ2' Q Γ2" |- Δ1 A Δ2
+Γ1 B Γ2' Q Γ2'' |- Δ1 Δ2    Γ1 Γ2' Q Γ2'' |- Δ1 A Δ2
 ------------------------------------------------------
-Γ1 A->B Γ2' Q Γ2" |- Δ1 Δ2
+Γ1 A->B Γ2' Q Γ2'' |- Δ1 Δ2
 
 becomes
 
-Γ1 B Γ2' Q Γ2" |- Δ1 Δ2    Γ1 Γ2' Q Γ2" |- Δ1 A Δ2
+Γ1 B Γ2' Q Γ2'' |- Δ1 Δ2    Γ1 Γ2' Q Γ2'' |- Δ1 A Δ2
 ------------------------------------------------------
-Γ1 A->B Γ2' Q Γ2" |- Δ1 Δ2
+Γ1 A->B Γ2' Q Γ2'' |- Δ1 Δ2
 
-Γ1 Q Γ2' B Γ2" |- Δ1 Δ2    Γ1 Q Γ2' Γ2" |- Δ1 A Δ2
+Γ1 Q Γ2' B Γ2'' |- Δ1 Δ2    Γ1 Q Γ2' Γ2'' |- Δ1 A Δ2
 ------------------------------------------------------
-Γ1 Q Γ2' A->B Γ2" |- Δ1 Δ2
+Γ1 Q Γ2' A->B Γ2'' |- Δ1 Δ2
 
 that is, in the right premise, we have to just move Q,
 not swap it with something else.
 *)
 
+Require Import gen.
 Require Import dd.
 Require Import lnt.
 Require Import List_lemmas.
@@ -65,7 +66,7 @@ unfold nsext.
 
 Ltac stage3 qin3 l l1 := 
 eapply qin3 ; [ apply nsext_def |
-rewrite seqext_def ; [ list_eq_assoc | apply (l,l1) ] ].
+rewrite seqext_def ; list_eq_assoc ].
 
 Lemma gen_exchL: forall (V : Set) ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),

@@ -91,12 +91,13 @@ Inductive seqrule (W : Set) (pr : rls (rel (list W))) :
   | Sctxt : forall ps c Φ1 Φ2 Ψ1 Ψ2, pr ps c -> 
     seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 
-Lemma seqext_def : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 (seq : rel (list W)) U V,
-      @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = ((Φ1 ++ U ++ Φ2),(Ψ1 ++ V ++ Ψ2)).
+Lemma seqext_def : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 U V,
+      @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof. reflexivity. Qed.
 
-Lemma seqext_def' : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 U V,
-      @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = ((Φ1 ++ U ++ Φ2),(Ψ1 ++ V ++ Ψ2)).
+Lemma seqext_defp : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 seq,
+      @seqext W Φ1 Φ2 Ψ1 Ψ2 seq =
+        let (U, V) := seq in (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof. reflexivity. Qed.
 
 Lemma seqrule_same: forall (W : Set) pr ps (c c' : rel (list W)),

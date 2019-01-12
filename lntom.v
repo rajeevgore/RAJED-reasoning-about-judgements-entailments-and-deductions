@@ -43,7 +43,7 @@ unfold nsext.
 
 Ltac stage3 qin3 l l1 := 
 eapply qin3 ; [ apply nsext_def |
-rewrite seqext_def ; [ list_eq_assoc | apply (l,l1) ] ].
+rewrite seqext_def ; list_eq_assoc ].
 
 Lemma gen_moveL: forall (V : Set) ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
@@ -362,7 +362,7 @@ rewrite <- nsext_def.
 apply NSctxt.
 rewrite app_cons_single.
 rewrite <- app_assoc.
-rewrite <- seqext_def'.
+rewrite <- seqext_def.
 apply Sctxt.
 eassumption.
 assumption.
@@ -437,25 +437,15 @@ rewrite app_nil_r.
 
 stage1 pr.
 apply pr.
-destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
 
+rewrite dersrec_forall.
+intros.
 rewrite dersrec_forall in H0.
-simpl in H0.
-specialize_full H0.
-left. reflexivity.
-assumption.
-
-rewrite dersrec_forall in H0.
-simpl in H0.
-specialize_full H0.
-left. reflexivity.
-assumption.
-
-rewrite dersrec_forall in H0.
-simpl in H0.
-specialize_full H0.
-right. left. reflexivity.
-assumption.
+specialize (H0 c).
+apply H0.
+(* rewrite <- seqext_defp in H. fails *)
+unfold seqext.
+exact H.
 
 Qed.
 
