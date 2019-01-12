@@ -229,6 +229,10 @@ inversion H. apply Forall_cons. assumption. tauto.
 inversion H. apply dlCons.  assumption. tauto.
 Qed.
 
+Lemma dersrec_forall: forall (X : Set) rules prems (cs : list X),
+  dersrec rules prems cs <-> forall c, In c cs -> derrec rules prems c.
+Proof. intros. rewrite dersrec_all. rewrite Forall_forall. reflexivity. Qed.
+
 Lemma dersrec_nil: forall (X : Set) rules prems,
   dersrec rules prems ([] : list X).
 Proof.  intros.  rewrite dersrec_all ; apply Forall_nil. Qed.

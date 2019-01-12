@@ -28,7 +28,7 @@ unfold seqext in pr ;
 simpl in pr | idtac ].
 
 Ltac stage2 H1 qin1 qin3 := 
-rewrite dersrec_all ;  rewrite Forall_forall ;
+rewrite dersrec_forall ;
 intros q qin ; rewrite in_map_iff in qin ; cD ;
 rename_last qin1 ;
 rewrite in_map_iff in qin1 ; cD ;
@@ -73,7 +73,7 @@ rewrite list_rearr14.
 rewrite <- nsext_def.  subst seqe.  rewrite <- HeqGe.
 apply NSctxt. assumption.
 
-rewrite dersrec_all.  rewrite Forall_forall.
+rewrite dersrec_forall.
 intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
 rewrite Forall_forall in H1.
@@ -98,7 +98,7 @@ rewrite <- list_rearr14.
 rewrite <- nsext_def.  subst seqe.  rewrite <- HeqHe.
 apply NSctxt. assumption.
 
-rewrite dersrec_all.  rewrite Forall_forall.
+rewrite dersrec_forall.
 intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
 rewrite Forall_forall in H1.
@@ -263,14 +263,10 @@ apply pr.
 stage2 H1 qin1 qin3. *)
 destruct pr. (* case pr. or elim pr. don't put value of ps1 into premises *)
 simpl.
-(* or apply dlNil. here *)
-intros.
-rewrite dersrec_all.
-apply Forall_nil.
+apply dlNil.
 simpl.
 intros.
-rewrite dersrec_all.
-rewrite Forall_forall.
+rewrite dersrec_forall.
 intros.
 apply in_inv in H.
 sD.
@@ -313,8 +309,7 @@ apply in_nil in H.
 contradiction.
 
 simpl.
-rewrite dersrec_all.
-rewrite Forall_forall.
+rewrite dersrec_forall.
 intros.
 apply in_inv in H.
 sD ; subst. (* 2 sgs *)
@@ -338,8 +333,7 @@ subst.
 unfold nsext.
 (* this one needs the dersrec hyp with no move *)
 simpl in H0.
-rewrite dersrec_all in H0.
-rewrite Forall_forall in H0.
+rewrite dersrec_forall in H0.
 simpl in H0.
 erequire H0.
 apply H0.
@@ -415,8 +409,7 @@ unfold nsext.
 reflexivity.
 reflexivity.
 
-rewrite dersrec_all in H0.
-rewrite Forall_forall in H0.
+rewrite dersrec_forall in H0.
 simpl in H0.
 specialize_full H0.
 right. left. reflexivity.
@@ -446,22 +439,19 @@ stage1 pr.
 apply pr.
 destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
 
-rewrite dersrec_all in H0.
-rewrite Forall_forall in H0.
+rewrite dersrec_forall in H0.
 simpl in H0.
 specialize_full H0.
 left. reflexivity.
 assumption.
 
-rewrite dersrec_all in H0.
-rewrite Forall_forall in H0.
+rewrite dersrec_forall in H0.
 simpl in H0.
 specialize_full H0.
 left. reflexivity.
 assumption.
 
-rewrite dersrec_all in H0.
-rewrite Forall_forall in H0.
+rewrite dersrec_forall in H0.
 simpl in H0.
 specialize_full H0.
 right. left. reflexivity.
