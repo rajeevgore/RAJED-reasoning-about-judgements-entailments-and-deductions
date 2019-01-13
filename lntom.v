@@ -4,8 +4,8 @@
 
 Require Import gen.
 Require Import dd.
-Require Import lnt.
 Require Import List_lemmas.
+Require Import lnt.
 
 Lemma all_eq_imp: forall (T : Type) (y : T) (z : T -> Prop),
   (forall (x : T), y = x \/ False -> z x) <-> z y.
@@ -261,42 +261,10 @@ apply pr.
 (* doesn't work, need to use the ps1 in the goal here is that
   given by princrule ps1 ([Qpr], l0)
 stage2 H1 qin1 qin3. *)
-destruct pr. (* case pr. or elim pr. don't put value of ps1 into premises *)
-simpl.
-apply dlNil.
-simpl.
-intros.
-rewrite dersrec_forall.
-intros.
-apply in_inv in H.
-sD.
-subst.
 
+destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
 rewrite Forall_forall in H1.
 simpl in H1.
-(* various solutions to dealing with hypothesis forall x, A x -> B x 
-  see emails 8-9 Jan 
-evar (z : list (rel (list (PropF V)) * dir)).
-specialize (H1 z).
-subst z. (* subst. alone doesn't work *)
-
-match type of H1 with
-| ?A -> _ =>
-  assert (I : A); [| apply H1 in I ]
-  end. 
-
-apply (fun G2 G1 => G1 (H1 G2)). 
-
-eassert _ as I%H1.
-
-or 
-eassert _ ; [ apply H1 | ].
-eassert _ as I ; [ | apply H1 in I ].
-
-all : cycle 1. Show. 
-Undo. Show. 
-*)
-
 rewrite all_eq_imp in H1.
 unfold can_gen_moveL in H1.
 unfold nsext.
@@ -305,14 +273,6 @@ eapply H1.
 unfold nsext.
 reflexivity.
 reflexivity.
-apply in_nil in H.
-contradiction.
-
-simpl.
-rewrite dersrec_forall.
-intros.
-apply in_inv in H.
-sD ; subst. (* 2 sgs *)
 
 rewrite Forall_forall in H1.
 simpl in H1.
@@ -327,11 +287,6 @@ unfold nsext.
 reflexivity.
 reflexivity.
 
-simpl in H.
-sE.
-subst.
-unfold nsext.
-(* this one needs the dersrec hyp with no move *)
 simpl in H0.
 rewrite dersrec_forall in H0.
 simpl in H0.
@@ -340,8 +295,6 @@ apply H0.
 unfold nsext.
 rewrite <- app_assoc.
 tauto.
-
-simpl. apply dlNil.
 
 (* next remaining subgoal with Q (formula to be moved) in principal formula *)
 subst.
@@ -372,9 +325,8 @@ subst.
 pose pr as Qpr.
 apply princrule_L in Qpr.
 sD.
-apply app_eq_nil in Qpr.
-cD.
-discriminate.
+apply list_eq_nil in Qpr.
+contradiction.
 apply list_eq_single in Qpr0.
 cD. subst.
 simpl.
@@ -421,10 +373,12 @@ assumption.
 subst.
 pose pr as Qpr.
 apply princrule_L in Qpr.
+(* this fails 
+sD ; 
+  (apply list_eq_single in Qpr0) | (apply list_eq_nil in Qpr ; contradiction).
+*)
 sD.
-apply app_eq_nil in Qpr.
-cD.
-discriminate.
+apply list_eq_nil in Qpr. contradiction.
 
 apply list_eq_single in Qpr0.
 cD. 

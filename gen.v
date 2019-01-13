@@ -60,6 +60,29 @@ Ltac sD :=
     | [ H : False |- _ ] => contradiction H
     end.
 
+(* various solutions to dealing with hypothesis forall x, A x -> B x 
+  see emails 8-9 Jan 
+evar (z : list (rel (list (PropF V)) * dir)).
+specialize (H1 z).
+subst z. (* subst. alone doesn't work *)
+
+match type of H1 with
+| ?A -> _ =>
+  assert (I : A); [| apply H1 in I ]
+  end. 
+
+apply (fun G2 G1 => G1 (H1 G2)). 
+
+eassert _ as I%H1.
+
+or 
+eassert _ ; [ apply H1 | ].
+eassert _ as I ; [ | apply H1 in I ].
+
+all : cycle 1. Show. 
+Undo. Show. 
+*)
+
 (* tactics from Lily Chung <ikdc@mit.edu> Tue, 8 Jan 2019
   https://gist.github.com/ichung/032b849da0c3c5e3987c83f835d111ee *) 
 

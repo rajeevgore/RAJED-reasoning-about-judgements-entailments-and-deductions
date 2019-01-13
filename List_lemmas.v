@@ -320,17 +320,12 @@ Qed.
 
 Lemma list_eq_single: forall (A : Type) (x y : list A) (u v : A),
   x ++ u :: y = [v] -> x = [] /\ y = [] /\ u = v.
-Proof.
-intros.
-apply app_eq_cons in H.
-sD.
-injection H0 as.
-subst.
-tauto.
-apply app_cons_not_nil in H1.
-contradiction.
-Qed.
+Proof.  intros.  apply app_eq_cons in H.  sD.  injection H0 as.  subst.  tauto.
+  apply app_cons_not_nil in H1.  contradiction.  Qed.
 
+Lemma list_eq_nil: forall (A : Type) (x y : list A) (u : A),
+  x ++ u :: y = [] -> False.
+Proof.  intros.  apply app_eq_nil in H.  cD.  discriminate.  Qed.
 
 
 
