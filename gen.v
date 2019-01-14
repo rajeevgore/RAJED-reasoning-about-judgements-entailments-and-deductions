@@ -25,6 +25,10 @@ Proof. intros. subst. reflexivity. Qed.
 
 (* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
 
+Lemma pair_eqI: forall T U (u v : T) (x y : U),
+  u = v -> x = y -> (u,x) = (v,y).
+Proof. intros. subst. reflexivity. Qed.
+
 Ltac rename_last name :=
   match goal with
     | [ K : _ |- _ ] => rename K into name

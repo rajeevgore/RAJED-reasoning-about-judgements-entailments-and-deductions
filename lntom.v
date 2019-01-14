@@ -27,15 +27,23 @@ Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
 
 Ltac assoc_mid l := 
   list_assoc_r ;
+  rewrite ?app_comm_cons ;
   repeat ((rewrite <- (app_assoc _ l _) ; fail 1) || rewrite app_assoc) ;
   rewrite <- (app_assoc _ l _).
 
+Definition app_assoc_cons A l m (x : A) xs := app_assoc l m (x :: xs).
+
+Ltac assoc_single_mid :=
+  rewrite <- ?app_comm_cons ;
+  rewrite ?app_assoc_cons.
+
 (* test of assoc_mid
-Lemma x : forall T (a b c d e f g : list T), a ++ b ++ c ++ d ++ e ++ f = g.
+Lemma x : forall T (a b c d e f g : list T) (x y z : T),
+  a ++ x :: b ++ c ++ y :: d ++ e ++ z :: f = g.
 intros.
-assoc_mid b.
+assoc_mid b. (* doesn't work *)
 assoc_mid c.
-assoc_mid d.
+assoc_mid d. (* doesn't work *)
 assoc_mid e.
 *)
 
@@ -254,8 +262,7 @@ eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 {
 stage1 pr.
 (* need to rearrange appends to get ... ++ l ++ ... *)
-rewrite <- !app_assoc.
-rewrite app_assoc.
+assoc_mid l.
 apply pr.
 stage2 H1 qin1 qin3.
 (*
@@ -277,11 +284,21 @@ eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 {
 stage1 pr.
 (* just need to get l in the middle *)
-rewrite app_assoc.
-rewrite app_comm_cons.
-rewrite app_assoc.
+assoc_mid l.
 apply pr.
 stage2 H1 qin1 qin3.
+(*
+specialize_full qin3.
+apply nsext_def.
+unfold seqext.
+eapply derrec_same.
+exact qin3.  
+repeat f_equal.
+all : apply pair_eqI.
+all : try reflexivity.
+(* now could do more automatically if could rewrite without instantiating *)
+*)
+
 repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons).
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 }
@@ -305,8 +322,6 @@ rewrite <- !app_assoc.
 apply pr.
 stage2 H1 qin1 qin3.
 rewrite !app_assoc.
-(* why doesn't this work?
-rewrite app_assoc in qin3. *)
 rewrite <- (app_assoc _ Γ2).
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 }
