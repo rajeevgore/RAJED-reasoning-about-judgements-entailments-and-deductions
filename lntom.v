@@ -2,13 +2,41 @@
 (* try non-adjacent move of a single formula,
   for system with princrule and seqrule *)
 
+(* 
+coqc gen.v
+coqc dd.v
+coqc List_lemmas.v
+coqc lnt.v
+*)
+
 Require Import gen.
 Require Import dd.
 Require Import List_lemmas.
 Require Import lnt.
 
+Ltac list_eq_nc := 
+   match goal with
+     | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H
+     | [ H : _ ++ _ = [] |- _ ] => apply app_eq_nil in H
+     | [ H : _ ++ _ :: _ = [_] |- _ ] => apply list_eq_single in H
+     | [ H : _ :: _ = [] |- _ ] => discriminate H
+     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
+     end.
+
+Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
+
+Ltac use_prL pr := 
+  pose pr as Qpr ;
+  apply princrule_L in Qpr ;
+  sD_list_eq ;
+  subst ;
+  simpl ;
+  simpl in pr ;
+  rewrite ?app_nil_r in * ;
+  rewrite ?app_nil_r.
+
 Lemma all_eq_imp: forall (T : Type) (y : T) (z : T -> Prop),
-  (forall (x : T), y = x \/ False -> z x) <-> z y.
+(forall (x : T), y = x \/ False -> z x) <-> z y.
 Proof. firstorder. subst.  assumption. Qed.
 
 Definition can_gen_moveL {V : Set}
@@ -243,17 +271,9 @@ rewrite <- (app_assoc _ Γ2).
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
-
-pose pr as Qpr.
-apply princrule_L in Qpr.
-sD.
+- {
 subst.
-discriminate.
-subst.
-injection Qpr0 as.
-subst.
-simpl.
-rewrite ?app_nil_r in *.
+use_prL pr.
 
 stage1 pr.
 rewrite app_assoc.
@@ -295,20 +315,12 @@ apply H0.
 unfold nsext.
 rewrite <- app_assoc.
 tauto.
+}
 
 (* next remaining subgoal with Q (formula to be moved) in principal formula *)
+- {
 subst.
-rewrite app_nil_r in *.
-pose pr as Qpr.
-apply princrule_L in Qpr.
-sD.
-discriminate.
-injection Qpr0 as.
-apply app_eq_nil in H2.
-cD.
-subst.
-simpl.
-simpl in pr.
+use_prL pr.
 (* doesn't seem to require any move, or cases of the rule *)
 eapply derI.
 rewrite <- nsext_def.
@@ -319,19 +331,12 @@ rewrite <- seqext_def.
 apply Sctxt.
 eassumption.
 assumption.
+}
 
 (* next remaining subgoal with Q (formula to be moved) in principal formula *)
+- {
 subst.
-pose pr as Qpr.
-apply princrule_L in Qpr.
-sD.
-apply list_eq_nil in Qpr.
-contradiction.
-apply list_eq_single in Qpr0.
-cD. subst.
-simpl.
-simpl in pr.
-rewrite app_nil_r.
+use_prL pr.
 stage1 pr.
 rewrite app_assoc.
 apply pr.
@@ -367,27 +372,12 @@ specialize_full H0.
 right. left. reflexivity.
 rewrite <- app_assoc.
 assumption.
+}
 
 (* next remaining subgoal with Q (formula to be moved) in principal formula *)
-
+- {
 subst.
-pose pr as Qpr.
-apply princrule_L in Qpr.
-(* this fails 
-sD ; 
-  (apply list_eq_single in Qpr0) | (apply list_eq_nil in Qpr ; contradiction).
-*)
-sD.
-apply list_eq_nil in Qpr. contradiction.
-
-apply list_eq_single in Qpr0.
-cD. 
-apply app_eq_nil in Qpr1.
-cD.
-subst.
-simpl.
-simpl in pr.
-rewrite app_nil_r.
+use_prL pr.
 
 stage1 pr.
 apply pr.
@@ -400,6 +390,7 @@ apply H0.
 (* rewrite <- seqext_defp in H. fails *)
 unfold seqext.
 exact H.
+}
 
 Qed.
 

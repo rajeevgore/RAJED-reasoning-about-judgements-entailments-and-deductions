@@ -37,12 +37,24 @@ Ltac cE :=
     | [ H : False |- _ ] => contradiction H
     end.
 
+(* one step of cD *)
+Ltac cD' :=
+  match goal with
+    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
+    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    | [ H : False |- _ ] => contradiction H
+    end.
+
+(*
 Ltac cD :=
   repeat match goal with
     | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
     | [ H : ex _ |- _ ] => destruct H as [?H ?H]
     | [ H : False |- _ ] => contradiction H
     end.
+    *)
+
+Ltac cD := repeat cD'.
 
 Ltac sE :=
   repeat match goal with
@@ -52,6 +64,21 @@ Ltac sE :=
     | [ H : False |- _ ] => contradiction H
     end.
 
+Ltac sD' :=
+  match goal with
+    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
+    | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
+    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    | [ H : False |- _ ] => contradiction H
+    end.
+
+(* extra stuff used in sD, not in cD *)
+Ltac sDx :=
+  match goal with
+    | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
+    end.
+
+(*
 Ltac sD :=
   repeat match goal with
     | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
@@ -59,6 +86,10 @@ Ltac sD :=
     | [ H : ex _ |- _ ] => destruct H as [?H ?H]
     | [ H : False |- _ ] => contradiction H
     end.
+
+Ltac sD := repeat sD'.
+*)
+Ltac sD := repeat (cD' || sDx).
 
 (* various solutions to dealing with hypothesis forall x, A x -> B x 
   see emails 8-9 Jan 
