@@ -25,6 +25,20 @@ Ltac list_eq_nc :=
 
 Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
 
+Ltac assoc_mid l := 
+  list_assoc_r ;
+  repeat ((rewrite <- (app_assoc _ l _) ; fail 1) || rewrite app_assoc) ;
+  rewrite <- (app_assoc _ l _).
+
+(* test of assoc_mid
+Lemma x : forall T (a b c d e f g : list T), a ++ b ++ c ++ d ++ e ++ f = g.
+intros.
+assoc_mid b.
+assoc_mid c.
+assoc_mid d.
+assoc_mid e.
+*)
+
 Ltac use_prL pr := 
   pose pr as Qpr ;
   apply princrule_L in Qpr ;
@@ -159,6 +173,7 @@ subst.
 (* do as much as possible for all rules at once *)
 acacD'. (* gives 10 subgoals *)
 
+{
 (* sg 1 of 10 *)
 stage1 pr.
 (* normally need to rearrange *)
@@ -172,6 +187,7 @@ unfold seqext.
 f_equal.
 apply app_assoc. (* need to generalise this *)
 list_eq_assoc.
+}
 
 (* sg 2 of 10 *)
 all: cycle 1.
@@ -182,6 +198,7 @@ all: cycle 1.
 (* problem here, Q between sel3 and sel5,
   but one of sel3 and sel5 must be empty due to princrule_L *)
 
+{
 pose pr as pr'.
 apply princrule_L in pr'.
 sD ; subst.
@@ -190,6 +207,7 @@ simpl in pr.
 simpl.
 rewrite app_nil_r.
 
+{
 stage1 pr. (* will need to move Q around sel1 *)
 
 rewrite app_assoc.
@@ -200,9 +218,11 @@ rewrite <- app_assoc.
 simpl.
 rewrite <- app_assoc.
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+}
 
 apply app_eq_unit in pr'0.
 sD ; subst.
+{
 simpl in pr. simpl.
 rewrite app_nil_r.
 stage1 pr. (* will need to move Q around sel1 *)
@@ -214,7 +234,9 @@ rewrite <- app_assoc.
 simpl.
 rewrite <- app_assoc.
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+}
 
+{
 rewrite app_nil_r in pr.
 simpl.
 stage1 pr.
@@ -226,7 +248,10 @@ stage2 H1 qin1 qin3.
 rewrite <- app_assoc.
 rewrite (app_assoc _ l).
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+}
+}
  
+{
 stage1 pr.
 (* need to rearrange appends to get ... ++ l ++ ... *)
 rewrite <- !app_assoc.
@@ -247,7 +272,9 @@ assert ((Γ1 ++ sel1) ++ l1 ++ sel5 ++ Q :: Γ3 =
 list_eq_assoc.
 rewrite H.
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+}
 
+{
 stage1 pr.
 (* just need to get l in the middle *)
 rewrite app_assoc.
@@ -257,18 +284,22 @@ apply pr.
 stage2 H1 qin1 qin3.
 repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons).
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+}
 
+{
 stage1 pr.
 rewrite <- !app_assoc.
 apply pr.
 stage2 H1 qin1 qin3.
 rewrite app_assoc.
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+}
 
 (* subgoal has Q (formula to be moved) in principal formula *)
 all: cycle 1.
 all: cycle 1.
 
+{
 stage1 pr.
 rewrite <- !app_assoc.
 apply pr.
@@ -278,6 +309,7 @@ rewrite !app_assoc.
 rewrite app_assoc in qin3. *)
 rewrite <- (app_assoc _ Γ2).
 eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+}
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
 - {
