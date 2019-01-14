@@ -46,6 +46,15 @@ Definition can_gen_moveL {V : Set}
   derrec rules (fun _ => False) 
     (G ++ (pair (Γ1 ++ Γ2 ++ Q :: Γ3) Δ, d) :: H).
 
+Ltac use_cgmL H1 := 
+  rewrite Forall_forall in H1 ;
+  simpl in H1 ;
+  specialize_full H1 ;
+  [ | unfold can_gen_moveL in H1 ; unfold nsext ;
+    rewrite <- app_assoc ;
+    eapply H1 ; reflexivity ] ;
+  unfold nsext ; tauto.
+
 Ltac stage1 pr := 
 subst ;
 rewrite ?app_nil_r in * ;
@@ -272,125 +281,22 @@ eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
 - {
-subst.
-use_prL pr.
-
-stage1 pr.
-rewrite app_assoc.
-apply pr.
-(* doesn't work, need to use the ps1 in the goal here is that
-  given by princrule ps1 ([Qpr], l0)
-stage2 H1 qin1 qin3. *)
-
+subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
 destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
-rewrite Forall_forall in H1.
-simpl in H1.
-rewrite all_eq_imp in H1.
-unfold can_gen_moveL in H1.
-unfold nsext.
-rewrite <- app_assoc.
-eapply H1.
-unfold nsext.
-reflexivity.
-reflexivity.
-
-rewrite Forall_forall in H1.
-simpl in H1.
-specialize_full H1.
-left. reflexivity.
-
-unfold can_gen_moveL in H1.
-unfold nsext.
-rewrite <- app_assoc.
-eapply H1.
-unfold nsext.
-reflexivity.
-reflexivity.
-
-simpl in H0.
-rewrite dersrec_forall in H0.
-simpl in H0.
-erequire H0.
-apply H0.
-unfold nsext.
-rewrite <- app_assoc.
-tauto.
+use_cgmL H1. use_cgmL H1.
+rewrite dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 }
 
-(* next remaining subgoal with Q (formula to be moved) in principal formula *)
-- {
-subst.
-use_prL pr.
-(* doesn't seem to require any move, or cases of the rule *)
-eapply derI.
-rewrite <- nsext_def.
-apply NSctxt.
-rewrite app_cons_single.
-rewrite <- app_assoc.
-rewrite <- seqext_def.
-apply Sctxt.
-eassumption.
-assumption.
-}
+- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0.  }
 
-(* next remaining subgoal with Q (formula to be moved) in principal formula *)
 - {
-subst.
-use_prL pr.
-stage1 pr.
-rewrite app_assoc.
-apply pr.
+subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
 destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
-
-rewrite Forall_forall in H1.
-simpl in H1.
-specialize_full H1.
-left. reflexivity.
-unfold can_gen_moveL in H1.
-unfold nsext.
-rewrite <- app_assoc.
-eapply H1.
-unfold nsext.
-reflexivity.
-reflexivity.
-
-rewrite Forall_forall in H1.
-simpl in H1.
-specialize_full H1.
-left. reflexivity.
-unfold can_gen_moveL in H1.
-unfold nsext.
-rewrite <- app_assoc.
-eapply H1.
-unfold nsext.
-reflexivity.
-reflexivity.
-
-rewrite dersrec_forall in H0.
-simpl in H0.
-specialize_full H0.
-right. left. reflexivity.
-rewrite <- app_assoc.
-assumption.
+use_cgmL H1. use_cgmL H1.
+rewrite dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 }
 
-(* next remaining subgoal with Q (formula to be moved) in principal formula *)
-- {
-subst.
-use_prL pr.
-
-stage1 pr.
-apply pr.
-
-rewrite dersrec_forall.
-intros.
-rewrite dersrec_forall in H0.
-specialize (H0 c).
-apply H0.
-(* rewrite <- seqext_defp in H. fails *)
-unfold seqext.
-exact H.
-}
+- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0.  }
 
 Qed.
 
