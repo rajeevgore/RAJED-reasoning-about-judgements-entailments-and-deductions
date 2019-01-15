@@ -35,8 +35,13 @@ Ltac assoc_mid l :=
 
 Definition app_assoc_cons A l m (x : A) xs := app_assoc l m (x :: xs).
 
+(* in ssreflect *)
+Ltac list_assoc_l' := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
+Ltac list_assoc_r' :=
+  repeat (rewrite - !app_assoc || rewrite - !app_comm_cons).
+
 Ltac assoc_single_mid :=
-  rewrite <- ?app_comm_cons ;
+  list_assoc_r' ; 
   rewrite ?app_assoc_cons.
 
 (* test of assoc_mid
@@ -299,7 +304,10 @@ exact qin3.
 f_equal.  f_equal.
 all : repeat (apply pair_eqI).
 all : try reflexivity.
-(* now could do more automatically if could rewrite without instantiating *)
+all : assoc_single_mid.
+2: reflexivity.
+list_eq_assoc.
+but our reasoning more generally would depend on recognising single variables
 *)
 
 repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons).
