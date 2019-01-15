@@ -9,6 +9,8 @@ coqc List_lemmas.v
 coqc lnt.v
 *)
 
+Require Import ssreflect.
+
 Require Import gen.
 Require Import dd.
 Require Import List_lemmas.
@@ -54,7 +56,7 @@ Ltac use_prL pr :=
   subst ;
   simpl ;
   simpl in pr ;
-  rewrite ?app_nil_r in * ;
+  rewrite -> ?app_nil_r in * ;
   rewrite ?app_nil_r.
 
 Lemma all_eq_imp: forall (T : Type) (y : T) (z : T -> Prop),
@@ -69,7 +71,7 @@ Definition can_gen_moveL {V : Set}
     (G ++ (pair (Γ1 ++ Γ2 ++ Q :: Γ3) Δ, d) :: H).
 
 Ltac use_cgmL H1 := 
-  rewrite Forall_forall in H1 ;
+  rewrite -> Forall_forall in H1 ;
   simpl in H1 ;
   specialize_full H1 ;
   [ | unfold can_gen_moveL in H1 ; unfold nsext ;
@@ -79,7 +81,7 @@ Ltac use_cgmL H1 :=
 
 Ltac stage1 pr := 
 subst ;
-rewrite ?app_nil_r in * ;
+rewrite -> ?app_nil_r in * ;
 eapply derI ; [
 rewrite <- nsext_def ; apply NSctxt ;
 eapply Sctxt in pr ;
@@ -88,12 +90,12 @@ simpl in pr | idtac ].
 
 Ltac stage2 H1 qin1 qin3 := 
 rewrite dersrec_forall ;
-intros q qin ; rewrite in_map_iff in qin ; cD ;
+intros q qin ; rewrite -> in_map_iff in qin ; cD ;
 rename_last qin1 ;
-rewrite in_map_iff in qin1 ; cD ;
+rewrite -> in_map_iff in qin1 ; cD ;
 rename_last qin3 ;
 destruct qin1 ; subst ;
-rewrite Forall_forall in H1 ;
+rewrite -> Forall_forall in H1 ;
 eapply in_map in qin3 ;
 eapply in_map in qin3 ;
 apply H1 in qin3 ;
@@ -133,9 +135,9 @@ rewrite <- nsext_def.  subst seqe.  rewrite <- HeqGe.
 apply NSctxt. assumption.
 
 rewrite dersrec_forall.
-intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
+intros q qin.  subst pse.  rewrite -> in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
-rewrite Forall_forall in H1.
+rewrite -> Forall_forall in H1.
 rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
 unfold can_gen_moveL in c0.
 unfold nsext. subst Ge. subst seqe.
@@ -158,9 +160,9 @@ rewrite <- nsext_def.  subst seqe.  rewrite <- HeqHe.
 apply NSctxt. assumption.
 
 rewrite dersrec_forall.
-intros q qin.  subst pse.  rewrite in_map_iff in qin. cE.
+intros q qin.  subst pse.  rewrite -> in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
-rewrite Forall_forall in H1.
+rewrite -> Forall_forall in H1.
 rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
 unfold can_gen_moveL in c0.
 unfold nsext. subst He. subst seqe.
@@ -291,10 +293,11 @@ stage2 H1 qin1 qin3.
 specialize_full qin3.
 apply nsext_def.
 unfold seqext.
+all : cycle 1.
 eapply derrec_same.
 exact qin3.  
-repeat f_equal.
-all : apply pair_eqI.
+f_equal.  f_equal.
+all : repeat (apply pair_eqI).
 all : try reflexivity.
 (* now could do more automatically if could rewrite without instantiating *)
 *)
@@ -331,7 +334,7 @@ eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
 subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
 destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
 use_cgmL H1. use_cgmL H1.
-rewrite dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
+rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 }
 
 - { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0.  }
@@ -340,7 +343,7 @@ rewrite dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
 destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
 use_cgmL H1. use_cgmL H1.
-rewrite dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
+rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 }
 
 - { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0.  }
