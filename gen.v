@@ -34,6 +34,11 @@ Ltac rename_last name :=
     | [ K : _ |- _ ] => rename K into name
     end.
 
+Ltac clear_one :=
+  match goal with
+    | [ K : _ |- _ ] => clear K
+    end.
+
 Ltac cE :=
   repeat match goal with
     | [ H : _ /\ _ |- _ ] => inversion_clear H
