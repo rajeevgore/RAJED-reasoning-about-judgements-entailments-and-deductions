@@ -156,3 +156,26 @@ Ltac stage3 qin3 l l1 :=
 eapply qin3 ; [ apply nsext_def |
 rewrite seqext_def ; list_eq_assoc ].
 
+Ltac stage2ds H1 qin1 qin3 := 
+  stage2 H1 qin1 qin3 ; eapply derrec_same ; [
+    eapply qin3 ; [ apply nsext_def | unfold seqext ] | ].
+
+Ltac stage12ds H1 qin1 qin3 pr l := 
+stage1 pr ; [ assoc_mid l ; apply pr | stage2ds H1 qin1 qin3 ].
+
+Ltac app_cancel := 
+  (list_assoc_l' ; rewrite ?appr_cong ;
+  list_assoc_r' ; rewrite ?appl_cong).
+
+Ltac solve_eqs := 
+  repeat clear_one ;
+  try (apply nsI) ;
+  repeat (apply pair_eqI) ;
+  try refl_ni ;
+  assoc_single_mid ;
+  try (apply midI) ;
+  try (first [check_app_app | reflexivity]) ;
+  repeat app_cancel ;
+  try (first [check_app_app | reflexivity]) ;
+  try refl_ni.
+

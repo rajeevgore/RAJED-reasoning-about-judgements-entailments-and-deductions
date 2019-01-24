@@ -33,7 +33,9 @@ unfold nsext in H7.
 apply partition_2_2 in H7.
 remember (Γ1 ++ Γ2 ++ Q :: Γ3, Δ) as seqe.
 
-decompose [or] H7. clear H7.  cE.
+decompose [or] H7. 
+{
+clear H7.  cE.
 (* case where the rule is applied in a sequent to the right
   of where the move takes place *)
 remember (G0 ++ (seqe, d0) :: x) as Ge.
@@ -57,8 +59,11 @@ rewrite <- list_rearr14.
 eapply c0. 2:reflexivity.
 unfold nsext. subst G. subst seq.
 list_eq_assoc.
+}
 
-all : revgoals. clear H7. cE.
+all : revgoals.
+{ 
+clear H7. cE.
 (* now the case where the rule is applied in a sequent to the left
   of where the move takes place *)
 remember (x ++ (seqe, d0) :: H6) as He.
@@ -83,6 +88,7 @@ rewrite list_rearr14.
 eapply c0. 2:reflexivity.
 unfold nsext. subst H2. subst seq.
 apply list_rearr14.
+}
 
 (* now case where move and rule application occur in the same sequent *)
 cE. clear H7. injection H10 as.
@@ -100,16 +106,7 @@ acacD'. (* gives 10 subgoals *)
 stage1 pr.
 (* normally need to rearrange *)
 apply pr. (* solves one sg *)
-
-stage2 H1 qin1 qin3.
-eapply derrec_same.
-eapply qin3.
-apply nsext_def.
-unfold seqext.
-f_equal.
-apply app_assoc. (* need to generalise this *)
-list_eq_assoc.
-}
+stage2ds H1 qin1 qin3.  2 : solve_eqs.  1 : solve_eqs.  1 : solve_eqs.  }
 
 (* sg 2 of 10 *)
 all: cycle 1.
@@ -131,121 +128,59 @@ rewrite app_nil_r.
 
 {
 stage1 pr. (* will need to move Q around sel1 *)
-
 rewrite app_assoc.
 rewrite list_rearr16.
 apply pr.
-stage2 H1 qin1 qin3.
-rewrite <- app_assoc.
-simpl.
-rewrite <- app_assoc.
-eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+stage2ds H1 qin1 qin3.
+2: list_assoc_r'.
+2: simpl.
+2: solve_eqs.
+1: solve_eqs.
+1: solve_eqs.
 }
 
-apply app_eq_unit in pr'0.
-sD ; subst.
 {
-simpl in pr. simpl.
-rewrite app_nil_r.
+apply app_eq_unit in pr'0.
+sD ; subst ; simpl in pr ; simpl ;
+  rewrite ?app_nil_r ; rewrite ?app_nil_r in pr.
+{
 stage1 pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
 rewrite list_rearr16.
 apply pr.
-stage2 H1 qin1 qin3.
-rewrite <- app_assoc.
-simpl.
-rewrite <- app_assoc.
-eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+stage2ds H1 qin1 qin3.
+2: solve_eqs.
+1: solve_eqs.
+rewrite app_nil_r.
+1: solve_eqs.
+1: solve_eqs.
 }
 
 {
-rewrite app_nil_r in pr.
-simpl.
 stage1 pr.
 rewrite <- app_assoc.
 simpl.
 rewrite app_assoc.
 apply pr.
-stage2 H1 qin1 qin3.
-rewrite <- app_assoc.
-rewrite (app_assoc _ l).
-eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
+stage2ds H1 qin1 qin3.
+2: solve_eqs.
+1: solve_eqs.
+1: solve_eqs.
+}
 }
 }
  
-{
-stage1 pr.
-(* need to rearrange appends to get ... ++ l ++ ... *)
-assoc_mid l.
-apply pr.
-stage2 H1 qin1 qin3.
-eapply derrec_same.
-eapply qin3.
+{ stage12ds H1 qin1 qin3 pr l. 2 : solve_eqs. 1 : solve_eqs. 1 : solve_eqs. }
 
-apply nsext_def.
-unfold seqext.
-all : repeat clear_one.
-all : try (apply nsI).
-all : repeat (apply pair_eqI).
-all : assoc_single_mid.
-all : try (apply midI).
-all : try (first [check_app_app | reflexivity]).
-all : list_assoc_l'.
-all : rewrite ?appr_cong.
-all : list_assoc_r'.
-all : rewrite ?appl_cong.
-all : try (first [check_app_app | reflexivity]).
-all : try trivial.
-}
+{ stage12ds H1 qin1 qin3 pr l. 2 : solve_eqs. 1 : solve_eqs. 1 : solve_eqs. }
 
-{
-stage1 pr.
-(* just need to get l in the middle *)
-assoc_mid l.
-apply pr.
-stage2 H1 qin1 qin3.
-(*
-specialize_full qin3.
-apply nsext_def.
-unfold seqext.
-all : cycle 1.
-eapply derrec_same.
-exact qin3.  
-f_equal.  f_equal.
-all : repeat (apply pair_eqI).
-all : try reflexivity.
-all : assoc_single_mid.
-2: reflexivity.
-list_eq_assoc.
-but our reasoning more generally would depend on recognising single variables
-*)
-
-repeat (rewrite <- !app_assoc || rewrite <- !app_comm_cons).
-eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
-}
-
-{
-stage1 pr.
-rewrite <- !app_assoc.
-apply pr.
-stage2 H1 qin1 qin3.
-rewrite app_assoc.
-eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
-}
+{ stage12ds H1 qin1 qin3 pr sel. 2 : solve_eqs. 1 : solve_eqs. 1 : solve_eqs. }
 
 (* subgoal has Q (formula to be moved) in principal formula *)
 all: cycle 1.
 all: cycle 1.
 
-{
-stage1 pr.
-rewrite <- !app_assoc.
-apply pr.
-stage2 H1 qin1 qin3.
-rewrite !app_assoc.
-rewrite <- (app_assoc _ Γ2).
-eapply qin3.  apply nsext_def.  unfold seqext.  list_eq_assoc.
-}
+{ stage12ds H1 qin1 qin3 pr l. 2 : solve_eqs. 1 : solve_eqs. 1 : solve_eqs. }
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
 - {
@@ -255,7 +190,7 @@ use_cgmL H1. use_cgmL H1.
 rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 }
 
-- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0.  }
+- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
 
 - {
 subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
@@ -264,7 +199,7 @@ use_cgmL H1. use_cgmL H1.
 rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 }
 
-- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0.  }
+- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
 
 Qed.
 

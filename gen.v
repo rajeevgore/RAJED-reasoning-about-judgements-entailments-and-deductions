@@ -25,6 +25,11 @@ Proof. intros. subst. reflexivity. Qed.
 
 (* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
 
+Ltac refl_ni :=
+  match goal with
+    | [ |- ?P = ?P ] => reflexivity 
+    end.
+
 Lemma pair_eqI: forall T U (u v : T) (x y : U),
   u = v -> x = y -> (u,x) = (v,y).
 Proof. intros. subst. reflexivity. Qed.
