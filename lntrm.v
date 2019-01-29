@@ -1,5 +1,5 @@
 
-(* try non-adjacent move of a single formula,
+(* try non-adjacent move of a single formula, on the right-hand side,
   for system with princrule and seqrule *)
 
 (* 
@@ -18,20 +18,20 @@ Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.
 
-Lemma gen_moveL: forall (V : Set) ns
+Lemma gen_moveR: forall (V : Set) ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
-  can_gen_moveL (nsrule (seqrule (@princrule V))) ns.
+  can_gen_moveR (nsrule (seqrule (@princrule V))) ns.
 
 Proof.
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
 exact D. tauto.
 intros. inversion H.  unfold nsext in H5.
-unfold can_gen_moveL.  intros.
+unfold can_gen_moveR.  intros.
 unfold nsext in H7.
 (* cases of where the move occurs vs where the last rule applied *)
 apply partition_2_2 in H7.
-remember (Γ1 ++ Γ2 ++ Q :: Γ3, Δ) as seqe.
+remember (Γ, Δ1 ++ Δ2 ++ Q :: Δ3) as seqe.
 
 decompose [or] H7. 
 {
@@ -53,7 +53,7 @@ intros q qin.  subst pse.  rewrite -> in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
 rewrite -> Forall_forall in H1.
 rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
-unfold can_gen_moveL in c0.
+unfold can_gen_moveR in c0.
 unfold nsext. subst Ge. subst seqe.
 rewrite <- list_rearr14.
 eapply c0. 2:reflexivity.
@@ -81,7 +81,7 @@ intros q qin.  subst pse.  rewrite -> in_map_iff in qin. cE.
 subst q.  clear H0 H.  subst ps.
 rewrite -> Forall_forall in H1.
 rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
-unfold can_gen_moveL in c0.
+unfold can_gen_moveR in c0.
 unfold nsext. subst He. subst seqe.
 rewrite list_rearr14.
 
@@ -115,11 +115,11 @@ all: cycle 1.
 (* sg 4 of 10 *)
 
 (* problem here, Q between sel3 and sel5,
-  but one of sel3 and sel5 must be empty due to princrule_L *)
+  but one of sel3 and sel5 must be empty due to princrule_R *)
 
 {
 pose pr as pr'.
-apply princrule_L in pr'.
+apply princrule_R in pr'.
 sD ; subst.
 apply app_eq_nil in pr'. cD. subst.
 simpl in pr.
@@ -129,13 +129,17 @@ rewrite app_nil_r.
 {
 stage1 pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
-rewrite list_rearr16.
+rewrite app_assoc.
+rewrite app_assoc in pr.
+rewrite list_rearr16'. DO THIS IN lntom
 apply pr.
 stage2ds H1 qin1 qin3.
 2: list_assoc_r'.
 2: simpl.
 all: solve_eqs.
 }
+
+DONE TO HERE
 
 {
 apply app_eq_unit in pr'0.
@@ -176,26 +180,26 @@ all: cycle 1.
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
 - {
-subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
+subst. use_prR pr. stage1 pr. rewrite app_assoc. apply pr.
 destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
-use_cgmL H1. use_cgmL H1.
+use_cgmR H1. use_cgmR H1.
 rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 }
 
-- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
+- { subst. use_prR pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
 
 - {
-subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
+subst. use_prR pr. stage1 pr. rewrite app_assoc. apply pr.
 destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
-use_cgmL H1. use_cgmL H1.
+use_cgmR H1. use_cgmR H1.
 rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
 }
 
-- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
+- { subst. use_prR pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
 
 Qed.
 
-Check gen_moveL.
+Check gen_moveR.
 
 
 

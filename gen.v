@@ -165,3 +165,8 @@ Ltac specialize_full H :=
   evar (foo : Prop); cut (foo); subst foo; cycle 1;
   [eapply H|try clear H; intro H].
 
+Ltac prgt t :=
+  match goal with
+    | [ |- ?P ] => idtac t P
+    end.
+

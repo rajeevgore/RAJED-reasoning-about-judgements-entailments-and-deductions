@@ -120,14 +120,24 @@ Definition can_gen_moveL {V : Set}
   derrec rules (fun _ => False) 
     (G ++ (pair (Γ1 ++ Γ2 ++ Q :: Γ3) Δ, d) :: H).
 
-Ltac use_cgmL H1 := 
+Definition can_gen_moveR {V : Set}
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
+  forall G H seq (d : dir) Δ1 Δ2 Δ3 (Q : PropF V) Γ,
+  ns = G ++ (seq, d) :: H -> seq = pair Γ (Δ1 ++ Q :: Δ2 ++ Δ3) ->
+  derrec rules (fun _ => False) 
+    (G ++ (pair Γ (Δ1 ++ Δ2 ++ Q :: Δ3), d) :: H).
+
+Ltac use_cgm cgmX H1 := 
   rewrite -> Forall_forall in H1 ;
   simpl in H1 ;
   specialize_full H1 ;
-  [ | unfold can_gen_moveL in H1 ; unfold nsext ;
+  [ | unfold cgmX in H1 ; unfold nsext ;
     rewrite <- app_assoc ;
     eapply H1 ; reflexivity ] ;
   unfold nsext ; tauto.
+
+Ltac use_cgmL H1 := use_cgm can_gen_moveL H1.
+Ltac use_cgmR H1 := use_cgm can_gen_moveR H1.
 
 Ltac stage1 pr := 
 subst ;
@@ -168,6 +178,7 @@ Ltac app_cancel :=
   list_assoc_r' ; rewrite ?appl_cong).
 
 Ltac solve_eqs := 
+  prgt 33 ;
   repeat clear_one ;
   try (apply nsI) ;
   repeat (apply pair_eqI) ;
@@ -177,5 +188,6 @@ Ltac solve_eqs :=
   try (first [check_app_app | reflexivity]) ;
   repeat app_cancel ;
   try (first [check_app_app | reflexivity]) ;
-  try refl_ni.
+  try refl_ni ;
+  prgt 44.
 
