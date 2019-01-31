@@ -118,13 +118,7 @@ all: cycle 1.
   but one of sel3 and sel5 must be empty due to princrule_L *)
 
 {
-pose pr as pr'.
-apply princrule_L in pr'.
-sD ; subst.
-apply app_eq_nil in pr'. cD. subst.
-simpl in pr.
-simpl.
-rewrite app_nil_r.
+use_prL pr.
 
 {
 stage1 pr. (* will need to move Q around sel1 *)
@@ -137,10 +131,6 @@ stage2ds H1 qin1 qin3.
 all: solve_eqs.
 }
 
-{
-apply app_eq_unit in pr'0.
-sD ; subst ; simpl in pr ; simpl ;
-  rewrite ?app_nil_r ; rewrite ?app_nil_r in pr.
 {
 stage1 pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
@@ -159,7 +149,6 @@ rewrite app_assoc.
 apply pr.
 stage2ds H1 qin1 qin3.
 all: solve_eqs.
-}
 }
 }
  

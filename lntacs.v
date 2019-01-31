@@ -48,6 +48,12 @@ rewrite -> appl_cong in e.
 apply if_rev_eq in e.  exact e.
 subst. reflexivity.  Qed.
 
+Lemma app_eq_nil_iff: forall {A} (l l' : list A), 
+  l ++ l' = [] <-> l = [] /\ l' = [].
+Proof. intros. unfold iff. split ; intros.
+  destruct l ; simpl in H ; [ tauto | discriminate]. 
+  destruct H. subst. simpl. tauto. Qed.
+
 Lemma applI: forall {T} (a b c : list T),
   a = b -> c ++ a = c ++ b.
 Proof. intros. subst. reflexivity. Qed.
@@ -56,6 +62,7 @@ Ltac list_eq_nc :=
    match goal with
      | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H
      | [ H : _ ++ _ = [] |- _ ] => apply app_eq_nil in H
+     | [ H : _ ++ _ = [_] |- _ ] => apply app_eq_unit in H
      | [ H : _ ++ _ :: _ = [_] |- _ ] => apply list_eq_single in H
      | [ H : _ :: _ = [] |- _ ] => discriminate H
      | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
@@ -93,12 +100,8 @@ assoc_mid e.
 Ltac use_prX princrule_X pr := 
   pose pr as Qpr ;
   apply princrule_X in Qpr ;
-  sD_list_eq ;
-  subst ;
-  simpl ;
-  simpl in pr ;
-  rewrite -> ?app_nil_r in * ;
-  rewrite ?app_nil_r.
+  repeat (sD_list_eq ; subst ; simpl ; simpl in pr ;
+  rewrite -> ?app_nil_r in * ; rewrite ?app_nil_r).
 
 Ltac use_prL pr := use_prX princrule_L pr.
 Ltac use_prR pr := use_prX princrule_R pr.
