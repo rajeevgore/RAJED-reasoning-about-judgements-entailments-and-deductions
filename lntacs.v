@@ -63,18 +63,18 @@ Ltac list_eq_nc :=
 
 Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
 
-Ltac assoc_mid l := 
-  list_assoc_r ;
-  rewrite ?app_comm_cons ;
-  repeat ((rewrite <- (app_assoc _ l _) ; fail 1) || rewrite app_assoc) ;
-  rewrite <- (app_assoc _ l _).
-
 Definition app_assoc_cons A l m (x : A) xs := app_assoc l m (x :: xs).
 
 (* in ssreflect *)
 Ltac list_assoc_l' := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
 Ltac list_assoc_r' :=
   repeat (rewrite - !app_assoc || rewrite - !app_comm_cons).
+
+Ltac assoc_mid l := 
+  list_assoc_r' ;
+  rewrite ?app_comm_cons ;
+  repeat ((rewrite - (app_assoc _ l _) ; fail 1) || rewrite app_assoc) ;
+  rewrite - (app_assoc _ l _).
 
 Ltac assoc_single_mid :=
   list_assoc_r' ; 
@@ -90,15 +90,18 @@ assoc_mid d. (* doesn't work *)
 assoc_mid e.
 *)
 
-Ltac use_prL pr := 
+Ltac use_prX princrule_X pr := 
   pose pr as Qpr ;
-  apply princrule_L in Qpr ;
+  apply princrule_X in Qpr ;
   sD_list_eq ;
   subst ;
   simpl ;
   simpl in pr ;
   rewrite -> ?app_nil_r in * ;
   rewrite ?app_nil_r.
+
+Ltac use_prL pr := use_prX princrule_L pr.
+Ltac use_prR pr := use_prX princrule_R pr.
 
 Ltac check_app_app :=
   match goal with
@@ -170,8 +173,13 @@ Ltac stage2ds H1 qin1 qin3 :=
   stage2 H1 qin1 qin3 ; eapply derrec_same ; [
     eapply qin3 ; [ apply nsext_def | unfold seqext ] | ].
 
-Ltac stage12ds H1 qin1 qin3 pr l := 
-stage1 pr ; [ assoc_mid l ; apply pr | stage2ds H1 qin1 qin3 ].
+Ltac srs pr := eapply seqrule_same ; [ exact pr |
+  apply pair_eqI ; try reflexivity ]. 
+
+Ltac amt l0 := eapply eq_trans ; [> assoc_mid l0 .. ] ; [> reflexivity ..].
+  
+Ltac stage12ds H1 qin1 qin3 pr l0 := 
+  stage1 pr ; [ srs pr ; amt l0 | stage2ds H1 qin1 qin3 ].
 
 Ltac app_cancel := 
   (list_assoc_l' ; rewrite ?appr_cong ;
@@ -190,4 +198,13 @@ Ltac solve_eqs :=
   try (first [check_app_app | reflexivity]) ;
   try refl_ni ;
   prgt 44.
+
+(* tactic for when principal formula to be moved *)
+Ltac mpv use_prL use_cgmL H1 H0 pr := 
+  subst ; use_prL pr ; stage1 pr ; [ 
+  rewrite !app_assoc ; rewrite !app_assoc in pr ; apply pr |
+  destruct pr ; simpl ; repeat (apply dlNil || apply dlCons) ;
+  try (use_cgmL H1) ;
+  rewrite -> dersrec_forall in H0 ; apply H0 ; simpl ;
+  rewrite <- app_assoc ;  tauto ].
 

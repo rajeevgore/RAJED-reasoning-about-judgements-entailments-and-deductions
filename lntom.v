@@ -129,7 +129,7 @@ rewrite app_nil_r.
 {
 stage1 pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
-rewrite list_rearr16.
+rewrite list_rearr16'.
 apply pr.
 stage2ds H1 qin1 qin3.
 2: list_assoc_r'.
@@ -144,7 +144,7 @@ sD ; subst ; simpl in pr ; simpl ;
 {
 stage1 pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
-rewrite list_rearr16.
+rewrite list_rearr16'.
 apply pr.
 stage2ds H1 qin1 qin3.
 2: rewrite - list_rearr16'.
@@ -175,21 +175,11 @@ all: cycle 1.
 { stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
-- {
-subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
-destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
-use_cgmL H1. use_cgmL H1.
-rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
-}
+- { mpv use_prL use_cgmL H1 H0 pr. }
 
 - { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
 
-- {
-subst. use_prL pr. stage1 pr. rewrite app_assoc. apply pr.
-destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
-use_cgmL H1. use_cgmL H1.
-rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
-}
+- { mpv use_prL use_cgmL H1 H0 pr. }
 
 - { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
 

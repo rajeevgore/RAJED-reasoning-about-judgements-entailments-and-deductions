@@ -131,7 +131,7 @@ stage1 pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
 rewrite app_assoc.
 rewrite app_assoc in pr.
-rewrite list_rearr16'. DO THIS IN lntom
+rewrite list_rearr16'. 
 apply pr.
 stage2ds H1 qin1 qin3.
 2: list_assoc_r'.
@@ -139,16 +139,15 @@ stage2ds H1 qin1 qin3.
 all: solve_eqs.
 }
 
-DONE TO HERE
-
 {
 apply app_eq_unit in pr'0.
 sD ; subst ; simpl in pr ; simpl ;
   rewrite ?app_nil_r ; rewrite ?app_nil_r in pr.
 {
 stage1 pr. (* will need to move Q around sel1 *)
-rewrite app_assoc.
-rewrite list_rearr16.
+rewrite list_rearr16'.
+rewrite !app_assoc.
+rewrite !app_assoc in pr.
 apply pr.
 stage2ds H1 qin1 qin3.
 2: rewrite - list_rearr16'.
@@ -159,7 +158,8 @@ all: solve_eqs.
 stage1 pr.
 rewrite <- app_assoc.
 simpl.
-rewrite app_assoc.
+rewrite !app_assoc.
+rewrite !app_assoc in pr.
 apply pr.
 stage2ds H1 qin1 qin3.
 all: solve_eqs.
@@ -168,32 +168,23 @@ all: solve_eqs.
 }
  
 (* why does all : solve_eqs work?  see emails late Jan 2019 *)
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
-{ stage12ds H1 qin1 qin3 pr sel. all : solve_eqs. }
+{ stage12ds H1 qin1 qin3 pr l0. all : solve_eqs. }
+{ stage12ds H1 qin1 qin3 pr l0. all : solve_eqs. }
+{ stage12ds H1 qin1 qin3 pr ser. all : solve_eqs. }
 
 (* subgoal has Q (formula to be moved) in principal formula *)
 all: cycle 1.
 all: cycle 1.
 
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
+{ stage12ds H1 qin1 qin3 pr l0. all : solve_eqs. }
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
-- {
-subst. use_prR pr. stage1 pr. rewrite app_assoc. apply pr.
-destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
-use_cgmR H1. use_cgmR H1.
-rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
-}
+
+- { mpv use_prR use_cgmR H1 H0 pr. }
 
 - { subst. use_prR pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
 
-- {
-subst. use_prR pr. stage1 pr. rewrite app_assoc. apply pr.
-destruct pr ; simpl ; repeat (apply dlNil || apply dlCons).
-use_cgmR H1. use_cgmR H1.
-rewrite -> dersrec_forall in H0. apply H0. simpl. rewrite <- app_assoc. tauto.
-}
+- { mpv use_prR use_cgmR H1 H0 pr. }
 
 - { subst. use_prR pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
 

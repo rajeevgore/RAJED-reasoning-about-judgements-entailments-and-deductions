@@ -539,3 +539,6 @@ unfold can_exchR in H1. rewrite app_comm_cons.
 eapply H1.
 right. left. reflexivity. apply nsext_def. reflexivity.
 Qed.
+
+Check can_exchL.
+Check can_exchR.
