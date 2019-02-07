@@ -135,10 +135,24 @@ Lemma NSctxt_nil: forall (W : Set) sr G H d c, (sr [] c : Prop) ->
   @nsrule W sr [] (nsext G H d c).
 Proof.  intros.  eapply NSctxt in H0.  simpl in H0. exact H0.  Qed.
 
+Definition nstail {W : Type} H (d : dir) (seq : W) := (seq, d) :: H.
+Lemma nstail_def: forall {W : Type} H d seq, 
+  nstail H (d : dir) (seq : W) = (seq, d) :: H.
+Proof.
+unfold nstail. reflexivity.
+Qed.
+
+Lemma nstail_ext: forall (W : Type) H d seq, 
+  nstail H (d : dir) (seq : W) = nsext [] H d seq.
+Proof.
+unfold nsext.  unfold nstail. reflexivity.
+Qed.
+
 Check princrule.
 Check seqext.
 Check seqrule.
 Check nsext.
+Check nstail.
 Check nsrule.
 
 (* problem with the seqrule/princrule approach, try this instead *)
