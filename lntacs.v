@@ -58,16 +58,6 @@ Lemma applI: forall {T} (a b c : list T),
   a = b -> c ++ a = c ++ b.
 Proof. intros. subst. reflexivity. Qed.
 
-Ltac list_eq_nc := 
-   match goal with
-     | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H
-     | [ H : _ ++ _ = [] |- _ ] => apply app_eq_nil in H
-     | [ H : _ ++ _ = [_] |- _ ] => apply app_eq_unit in H
-     | [ H : _ ++ _ :: _ = [_] |- _ ] => apply list_eq_single in H
-     | [ H : _ :: _ = [] |- _ ] => discriminate H
-     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
-     end.
-
 Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
 
 Definition app_assoc_cons A l m (x : A) xs := app_assoc l m (x :: xs).
@@ -132,6 +122,20 @@ Definition can_gen_moveR {V : Set}
   ns = G ++ (seq, d) :: H -> seq = pair Γ (Δ1 ++ Q :: Δ2 ++ Δ3) ->
   derrec rules (fun _ => False) 
     (G ++ (pair Γ (Δ1 ++ Δ2 ++ Q :: Δ3), d) :: H).
+
+Definition can_gen_swapL {V : Set}
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
+  forall G H seq (d : dir) Γ1 Γ2 Γ3 Γ4 Δ,
+  ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ Γ2 ++ Γ3 ++ Γ4) Δ ->
+  derrec rules (fun _ => False) 
+    (G ++ (pair (Γ1 ++ Γ3 ++ Γ2 ++ Γ4) Δ, d) :: H).
+
+Definition can_gen_swapR {V : Set}
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
+  forall G H seq (d : dir) Δ1 Δ2 Δ3 Δ4 Γ,
+  ns = G ++ (seq, d) :: H -> seq = pair Γ (Δ1 ++ Δ2 ++ Δ3 ++ Δ4) ->
+  derrec rules (fun _ => False) 
+    (G ++ (pair Γ (Δ1 ++ Δ3 ++ Δ2 ++ Δ4), d) :: H).
 
 Ltac use_cgm cgmX H1 := 
   rewrite -> Forall_forall in H1 ;
@@ -210,4 +214,57 @@ Ltac mpv use_prL use_cgmL H1 H0 pr :=
   try (use_cgmL H1) ;
   rewrite -> dersrec_forall in H0 ; apply H0 ; simpl ;
   rewrite <- app_assoc ;  tauto ].
+
+(* tactic for admissibility proof in nested sequents,
+  case where the rule is applied in a sequent to the right
+  of where the move takes place *)
+Ltac nsright H7 G0 seqe d0 x c0 Ge HeqGe H2 d ps ps0 inps0 pse H6 H0 H H1
+  G seq := 
+clear H7 ;  cE ;
+(* case where the rule is applied in a sequent to the right
+  of where the swap takes place *)
+remember (G0 ++ (seqe, d0) :: x) as Ge ;
+remember (map (nsext Ge H2 d) ps0) as pse ;
+apply derI with pse ; [
+  subst pse ; subst H6 ; rewrite list_rearr14 ;
+  (* it must be easier than this
+    to rewrite using the inverse of the definition of nsext *)
+  rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqGe ;
+  apply NSctxt ; assumption |
+  rewrite dersrec_forall ;
+  intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
+  subst q ;  clear H0 H ;  subst ps ;
+  rewrite -> Forall_forall in H1 ;
+  rename_last inps0 ;  eapply in_map in inps0 ; pose (H1 _ inps0) ;
+  unfold can_gen_swapL in c0 ;
+  unfold nsext ; subst Ge ; subst seqe ;
+  rewrite <- list_rearr14 ;
+  eapply c0 ; [> | reflexivity ] ;
+  unfold nsext ; subst G ; subst seq ;
+  list_eq_assoc ].
+
+Ltac nsleft H7 G0 seqe d0 x c0 He HeqHe H2 d ps ps0 inps0 pse H6 H0 H H1
+  G seq := 
+clear H7 ;  cE ;
+(* case where the rule is applied in a sequent to the left
+  of where the swap takes place *)
+remember (x ++ (seqe, d0) :: H6) as He ;
+remember (map (nsext G He d) ps0) as pse ;
+apply derI with pse ; [
+  subst pse ; subst G0 ; rewrite <- list_rearr14 ;
+  (* it must be easier than this
+    to rewrite using the inverse of the definition of nsext *)
+  rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqHe ;
+  apply NSctxt ; assumption |
+  rewrite dersrec_forall ;
+  intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
+  subst q ;  clear H0 H ;  subst ps ;
+  rewrite -> Forall_forall in H1 ;
+  rename_last inps0 ;  eapply in_map in inps0 ; pose (H1 _ inps0) ;
+  unfold can_gen_swapL in c0 ;
+  unfold nsext ; subst He ; subst seqe ;
+  rewrite list_rearr14 ;
+  eapply c0 ; [> | reflexivity ] ;
+  unfold nsext ; subst H2 ; subst seq ;
+  list_eq_assoc ].
 

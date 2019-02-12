@@ -34,68 +34,19 @@ apply partition_2_2 in H7.
 remember (Γ, Δ1 ++ Δ2 ++ Q :: Δ3) as seqe.
 
 decompose [or] H7. 
-{
-clear H7.  cE.
-(* case where the rule is applied in a sequent to the right
-  of where the move takes place *)
-remember (G0 ++ (seqe, d0) :: x) as Ge.
-remember (map (nsext Ge H2 d) ps0) as pse.
-
-apply derI with pse. subst pse. subst H6.
-rewrite list_rearr14.
-(* it must be easier than this
-  to rewrite using the inverse of the definition of nsext *)
-rewrite <- nsext_def.  subst seqe.  rewrite <- HeqGe.
-apply NSctxt. assumption.
-
-rewrite dersrec_forall.
-intros q qin.  subst pse.  rewrite -> in_map_iff in qin. cE.
-subst q.  clear H0 H.  subst ps.
-rewrite -> Forall_forall in H1.
-rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
-unfold can_gen_moveR in c0.
-unfold nsext. subst Ge. subst seqe.
-rewrite <- list_rearr14.
-eapply c0. 2:reflexivity.
-unfold nsext. subst G. subst seq.
-list_eq_assoc.
-}
-
+{ nsright H7 G0 seqe d0 x c0 Ge HeqGe
+  H2 d ps ps0 inps0 pse H6 H0 H H1 G seq. }
 all : revgoals.
-{ 
-clear H7. cE.
-(* now the case where the rule is applied in a sequent to the left
-  of where the move takes place *)
-remember (x ++ (seqe, d0) :: H6) as He.
-remember (map (nsext G He d) ps0) as pse.
+{ nsleft H7 G0 seqe d0 x c0 He HeqHe
+  H2 d ps ps0 inps0 pse H6 H0 H H1 G seq. }
 
-apply derI with pse. subst pse. subst G0.
-rewrite <- list_rearr14.
-(* it must be easier than this
-  to rewrite using the inverse of the definition of nsext *)
-rewrite <- nsext_def.  subst seqe.  rewrite <- HeqHe.
-apply NSctxt. assumption.
-
-rewrite dersrec_forall.
-intros q qin.  subst pse.  rewrite -> in_map_iff in qin. cE.
-subst q.  clear H0 H.  subst ps.
-rewrite -> Forall_forall in H1.
-rename_last inps0.  eapply in_map in inps0. pose (H1 _ inps0).
-unfold can_gen_moveR in c0.
-unfold nsext. subst He. subst seqe.
-rewrite list_rearr14.
-
-eapply c0. 2:reflexivity.
-unfold nsext. subst H2. subst seq.
-apply list_rearr14.
-}
 
 (* now case where move and rule application occur in the same sequent *)
 cE. clear H7. injection H10 as.
 inversion H3 as [? ? ? ? ? ? pr mse se].
 unfold seqext in se.
 subst.  clear H. clear H3.
-destruct c0. unfold seqext in se.
+destruct c0. 
 injection se as sel ser.
 subst.
 (* do as much as possible for all rules at once *)

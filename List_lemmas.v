@@ -327,5 +327,10 @@ Lemma list_eq_nil: forall (A : Type) (x y : list A) (u : A),
   x ++ u :: y = [] -> False.
 Proof.  intros.  apply app_eq_nil in H.  cD.  discriminate.  Qed.
 
+Lemma nnn_app_eq: forall {A : Type} (x : list A), [] ++ [] ++ [] ++ x = x.
+Proof.  intros.  simpl. reflexivity. Qed.
+
+Definition eq_nnn_app {A : Type} (x : list A) := eq_sym (nnn_app_eq x).
+
 
 

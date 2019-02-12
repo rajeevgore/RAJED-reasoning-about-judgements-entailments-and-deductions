@@ -229,14 +229,36 @@ Ltac acacD :=
 
 Ltac acacD' :=
   repeat match goal with
-    | [ H : _ |- _ ] => apply app_eq_app in H ; sD
-    | [ H : _ |- _ ] => apply cons_eq_app in H ; sD
-    | [ H : _ |- _ ] => apply app_eq_cons in H ; sD
+    | [ H : _ ++ _ = _ ++ _ |- _ ] => apply app_eq_app in H ; sD
+    | [ H : _ :: _ = _ ++ _ |- _ ] => apply cons_eq_app in H ; sD
+    | [ H : _ ++ _ = _ :: _ |- _ ] => apply app_eq_cons in H ; sD
     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as ?H ?H 
     | [ H : (_, _) = (_, _) |- _ ] => injection H as ?H ?H 
     | [ H : _ :: _ = [] |- _ ] => discriminate H
     | [ H : [] = _ :: _ |- _ ] => discriminate H
     end.
+
+Ltac list_eq_nc :=
+   match goal with
+     | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H
+     | [ H : _ ++ _ = [] |- _ ] => apply app_eq_nil in H
+     | [ H : _ ++ _ = [_] |- _ ] => apply app_eq_unit in H
+     | [ H : _ ++ _ :: _ = [_] |- _ ] => apply list_eq_single in H
+     | [ H : _ :: _ = [] |- _ ] => discriminate H
+     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
+     end.
+
+Lemma princrule_L_oe : forall {V : Set} ps x y Δ,
+    @princrule V ps (x ++ y, Δ) -> x = [] \/ y = [].
+Proof.
+  intros. apply princrule_L in H. sD ; list_eq_nc ; tauto.
+Qed.
+
+Lemma princrule_R_oe : forall {V : Set} ps x y Γ,
+    @princrule V ps (Γ, x ++ y) -> x = [] \/ y = [].
+Proof.
+  intros. apply princrule_R in H. sD ; list_eq_nc ; tauto.
+Qed.
 
 Lemma exchL: forall (V : Set) ns 
   (D : derrec (nsrule (@proprule V)) (fun _ => False) ns),
