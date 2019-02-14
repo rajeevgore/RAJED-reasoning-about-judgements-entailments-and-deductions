@@ -216,9 +216,9 @@ Ltac stage12altdsL H0 H1 qin1 qin3 pr :=
   match goal with
     | [ H : princrule _ (?x, _) |- _ ] => stage12altds H0 H1 qin1 qin3 pr x end.
 
-Ltac stage12dsL H1 qin1 qin3 pr := 
+Ltac stage12altdsR H0 H1 qin1 qin3 pr := 
   match goal with
-    | [ H : princrule _ (?x, _) |- _ ] => stage12ds H1 qin1 qin3 pr x end.
+    | [ H : princrule _ (_, ?x) |- _ ] => stage12altds H0 H1 qin1 qin3 pr x end.
 
 Ltac app_cancel := 
   (list_assoc_l' ; rewrite ?appr_cong ;
