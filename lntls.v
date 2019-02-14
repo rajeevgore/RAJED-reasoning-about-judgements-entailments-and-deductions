@@ -58,95 +58,65 @@ repeat ((list_eq_nc || (pose pr as Qpr ; apply princrule_L_oe in Qpr)) ;
 (* need to do stage1 pr. to see what next,
   then stage12ds H1 qin1 qin3 pr ...,
   then all : solve_eqs. to see what next *)
-{ stage12ds H1 qin1 qin3 pr sel3 ; solve_eqs ;
-rewrite (app_assoc l sel5) ; reflexivity.  }
 
-{ stage12ds H1 qin1 qin3 pr sel1 ; solve_eqs ;
-rewrite (app_assoc sel l) ; reflexivity.  }
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ;
+rewrite (app_assoc l) ; reflexivity.  }
 
-{ stage12ds H1 qin1 qin3 pr sel5 ; solve_eqs.
-apply eq_nnn_app. simpl. reflexivity. }
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ;
+rewrite (app_assoc sel) ; reflexivity.  }
 
-{ stage12ds H1 qin1 qin3 pr Γ3 ; solve_eqs ; reflexivity. }
+{ stage12altdsL H0 H1 qin1 qin3 pr. }
 
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ; 
+rewrite (app_assoc l1) ; rewrite (app_assoc sel) ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ;
+rewrite (app_assoc sel1) ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ;
+rewrite (app_assoc l1) ; rewrite (app_assoc sel1) ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ;
+rewrite (app_assoc l) ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ;
+rewrite (app_assoc Φ1) ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ; reflexivity. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs. }
+
+{ stage12altdsL H0 H1 qin1 qin3 pr ; solve_eqs ;
+rewrite (app_assoc l1) ; rewrite (app_assoc Φ1) ; reflexivity. }
+
+Qed.
 
 (* 
+}
 {
 stage1 pr.
 Undo.
 all : solve_eqs.
 Undo 2.
 *)
-
-(* normally need to rearrange *)
-apply pr. (* solves one sg *)
-stage2ds H1 qin1 qin3.  all : solve_eqs. }
-
-(* sg 2 of 10 *)
-all: cycle 1.
-all: cycle 1.
-
-(* sg 4 of 10 *)
-
-(* problem here, Q between sel3 and sel5,
-  but one of sel3 and sel5 must be empty due to princrule_L *)
-
-{
-use_prL pr.
-
-{
-stage1 pr. (* will need to move Q around sel1 *)
-rewrite app_assoc.
-rewrite list_rearr16'.
-apply pr.
-stage2ds H1 qin1 qin3.
-2: list_assoc_r'.
-2: simpl.
-all: solve_eqs.
-}
-
-{
-stage1 pr. (* will need to move Q around sel1 *)
-rewrite app_assoc.
-rewrite list_rearr16'.
-apply pr.
-stage2ds H1 qin1 qin3.
-2: rewrite - list_rearr16'.
-all: solve_eqs.
-}
-
-{
-stage1 pr.
-rewrite <- app_assoc.
-simpl.
-rewrite app_assoc.
-apply pr.
-stage2ds H1 qin1 qin3.
-all: solve_eqs.
-}
-}
- 
-(* why does all : solve_eqs work?  see emails late Jan 2019 *)
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
-{ stage12ds H1 qin1 qin3 pr sel. all : solve_eqs. }
-
-(* subgoal has Q (formula to be moved) in principal formula *)
-all: cycle 1.
-all: cycle 1.
-
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
-
-(* four remaining subgoals have Q (formula to be moved) in principal formula *)
-- { mpv use_prL use_cgmL H1 H0 pr. }
-
-- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
-
-- { mpv use_prL use_cgmL H1 H0 pr. }
-
-- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
-
-Qed.
 
 Check gen_swapL.
 

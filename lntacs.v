@@ -172,9 +172,30 @@ apply H1 in qin3 ;
 unfold can_gen_moveL in qin3 ;
 unfold nsext.
 
+Ltac stage2alt H0 H1 qin1 qin3 := 
+rewrite dersrec_forall ;
+rewrite -> dersrec_forall in H0 ;
+intros q qin ; rewrite -> in_map_iff in qin ; cD ;
+rename_last qin1 ;
+rewrite -> in_map_iff in qin1 ; cD ;
+rename_last qin3 ;
+destruct qin1 ; subst ;
+rewrite -> Forall_forall in H1 ;
+eapply in_map in qin3 ;
+eapply in_map in qin3 ;
+(* see if can solve goal without swapping premises *)
+try (apply H0 in qin3 ; unfold seqext in qin3 ; exact qin3) ;
+apply H1 in qin3 ;
+unfold can_gen_moveL in qin3 ;
+unfold nsext.
+
 Ltac stage3 qin3 l l1 := 
 eapply qin3 ; [ apply nsext_def |
 rewrite seqext_def ; list_eq_assoc ].
+
+Ltac stage2altds H0 H1 qin1 qin3 := 
+  stage2alt H0 H1 qin1 qin3 ; (eapply derrec_same ; [
+    eapply qin3 ; [ apply nsext_def | unfold seqext ] | ]).
 
 Ltac stage2ds H1 qin1 qin3 := 
   stage2 H1 qin1 qin3 ; eapply derrec_same ; [
@@ -185,8 +206,19 @@ Ltac srs pr := eapply seqrule_same ; [ exact pr |
 
 Ltac amt l0 := eapply eq_trans ; [> assoc_mid l0 .. ] ; [> reflexivity ..].
   
+Ltac stage12altds H0 H1 qin1 qin3 pr l0 := 
+  stage1 pr ; [ srs pr ; amt l0 | stage2altds H0 H1 qin1 qin3 ].
+
 Ltac stage12ds H1 qin1 qin3 pr l0 := 
   stage1 pr ; [ srs pr ; amt l0 | stage2ds H1 qin1 qin3 ].
+
+Ltac stage12altdsL H0 H1 qin1 qin3 pr := 
+  match goal with
+    | [ H : princrule _ (?x, _) |- _ ] => stage12altds H0 H1 qin1 qin3 pr x end.
+
+Ltac stage12dsL H1 qin1 qin3 pr := 
+  match goal with
+    | [ H : princrule _ (?x, _) |- _ ] => stage12ds H1 qin1 qin3 pr x end.
 
 Ltac app_cancel := 
   (list_assoc_l' ; rewrite ?appr_cong ;
