@@ -126,8 +126,8 @@ Proof.
 unfold nsext. reflexivity.
 Qed.
 
-Inductive nsrule (W : Set) (sr : rls (rel (list W))) : 
-    rls (list (rel (list W) * dir)) :=
+Inductive nsrule (W : Type) (sr : rls W) : 
+    rls (list (W * dir)) :=
   | NSctxt : forall ps c G H d, sr ps c -> 
     nsrule sr (map (nsext G H d) ps) (nsext G H d c).
 

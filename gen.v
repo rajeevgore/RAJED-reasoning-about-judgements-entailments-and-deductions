@@ -1,3 +1,4 @@
+Set Implicit Arguments.
 
 (* lemmas which shouldn't be necessary at all! *)
 
