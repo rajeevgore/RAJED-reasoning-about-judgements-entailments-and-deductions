@@ -91,6 +91,23 @@ Inductive seqrule (W : Set) (pr : rls (rel (list W))) :
   | Sctxt : forall ps c Φ1 Φ2 Ψ1 Ψ2, pr ps c -> 
     seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 
+Inductive seqrule_s (W : Set) (ps : list (rel (list W))) (c : rel (list W)) : 
+    rls (rel (list W)) := 
+  | Sctxt_s : forall Φ1 Φ2 Ψ1 Ψ2, 
+    seqrule_s ps c (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
+
+Inductive seqrule' (W : Set) (pr : rls (rel (list W))) : 
+    rls (rel (list W)) := 
+  | Sctxt' : forall ps c pse ce,
+    pr ps c -> seqrule_s ps c pse ce -> seqrule' pr pse ce.
+
+Check (Sctxt' _ _ (Sctxt_s _ _ _ _ _ _)). 
+
+(* Check, get same as Sctxt but for seqrule' *)
+Lemma Sctxt_alt : forall (W : Set) (pr : rls (rel (list W))) ps c Φ1 Φ2 Ψ1 Ψ2,
+    pr ps c -> seqrule' pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
+Proof.  intros. eapply Sctxt'. exact H. apply Sctxt_s. Qed.
+
 Lemma seqext_def : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 U V,
       @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof. reflexivity. Qed.
@@ -154,6 +171,7 @@ Check seqrule.
 Check nsext.
 Check nstail.
 Check nsrule.
+Check (fun V => nsrule (seqrule (@princrule V))).
 
 (* problem with the seqrule/princrule approach, try this instead *)
 

@@ -1,0 +1,13 @@
+
+coqc gen.v
+coqc dd.v
+coqc List_lemmas.v
+coqc lnt.v
+coqc lntacs.v
+coqc lntom.v
+coqc lntrm.v
+coqc lntls.v
+coqc lntrs.v
+
+coqtop -color no
+
