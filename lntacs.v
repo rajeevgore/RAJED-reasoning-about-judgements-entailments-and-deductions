@@ -250,9 +250,9 @@ Ltac mpv use_prL use_cgmL H1 H0 pr :=
 (* tactic for admissibility proof in nested sequents,
   case where the rule is applied in a sequent to the right
   of where the move takes place *)
-Ltac nsright H7 G0 seqe d0 x c0 Ge HeqGe H2 d ps ps0 inps0 pse H6 H0 H H1
+Ltac nsright pp G0 seqe d0 x c0 Ge HeqGe H2 d ps ps0 inps0 pse H6 H0 H H1
   G seq := 
-clear H7 ;  cE ;
+clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the right
   of where the swap takes place *)
 remember (G0 ++ (seqe, d0) :: x) as Ge ;
@@ -275,9 +275,9 @@ apply derI with pse ; [
   unfold nsext ; subst G ; subst seq ;
   list_eq_assoc ].
 
-Ltac nsleft H7 G0 seqe d0 x c0 He HeqHe H2 d ps ps0 inps0 pse H6 H0 H H1
+Ltac nsleft pp G0 seqe d0 x c0 He HeqHe H2 d ps ps0 inps0 pse H6 H0 H H1
   G seq := 
-clear H7 ;  cE ;
+clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the left
   of where the swap takes place *)
 remember (x ++ (seqe, d0) :: H6) as He ;

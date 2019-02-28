@@ -27,22 +27,22 @@ intro.  intro.  intro.
 eapply derrec_all_ind in D.
 exact D. tauto.
 intros. inversion H.  unfold nsext in H5.
-unfold can_gen_moveR.  intros.
-unfold nsext in H7.
+unfold can_gen_moveR.   intros until 0. intros pp ss.
+unfold nsext in pp.
 (* cases of where the move occurs vs where the last rule applied *)
-apply partition_2_2 in H7.
+apply partition_2_2 in pp.
 remember (Γ, Δ1 ++ Δ2 ++ Q :: Δ3) as seqe.
 
-decompose [or] H7. 
-{ nsright H7 G0 seqe d0 x c0 Ge HeqGe
+decompose [or] pp. 
+{ nsright pp G0 seqe d0 x c0 Ge HeqGe
   H2 d ps ps0 inps0 pse H6 H0 H H1 G seq. }
 all : revgoals.
-{ nsleft H7 G0 seqe d0 x c0 He HeqHe
+{ nsleft pp G0 seqe d0 x c0 He HeqHe
   H2 d ps ps0 inps0 pse H6 H0 H H1 G seq. }
 
 
 (* now case where move and rule application occur in the same sequent *)
-cE. clear H7. injection H10 as.
+cE. clear pp. injection H8 as.
 inversion H3 as [? ? ? ? ? ? pr mse se].
 unfold seqext in se.
 subst.  clear H. clear H3.

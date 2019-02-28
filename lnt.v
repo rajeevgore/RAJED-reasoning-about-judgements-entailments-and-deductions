@@ -33,7 +33,6 @@ Inductive PropF (V : Set): Set :=
 Definition rel (W : Type) : Type := prod W W.
 *)
 Definition rel (W : Set) : Set := prod W W.
-Definition rls (W : Type) : Type := list W -> W -> Prop.  
 Definition trf (W : Type) : Type := W -> W.  
 
 (*

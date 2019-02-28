@@ -130,8 +130,6 @@ with dercsl_ind_mut := Induction for dercsl Sort Prop.
 Check dercl_ind_mut.
 Check dercsl_ind_mut.
 
-Reset derrec_trans_imp.
-
 Theorem derrec_trans_imp: forall (X : Set) rules prems (concl : X),
   derrec rules (derrec rules prems) concl -> derrec rules prems concl.
 
@@ -162,7 +160,6 @@ intros.
 apply dlCons. assumption.  assumption.
 assumption.
 Qed.
-
 
 Theorem dersl_derl: forall (X : Set) rules prems (concls : list X),
   dersl (derl rules) prems concls -> dersl rules prems concls.
@@ -238,12 +235,19 @@ Lemma dersrec_nil: forall (X : Set) rules prems,
 Proof.  intros.  rewrite dersrec_all ; apply Forall_nil. Qed.
 
 (* try using the induction principle derrec_all_ind *)
+Lemma derrec_rmono: forall (W : Set) (rulesa rulesb : rls W) prems concl,
+  rsub rulesa rulesb -> 
+  derrec rulesa prems concl ->
+  derrec rulesb prems concl.
+Proof.  intros.  revert H.  eapply derrec_all_ind.
+intros. apply dpI. assumption.
+intros. eapply derI. unfold rsub in X. apply X. eassumption.
+rewrite dersrec_forall. rewrite -> Forall_forall in H1. assumption.
+Qed.
+
 Theorem derrec_trans_imp_alt: forall (X : Set) rules prems (concl : X),
   derrec rules (derrec rules prems) concl -> derrec rules prems concl.
-Proof.
-intros.
-revert H. 
-eapply derrec_all_ind. tauto.
+Proof.  intros.  revert H.  eapply derrec_all_ind. tauto.
 intros. eapply derI. eassumption.
 rewrite dersrec_all.  assumption.
 Qed.
@@ -290,8 +294,6 @@ rewrite <- !dersrec_all in H3.
 inversion H3.  eapply dlCons ; tauto.
 eassumption.  assumption.
 Qed.
-
-Reset derrec_derl_deriv.
 
 Theorem derrec_derl_deriv: forall (X : Set) rules prems (concl : X),
   derrec (derl rules) prems concl -> derrec rules prems concl.

@@ -1,5 +1,8 @@
 Set Implicit Arguments.
 
+Definition rsub U V f g := forall (u : U) (v : V), f u v -> g u v.
+Definition rls W := list W -> W -> Prop.
+
 (* lemmas which shouldn't be necessary at all! *)
 
 Lemma or_false: forall P : Prop, iff (or P False) P. Proof. tauto. Qed.
