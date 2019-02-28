@@ -250,24 +250,24 @@ Ltac mpv use_prL use_cgmL H1 H0 pr :=
 (* tactic for admissibility proof in nested sequents,
   case where the rule is applied in a sequent to the right
   of where the move takes place *)
-Ltac nsright pp G0 seqe d0 x c0 Ge HeqGe H2 d ps ps0 inps0 pse H3 H0 H H1
+Ltac nsright pp G0 seqe d0 x c0 Ge HeqGe K d ps ps0 inps0 pse K0 drs nsr acm
   G seq := 
 clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the right
   of where the swap takes place *)
 remember (G0 ++ (seqe, d0) :: x) as Ge ;
-remember (map (nsext Ge H2 d) ps0) as pse ;
+remember (map (nsext Ge K d) ps0) as pse ;
 apply derI with pse ; [
-  subst pse ; subst H3 ; rewrite list_rearr14 ;
+  subst pse ; subst K0 ; rewrite list_rearr14 ;
   (* it must be easier than this
     to rewrite using the inverse of the definition of nsext *)
   rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqGe ;
   apply NSctxt ; assumption |
   rewrite dersrec_forall ;
   intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
-  subst q ;  clear H0 H ;  subst ps ;
-  rewrite -> Forall_forall in H1 ;
-  rename_last inps0 ;  eapply in_map in inps0 ; pose (H1 _ inps0) ;
+  subst q ;  clear drs nsr ;  subst ps ;
+  rewrite -> Forall_forall in acm ;
+  rename_last inps0 ;  eapply in_map in inps0 ; pose (acm _ inps0) ;
   unfold can_gen_swapL in c0 ;
   unfold nsext ; subst Ge ; subst seqe ;
   rewrite <- list_rearr14 ;
@@ -275,12 +275,12 @@ apply derI with pse ; [
   unfold nsext ; subst G ; subst seq ;
   list_eq_assoc ].
 
-Ltac nsleft pp G0 seqe d0 x c0 He HeqHe H2 d ps ps0 inps0 pse H3 H0 H H1
+Ltac nsleft pp G0 seqe d0 x c0 He HeqHe K d ps ps0 inps0 pse K0 drs nsr acm
   G seq := 
 clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the left
   of where the swap takes place *)
-remember (x ++ (seqe, d0) :: H3) as He ;
+remember (x ++ (seqe, d0) :: K0) as He ;
 remember (map (nsext G He d) ps0) as pse ;
 apply derI with pse ; [
   subst pse ; subst G0 ; rewrite <- list_rearr14 ;
@@ -290,13 +290,13 @@ apply derI with pse ; [
   apply NSctxt ; assumption |
   rewrite dersrec_forall ;
   intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
-  subst q ;  clear H0 H ;  subst ps ;
-  rewrite -> Forall_forall in H1 ;
-  rename_last inps0 ;  eapply in_map in inps0 ; pose (H1 _ inps0) ;
+  subst q ;  clear drs nsr ;  subst ps ;
+  rewrite -> Forall_forall in acm ;
+  rename_last inps0 ;  eapply in_map in inps0 ; pose (acm _ inps0) ;
   unfold can_gen_swapL in c0 ;
   unfold nsext ; subst He ; subst seqe ;
   rewrite list_rearr14 ;
   eapply c0 ; [> | reflexivity ] ;
-  unfold nsext ; subst H2 ; subst seq ;
+  unfold nsext ; subst K ; subst seq ;
   list_eq_assoc ].
 

@@ -99,16 +99,18 @@ Lemma can_gen_swapL_mono: forall (V : Set)
   rsub rulesa rulesb ->
   can_gen_swapL rulesa ns -> can_gen_swapL rulesb ns.
 Proof.  unfold can_gen_swapL.  intros. 
-eapply H in H1.
-eapply derrec_rmono in X. exact X. exact H1. exact H2. Qed.
+eapply H in H0.
+eapply derrec_rmono in X. exact X. exact H0. exact H1. Qed.
 
 
 (*
 Lemma gen_swapL_step_pr': forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
-  rsub last_rule rules -> last_rule = nsrule (seqrule (@princrule V)) ->
+  last_rule = nsrule (seqrule (@princrule V)) ->
   gen_swapL_step last_rule rules ps concl.
-Proof.  intros.  unfold gen_swapL_step. intros. subst.
+Proof.  intros until 0.  unfold gen_swapL_step.
+intros lreq lrps drs acm rs. subst.
+
 eapply can_gen_swapL_mono in X0. exact X0.
 inversion H0. unfold nsext in H5.
 unfold can_gen_swapL.  intros.
