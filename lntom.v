@@ -26,7 +26,8 @@ Proof.
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
 exact D. tauto.
-intros. inversion H.  unfold nsext in H5.
+intros ? ? nsr drs acm. inversion nsr as [? ? ? K ? sppc mnsp nsc].
+unfold nsext in nsc.
 unfold can_gen_moveL.  intros until 0. intros pp ss.
 unfold nsext in pp.
 (* cases of where the move occurs vs where the last rule applied *)
@@ -35,16 +36,16 @@ remember (Γ1 ++ Γ2 ++ Q :: Γ3, Δ) as seqe.
 
 decompose [or] pp. 
 { nsright pp G0 seqe d0 x c0 Ge HeqGe
-  H2 d ps ps0 inps0 pse H6 H0 H H1 G seq. }
+  K d ps ps0 inps0 pse K0 drs nsr acm G seq. }
 all : revgoals.
 { nsleft pp G0 seqe d0 x c0 He HeqHe
-  H2 d ps ps0 inps0 pse H6 H0 H H1 G seq. }
+  K d ps ps0 inps0 pse K0 drs nsr acm G seq. }
 
 (* now case where move and rule application occur in the same sequent *)
-cE. clear pp. injection H8 as.
-inversion H3 as [? ? ? ? ? ? pr mse se].
+cE. clear pp. injection H0 as.
+inversion sppc as [? ? ? ? ? ? pr mse se].
 unfold seqext in se.
-subst.  clear H. clear H3.
+subst.  clear nsr. clear sppc.
 destruct c0. 
 injection se as sel ser.
 subst.
@@ -56,7 +57,7 @@ acacD'. (* gives 10 subgoals *)
 stage1 pr.
 (* normally need to rearrange *)
 apply pr. (* solves one sg *)
-stage2ds H1 qin1 qin3.  all : solve_eqs. }
+stage2ds acm qin1 qin3.  all : solve_eqs. }
 
 (* sg 2 of 10 *)
 all: cycle 1.
@@ -75,7 +76,7 @@ stage1 pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
 rewrite list_rearr16'.
 apply pr.
-stage2ds H1 qin1 qin3.
+stage2ds acm qin1 qin3.
 2: list_assoc_r'.
 2: simpl.
 all: solve_eqs.
@@ -86,7 +87,7 @@ stage1 pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
 rewrite list_rearr16'.
 apply pr.
-stage2ds H1 qin1 qin3.
+stage2ds acm qin1 qin3.
 2: rewrite - list_rearr16'.
 all: solve_eqs.
 }
@@ -97,30 +98,30 @@ rewrite <- app_assoc.
 simpl.
 rewrite app_assoc.
 apply pr.
-stage2ds H1 qin1 qin3.
+stage2ds acm qin1 qin3.
 all: solve_eqs.
 }
 }
  
 (* why does all : solve_eqs work?  see emails late Jan 2019 *)
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
-{ stage12ds H1 qin1 qin3 pr sel. all : solve_eqs. }
+{ stage12ds acm qin1 qin3 pr l. all : solve_eqs. }
+{ stage12ds acm qin1 qin3 pr l. all : solve_eqs. }
+{ stage12ds acm qin1 qin3 pr sel. all : solve_eqs. }
 
 (* subgoal has Q (formula to be moved) in principal formula *)
 all: cycle 1.
 all: cycle 1.
 
-{ stage12ds H1 qin1 qin3 pr l. all : solve_eqs. }
+{ stage12ds acm qin1 qin3 pr l. all : solve_eqs. }
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
-- { mpv use_prL use_cgmL H1 H0 pr. }
+- { mpv use_prL use_cgmL acm drs pr. }
 
-- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
+- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in drs. exact drs. }
 
-- { mpv use_prL use_cgmL H1 H0 pr. }
+- { mpv use_prL use_cgmL acm drs pr. }
 
-- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in H0. exact H0. }
+- { subst. use_prL pr. stage1 pr. apply pr. unfold seqext in drs. exact drs. }
 
 Qed.
 

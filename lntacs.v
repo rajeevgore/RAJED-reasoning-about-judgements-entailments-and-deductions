@@ -111,31 +111,31 @@ Proof. firstorder. subst.  assumption. Qed.
 
 Definition can_gen_moveL {V : Set}
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
-  forall G H seq (d : dir) Γ1 Γ2 Γ3 (Q : PropF V) Δ,
-  ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ Q :: Γ2 ++ Γ3) Δ ->
+  forall G K seq (d : dir) Γ1 Γ2 Γ3 (Q : PropF V) Δ,
+  ns = G ++ (seq, d) :: K -> seq = pair (Γ1 ++ Q :: Γ2 ++ Γ3) Δ ->
   derrec rules (fun _ => False) 
-    (G ++ (pair (Γ1 ++ Γ2 ++ Q :: Γ3) Δ, d) :: H).
+    (G ++ (pair (Γ1 ++ Γ2 ++ Q :: Γ3) Δ, d) :: K).
 
 Definition can_gen_moveR {V : Set}
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
-  forall G H seq (d : dir) Δ1 Δ2 Δ3 (Q : PropF V) Γ,
-  ns = G ++ (seq, d) :: H -> seq = pair Γ (Δ1 ++ Q :: Δ2 ++ Δ3) ->
+  forall G K seq (d : dir) Δ1 Δ2 Δ3 (Q : PropF V) Γ,
+  ns = G ++ (seq, d) :: K -> seq = pair Γ (Δ1 ++ Q :: Δ2 ++ Δ3) ->
   derrec rules (fun _ => False) 
-    (G ++ (pair Γ (Δ1 ++ Δ2 ++ Q :: Δ3), d) :: H).
+    (G ++ (pair Γ (Δ1 ++ Δ2 ++ Q :: Δ3), d) :: K).
 
 Definition can_gen_swapL {V : Set}
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
-  forall G H seq (d : dir) Γ1 Γ2 Γ3 Γ4 Δ,
-  ns = G ++ (seq, d) :: H -> seq = pair (Γ1 ++ Γ2 ++ Γ3 ++ Γ4) Δ ->
+  forall G K seq (d : dir) Γ1 Γ2 Γ3 Γ4 Δ,
+  ns = G ++ (seq, d) :: K -> seq = pair (Γ1 ++ Γ2 ++ Γ3 ++ Γ4) Δ ->
   derrec rules (fun _ => False) 
-    (G ++ (pair (Γ1 ++ Γ3 ++ Γ2 ++ Γ4) Δ, d) :: H).
+    (G ++ (pair (Γ1 ++ Γ3 ++ Γ2 ++ Γ4) Δ, d) :: K).
 
 Definition can_gen_swapR {V : Set}
   (rules : rls (list (rel (list (PropF V)) * dir))) ns :=
-  forall G H seq (d : dir) Δ1 Δ2 Δ3 Δ4 Γ,
-  ns = G ++ (seq, d) :: H -> seq = pair Γ (Δ1 ++ Δ2 ++ Δ3 ++ Δ4) ->
+  forall G K seq (d : dir) Δ1 Δ2 Δ3 Δ4 Γ,
+  ns = G ++ (seq, d) :: K -> seq = pair Γ (Δ1 ++ Δ2 ++ Δ3 ++ Δ4) ->
   derrec rules (fun _ => False) 
-    (G ++ (pair Γ (Δ1 ++ Δ3 ++ Δ2 ++ Δ4), d) :: H).
+    (G ++ (pair Γ (Δ1 ++ Δ3 ++ Δ2 ++ Δ4), d) :: K).
 
 Ltac use_cgm cgmX H1 := 
   rewrite -> Forall_forall in H1 ;
@@ -250,7 +250,7 @@ Ltac mpv use_prL use_cgmL H1 H0 pr :=
 (* tactic for admissibility proof in nested sequents,
   case where the rule is applied in a sequent to the right
   of where the move takes place *)
-Ltac nsright pp G0 seqe d0 x c0 Ge HeqGe H2 d ps ps0 inps0 pse H6 H0 H H1
+Ltac nsright pp G0 seqe d0 x c0 Ge HeqGe H2 d ps ps0 inps0 pse H3 H0 H H1
   G seq := 
 clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the right
@@ -258,7 +258,7 @@ clear pp ;  cE ;
 remember (G0 ++ (seqe, d0) :: x) as Ge ;
 remember (map (nsext Ge H2 d) ps0) as pse ;
 apply derI with pse ; [
-  subst pse ; subst H6 ; rewrite list_rearr14 ;
+  subst pse ; subst H3 ; rewrite list_rearr14 ;
   (* it must be easier than this
     to rewrite using the inverse of the definition of nsext *)
   rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqGe ;
@@ -275,12 +275,12 @@ apply derI with pse ; [
   unfold nsext ; subst G ; subst seq ;
   list_eq_assoc ].
 
-Ltac nsleft pp G0 seqe d0 x c0 He HeqHe H2 d ps ps0 inps0 pse H6 H0 H H1
+Ltac nsleft pp G0 seqe d0 x c0 He HeqHe H2 d ps ps0 inps0 pse H3 H0 H H1
   G seq := 
 clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the left
   of where the swap takes place *)
-remember (x ++ (seqe, d0) :: H6) as He ;
+remember (x ++ (seqe, d0) :: H3) as He ;
 remember (map (nsext G He d) ps0) as pse ;
 apply derI with pse ; [
   subst pse ; subst G0 ; rewrite <- list_rearr14 ;
