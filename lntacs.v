@@ -137,6 +137,20 @@ Definition can_gen_swapR {V : Set}
   derrec rules (fun _ => False) 
     (G ++ (pair Γ (Δ1 ++ Δ3 ++ Δ2 ++ Δ4), d) :: K).
 
+Lemma can_gen_swapL_mono: forall {V : Set}
+  (rulesa rulesb : rls (list (rel (list (PropF V)) * dir))) ns,
+  rsub rulesa rulesb ->
+  can_gen_swapL rulesa ns -> can_gen_swapL rulesb ns.
+Proof.  unfold can_gen_swapL.  intros. 
+eapply H in H0.
+eapply derrec_rmono in X. exact X. exact H0. exact H1. Qed.
+
+Definition gen_swapL_step {V : Set}
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))) ps concl :=
+  last_rule ps concl -> dersrec rules (fun _ => False) ps ->
+  Forall (can_gen_swapL rules) ps -> rsub last_rule rules -> 
+  can_gen_swapL rules concl.
+
 Ltac use_cgm cgmX H1 := 
   rewrite -> Forall_forall in H1 ;
   simpl in H1 ;
@@ -220,6 +234,32 @@ Ltac stage12altdsR H0 H1 qin1 qin3 pr :=
   match goal with
     | [ H : princrule _ (_, ?x) |- _ ] => stage12altds H0 H1 qin1 qin3 pr x end.
 
+Ltac stage1' rs pr :=
+subst ;
+rewrite -> ?app_nil_r in * ;
+eapply derI ; [
+unfold rsub in rs ; apply rs ;
+rewrite <- nsext_def ; apply NSctxt ;
+eapply Sctxt in pr ;
+unfold seqext in pr ;
+simpl in pr | idtac ].
+
+Ltac stage12altds' rs H0 H1 qin1 qin3 pr l0 := 
+  stage1' rs pr ; [ srs pr ; amt l0 | stage2altds H0 H1 qin1 qin3 ].
+
+Ltac stage12ds' rs H1 qin1 qin3 pr l0 := 
+  stage1' rs pr ; [ srs pr ; amt l0 | stage2ds H1 qin1 qin3 ].
+
+Ltac stage12altdsL' rs H0 H1 qin1 qin3 pr := 
+  match goal with
+    | [ H : princrule _ (?x, _) |- _ ] =>
+      stage12altds' rs H0 H1 qin1 qin3 pr x end.
+
+Ltac stage12altdsR' rs H0 H1 qin1 qin3 pr := 
+  match goal with
+    | [ H : princrule _ (_, ?x) |- _ ] =>
+      stage12altds' rs H0 H1 qin1 qin3 pr x end.
+
 Ltac app_cancel := 
   (list_assoc_l' ; rewrite ?appr_cong ;
   list_assoc_r' ; rewrite ?appl_cong).
@@ -275,6 +315,34 @@ apply derI with pse ; [
   unfold nsext ; subst G ; subst seq ;
   list_eq_assoc ].
 
+(* version of nsright suitable for case where 
+  rs : rsub (nsrule ...) rules, and rest of goal involves rules *)
+Ltac nsright' pp G0 seqe d0 x c0 Ge HeqGe K d ps ps0 inps0 pse K0 drs nsr acm
+  G seq rs := 
+clear pp ;  cE ;
+(* case where the rule is applied in a sequent to the right
+  of where the swap takes place *)
+remember (G0 ++ (seqe, d0) :: x) as Ge ;
+remember (map (nsext Ge K d) ps0) as pse ;
+apply derI with pse ; [
+  subst pse ; subst K0 ; rewrite list_rearr14 ;
+  unfold rsub in rs ; apply rs ;
+  (* it must be easier than this
+    to rewrite using the inverse of the definition of nsext *)
+  rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqGe ;
+  apply NSctxt ; assumption |
+  rewrite dersrec_forall ;
+  intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
+  subst q ;  clear drs nsr ;  subst ps ;
+  rewrite -> Forall_forall in acm ;
+  rename_last inps0 ;  eapply in_map in inps0 ; pose (acm _ inps0) ;
+  unfold can_gen_swapL in c0 ;
+  unfold nsext ; subst Ge ; subst seqe ;
+  rewrite <- list_rearr14 ;
+  eapply c0 ; [> | reflexivity ] ;
+  unfold nsext ; subst G ; subst seq ;
+  list_eq_assoc ].
+
 Ltac nsleft pp G0 seqe d0 x c0 He HeqHe K d ps ps0 inps0 pse K0 drs nsr acm
   G seq := 
 clear pp ;  cE ;
@@ -284,6 +352,32 @@ remember (x ++ (seqe, d0) :: K0) as He ;
 remember (map (nsext G He d) ps0) as pse ;
 apply derI with pse ; [
   subst pse ; subst G0 ; rewrite <- list_rearr14 ;
+  (* it must be easier than this
+    to rewrite using the inverse of the definition of nsext *)
+  rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqHe ;
+  apply NSctxt ; assumption |
+  rewrite dersrec_forall ;
+  intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
+  subst q ;  clear drs nsr ;  subst ps ;
+  rewrite -> Forall_forall in acm ;
+  rename_last inps0 ;  eapply in_map in inps0 ; pose (acm _ inps0) ;
+  unfold can_gen_swapL in c0 ;
+  unfold nsext ; subst He ; subst seqe ;
+  rewrite list_rearr14 ;
+  eapply c0 ; [> | reflexivity ] ;
+  unfold nsext ; subst K ; subst seq ;
+  list_eq_assoc ].
+
+Ltac nsleft' pp G0 seqe d0 x c0 He HeqHe K d ps ps0 inps0 pse K0 drs nsr acm
+  G seq rs := 
+clear pp ;  cE ;
+(* case where the rule is applied in a sequent to the left
+  of where the swap takes place *)
+remember (x ++ (seqe, d0) :: K0) as He ;
+remember (map (nsext G He d) ps0) as pse ;
+apply derI with pse ; [
+  subst pse ; subst G0 ; rewrite <- list_rearr14 ;
+  unfold rsub in rs ; apply rs ;
   (* it must be easier than this
     to rewrite using the inverse of the definition of nsext *)
   rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqHe ;

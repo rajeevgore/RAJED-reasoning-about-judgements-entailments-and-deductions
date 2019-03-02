@@ -58,16 +58,10 @@ Inductive pdrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Drules : forall ps c,
     nslrule (seqlrule (@drules V)) ps c -> pdrules ps c.
 
-Definition gen_swapL_step (V : Set)
-  (last_rule rules : rls (list (rel (list (PropF V)) * dir))) ps concl :=
-  last_rule ps concl -> dersrec rules (fun _ => False) ps ->
-  Forall (can_gen_swapL rules) ps -> rsub last_rule rules -> 
-  can_gen_swapL rules concl.
-
-Axiom gen_swapL_step_pr: forall V ps concl, gen_swapL_step 
+Axiom gen_swapL_step_pr_ax: forall V ps concl, gen_swapL_step 
   (nsrule (seqrule (@princrule V))) (@pdrules V) ps concl.
 
-Axiom gen_swapL_step_dr: forall V ps concl, gen_swapL_step 
+Axiom gen_swapL_step_dr_ax: forall V ps concl, gen_swapL_step 
   (nslrule (seqlrule (@drules V))) (@pdrules V) ps concl.
 
 (* including first modal rules *)
@@ -80,13 +74,13 @@ eapply derrec_all_ind in D.
 exact D. tauto.
 intros. inversion H. 
 subst.
-pose gen_swapL_step_pr.
+pose gen_swapL_step_pr_ax.
 unfold gen_swapL_step in g.
 eapply g. eassumption. assumption. assumption.
 unfold rsub. clear g. 
 intros. apply Prules.  assumption.
 subst.
-pose gen_swapL_step_dr.
+pose gen_swapL_step_dr_ax.
 unfold gen_swapL_step in g.
 eapply g. eassumption. assumption. assumption.
 unfold rsub. clear g. 
@@ -94,40 +88,3 @@ intros. apply Drules.  assumption.
 Qed.
 
 
-Lemma can_gen_swapL_mono: forall (V : Set)
-  (rulesa rulesb : rls (list (rel (list (PropF V)) * dir))) ns,
-  rsub rulesa rulesb ->
-  can_gen_swapL rulesa ns -> can_gen_swapL rulesb ns.
-Proof.  unfold can_gen_swapL.  intros. 
-eapply H in H0.
-eapply derrec_rmono in X. exact X. exact H0. exact H1. Qed.
-
-
-(*
-Lemma gen_swapL_step_pr': forall V ps concl 
-  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
-  last_rule = nsrule (seqrule (@princrule V)) ->
-  gen_swapL_step last_rule rules ps concl.
-Proof.  intros until 0.  unfold gen_swapL_step.
-intros lreq lrps drs acm rs. subst.
-
-eapply can_gen_swapL_mono in X0. exact X0.
-inversion H0. unfold nsext in H5.
-unfold can_gen_swapL.  intros.
-unfold nsext in H7.
-(* cases of where the swap occurs vs where the last rule applied *)
-apply partition_2_2 in H7.
-remember (Γ1 ++ Γ3 ++ Γ2 ++ Γ4, Δ) as seqe.
-
-decompose [or] H7.
-(* this fails *)
-{ nsright H7 G0 seqe d0 x c0 Ge HeqGe
-  H d ps ps0 inps0 pse H6 H1 H0 H2 G seq. }
-all : revgoals.
-{ nsleft H7 G0 seqe d0 x c0 He HeqHe
-  H2 d ps ps0 inps0 pse H6 H0 H H1 G seq. }
-
-
-
-
-*)
