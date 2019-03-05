@@ -61,52 +61,52 @@ repeat ((list_eq_nc || (pose pr as Qpr ; apply princrule_L_oe in Qpr)) ;
   then stage12ds acm qin1 qin3 pr ...,
   then all : solve_eqs. to see what next *)
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l) ; reflexivity.  }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc sel) ; reflexivity.  }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr. }
+{ stage12altdsL rs drs acm qin1 qin3 pr. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ; 
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ; 
 rewrite (app_assoc l1) ; rewrite (app_assoc sel) ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc sel1) ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l1) ; rewrite (app_assoc sel1) ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l) ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc Φ1) ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsL' rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l1) ; rewrite (app_assoc Φ1) ; reflexivity. }
 
 Qed.

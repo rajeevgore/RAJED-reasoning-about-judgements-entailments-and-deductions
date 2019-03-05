@@ -105,15 +105,15 @@ all: solve_eqs.
 }
  
 (* why does all : solve_eqs work?  see emails late Jan 2019 *)
-{ stage12ds' rs acm qin1 qin3 pr l. all : solve_eqs. }
-{ stage12ds' rs acm qin1 qin3 pr l. all : solve_eqs. }
-{ stage12ds' rs acm qin1 qin3 pr sel. all : solve_eqs. }
+{ stage12ds rs acm qin1 qin3 pr l. all : solve_eqs. }
+{ stage12ds rs acm qin1 qin3 pr l. all : solve_eqs. }
+{ stage12ds rs acm qin1 qin3 pr sel. all : solve_eqs. }
 
 (* subgoal has Q (formula to be moved) in principal formula *)
 all: cycle 1.
 all: cycle 1.
 
-{ stage12ds' rs acm qin1 qin3 pr l. all : solve_eqs. }
+{ stage12ds rs acm qin1 qin3 pr l. all : solve_eqs. }
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
 - { mpv' use_prL use_cgmL acm drs rs pr. }

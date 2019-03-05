@@ -263,21 +263,21 @@ eapply Sctxt in pr ;
 unfold seqext in pr ;
 simpl in pr | idtac ].
 
-Ltac stage12altds' rs H0 H1 qin1 qin3 pr l0 := 
+Ltac stage12altds rs H0 H1 qin1 qin3 pr l0 := 
   stage1' rs pr ; [ srs pr ; amt l0 | stage2altds H0 H1 qin1 qin3 ].
 
-Ltac stage12ds' rs H1 qin1 qin3 pr l0 := 
+Ltac stage12ds rs H1 qin1 qin3 pr l0 := 
   stage1' rs pr ; [ srs pr ; amt l0 | stage2ds H1 qin1 qin3 ].
 
-Ltac stage12altdsL' rs H0 H1 qin1 qin3 pr := 
+Ltac stage12altdsL rs H0 H1 qin1 qin3 pr := 
   match goal with
     | [ H : princrule _ (?x, _) |- _ ] =>
-      stage12altds' rs H0 H1 qin1 qin3 pr x end.
+      stage12altds rs H0 H1 qin1 qin3 pr x end.
 
-Ltac stage12altdsR' rs H0 H1 qin1 qin3 pr := 
+Ltac stage12altdsR rs H0 H1 qin1 qin3 pr := 
   match goal with
     | [ H : princrule _ (_, ?x) |- _ ] =>
-      stage12altds' rs H0 H1 qin1 qin3 pr x end.
+      stage12altds rs H0 H1 qin1 qin3 pr x end.
 
 Ltac app_cancel := 
   (list_assoc_l' ; rewrite ?appr_cong ;
