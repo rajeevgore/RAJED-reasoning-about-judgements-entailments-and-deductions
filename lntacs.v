@@ -137,6 +137,22 @@ Definition can_gen_swapR {V : Set}
   derrec rules (fun _ => False) 
     (G ++ (pair Γ (Δ1 ++ Δ3 ++ Δ2 ++ Δ4), d) :: K).
 
+Lemma can_gen_moveL_mono: forall {V : Set}
+  (rulesa rulesb : rls (list (rel (list (PropF V)) * dir))) ns,
+  rsub rulesa rulesb ->
+  can_gen_moveL rulesa ns -> can_gen_moveL rulesb ns.
+Proof.  unfold can_gen_moveL.  intros. 
+eapply H in H0.
+eapply derrec_rmono in X. exact X. exact H0. exact H1. Qed.
+
+Lemma can_gen_moveR_mono: forall {V : Set}
+  (rulesa rulesb : rls (list (rel (list (PropF V)) * dir))) ns,
+  rsub rulesa rulesb ->
+  can_gen_moveR rulesa ns -> can_gen_moveR rulesb ns.
+Proof.  unfold can_gen_moveR.  intros. 
+eapply H in H0.
+eapply derrec_rmono in X. exact X. exact H0. exact H1. Qed.
+
 Lemma can_gen_swapL_mono: forall {V : Set}
   (rulesa rulesb : rls (list (rel (list (PropF V)) * dir))) ns,
   rsub rulesa rulesb ->
@@ -145,11 +161,37 @@ Proof.  unfold can_gen_swapL.  intros.
 eapply H in H0.
 eapply derrec_rmono in X. exact X. exact H0. exact H1. Qed.
 
+Lemma can_gen_swapR_mono: forall {V : Set}
+  (rulesa rulesb : rls (list (rel (list (PropF V)) * dir))) ns,
+  rsub rulesa rulesb ->
+  can_gen_swapR rulesa ns -> can_gen_swapR rulesb ns.
+Proof.  unfold can_gen_swapR.  intros. 
+eapply H in H0.
+eapply derrec_rmono in X. exact X. exact H0. exact H1. Qed.
+
+Definition gen_moveL_step {V : Set}
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))) ps concl :=
+  last_rule ps concl -> dersrec rules (fun _ => False) ps ->
+  Forall (can_gen_moveL rules) ps -> rsub last_rule rules -> 
+  can_gen_moveL rules concl.
+
+Definition gen_moveR_step {V : Set}
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))) ps concl :=
+  last_rule ps concl -> dersrec rules (fun _ => False) ps ->
+  Forall (can_gen_moveR rules) ps -> rsub last_rule rules -> 
+  can_gen_moveR rules concl.
+
 Definition gen_swapL_step {V : Set}
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))) ps concl :=
   last_rule ps concl -> dersrec rules (fun _ => False) ps ->
   Forall (can_gen_swapL rules) ps -> rsub last_rule rules -> 
   can_gen_swapL rules concl.
+
+Definition gen_swapR_step {V : Set}
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))) ps concl :=
+  last_rule ps concl -> dersrec rules (fun _ => False) ps ->
+  Forall (can_gen_swapR rules) ps -> rsub last_rule rules -> 
+  can_gen_swapR rules concl.
 
 Ltac use_cgm cgmX H1 := 
   rewrite -> Forall_forall in H1 ;
