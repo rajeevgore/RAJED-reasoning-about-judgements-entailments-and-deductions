@@ -205,15 +205,6 @@ Ltac use_cgm cgmX H1 :=
 Ltac use_cgmL H1 := use_cgm can_gen_moveL H1.
 Ltac use_cgmR H1 := use_cgm can_gen_moveR H1.
 
-Ltac stage1 pr := 
-subst ;
-rewrite -> ?app_nil_r in * ;
-eapply derI ; [
-rewrite <- nsext_def ; apply NSctxt ;
-eapply Sctxt in pr ;
-unfold seqext in pr ;
-simpl in pr | idtac ].
-
 Ltac stage2 H1 qin1 qin3 := 
 rewrite dersrec_forall ;
 intros q qin ; rewrite -> in_map_iff in qin ; cD ;
@@ -262,20 +253,6 @@ Ltac srs pr := eapply seqrule_same ; [ exact pr |
 
 Ltac amt l0 := eapply eq_trans ; [> assoc_mid l0 .. ] ; [> reflexivity ..].
   
-Ltac stage12altds H0 H1 qin1 qin3 pr l0 := 
-  stage1 pr ; [ srs pr ; amt l0 | stage2altds H0 H1 qin1 qin3 ].
-
-Ltac stage12ds H1 qin1 qin3 pr l0 := 
-  stage1 pr ; [ srs pr ; amt l0 | stage2ds H1 qin1 qin3 ].
-
-Ltac stage12altdsL H0 H1 qin1 qin3 pr := 
-  match goal with
-    | [ H : princrule _ (?x, _) |- _ ] => stage12altds H0 H1 qin1 qin3 pr x end.
-
-Ltac stage12altdsR H0 H1 qin1 qin3 pr := 
-  match goal with
-    | [ H : princrule _ (_, ?x) |- _ ] => stage12altds H0 H1 qin1 qin3 pr x end.
-
 Ltac stage1' rs pr :=
 subst ;
 rewrite -> ?app_nil_r in * ;
@@ -321,14 +298,6 @@ Ltac solve_eqs :=
   prgt 44.
 
 (* tactic for when principal formula to be moved *)
-Ltac mpv use_prL use_cgmL H1 H0 pr := 
-  subst ; use_prL pr ; stage1 pr ; [ 
-  rewrite !app_assoc ; rewrite !app_assoc in pr ; apply pr |
-  destruct pr ; simpl ; repeat (apply dlNil || apply dlCons) ;
-  try (use_cgmL H1) ;
-  rewrite -> dersrec_forall in H0 ; apply H0 ; simpl ;
-  rewrite <- app_assoc ;  tauto ].
-
 Ltac mpv' use_prL use_cgmL H1 H0 rs pr := 
   subst ; use_prL pr ; stage1' rs pr ; [ 
   rewrite !app_assoc ; rewrite !app_assoc in pr ; apply pr |
