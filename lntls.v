@@ -233,16 +233,5 @@ unfold rsub. clear g.
 intros.  assumption.
 Qed.
 
-
-
-
-
-
-
-
-
-
-
-
-
+Check gen_swapL'.
 

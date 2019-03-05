@@ -329,6 +329,14 @@ Ltac mpv use_prL use_cgmL H1 H0 pr :=
   rewrite -> dersrec_forall in H0 ; apply H0 ; simpl ;
   rewrite <- app_assoc ;  tauto ].
 
+Ltac mpv' use_prL use_cgmL H1 H0 rs pr := 
+  subst ; use_prL pr ; stage1' rs pr ; [ 
+  rewrite !app_assoc ; rewrite !app_assoc in pr ; apply pr |
+  destruct pr ; simpl ; repeat (apply dlNil || apply dlCons) ;
+  try (use_cgmL H1) ;
+  rewrite -> dersrec_forall in H0 ; apply H0 ; simpl ;
+  rewrite <- app_assoc ;  tauto ].
+
 (* tactic for admissibility proof in nested sequents,
   case where the rule is applied in a sequent to the right
   of where the move takes place *)
