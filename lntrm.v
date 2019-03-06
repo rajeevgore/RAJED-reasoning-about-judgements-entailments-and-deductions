@@ -135,7 +135,7 @@ Qed.
 
 Check gen_moveR_step_pr.
 
-Lemma gen_moveR: forall (V : Set) ns
+Lemma gen_moveR: forall {V : Set} ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_gen_moveR (nsrule (seqrule (@princrule V))) ns.
 

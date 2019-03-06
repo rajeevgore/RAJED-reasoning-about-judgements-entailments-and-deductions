@@ -113,7 +113,7 @@ Qed.
 
 Check gen_swapR_step_pr.
 
-Lemma gen_swapR: forall (V : Set) ns
+Lemma gen_swapR: forall {V : Set} ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_gen_swapR (nsrule (seqrule (@princrule V))) ns.
 

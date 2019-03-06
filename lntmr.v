@@ -8,6 +8,8 @@ Require Import dd.
 Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.
+Require Import lntls.
+Require Import lntrs.
 
 Set Implicit Arguments.
 
@@ -50,19 +52,15 @@ Inductive drules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
       
 Check (fun V => nslrule (seqlrule (@drules V))).
 
-Definition rsub U V f g := forall (u : U) (v : V), f u v -> g u v.
-
 Inductive pdrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Prules : forall ps c,
     nsrule (seqrule (@princrule V)) ps c -> pdrules ps c
   | Drules : forall ps c,
     nslrule (seqlrule (@drules V)) ps c -> pdrules ps c.
 
-Axiom gen_swapL_step_pr_ax: forall V ps concl, gen_swapL_step 
-  (nsrule (seqrule (@princrule V))) (@pdrules V) ps concl.
-
-Axiom gen_swapL_step_dr_ax: forall V ps concl, gen_swapL_step 
-  (nslrule (seqlrule (@drules V))) (@pdrules V) ps concl.
+Axiom gen_swapL_step_dr_ax: forall V ps concl last_rule rules,
+  last_rule = nslrule (seqlrule (@drules V)) ->
+  gen_swapL_step last_rule rules ps concl.
 
 (* including first modal rules *)
 Lemma gen_swapmL: forall (V : Set) ns
@@ -74,15 +72,15 @@ eapply derrec_all_ind in D.
 exact D. tauto.
 intros. inversion H. 
 subst.
-pose gen_swapL_step_pr_ax.
+pose gen_swapL_step_pr.
 unfold gen_swapL_step in g.
-eapply g. eassumption. assumption. assumption.
+eapply g.  reflexivity. eassumption. assumption. assumption.
 unfold rsub. clear g. 
 intros. apply Prules.  assumption.
 subst.
 pose gen_swapL_step_dr_ax.
 unfold gen_swapL_step in g.
-eapply g. eassumption. assumption. assumption.
+eapply g.  reflexivity. eassumption. assumption. assumption.
 unfold rsub. clear g. 
 intros. apply Drules.  assumption.
 Qed.
