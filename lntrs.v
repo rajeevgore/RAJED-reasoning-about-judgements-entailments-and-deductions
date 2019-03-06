@@ -36,10 +36,10 @@ remember (Γ, Δ1 ++ Δ3 ++ Δ2 ++ Δ4) as seqe.
 
 decompose [or] pp. 
 
-{ nsright' pp G0 seqe d0 x c0 Ge HeqGe
+{ nsright pp G0 seqe d0 x c0 Ge HeqGe
   K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
 all : revgoals.
-{ nsleft' pp G0 seqe d0 x c0 He HeqHe
+{ nsleft pp G0 seqe d0 x c0 He HeqHe
   K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
 
 (* now case where move and rule application occur in the same sequent *)
@@ -57,8 +57,8 @@ repeat ((list_eq_nc || (pose pr as Qpr ; apply princrule_R_oe in Qpr)) ;
   sD ; subst ; simpl ; simpl in pr ;
   try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
 
-(* need to do stage1 pr. to see what next,
-  then stage12ds acm qin1 qin3 pr ...,
+(* need to do stage1 rs pr. to see what next,
+  and stage12ds rs acm qin1 qin3 pr ...,
   then all : solve_eqs. to see what next *)
 
 { stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ;
@@ -113,7 +113,7 @@ Qed.
 
 Check gen_swapR_step_pr.
 
-Lemma gen_swapR': forall (V : Set) ns
+Lemma gen_swapR: forall (V : Set) ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_gen_swapR (nsrule (seqrule (@princrule V))) ns.
 
@@ -130,7 +130,7 @@ unfold rsub. clear g.
 intros.  assumption.
 Qed.
 
-Check gen_swapR'.
+Check gen_swapR.
 
 
 

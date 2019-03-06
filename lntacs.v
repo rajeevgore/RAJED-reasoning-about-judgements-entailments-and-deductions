@@ -253,7 +253,7 @@ Ltac srs pr := eapply seqrule_same ; [ exact pr |
 
 Ltac amt l0 := eapply eq_trans ; [> assoc_mid l0 .. ] ; [> reflexivity ..].
   
-Ltac stage1' rs pr :=
+Ltac stage1 rs pr :=
 subst ;
 rewrite -> ?app_nil_r in * ;
 eapply derI ; [
@@ -264,10 +264,10 @@ unfold seqext in pr ;
 simpl in pr | idtac ].
 
 Ltac stage12altds rs H0 H1 qin1 qin3 pr l0 := 
-  stage1' rs pr ; [ srs pr ; amt l0 | stage2altds H0 H1 qin1 qin3 ].
+  stage1 rs pr ; [ srs pr ; amt l0 | stage2altds H0 H1 qin1 qin3 ].
 
 Ltac stage12ds rs H1 qin1 qin3 pr l0 := 
-  stage1' rs pr ; [ srs pr ; amt l0 | stage2ds H1 qin1 qin3 ].
+  stage1 rs pr ; [ srs pr ; amt l0 | stage2ds H1 qin1 qin3 ].
 
 Ltac stage12altdsL rs H0 H1 qin1 qin3 pr := 
   match goal with
@@ -298,8 +298,8 @@ Ltac solve_eqs :=
   prgt 44.
 
 (* tactic for when principal formula to be moved *)
-Ltac mpv' use_prL use_cgmL H1 H0 rs pr := 
-  subst ; use_prL pr ; stage1' rs pr ; [ 
+Ltac mpv use_prL use_cgmL H1 H0 rs pr := 
+  subst ; use_prL pr ; stage1 rs pr ; [ 
   rewrite !app_assoc ; rewrite !app_assoc in pr ; apply pr |
   destruct pr ; simpl ; repeat (apply dlNil || apply dlCons) ;
   try (use_cgmL H1) ;
@@ -309,34 +309,10 @@ Ltac mpv' use_prL use_cgmL H1 H0 rs pr :=
 (* tactic for admissibility proof in nested sequents,
   case where the rule is applied in a sequent to the right
   of where the move takes place *)
-Ltac nsright pp G0 seqe d0 x c0 Ge HeqGe K d ps ps0 inps0 pse K0 drs nsr acm
-  G seq := 
-clear pp ;  cE ;
-(* case where the rule is applied in a sequent to the right
-  of where the swap takes place *)
-remember (G0 ++ (seqe, d0) :: x) as Ge ;
-remember (map (nsext Ge K d) ps0) as pse ;
-apply derI with pse ; [
-  subst pse ; subst K0 ; rewrite list_rearr14 ;
-  (* it must be easier than this
-    to rewrite using the inverse of the definition of nsext *)
-  rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqGe ;
-  apply NSctxt ; assumption |
-  rewrite dersrec_forall ;
-  intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
-  subst q ;  clear drs nsr ;  subst ps ;
-  rewrite -> Forall_forall in acm ;
-  rename_last inps0 ;  eapply in_map in inps0 ; pose (acm _ inps0) ;
-  unfold can_gen_swapL in c0 ;
-  unfold nsext ; subst Ge ; subst seqe ;
-  rewrite <- list_rearr14 ;
-  eapply c0 ; [> | reflexivity ] ;
-  unfold nsext ; subst G ; subst seq ;
-  list_eq_assoc ].
 
 (* version of nsright suitable for case where 
   rs : rsub (nsrule ...) rules, and rest of goal involves rules *)
-Ltac nsright' pp G0 seqe d0 x c0 Ge HeqGe K d ps ps0 inps0 pse K0 drs nsr acm
+Ltac nsright pp G0 seqe d0 x c0 Ge HeqGe K d ps ps0 inps0 pse K0 drs nsr acm
   G seq rs := 
 clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the right
@@ -363,31 +339,6 @@ apply derI with pse ; [
   list_eq_assoc ].
 
 Ltac nsleft pp G0 seqe d0 x c0 He HeqHe K d ps ps0 inps0 pse K0 drs nsr acm
-  G seq := 
-clear pp ;  cE ;
-(* case where the rule is applied in a sequent to the left
-  of where the swap takes place *)
-remember (x ++ (seqe, d0) :: K0) as He ;
-remember (map (nsext G He d) ps0) as pse ;
-apply derI with pse ; [
-  subst pse ; subst G0 ; rewrite <- list_rearr14 ;
-  (* it must be easier than this
-    to rewrite using the inverse of the definition of nsext *)
-  rewrite <- nsext_def ;  subst seqe ;  rewrite <- HeqHe ;
-  apply NSctxt ; assumption |
-  rewrite dersrec_forall ;
-  intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
-  subst q ;  clear drs nsr ;  subst ps ;
-  rewrite -> Forall_forall in acm ;
-  rename_last inps0 ;  eapply in_map in inps0 ; pose (acm _ inps0) ;
-  unfold can_gen_swapL in c0 ;
-  unfold nsext ; subst He ; subst seqe ;
-  rewrite list_rearr14 ;
-  eapply c0 ; [> | reflexivity ] ;
-  unfold nsext ; subst K ; subst seq ;
-  list_eq_assoc ].
-
-Ltac nsleft' pp G0 seqe d0 x c0 He HeqHe K d ps ps0 inps0 pse K0 drs nsr acm
   G seq rs := 
 clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the left

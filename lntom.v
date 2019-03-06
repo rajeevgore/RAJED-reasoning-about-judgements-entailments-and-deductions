@@ -36,10 +36,10 @@ remember (Γ1 ++ Γ2 ++ Q :: Γ3, Δ) as seqe.
 
 decompose [or] pp. 
 
-{ nsright' pp G0 seqe d0 x c0 Ge HeqGe
+{ nsright pp G0 seqe d0 x c0 Ge HeqGe
   K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
 all : revgoals.
-{ nsleft' pp G0 seqe d0 x c0 He HeqHe
+{ nsleft pp G0 seqe d0 x c0 He HeqHe
   K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
 
 (* now case where move and rule application occur in the same sequent *)
@@ -55,7 +55,7 @@ acacD'. (* gives 10 subgoals *)
 
 {
 (* sg 1 of 10 *)
-stage1' rs pr.
+stage1 rs pr.
 (* normally need to rearrange *)
 apply pr. (* solves one sg *)
 stage2ds acm qin1 qin3.  all : solve_eqs. }
@@ -73,7 +73,7 @@ all: cycle 1.
 use_prL pr.
 
 {
-stage1' rs pr. (* will need to move Q around sel1 *)
+stage1 rs pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
 rewrite list_rearr16'.
 apply pr.
@@ -84,7 +84,7 @@ all: solve_eqs.
 }
 
 {
-stage1' rs pr. (* will need to move Q around sel1 *)
+stage1 rs pr. (* will need to move Q around sel1 *)
 rewrite app_assoc.
 rewrite list_rearr16'.
 apply pr.
@@ -94,7 +94,7 @@ all: solve_eqs.
 }
 
 {
-stage1' rs pr.
+stage1 rs pr.
 rewrite <- app_assoc.
 simpl.
 rewrite app_assoc.
@@ -116,21 +116,21 @@ all: cycle 1.
 { stage12ds rs acm qin1 qin3 pr l. all : solve_eqs. }
 
 (* four remaining subgoals have Q (formula to be moved) in principal formula *)
-- { mpv' use_prL use_cgmL acm drs rs pr. }
+- { mpv use_prL use_cgmL acm drs rs pr. }
 
-- { subst. use_prL pr. stage1' rs pr. apply pr. 
+- { subst. use_prL pr. stage1 rs pr. apply pr. 
     unfold seqext in drs. exact drs. }
 
-- { mpv' use_prL use_cgmL acm drs rs pr. }
+- { mpv use_prL use_cgmL acm drs rs pr. }
 
-- { subst. use_prL pr. stage1' rs pr. apply pr.
+- { subst. use_prL pr. stage1 rs pr. apply pr.
     unfold seqext in drs. exact drs. }
 
 Qed.
 
 Check gen_moveL_step_pr.
 
-Lemma gen_moveL': forall (V : Set) ns
+Lemma gen_moveL: forall (V : Set) ns
   (D : derrec (nsrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_gen_moveL (nsrule (seqrule (@princrule V))) ns.
 
@@ -147,5 +147,5 @@ unfold rsub. clear g.
 intros.  assumption.
 Qed.
 
-Check gen_moveL'.
+Check gen_moveL.
 
