@@ -11,13 +11,13 @@ Require Import gen.
   although the actual version used allows prems : X -> Prop 
 Reset derrec.
 
-Inductive derrec (X : Set) (rules : list X -> X -> Prop) :
+Inductive derrec X (rules : list X -> X -> Prop) :
   (X -> Type) -> X -> Prop := 
   | dpI : forall prems concl,
     prems concl -> derrec rules prems concl
   | derI : forall ps prems concl,
     rules ps concl -> dersrec rules prems ps -> derrec rules prems concl 
-with dersrec (X : Set) (rules : list X -> X -> Prop) :
+with dersrec X (rules : list X -> X -> Prop) :
   (X -> Type) -> list X -> Prop :=
   | dlNil : forall prems, dersrec rules prems []
   | dlCons : forall prems seq seqs, 
@@ -27,20 +27,20 @@ with dersrec (X : Set) (rules : list X -> X -> Prop) :
     *)
 
 (* definition using Forall, seems equivalent *)
-Inductive aderrec (X : Set) (rules : list X -> X -> Prop) 
+Inductive aderrec X (rules : list X -> X -> Prop) 
   (prems : X -> Prop) : X -> Prop := 
   | adpI : forall concl,
     prems concl -> aderrec rules prems concl
   | aderI : forall ps concl, rules ps concl ->
     Forall (aderrec rules prems) ps -> aderrec rules prems concl.
 
-Inductive derrec (X : Set) (rules : list X -> X -> Prop) (prems : X -> Prop) :
+Inductive derrec X (rules : list X -> X -> Prop) (prems : X -> Prop) :
   X -> Prop := 
   | dpI : forall concl,
     prems concl -> derrec rules prems concl
   | derI : forall ps concl,
     rules ps concl -> dersrec rules prems ps -> derrec rules prems concl 
-with dersrec (X : Set) (rules : list X -> X -> Prop) (prems : X -> Prop) :
+with dersrec X (rules : list X -> X -> Prop) (prems : X -> Prop) :
   list X -> Prop :=
   | dlNil : dersrec rules prems []
   | dlCons : forall seq seqs, 
@@ -80,7 +80,7 @@ Definition dim_all8 X rules prems Q h1 h2 :=
 (* so dim_all4, or dim_all8 better, is the same as derrec_all_ind below *)
 
 Lemma derrec_all_ind:
-  forall (X : Set) (rules : list X -> X -> Prop) (prems Q : X -> Prop),
+  forall X (rules : list X -> X -> Prop) (prems Q : X -> Prop),
      (forall concl : X, prems concl -> Q concl) ->
      (forall (ps : list X) (concl : X),
       rules ps concl -> dersrec rules prems ps -> Forall Q ps -> Q concl) ->
@@ -94,12 +94,12 @@ apply Forall_cons. assumption.  assumption.
 assumption.
 Qed.
 
-Inductive derl (X : Set) (rules : list X -> X -> Prop) :
+Inductive derl X (rules : list X -> X -> Prop) :
   list X -> X -> Prop := 
   | asmI : forall p, derl rules [p] p
   | dtderI : forall pss ps concl, rules ps concl ->
     dersl rules pss ps -> derl rules pss concl
-with dersl (X : Set) (rules : list X -> X -> Prop) :
+with dersl X (rules : list X -> X -> Prop) :
   list X -> list X -> Prop := 
   | dtNil : dersl rules [] []
   | dtCons : forall ps c pss cs,
@@ -112,12 +112,12 @@ with dersl_ind_mut := Induction for dersl Sort Prop.
 Check derl_ind_mut.
 Check dersl_ind_mut.
 
-Inductive dercl (X : Set) (rules : list X -> X -> Prop) :
+Inductive dercl X (rules : list X -> X -> Prop) :
   list X -> X -> Prop := 
   | casmI : forall p, dercl rules [p] p
   | dtcderI : forall pss ps concl, rules ps concl ->
     dercsl rules pss ps -> dercl rules (concat pss) concl
-with dercsl (X : Set) (rules : list X -> X -> Prop) :
+with dercsl X (rules : list X -> X -> Prop) :
   list (list X) -> list X -> Prop := 
   | dtcNil : dercsl rules [] []
   | dtcCons : forall ps c pss cs, dercl rules ps c ->
@@ -130,11 +130,10 @@ with dercsl_ind_mut := Induction for dercsl Sort Prop.
 Check dercl_ind_mut.
 Check dercsl_ind_mut.
 
-Theorem derrec_trans_imp: forall (X : Set) rules prems (concl : X),
+Theorem derrec_trans_imp: forall X rules prems (concl : X),
   derrec rules (derrec rules prems) concl -> derrec rules prems concl.
 
 Proof.
-Restart. 
 intros.
 
 Check (derrec rules (derrec rules prems) concl).
@@ -161,7 +160,8 @@ apply dlCons. assumption.  assumption.
 assumption.
 Qed.
 
-Theorem dersl_derl: forall (X : Set) rules prems (concls : list X),
+(*
+Theorem dersl_derl: forall X rules prems (concls : list X),
   dersl (derl rules) prems concls -> dersl rules prems concls.
 
 intros.
@@ -174,9 +174,11 @@ intros.
 eapply dtderI.
 (* doesn't work, requires rules ?ps concl *)
 Abort.
+*)
 
 (* need transitivity ones first *)
-Theorem derl_trans: forall (X : Set) rules pss prems (concl : X),
+(*
+Theorem derl_trans: forall X rules pss prems (concl : X),
   derl rules prems concl -> dersl rules pss prems -> derl rules pss concl.
 intros.
 
@@ -197,10 +199,11 @@ intros.
   is dercl dercsl easier ? *)
 
 Abort.
+*)
 
 (* no convenient way of expressing the corresponding result
   for dercsl except using sth like allrel
-Theorem dercl_dercsl: forall (X : Set) rules pss prems (concl : X),
+Theorem dercl_dercsl: forall X rules pss prems (concl : X),
   dercl rules prems concl -> dercsl rules pss prems -> 
     dercl rules (concat pss) concl.
 intros.
@@ -212,11 +215,11 @@ eapply (dercl_ind_mut (rules := rules)
     forall qss, dercsl rules qss pss -> dercsl rules pss cs)).
 *)
 
-Lemma derrec_same: forall (X : Set) rules prems (c c' : X),
+Lemma derrec_same: forall X rules prems (c c' : X),
   derrec rules prems c -> c = c' -> derrec rules prems c'.
 Proof. intros. subst. assumption. Qed.
 
-Lemma dersrec_all: forall (X : Set) rules prems (cs : list X),
+Lemma dersrec_all: forall X rules prems (cs : list X),
   dersrec rules prems cs <-> Forall (derrec rules prems) cs.
 Proof.
 intros. 
@@ -226,16 +229,16 @@ inversion H. apply Forall_cons. assumption. tauto.
 inversion H. apply dlCons.  assumption. tauto.
 Qed.
 
-Lemma dersrec_forall: forall (X : Set) rules prems (cs : list X),
+Lemma dersrec_forall: forall X rules prems (cs : list X),
   dersrec rules prems cs <-> forall c, In c cs -> derrec rules prems c.
 Proof. intros. rewrite dersrec_all. rewrite Forall_forall. reflexivity. Qed.
 
-Lemma dersrec_nil: forall (X : Set) rules prems,
+Lemma dersrec_nil: forall X rules prems,
   dersrec rules prems ([] : list X).
 Proof.  intros.  rewrite dersrec_all ; apply Forall_nil. Qed.
 
 (* try using the induction principle derrec_all_ind *)
-Lemma derrec_rmono: forall (W : Set) (rulesa rulesb : rls W) prems concl,
+Lemma derrec_rmono: forall W (rulesa rulesb : rls W) prems concl,
   rsub rulesa rulesb -> 
   derrec rulesa prems concl ->
   derrec rulesb prems concl.
@@ -245,7 +248,7 @@ intros. eapply derI. unfold rsub in X. apply X. eassumption.
 rewrite dersrec_forall. rewrite -> Forall_forall in H1. assumption.
 Qed.
 
-Theorem derrec_trans_imp_alt: forall (X : Set) rules prems (concl : X),
+Theorem derrec_trans_imp_alt: forall X rules prems (concl : X),
   derrec rules (derrec rules prems) concl -> derrec rules prems concl.
 Proof.  intros.  revert H.  eapply derrec_all_ind. tauto.
 intros. eapply derI. eassumption.
@@ -256,25 +259,25 @@ Lemma eq_TrueI: forall (P : Prop), (P -> (P <-> True)).
 intros. unfold iff. apply conj ; intro.  apply I. assumption.
 Qed.
 
-Lemma Forall_cons_inv: forall (A : Set) (P : A -> Prop) (x : A) (l : list A),
+Lemma Forall_cons_inv: forall A (P : A -> Prop) (x : A) (l : list A),
   Forall P (x :: l) -> P x /\ Forall P l.
 Proof. intros. inversion H. tauto. Qed.
 
-Lemma Forall_cons_iff: forall (A : Set) (P : A -> Prop) (x : A) (l : list A),
+Lemma Forall_cons_iff: forall A (P : A -> Prop) (x : A) (l : list A),
   Forall P (x :: l) <-> P x /\ Forall P l.
 Proof.  intros. unfold iff. apply conj ; intro. 
 apply Forall_cons_inv. assumption.
 inversion H.  apply Forall_cons ; assumption.
 Qed.
 
-Lemma Forall_append: forall (X : Set) P (xs ys: list X),
+Lemma Forall_append: forall X P (xs ys: list X),
   Forall P (xs ++ ys) <-> Forall P xs /\ Forall P ys.
 Proof.
 intros.  induction xs.  easy.
 simpl.  rewrite !Forall_cons_iff.  rewrite IHxs.  tauto.
 Qed.
 
-Theorem derl_derrec_trans: forall (X : Set) rules prems rps (concl : X),
+Theorem derl_derrec_trans: forall X rules prems rps (concl : X),
   derl rules rps concl -> dersrec rules prems rps -> derrec rules prems concl.
 Proof. 
 intros.
@@ -295,11 +298,10 @@ inversion H3.  eapply dlCons ; tauto.
 eassumption.  assumption.
 Qed.
 
-Theorem derrec_derl_deriv: forall (X : Set) rules prems (concl : X),
+Theorem derrec_derl_deriv: forall X rules prems (concl : X),
   derrec (derl rules) prems concl -> derrec rules prems concl.
 
 Proof.
-Restart. 
 intros.
 
 apply (derrec_ind_mut (rules := derl rules) (prems := prems)
@@ -313,7 +315,7 @@ intros. apply dlCons ; assumption.
 assumption.
 Qed.
 
-Lemma dersl_cons: forall (X : Set) rules qs p (ps : list X), 
+Lemma dersl_cons: forall X rules qs p (ps : list X), 
   dersl rules qs (p :: ps) -> exists qsa qsb, qs = qsa ++ qsb /\
     derl rules qsa p /\ dersl rules qsb ps.
 Proof.
@@ -325,7 +327,7 @@ Qed.
 
 Reset dersl_app_eq.
 
-Lemma dersl_app_eq: forall (X : Set) rules (psa psb : list X) qs, 
+Lemma dersl_app_eq: forall X rules (psa psb : list X) qs, 
   dersl rules qs (psa ++ psb) -> exists qsa qsb, qs = qsa ++ qsb /\
     dersl rules qsa psa /\ dersl rules qsb psb.
 Proof.
@@ -374,7 +376,7 @@ apply dtCons. assumption.  assumption.  assumption.
 Qed.
 *)
 
-Lemma derl_trans: forall (X : Set) (rules : list X -> X -> Prop) 
+Lemma derl_trans: forall X (rules : list X -> X -> Prop) 
           (pss : list X) (rps : list X) (concl : X),
     derl rules rps concl -> dersl rules pss rps -> derl rules pss concl.
 Proof.
@@ -396,7 +398,7 @@ apply H1. assumption. apply H2. assumption.
 eassumption. assumption. 
 Qed.
 
-Lemma dersl_trans: forall (X : Set) (rules : list X -> X -> Prop)
+Lemma dersl_trans: forall X (rules : list X -> X -> Prop)
           (pss : list X) (rps : list X) (cs : list X),
     dersl rules rps cs -> dersl rules pss rps -> dersl rules pss cs.
 Proof.
@@ -420,7 +422,7 @@ eassumption. assumption.
 Qed.
 
 (* alternatively, just induction on the list of conclusions *)
-Lemma dersl_trans_alt: forall (X : Set) (rules : list X -> X -> Prop)
+Lemma dersl_trans_alt: forall X (rules : list X -> X -> Prop)
            (cs rps : list X), dersl rules rps cs ->
 	 forall (pss : list X), dersl rules pss rps -> dersl rules pss cs.
 Proof.
@@ -434,7 +436,7 @@ apply dtCons. eapply derl_trans. eassumption. assumption.
 firstorder.
 Qed.
 
-Theorem derl_deriv: forall (X : Set) rules prems (concl : X),
+Theorem derl_deriv: forall X rules prems (concl : X),
   derl (derl rules) prems concl -> derl rules prems concl.
 intros.
 

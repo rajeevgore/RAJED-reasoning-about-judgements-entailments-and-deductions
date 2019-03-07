@@ -8,6 +8,7 @@ coqc lntom.v
 coqc lntrm.v
 coqc lntls.v
 coqc lntrs.v
+coqc lntmr.v
 
 coqtop -color no
 

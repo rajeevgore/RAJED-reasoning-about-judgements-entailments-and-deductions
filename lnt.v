@@ -14,7 +14,7 @@ Inductive dir : Type :=
 | bac : dir.
 
 (* definition of Propositional Formulas, parameterised over prim prop set *)
-Inductive PropF (V : Set): Set :=
+Inductive PropF (V : Set): Type :=
  | Var : V -> PropF V
  | Bot : PropF V
  | Imp : PropF V -> PropF V -> PropF V
@@ -29,10 +29,10 @@ Inductive PropF (V : Set): Set :=
  | BDia : PropF V -> PropF V
 .
 
-(* statement of exchL fails if using Type here 
 Definition rel (W : Type) : Type := prod W W.
-*)
+(* statement of exchL fails if using Type here 
 Definition rel (W : Set) : Set := prod W W.
+*)
 Definition trf (W : Type) : Type := W -> W.  
 
 (*
@@ -82,20 +82,20 @@ Inductive princrule (V : Set) : rls (rel (list (PropF V))) :=
     [pair [B] [] ; pair [] [A]] (pair [Imp A B] [])
   | BotL' : princrule [] (pair [Bot V] []).
 
-Definition seqext (W : Set) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
+Definition seqext (W : Type) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
   match seq with | pair U V => pair (Γ1 ++ U ++ Γ2) (Δ1 ++ V ++ Δ2) end.
 
-Inductive seqrule (W : Set) (pr : rls (rel (list W))) : 
+Inductive seqrule (W : Type) (pr : rls (rel (list W))) : 
     rls (rel (list W)) := 
   | Sctxt : forall ps c Φ1 Φ2 Ψ1 Ψ2, pr ps c -> 
     seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 
-Inductive seqrule_s (W : Set) (ps : list (rel (list W))) (c : rel (list W)) : 
+Inductive seqrule_s (W : Type) (ps : list (rel (list W))) (c : rel (list W)) : 
     rls (rel (list W)) := 
   | Sctxt_s : forall Φ1 Φ2 Ψ1 Ψ2, 
     seqrule_s ps c (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 
-Inductive seqrule' (W : Set) (pr : rls (rel (list W))) : 
+Inductive seqrule' (W : Type) (pr : rls (rel (list W))) : 
     rls (rel (list W)) := 
   | Sctxt' : forall ps c pse ce,
     pr ps c -> seqrule_s ps c pse ce -> seqrule' pr pse ce.
@@ -103,24 +103,24 @@ Inductive seqrule' (W : Set) (pr : rls (rel (list W))) :
 Check (Sctxt' _ _ (Sctxt_s _ _ _ _ _ _)). 
 
 (* Check, get same as Sctxt but for seqrule' *)
-Lemma Sctxt_alt : forall (W : Set) (pr : rls (rel (list W))) ps c Φ1 Φ2 Ψ1 Ψ2,
+Lemma Sctxt_alt : forall (W : Type) (pr : rls (rel (list W))) ps c Φ1 Φ2 Ψ1 Ψ2,
     pr ps c -> seqrule' pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 Proof.  intros. eapply Sctxt'. exact H. apply Sctxt_s. Qed.
 
-Lemma seqext_def : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 U V,
+Lemma seqext_def : forall (W : Type) Φ1 Φ2 Ψ1 Ψ2 U V,
       @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof. reflexivity. Qed.
 
-Lemma seqext_defp : forall (W : Set) Φ1 Φ2 Ψ1 Ψ2 seq,
+Lemma seqext_defp : forall (W : Type) Φ1 Φ2 Ψ1 Ψ2 seq,
       @seqext W Φ1 Φ2 Ψ1 Ψ2 seq =
         let (U, V) := seq in (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof. reflexivity. Qed.
 
-Lemma seqrule_same: forall (W : Set) pr ps (c c' : rel (list W)),
+Lemma seqrule_same: forall (W : Type) pr ps (c c' : rel (list W)),
   seqrule pr ps c -> c = c' -> seqrule pr ps c'.
 Proof. intros. subst. assumption. Qed.  
 
-Lemma Sctxt_nil: forall (W : Set) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Prop) ->
+Lemma Sctxt_nil: forall (W : Type) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Prop) ->
   @seqrule W pr [] (seqext Γ1 Γ2 Δ1 Δ2 c).
 Proof.  intros.  eapply Sctxt in H.  simpl in H. exact H.  Qed.
 
@@ -147,7 +147,7 @@ Inductive nsrule (W : Type) (sr : rls W) :
   | NSctxt : forall ps c G H d, sr ps c -> 
     nsrule sr (map (nsext G H d) ps) (nsext G H d c).
 
-Lemma NSctxt_nil: forall (W : Set) sr G H d c, (sr [] c : Prop) ->
+Lemma NSctxt_nil: forall (W : Type) sr G H d c, (sr [] c : Prop) ->
   @nsrule W sr [] (nsext G H d c).
 Proof.  intros.  eapply NSctxt in H0.  simpl in H0. exact H0.  Qed.
 
