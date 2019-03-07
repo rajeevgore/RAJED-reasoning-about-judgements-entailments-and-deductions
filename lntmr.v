@@ -25,8 +25,12 @@ Inductive nslrule W (sr : rls (list W)) : rls (list W) :=
 
 Inductive is_map2 U V W :
   (U -> V -> W) -> list U -> list V -> list W -> Prop :=
+  | map2_nil : forall f, is_map2 f [] [] []
   | map2_cons : forall f u us v vs ws, is_map2 f us vs ws -> 
     is_map2 f (u :: us) (v :: vs) (f u v :: ws).
+
+Lemma is_map2_lens: forall f us vs ws, 
+  is_map2 f us vs ws -> length us = length vs /\ length us = length ws.
 
 Inductive seqlrule_s (W : Set) : 
   list (list (rel (list W) * dir)) -> list (rel (list W) * dir) ->
@@ -84,5 +88,50 @@ eapply g.  reflexivity. eassumption. assumption. assumption.
 unfold rsub. clear g. 
 intros. apply Drules.  assumption.
 Qed.
+
+(*
+Lemma gen_swapL_step_dr: forall V ps concl last_rule rules,
+  last_rule = nslrule (seqlrule (@drules V)) ->
+  gen_swapL_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_swapL_step.
+intros lreq nsr drs acm rs. subst.
+
+inversion nsr as [? ? ? K sppc mnsp nsc].
+unfold nslext in nsc.
+unfold can_gen_swapL.   intros until 0. intros pp ss.
+unfold nslext in pp.
+
+remember (Γ1 ++ Γ3 ++ Γ2 ++ Γ4, Δ) as seqe.
+acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
+  relative to where the rule is active *)
+
+rewrite -> app_nil_r in *.
+simpl in *.
+
+(* use acm *)
+
+
+{ nsright pp G0 seqe d0 x c0 Ge HeqGe
+  K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
+all : revgoals.
+{ nsleft pp G0 seqe d0 x c0 He HeqHe
+  K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
+
+(* now case where move and rule application occur in the same sequent *)
+cE. clear pp. injection H0 as.
+inversion sppc as [? ? ? ? ? ? pr mse se].
+unfold seqext in se.
+subst.  clear nsr. clear sppc.
+destruct c0.
+injection se as sel ser.
+subst.
+(* do as much as possible for all rules at once *)
+acacD' ; (* gives 10 subgoals *)
+subst ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply princrule_L_oe in Qpr)) ;
+  sD ; subst ; simpl ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
+*)
+
 
 
