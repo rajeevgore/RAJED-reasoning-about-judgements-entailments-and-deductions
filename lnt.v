@@ -90,6 +90,9 @@ Inductive seqrule (W : Type) (pr : rls (rel (list W))) :
   | Sctxt : forall ps c Φ1 Φ2 Ψ1 Ψ2, pr ps c -> 
     seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 
+(* seqrule_s ps c qs d means that d is a sequent extension of c 
+  and that each q in qs is a corresponding sequent extension of the
+  corresponding p in ps *)
 Inductive seqrule_s (W : Type) (ps : list (rel (list W))) (c : rel (list W)) : 
     rls (rel (list W)) := 
   | Sctxt_s : forall Φ1 Φ2 Ψ1 Ψ2, 

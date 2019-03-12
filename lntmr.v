@@ -29,9 +29,16 @@ Inductive is_map2 U V W :
   | map2_cons : forall f u us v vs ws, is_map2 f us vs ws -> 
     is_map2 f (u :: us) (v :: vs) (f u v :: ws).
 
-Lemma is_map2_lens: forall f us vs ws, 
-  is_map2 f us vs ws -> length us = length vs /\ length us = length ws.
+Lemma is_map2_lens: forall X Y Z (f : X -> Y -> Z) ws us vs, 
+  is_map2 f us vs ws -> length ws = length us /\ length ws = length vs.
+Proof. induction ws ; intros ; inversion H. tauto.
+  subst. apply IHws in H4. simpl. 
+  destruct H4. split. rewrite H0. reflexivity.
+  rewrite H1. reflexivity. Qed.
 
+(* seqlrule_s pss cs qss ds means that the nth member of cs and 
+  of each member of pss is extended, per seqrule_s, to become
+  the nth member of ds and of each member of qss *)
 Inductive seqlrule_s (W : Set) : 
   list (list (rel (list W) * dir)) -> list (rel (list W) * dir) ->
   rls (list (rel (list W) * dir)) := 
@@ -42,6 +49,30 @@ Inductive seqlrule_s (W : Set) :
     is_map2 cons ps pss pss' -> 
     is_map2 cons qs qss qss' -> 
     seqlrule_s pss' ((c, bf) :: cs) qss' ((d, bf) :: ds).
+
+(* same number of premises before and after extension *)
+Lemma seqrule_s_nprems: forall W pss qss cs ds, 
+  @seqlrule_s W pss cs qss ds -> length pss = length qss.
+Proof.  intros ; inversion H ; subst. 
+  pose (arg_cong (@length dir) H2). rewrite -> !map_length in e.
+  apply is_map2_lens in H3.  apply is_map2_lens in H4.
+  destruct H3.  destruct H4.  rewrite H3 H4 e. reflexivity. Qed.
+
+(* same number of sequents in conclusion before and after extension *)
+Lemma seqrule_s_conc_len: forall W cs ds pss qss, 
+  @seqlrule_s W pss cs qss ds -> length cs = length ds.
+Proof.  induction cs ; intros ; inversion H.
+  subst. simpl. apply IHcs in H3. rewrite H3. reflexivity. Qed.
+
+(* same number of sequents in each premise as in conclusion 
+  (both before and after extension) *)
+Lemma seqrule_s_pcb_len: forall W pss qss cs ds ps, 
+  @seqlrule_s W pss cs qss ds -> In ps pss -> length ps = length cs.
+Proof.  induction pss ; intros.
+  simpl in H0. tauto.
+  apply in_inv in H0. destruct H0.
+  TBC
+
 
 Inductive seqlrule (W : Set) (sr : rls (list (rel (list W) * dir))) :
   rls (list (rel (list W) * dir)) :=  
@@ -55,6 +86,9 @@ Inductive drules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
       [(pair [] [WDia A], d); (pair [] [], bac)].
       
 Check (fun V => nslrule (seqlrule (@drules V))).
+
+Lemma drules_conc_ne: forall V ps,  drules (V:=V) ps [] -> False.
+Proof.  intros. inversion H. Qed.
 
 Inductive pdrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Prules : forall ps c,
