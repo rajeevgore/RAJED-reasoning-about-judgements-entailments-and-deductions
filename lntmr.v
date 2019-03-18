@@ -64,15 +64,28 @@ Lemma seqrule_s_conc_len: forall W cs ds pss qss,
 Proof.  induction cs ; intros ; inversion H.
   subst. simpl. apply IHcs in H3. rewrite H3. reflexivity. Qed.
 
+Lemma in_is_map2: forall A B C (f : A -> B -> C) zs xs ys z,
+  is_map2 f xs ys zs -> In z zs ->
+  exists x y, In x xs /\ In y ys /\ z = f x y.
+Proof.  induction zs ; intros.
+  apply in_nil in H0. contradiction.
+  apply in_inv in H0. sD.
+  subst.  inversion H. subst. eexists.  eexists.
+  split.  eapply in_eq.  split.  eapply in_eq.  reflexivity.
+  inversion H. subst.
+  eapply IHzs in H5. cD. eexists.  eexists.
+  split. apply in_cons.  eassumption.
+  split. apply in_cons.  eassumption. eassumption.  
+  assumption. Qed.
+
 (* same number of sequents in each premise as in conclusion 
   (both before and after extension) *)
-Lemma seqrule_s_pcb_len: forall W pss qss cs ds ps, 
-  @seqlrule_s W pss cs qss ds -> In ps pss -> length ps = length cs.
-Proof.  induction pss ; intros.
-  simpl in H0. tauto.
-  apply in_inv in H0. destruct H0.
-  TBC
-
+Lemma seqrule_s_pcb_len: forall W pss qss cs ds, 
+  @seqlrule_s W pss cs qss ds -> forall ps, In ps pss -> length ps = length cs.
+Proof. intros until 0. intro.  induction H. intros.
+  eapply in_is_map2 in H2.
+  2 : eassumption. cD. subst. simpl.
+  apply IHseqlrule_s in H7. rewrite H7. reflexivity. Qed.
 
 Inductive seqlrule (W : Set) (sr : rls (list (rel (list W) * dir))) :
   rls (list (rel (list W) * dir)) :=  
