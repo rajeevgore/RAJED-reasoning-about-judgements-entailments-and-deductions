@@ -67,6 +67,8 @@ Ltac list_assoc_l' := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
 Ltac list_assoc_r' :=
   repeat (rewrite - !app_assoc || rewrite - !app_comm_cons).
 
+(* to rearrange a ++ b ++ l ++ d ++ e so that l is central, 
+  ie to give (a ++ b) ++ l ++ (d ++ e) *)
 Ltac assoc_mid l := 
   list_assoc_r' ;
   rewrite ?app_comm_cons ;

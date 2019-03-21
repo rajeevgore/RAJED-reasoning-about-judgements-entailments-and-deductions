@@ -2,6 +2,7 @@
 (* modal rules *)
 
 Require Import ssreflect.
+Require Import Omega.
 
 Require Import gen.
 Require Import dd.
@@ -136,6 +137,11 @@ unfold rsub. clear g.
 intros. apply Drules.  assumption.
 Qed.
 
+Lemma sdne: forall V ps, seqlrule (drules (V:=V)) ps [] -> False.
+Proof. intros.  inversion H. subst.
+inversion H1 ; subst ;
+apply seqrule_s_conc_len in H0 ; simpl in H0 ; omega. Qed.
+
 (*
 Lemma gen_swapL_step_dr: forall V ps concl last_rule rules,
   last_rule = nslrule (seqlrule (@drules V)) ->
@@ -151,34 +157,98 @@ unfold nslext in pp.
 remember (Γ1 ++ Γ3 ++ Γ2 ++ Γ4, Δ) as seqe.
 acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
   relative to where the rule is active *)
+apply sdne in sppc. contradiction.
 
-rewrite -> app_nil_r in *.
-simpl in *.
+all: rewrite -> ?app_nil_r in *.
 
-(* use acm *)
+all : cycle 1.
 
+(* case of exchange in sequent to the left of where rule applied *)
+{
+clear drs nsr.
+eapply derI.
+unfold rsub in rs. apply rs.
+assoc_mid c.
+rewrite <- nslext_def.
+apply NSlctxt. exact sppc.
+rewrite dersrec_forall.
+intros q qin.
+rewrite -> in_map_iff in qin.
+cE.
+subst q.
+rewrite -> Forall_forall in acm.
+rename_last inps0.
+eapply in_map in inps0.
+pose (acm _ inps0).
+unfold can_gen_swapL in c0.
+unfold nslext.
+list_assoc_r.
+eapply c0.
+unfold nslext.
+list_assoc_r'.
+reflexivity.
+reflexivity.
+}
+{
+clear drs nsr.
+eapply derI.
+unfold rsub in rs. apply rs.
+assoc_mid pp.
+rewrite <- nslext_def.
+apply NSlctxt. exact sppc.
+rewrite dersrec_forall.
+intros q qin.
+rewrite -> in_map_iff in qin.
+cE.
+subst q.
+rewrite -> Forall_forall in acm.
+rename_last inps0.
+eapply in_map in inps0.
+pose (acm _ inps0).
+unfold can_gen_swapL in c.
+unfold nslext.
+rewrite app_assoc.
+eapply c.
+unfold nslext.
+rewrite app_assoc.
+reflexivity.
+reflexivity.
+}
+all : cycle 1.
+{
+clear drs nsr.
+eapply derI.
+unfold rsub in rs. apply rs.
+assoc_mid c.
+rewrite <- nslext_def.
+apply NSlctxt. exact sppc.
+rewrite dersrec_forall.
+intros q qin.
+rewrite -> in_map_iff in qin.
+cE.
+subst q.
+rewrite -> Forall_forall in acm.
+rename_last inps0.
+eapply in_map in inps0.
+pose (acm _ inps0).
+unfold can_gen_swapL in c0.
+unfold nslext.
+rewrite app_assoc.
+rewrite (app_assoc _ pp1).
+eapply c0.
+unfold nslext.
+rewrite - !app_assoc.
+reflexivity.
+reflexivity.
+}
 
-{ nsright pp G0 seqe d0 x c0 Ge HeqGe
-  K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
-all : revgoals.
-{ nsleft pp G0 seqe d0 x c0 He HeqHe
-  K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
+(* now have cases where one of the sequents involved in the rule is 
+  where the exchange takes place *)
 
-(* now case where move and rule application occur in the same sequent *)
-cE. clear pp. injection H0 as.
-inversion sppc as [? ? ? ? ? ? pr mse se].
-unfold seqext in se.
-subst.  clear nsr. clear sppc.
-destruct c0.
-injection se as sel ser.
-subst.
-(* do as much as possible for all rules at once *)
-acacD' ; (* gives 10 subgoals *)
-subst ;
-repeat ((list_eq_nc || (pose pr as Qpr ; apply princrule_L_oe in Qpr)) ;
-  sD ; subst ; simpl ; simpl in pr ;
-  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
+(* I think this will be too complicated, 
+  don't use seqlrule, but write rules explicitly 
+  using the fact that drules rules have exactly two sequents 
+  and one premise *)
+
 *)
-
-
 
