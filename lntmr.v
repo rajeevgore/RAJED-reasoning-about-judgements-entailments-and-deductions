@@ -114,6 +114,26 @@ Axiom gen_swapL_step_dr_ax: forall V ps concl last_rule rules,
   last_rule = nslrule (seqlrule (@drules V)) ->
   gen_swapL_step last_rule rules ps concl.
 
+(* try more specific way of defining modal rules, for drules,
+  restricted to two sequents plus context, and one premise *) 
+Inductive dsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
+  | WDiaRs : forall A d G1 G2 H1l H1r H2l H2r, dsrules 
+      [[(pair G1 (H1l ++ WDia A :: H1r), d);
+        (pair G2 (H2l ++ A :: H2r), fwd)]]
+      [(pair G1 (H1l ++ WDia A :: H1r), d); 
+        (pair G2 (H2l ++ H2r), fwd)]
+  | BDiaRs : forall A d G1 G2 H1l H1r H2l H2r, dsrules 
+      [[(pair G1 (H1l ++ BDia A :: H1r), d);
+        (pair G2 (H2l ++ A :: H2r), bac)]]
+      [(pair G1 (H1l ++ BDia A :: H1r), d); 
+        (pair G2 (H2l ++ H2r), bac)].
+
+Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
+  | Psrules : forall ps c,
+    nsrule (seqrule (@princrule V)) ps c -> pdsrules ps c
+  | Dsrules : forall ps c,
+    nslrule (@dsrules V) ps c -> pdsrules ps c.
+
 (* including first modal rules *)
 Lemma gen_swapmL: forall (V : Set) ns
   (D : derrec (@pdrules V) (fun _ => False) ns),
@@ -141,6 +161,21 @@ Lemma sdne: forall V ps, seqlrule (drules (V:=V)) ps [] -> False.
 Proof. intros.  inversion H. subst.
 inversion H1 ; subst ;
 apply seqrule_s_conc_len in H0 ; simpl in H0 ; omega. Qed.
+
+(*
+Lemma gen_swapL_step_dsr: forall V ps concl last_rule rules,
+  last_rule = nslrule (@dsrules V) ->
+  gen_swapL_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_swapL_step.
+intros lreq nsr drs acm rs. subst.
+
+inversion nsr as [? ? ? K sppc mnsp nsc].
+unfold nslext in nsc.
+unfold can_gen_swapL.   intros until 0. intros pp ss.
+unfold nslext in pp.
+
+and continue as below
+*)
 
 (*
 Lemma gen_swapL_step_dr: forall V ps concl last_rule rules,
