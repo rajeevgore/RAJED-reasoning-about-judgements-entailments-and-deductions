@@ -63,15 +63,6 @@ Ltac cD' :=
     | [ H : False |- _ ] => contradiction H
     end.
 
-(*
-Ltac cD :=
-  repeat match goal with
-    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
-    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
-    | [ H : False |- _ ] => contradiction H
-    end.
-    *)
-
 Ltac cD := repeat cD'.
 
 Ltac sE :=
@@ -96,17 +87,6 @@ Ltac sDx :=
     | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
     end.
 
-(*
-Ltac sD :=
-  repeat match goal with
-    | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
-    | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
-    | [ H : ex _ |- _ ] => destruct H as [?H ?H]
-    | [ H : False |- _ ] => contradiction H
-    end.
-
-Ltac sD := repeat sD'.
-*)
 Ltac sD := repeat (cD' || sDx).
 
 (* various solutions to dealing with hypothesis forall x, A x -> B x 
@@ -173,4 +153,11 @@ Ltac prgt t :=
   match goal with
     | [ |- ?P ] => idtac t P
     end.
+
+Lemma in_single: forall (A : Type) (a x : A) (l : list A), In a [x] <-> a = x.
+Proof. intros. unfold iff. split ; intros.
+  apply in_inv in H. sD.
+  subst. reflexivity.
+  apply in_nil in H. contradiction.
+  subst.  apply in_eq. Qed.
 
