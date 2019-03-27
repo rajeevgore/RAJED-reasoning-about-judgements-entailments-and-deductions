@@ -3,6 +3,11 @@ Require Import List.
 Import ListNotations.
 
 Definition rsub U V f g := forall (u : U) (v : V), f u v -> g u v.
+
+Lemma rsub_def: forall U V (f g : U -> V -> Type), 
+  @rsub U V f g = forall (u : U) (v : V), f u v -> g u v.
+Proof.  intros.  unfold rsub.  reflexivity. Qed.
+
 Definition rls W := list W -> W -> Prop.
 
 (* lemmas which shouldn't be necessary at all! *)
@@ -28,6 +33,14 @@ Proof. intros. subst. reflexivity. Qed.
 
 Lemma arg_cong: forall T U f x y, x = y -> (f (x : U) : T) = f y.
 Proof. intros. subst. reflexivity. Qed.
+
+Lemma iffD1: forall x y, (x = y) -> x -> y.
+Proof. intros.  subst.  assumption. Qed.
+
+Lemma iffD2: forall x y, (x = y) -> y -> x.
+Proof. intros.  subst.  assumption. Qed.
+
+Definition rsub_imp U V (f g : U -> V -> Type) := iffD1 (@rsub_def U V f g).
 
 (* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
 
@@ -170,3 +183,6 @@ Proof. intros. unfold iff. rewrite Forall_forall.
   inversion H0. subst. exact H.
   apply in_nil in H1. contradiction. Qed.
   
+Lemma Forall_map_single: forall (A B : Type) P (f : A -> B) x, 
+  Forall P (map f [x]) <-> P (f x).
+Proof.  simpl. intros. apply Forall_single. Qed.

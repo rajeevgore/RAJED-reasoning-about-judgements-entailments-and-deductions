@@ -455,6 +455,9 @@ intros.  apply dtCons.  assumption.  assumption.
 assumption.  
 Qed.
 
+Definition derI_rules_mono X rules rulesb prems ps concl rs fuv :=
+  @derI X rulesb prems ps concl (@rsub_imp _ _ rules rulesb rs ps concl fuv).
+
 Check derrec_trans_imp.
 Check derl_derrec_trans.
 Check derrec_derl_deriv.

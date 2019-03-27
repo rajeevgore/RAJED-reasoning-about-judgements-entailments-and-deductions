@@ -194,11 +194,11 @@ rewrite -> in_map_iff in qin.
 cE.
 subst q.
 rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0).
-unfold can_gen_swapL in c0.
+rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0) as acmps.
+unfold can_gen_swapL in acmps.
 unfold nslext.
 list_assoc_r.
-eapply c0.
+eapply acmps.
 unfold nslext.
 list_assoc_r'.
 reflexivity.
@@ -217,11 +217,11 @@ rewrite -> in_map_iff in qin.
 cE.
 subst q.
 rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0).
-unfold can_gen_swapL in c.
+rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0) as acmps.
+unfold can_gen_swapL in acmps.
 unfold nslext.
 rewrite app_assoc.
-eapply c.
+eapply acmps.
 unfold nslext.
 rewrite app_assoc.
 reflexivity.
@@ -241,12 +241,12 @@ rewrite -> in_map_iff in qin.
 cE.
 subst q.
 rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0).
-unfold can_gen_swapL in c0.
+rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0) as acmps.
+unfold can_gen_swapL in acmps.
 unfold nslext.
 rewrite app_assoc.
 rewrite (app_assoc _ pp1).
-eapply c0.
+eapply acmps.
 unfold nslext.
 rewrite - !app_assoc.
 reflexivity.
@@ -264,19 +264,14 @@ subst. clear sppc.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite app_comm_cons.  rewrite <- (nslext_def G0).
 apply NSlctxt. apply WDiaRs.
-rewrite dersrec_forall.  intros c cin. 
-rewrite -> in_map_iff in cin. cD.
-inversion_clear cin1. subst.
+rewrite dersrec_single.
 
-rewrite -> Forall_forall in acm.
-erequire acm.  require acm.
-apply in_map. apply in_eq.
+rewrite -> Forall_map_single in acm.
 unfold can_gen_swapL in acm.
 unfold nslext.
 list_assoc_r. simpl.
 eapply acm ; clear acm.
 unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-apply in_nil in H.  contradiction.
 }
 
 (* now similar to above for BDia *)
@@ -285,19 +280,14 @@ subst. clear sppc.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite app_comm_cons.  rewrite <- (nslext_def G0).
 apply NSlctxt. apply BDiaRs.
-rewrite dersrec_forall.  intros c cin. 
-rewrite -> in_map_iff in cin. cD.
-inversion_clear cin1. subst.
+rewrite dersrec_single. 
 
-rewrite -> Forall_forall in acm.
-erequire acm.  require acm.
-apply in_map. apply in_eq.
+rewrite -> Forall_map_single in acm.
 unfold can_gen_swapL in acm.
 unfold nslext.
 list_assoc_r. simpl.
 eapply acm ; clear acm.
 unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-apply in_nil in H.  contradiction.
 }
 
 (* now where exchange is in the right one of the two sequents in the rule *)
@@ -317,19 +307,14 @@ rewrite ?app_nil_r.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite app_comm_cons.  rewrite <- (nslext_def G).
 apply NSlctxt. apply WDiaRs.
-rewrite dersrec_forall.  intros c cin. 
-rewrite -> in_map_iff in cin. cD.
-inversion_clear cin1. subst.
+rewrite dersrec_single. 
 
-rewrite -> Forall_forall in acm.
-erequire acm.  require acm.
-apply in_map. apply in_eq.
+rewrite -> Forall_map_single in acm.
 unfold can_gen_swapL in acm.
 unfold nslext.
 list_assoc_r. simpl.
 eapply acm ; clear acm.
 unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-apply in_nil in H.  contradiction.
 }
 
 {
@@ -338,20 +323,15 @@ rewrite list_rearr19.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite <- (nslext_def G).
 apply NSlctxt. apply WDiaRs.
-rewrite dersrec_forall.  intros c cin. 
-rewrite -> in_map_iff in cin. cD.
-inversion_clear cin1. subst.
+rewrite dersrec_single.
 
-rewrite -> Forall_forall in acm.
-erequire acm.  require acm.
-apply in_map. apply in_eq.
+rewrite -> Forall_map_single in acm.
 unfold can_gen_swapL in acm.
 unfold nslext.
 list_assoc_r. simpl.
 rewrite (list_rearr16' G).
 eapply acm ; clear acm.
 unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-apply in_nil in H.  contradiction.
 }
 
 subst. simpl.
@@ -365,19 +345,14 @@ subst. rewrite ?app_nil_r.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite app_comm_cons.  rewrite <- (nslext_def G).
 apply NSlctxt. apply BDiaRs.
-rewrite dersrec_forall.  intros c cin. 
-rewrite -> in_map_iff in cin. cD.
-inversion_clear cin1. subst.
+rewrite dersrec_single.
 
-rewrite -> Forall_forall in acm.
-erequire acm.  require acm.
-apply in_map. apply in_eq.
+rewrite -> Forall_map_single in acm.
 unfold can_gen_swapL in acm.
 unfold nslext.
 list_assoc_r. simpl.
 eapply acm ; clear acm.
 unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-apply in_nil in H.  contradiction.
 }
 
 {
@@ -386,20 +361,15 @@ rewrite list_rearr19.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite <- (nslext_def G).
 apply NSlctxt. apply BDiaRs.
-rewrite dersrec_forall.  intros c cin. 
-rewrite -> in_map_iff in cin. cD.
-inversion_clear cin1. subst.
+rewrite dersrec_single.
 
-rewrite -> Forall_forall in acm.
-erequire acm.  require acm.
-apply in_map. apply in_eq.
+rewrite -> Forall_map_single in acm.
 unfold can_gen_swapL in acm.
 unfold nslext.
 list_assoc_r. simpl.
 rewrite (list_rearr16' G).
 eapply acm ; clear acm.
 unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-apply in_nil in H.  contradiction.
 }
 subst. simpl.
 apply eq_sym in H4. list_eq_nc. contradiction.
