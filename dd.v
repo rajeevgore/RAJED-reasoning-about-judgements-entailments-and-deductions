@@ -237,6 +237,10 @@ Lemma dersrec_nil: forall X rules prems,
   dersrec rules prems ([] : list X).
 Proof.  intros.  rewrite dersrec_all ; apply Forall_nil. Qed.
 
+Lemma dersrec_single: forall X rules prems c,
+  dersrec rules prems [c] <-> derrec rules prems (c : X).
+Proof.  intros.  rewrite dersrec_all. rewrite Forall_single. tauto. Qed.
+
 (* try using the induction principle derrec_all_ind *)
 Lemma derrec_rmono: forall W (rulesa rulesb : rls W) prems concl,
   rsub rulesa rulesb -> 

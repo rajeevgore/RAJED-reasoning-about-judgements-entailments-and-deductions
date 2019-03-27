@@ -1,4 +1,6 @@
 Set Implicit Arguments.
+Require Import List.
+Import ListNotations.
 
 Definition rsub U V f g := forall (u : U) (v : V), f u v -> g u v.
 Definition rls W := list W -> W -> Prop.
@@ -154,10 +156,17 @@ Ltac prgt t :=
     | [ |- ?P ] => idtac t P
     end.
 
-Lemma in_single: forall (A : Type) (a x : A) (l : list A), In a [x] <-> a = x.
+Lemma in_single: forall (A : Type) (a x : A), In a [x] <-> a = x.
 Proof. intros. unfold iff. split ; intros.
   apply in_inv in H. sD.
   subst. reflexivity.
   apply in_nil in H. contradiction.
   subst.  apply in_eq. Qed.
 
+Lemma Forall_single: forall (A : Type) P x, @Forall A P [x] <-> P x.
+Proof. intros. unfold iff. rewrite Forall_forall. 
+  split ; intros.
+  apply H. rewrite in_single. reflexivity.
+  inversion H0. subst. exact H.
+  apply in_nil in H1. contradiction. Qed.
+  
