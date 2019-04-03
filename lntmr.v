@@ -134,7 +134,7 @@ Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Dsrules : forall ps c,
     nslrule (@dsrules V) ps c -> pdsrules ps c.
 
-(* including first modal rules *)
+(* including first modal rules, in the general (using seqlrule) form *)
 Lemma gen_swapmL: forall (V : Set) ns
   (D : derrec (@pdrules V) (fun _ => False) ns),
     can_gen_swapL (@pdrules V) ns.
@@ -194,11 +194,12 @@ rewrite -> in_map_iff in qin.
 cE.
 subst q.
 rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0) as acmps.
-unfold can_gen_swapL in acmps.
+rename_last inps0.  eapply in_map in inps0.
+eapply acm in inps0.
+unfold can_gen_swapL in inps0.
 unfold nslext.
 list_assoc_r.
-eapply acmps.
+eapply inps0.
 unfold nslext.
 list_assoc_r'.
 reflexivity.
@@ -217,11 +218,12 @@ rewrite -> in_map_iff in qin.
 cE.
 subst q.
 rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0) as acmps.
-unfold can_gen_swapL in acmps.
+rename_last inps0.  eapply in_map in inps0.  
+eapply acm in inps0.
+unfold can_gen_swapL in inps0.
 unfold nslext.
 rewrite app_assoc.
-eapply acmps.
+eapply inps0.
 unfold nslext.
 rewrite app_assoc.
 reflexivity.
@@ -241,12 +243,13 @@ rewrite -> in_map_iff in qin.
 cE.
 subst q.
 rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.  pose (acm _ inps0) as acmps.
-unfold can_gen_swapL in acmps.
+rename_last inps0.  eapply in_map in inps0.  
+eapply acm in inps0.
+unfold can_gen_swapL in inps0.
 unfold nslext.
 rewrite app_assoc.
 rewrite (app_assoc _ pp1).
-eapply acmps.
+eapply inps0.
 unfold nslext.
 rewrite - !app_assoc.
 reflexivity.
@@ -263,7 +266,7 @@ inversion sppc.
 subst. clear sppc.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite app_comm_cons.  rewrite <- (nslext_def G0).
-apply NSlctxt. apply WDiaRs.
+apply NSlctxt. apply WDiaRs || apply BDiaRs.
 rewrite dersrec_single.
 
 rewrite -> Forall_map_single in acm.
@@ -279,7 +282,7 @@ unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
 subst. clear sppc.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite app_comm_cons.  rewrite <- (nslext_def G0).
-apply NSlctxt. apply BDiaRs.
+apply NSlctxt. apply WDiaRs || apply BDiaRs.
 rewrite dersrec_single. 
 
 rewrite -> Forall_map_single in acm.
@@ -306,7 +309,7 @@ rewrite ?app_nil_r.
 (* from here, same as above *)
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite app_comm_cons.  rewrite <- (nslext_def G).
-apply NSlctxt. apply WDiaRs.
+apply NSlctxt. apply WDiaRs || apply BDiaRs.
 rewrite dersrec_single. 
 
 rewrite -> Forall_map_single in acm.
@@ -322,7 +325,7 @@ subst. simpl.
 rewrite list_rearr19.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite <- (nslext_def G).
-apply NSlctxt. apply WDiaRs.
+apply NSlctxt. apply WDiaRs || apply BDiaRs.
 rewrite dersrec_single.
 
 rewrite -> Forall_map_single in acm.
@@ -344,7 +347,7 @@ acacD'. (* 3 subgoals *)
 subst. rewrite ?app_nil_r. 
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite app_comm_cons.  rewrite <- (nslext_def G).
-apply NSlctxt. apply BDiaRs.
+apply NSlctxt. apply WDiaRs || apply BDiaRs.
 rewrite dersrec_single.
 
 rewrite -> Forall_map_single in acm.
@@ -360,7 +363,7 @@ subst. simpl.
 rewrite list_rearr19.
 eapply derI.  unfold rsub in rs. apply rs.
 rewrite <- (nslext_def G).
-apply NSlctxt. apply BDiaRs.
+apply NSlctxt. apply WDiaRs || apply BDiaRs.
 rewrite dersrec_single.
 
 rewrite -> Forall_map_single in acm.
@@ -377,6 +380,31 @@ apply eq_sym in H4. list_eq_nc. contradiction.
 Qed.
 
 Check gen_swapL_step_dsr.
+
+(* including first modal rules, in the specific (dsrules) form *)
+Lemma gen_swapmsL: forall (V : Set) ns
+  (D : derrec (@pdsrules V) (fun _ => False) ns),
+    can_gen_swapL (@pdsrules V) ns.
+Proof. 
+intro.  intro.  intro.
+eapply derrec_all_ind in D.
+exact D. tauto.
+intros. inversion H. 
+subst.
+pose gen_swapL_step_pr.
+unfold gen_swapL_step in g.
+eapply g.  reflexivity. eassumption. assumption. assumption.
+unfold rsub. clear g. 
+intros. apply Psrules.  assumption.
+subst.
+pose gen_swapL_step_dsr.
+unfold gen_swapL_step in g.
+eapply g.  reflexivity. eassumption. assumption. assumption.
+unfold rsub. clear g. 
+intros. apply Dsrules.  assumption.
+Qed.
+
+Check gen_swapmsL.
 
 (*
 Lemma gen_swapL_step_dr: forall V ps concl last_rule rules,
