@@ -162,6 +162,39 @@ Proof. intros.  inversion H. subst.
 inversion H1 ; subst ;
 apply seqrule_s_conc_len in H0 ; simpl in H0 ; omega. Qed.
 
+Ltac nsgen drs nsr rs c sppc q qin acm inps0 at1 at2 := 
+clear drs nsr ;
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+assoc_mid c ; rewrite <- nslext_def ;
+apply NSlctxt ; exact sppc |
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; subst q ;
+rewrite -> Forall_forall in acm ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+eapply acm in inps0 ;
+unfold can_gen_swapL in inps0 ;
+unfold nslext ;
+at1 ;
+eapply inps0 ; [> | reflexivity] ;
+unfold nslext ;
+at2 ;
+reflexivity].
+
+(* for diamond rules, exchange on left, on 1st sequent *)
+Ltac dia1l' rs G0 acm rw1 rw2 := 
+  eapply derI ; [> unfold rsub in rs ; apply rs ;
+  rw1 ;  rewrite <- (nslext_def G0) ;
+  apply NSlctxt ; (apply WDiaRs || apply BDiaRs) | 
+  rewrite dersrec_single ;  rewrite -> Forall_map_single in acm ;
+  unfold can_gen_swapL in acm ;  unfold nslext ;
+  list_assoc_r ; simpl ; rw2 ;
+  eapply acm ; [> | reflexivity ] ; clear acm ;
+  unfold nslext ; list_assoc_r' ; simpl ; reflexivity]. 
+  
+Ltac dia1l sppc rs G0 acm := subst ; clear sppc ;
+  dia1l' rs G0 acm ltac: (rewrite app_comm_cons) idtac.
+  
 Lemma gen_swapL_step_dsr: forall V ps concl last_rule rules,
   last_rule = nslrule (@dsrules V) ->
   gen_swapL_step last_rule rules ps concl.
@@ -182,200 +215,47 @@ all: rewrite -> ?app_nil_r in *.
 all : cycle 1.
 
 (* case of exchange in sequent to the left of where rule applied *)
-{
-clear drs nsr.
-eapply derI.  unfold rsub in rs. apply rs.
-assoc_mid c.
-rewrite <- nslext_def.
-apply NSlctxt. exact sppc.
-rewrite dersrec_forall.
-intros q qin.
-rewrite -> in_map_iff in qin.
-cE.
-subst q.
-rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.
-eapply acm in inps0.
-unfold can_gen_swapL in inps0.
-unfold nslext.
-list_assoc_r.
-eapply inps0.
-unfold nslext.
-list_assoc_r'.
-reflexivity.
-reflexivity.
-}
+{ nsgen drs nsr rs c sppc q qin acm inps0 list_assoc_r list_assoc_r'.  }
 (* case of exchange in sequent to the right of where rule applied *)
-{
-clear drs nsr.
-eapply derI.  unfold rsub in rs. apply rs.
-assoc_mid pp.
-rewrite <- nslext_def.
-apply NSlctxt. exact sppc.
-rewrite dersrec_forall.
-intros q qin.
-rewrite -> in_map_iff in qin.
-cE.
-subst q.
-rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.  
-eapply acm in inps0.
-unfold can_gen_swapL in inps0.
-unfold nslext.
-rewrite app_assoc.
-eapply inps0.
-unfold nslext.
-rewrite app_assoc.
-reflexivity.
-reflexivity.
-}
+{ nsgen drs nsr rs pp sppc q qin acm inps0 
+  ltac: (rewrite app_assoc) ltac: (rewrite app_assoc). }
 all : cycle 1.
 (* another case of exchange in sequent to the right of where rule applied *)
-{
-clear drs nsr.
-eapply derI.  unfold rsub in rs. apply rs.
-assoc_mid c.
-rewrite <- nslext_def.
-apply NSlctxt. exact sppc.
-rewrite dersrec_forall.
-intros q qin.
-rewrite -> in_map_iff in qin.
-cE.
-subst q.
-rewrite -> Forall_forall in acm.
-rename_last inps0.  eapply in_map in inps0.  
-eapply acm in inps0.
-unfold can_gen_swapL in inps0.
-unfold nslext.
-rewrite app_assoc.
-rewrite (app_assoc _ pp1).
-eapply inps0.
-unfold nslext.
-rewrite - !app_assoc.
-reflexivity.
-reflexivity.
-}
+
+{ nsgen drs nsr rs c sppc q qin acm inps0 
+  ltac: (rewrite app_assoc ; rewrite (app_assoc _ pp1))
+  ltac: (rewrite - !app_assoc). }
 
 (* now have two cases where one of the sequents involved in the rule is 
   where the exchange takes place, they should be easy as the exchange
   is on the left and the rules operate on the right *)
-clear nsr. 
-inversion sppc.
+clear nsr.  inversion sppc.
 
-{
-subst. clear sppc.
-eapply derI.  unfold rsub in rs. apply rs.
-rewrite app_comm_cons.  rewrite <- (nslext_def G0).
-apply NSlctxt. apply WDiaRs || apply BDiaRs.
-rewrite dersrec_single.
-
-rewrite -> Forall_map_single in acm.
-unfold can_gen_swapL in acm.
-unfold nslext.
-list_assoc_r. simpl.
-eapply acm ; clear acm.
-unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-}
-
-(* now similar to above for BDia *)
-{
-subst. clear sppc.
-eapply derI.  unfold rsub in rs. apply rs.
-rewrite app_comm_cons.  rewrite <- (nslext_def G0).
-apply NSlctxt. apply WDiaRs || apply BDiaRs.
-rewrite dersrec_single. 
-
-rewrite -> Forall_map_single in acm.
-unfold can_gen_swapL in acm.
-unfold nslext.
-list_assoc_r. simpl.
-eapply acm ; clear acm.
-unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-}
+{ dia1l sppc rs G0 acm. } (* for WDia *)
+{ dia1l sppc rs G0 acm. } (* for BDia *)
 
 (* now where exchange is in the right one of the two sequents in the rule *)
-clear nsr.
-inversion sppc. 
+clear nsr.  inversion sppc. 
 
-subst. clear sppc.
-(* at this point we seem to have two possibilities,
-  one of which we have already done *)
-acacD'. (* 4 subgoals *)
+subst. clear sppc.  acacD'. (* 3 subgoals resulting *)
 
-{
-subst.
-rewrite ?app_nil_r.
+{ subst.  rewrite ?app_nil_r. 
+  dia1l' rs G acm ltac: (rewrite app_comm_cons) idtac. }
 
-(* from here, same as above *)
-eapply derI.  unfold rsub in rs. apply rs.
-rewrite app_comm_cons.  rewrite <- (nslext_def G).
-apply NSlctxt. apply WDiaRs || apply BDiaRs.
-rewrite dersrec_single. 
+{ subst. simpl.  rewrite list_rearr19.
+ dia1l' rs G acm idtac ltac: (rewrite (list_rearr16' G)). }
 
-rewrite -> Forall_map_single in acm.
-unfold can_gen_swapL in acm.
-unfold nslext.
-list_assoc_r. simpl.
-eapply acm ; clear acm.
-unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-}
+subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction.
 
-{
-subst. simpl.
-rewrite list_rearr19.
-eapply derI.  unfold rsub in rs. apply rs.
-rewrite <- (nslext_def G).
-apply NSlctxt. apply WDiaRs || apply BDiaRs.
-rewrite dersrec_single.
+clear sppc.  acacD'. (* 3 subgoals *)
 
-rewrite -> Forall_map_single in acm.
-unfold can_gen_swapL in acm.
-unfold nslext.
-list_assoc_r. simpl.
-rewrite (list_rearr16' G).
-eapply acm ; clear acm.
-unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-}
+{ subst. rewrite ?app_nil_r. 
+  dia1l' rs G acm ltac: (rewrite app_comm_cons) idtac. }
 
-subst. simpl.
-apply eq_sym in H4. list_eq_nc. contradiction.
+{ subst. simpl.  rewrite list_rearr19.
+ dia1l' rs G acm idtac ltac: (rewrite (list_rearr16' G)). }
 
-clear sppc.
-acacD'. (* 3 subgoals *)
-
-{
-subst. rewrite ?app_nil_r. 
-eapply derI.  unfold rsub in rs. apply rs.
-rewrite app_comm_cons.  rewrite <- (nslext_def G).
-apply NSlctxt. apply WDiaRs || apply BDiaRs.
-rewrite dersrec_single.
-
-rewrite -> Forall_map_single in acm.
-unfold can_gen_swapL in acm.
-unfold nslext.
-list_assoc_r. simpl.
-eapply acm ; clear acm.
-unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-}
-
-{
-subst. simpl.
-rewrite list_rearr19.
-eapply derI.  unfold rsub in rs. apply rs.
-rewrite <- (nslext_def G).
-apply NSlctxt. apply WDiaRs || apply BDiaRs.
-rewrite dersrec_single.
-
-rewrite -> Forall_map_single in acm.
-unfold can_gen_swapL in acm.
-unfold nslext.
-list_assoc_r. simpl.
-rewrite (list_rearr16' G).
-eapply acm ; clear acm.
-unfold nslext. list_assoc_r'. simpl. reflexivity. reflexivity.
-}
-subst. simpl.
-apply eq_sym in H4. list_eq_nc. contradiction.
+subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction.
 
 Qed.
 

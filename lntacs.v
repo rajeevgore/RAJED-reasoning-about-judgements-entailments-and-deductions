@@ -314,9 +314,9 @@ Ltac mpv use_prL use_cgmL H1 H0 rs pr :=
 
 (* version of nsright suitable for case where 
   rs : rsub (nsrule ...) rules, and rest of goal involves rules *)
-Ltac nsright pp G0 seqe d0 x c0 Ge HeqGe K d ps ps0 inps0 pse K0 drs nsr acm
+Ltac nsright pp G0 seqe d0 x Ge HeqGe K d ps ps0 inps0 pse K0 drs nsr acm
   G seq rs := 
-clear pp ;  cE ;
+clear drs nsr ;  clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the right
   of where the swap takes place *)
 remember (G0 ++ (seqe, d0) :: x) as Ge ;
@@ -330,19 +330,20 @@ apply derI with pse ; [
   apply NSctxt ; assumption |
   rewrite dersrec_forall ;
   intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
-  subst q ;  clear drs nsr ;  subst ps ;
+  subst q ;  subst ps ;
   rewrite -> Forall_forall in acm ;
-  rename_last inps0 ;  eapply in_map in inps0 ; pose (acm _ inps0) ;
-  unfold can_gen_swapL in c0 ;
+  rename_last inps0 ;  eapply in_map in inps0 ; 
+  apply acm in inps0 ;
+  unfold can_gen_swapL in inps0 ;
   unfold nsext ; subst Ge ; subst seqe ;
   rewrite <- list_rearr14 ;
-  eapply c0 ; [> | reflexivity ] ;
+  eapply inps0 ; [> | reflexivity ] ;
   unfold nsext ; subst G ; subst seq ;
   list_eq_assoc ].
 
-Ltac nsleft pp G0 seqe d0 x c0 He HeqHe K d ps ps0 inps0 pse K0 drs nsr acm
+Ltac nsleft pp G0 seqe d0 x He HeqHe K d ps ps0 inps0 pse K0 drs nsr acm
   G seq rs := 
-clear pp ;  cE ;
+clear drs nsr ;  clear pp ;  cE ;
 (* case where the rule is applied in a sequent to the left
   of where the swap takes place *)
 remember (x ++ (seqe, d0) :: K0) as He ;
@@ -356,13 +357,14 @@ apply derI with pse ; [
   apply NSctxt ; assumption |
   rewrite dersrec_forall ;
   intros q qin ;  subst pse ;  rewrite -> in_map_iff in qin ; cE ;
-  subst q ;  clear drs nsr ;  subst ps ;
+  subst q ;  subst ps ;
   rewrite -> Forall_forall in acm ;
-  rename_last inps0 ;  eapply in_map in inps0 ; pose (acm _ inps0) ;
-  unfold can_gen_swapL in c0 ;
+  rename_last inps0 ;  eapply in_map in inps0 ; 
+  apply acm in inps0 ;
+  unfold can_gen_swapL in inps0 ;
   unfold nsext ; subst He ; subst seqe ;
   rewrite list_rearr14 ;
-  eapply c0 ; [> | reflexivity ] ;
+  eapply inps0 ; [> | reflexivity ] ;
   unfold nsext ; subst K ; subst seq ;
   list_eq_assoc ].
 

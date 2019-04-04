@@ -35,10 +35,10 @@ apply partition_2_2 in pp.
 remember (Γ, Δ1 ++ Δ2 ++ Q :: Δ3) as seqe.
 
 decompose [or] pp. 
-{ nsright pp G0 seqe d0 x c0 Ge HeqGe
+{ nsright pp G0 seqe d0 x Ge HeqGe
   K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
 all : revgoals.
-{ nsleft pp G0 seqe d0 x c0 He HeqHe
+{ nsleft pp G0 seqe d0 x He HeqHe
   K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
 
 
