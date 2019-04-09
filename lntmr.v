@@ -314,3 +314,50 @@ all : cycle 1.
 
 *)
 
+(* in progress L is 120 lines back 
+Lemma gen_swapR_step_dsr: forall V ps concl last_rule rules,
+  last_rule = nslrule (@dsrules V) ->
+  gen_swapR_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_swapR_step.
+intros lreq nsr drs acm rs. subst.
+
+inversion nsr as [? ? ? K sppc mnsp nsc].
+unfold nslext in nsc.
+unfold can_gen_swapR.   intros until 0. intros pp ss.
+unfold nslext in pp. subst.
+
+remember (Γ, Δ1 ++ Δ3 ++ Δ2 ++ Δ4) as seqe.
+acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
+  relative to where the rule is active *)
+inversion sppc. (* solves first goal *)
+
+all: rewrite -> ?app_nil_r in *.
+all : cycle 1.
+
+inversion sppc. (* solves first goal *)
+
+all: rewrite -> ?app_nil_r in *.
+all : cycle 1.
+
+(* case of exchange in sequent to the left of where rule applied *)
+{ nsgen drs nsr rs c sppc q qin acm inps0 list_assoc_r list_assoc_r'.  }
+(* case of exchange in sequent to the right of where rule applied *)
+{ nsgen drs nsr rs pp sppc q qin acm inps0 
+  ltac: (rewrite app_assoc) ltac: (rewrite app_assoc). }
+all : cycle 1.
+(* another case of exchange in sequent to the right of where rule applied *) 
+{ nsgen drs nsr rs c sppc q qin acm inps0 
+  ltac: (rewrite app_assoc ; rewrite (app_assoc _ pp1))
+  ltac: (rewrite - !app_assoc). }
+
+(* now have two cases where one of the sequents involved in the rule is where
+  the exchange takes place, they will be harder than exchange on the left *)
+  
+clear nsr.  inversion sppc.
+
+subst. clear sppc.  acacD'. (* 10 subgoals resulting *)
+
+{ subst. simpl.  rewrite ?app_nil_r. 
+  (* simpl in drs.  rewrite -> dersrec_single in drs.  *)
+  use WDiaRs rule directly 
+*)
