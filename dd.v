@@ -219,6 +219,12 @@ Lemma derrec_same: forall X rules prems (c c' : X),
   derrec rules prems c -> c = c' -> derrec rules prems c'.
 Proof. intros. subst. assumption. Qed.
 
+(* further detailed versions of derrec_same *)
+Lemma derrec_same_nsR: forall Y X D rules prems G H Γ d (Δ Δ' : X),
+  derrec rules prems (G ++ (Γ : Y, Δ : X, d : D) :: H) ->
+    Δ = Δ' -> derrec rules prems (G ++ (Γ, Δ', d) :: H).
+Proof. intros. subst. assumption. Qed.
+
 Lemma dersrec_all: forall X rules prems (cs : list X),
   dersrec rules prems cs <-> Forall (derrec rules prems) cs.
 Proof.
@@ -240,6 +246,10 @@ Proof.  intros.  rewrite dersrec_all ; apply Forall_nil. Qed.
 Lemma dersrec_single: forall X rules prems c,
   dersrec rules prems [c] <-> derrec rules prems (c : X).
 Proof.  intros.  rewrite dersrec_all. rewrite Forall_single. tauto. Qed.
+
+Lemma dersrec_map_single: forall X Y (f : X -> Y) rules prems c,
+  dersrec rules prems (map f [c]) <-> derrec rules prems (f c).
+Proof.  intros.  simpl. rewrite dersrec_single. tauto. Qed.
 
 (* try using the induction principle derrec_all_ind *)
 Lemma derrec_rmono: forall W (rulesa rulesb : rls W) prems concl,
@@ -328,8 +338,6 @@ inversion H.
 eapply ex_intro.  eapply ex_intro.  apply conj.  reflexivity.
 tauto.
 Qed.
-
-Reset dersl_app_eq.
 
 Lemma dersl_app_eq: forall X rules (psa psb : list X) qs, 
   dersl rules qs (psa ++ psb) -> exists qsa qsb, qs = qsa ++ qsb /\

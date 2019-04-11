@@ -20,9 +20,17 @@ Definition nslext W (G H seqs : list W) := G ++ seqs ++ H.
 Lemma nslext_def: forall W G H seqs, @nslext W G H seqs = G ++ seqs ++ H.
 Proof.  unfold nslext. reflexivity.  Qed.
 
+Lemma nslext2_def: forall W G H seq1 seq2, 
+  @nslext W G H [seq1 ; seq2] = G ++ seq1 :: seq2 :: H.
+Proof.  unfold nslext. simpl. reflexivity.  Qed.
+
 Inductive nslrule W (sr : rls (list W)) : rls (list W) :=
   | NSlctxt : forall ps c G H, sr ps c ->
     nslrule sr (map (nslext G H) ps) (nslext G H c).
+
+Lemma NSlctxt': forall W (sr : rls (list W)) ps c G H, sr ps c ->
+    nslrule sr (map (nslext G H) ps) (G ++ c ++ H).
+Proof. intros. rewrite <- nslext_def. apply NSlctxt. assumption. Qed.
 
 Inductive is_map2 U V W :
   (U -> V -> W) -> list U -> list V -> list W -> Prop :=
@@ -165,8 +173,7 @@ apply seqrule_s_conc_len in H0 ; simpl in H0 ; omega. Qed.
 Ltac nsgen drs nsr rs c sppc q qin acm inps0 at1 at2 := 
 clear drs nsr ;
 eapply derI ; [> unfold rsub in rs ; apply rs ;
-assoc_mid c ; rewrite <- nslext_def ;
-apply NSlctxt ; exact sppc |
+assoc_mid c ; apply NSlctxt' ; exact sppc |
 rewrite dersrec_forall ;
 intros q qin ;
 rewrite -> in_map_iff in qin ; cE ; subst q ;
@@ -182,18 +189,17 @@ at2 ;
 reflexivity].
 
 (* for diamond rules, exchange on left, on 1st sequent *)
-Ltac dia1l' rs G0 acm rw1 rw2 := 
-  eapply derI ; [> unfold rsub in rs ; apply rs ;
-  rw1 ;  rewrite <- (nslext_def G0) ;
-  apply NSlctxt ; (apply WDiaRs || apply BDiaRs) | 
+Ltac dia1l' rs acm rw1 rw2 := 
+  eapply derI ; [> unfold rsub in rs ; apply rs ; rw1 ;  
+  apply NSlctxt' ; (apply WDiaRs || apply BDiaRs) | 
   rewrite dersrec_single ;  rewrite -> Forall_map_single in acm ;
   unfold can_gen_swapL in acm ;  unfold nslext ;
   list_assoc_r ; simpl ; rw2 ;
   eapply acm ; [> | reflexivity ] ; clear acm ;
   unfold nslext ; list_assoc_r' ; simpl ; reflexivity]. 
   
-Ltac dia1l sppc rs G0 acm := subst ; clear sppc ;
-  dia1l' rs G0 acm ltac: (rewrite app_comm_cons) idtac.
+Ltac dia1l sppc rs acm := subst ; clear sppc ;
+  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac.
   
 Lemma gen_swapL_step_dsr: forall V ps concl last_rule rules,
   last_rule = nslrule (@dsrules V) ->
@@ -231,31 +237,35 @@ all : cycle 1.
   is on the left and the rules operate on the right *)
 clear nsr.  inversion sppc.
 
-{ dia1l sppc rs G0 acm. } (* for WDia *)
-{ dia1l sppc rs G0 acm. } (* for BDia *)
+{ dia1l sppc rs acm. } (* for WDia *)
+{ dia1l sppc rs acm. } (* for BDia *)
 
 (* now where exchange is in the right one of the two sequents in the rule *)
 clear nsr.  inversion sppc. 
 
+{
 subst. clear sppc.  acacD'. (* 3 subgoals resulting *)
 
-{ subst.  rewrite ?app_nil_r. 
-  dia1l' rs G acm ltac: (rewrite app_comm_cons) idtac. }
++ { subst.  rewrite ?app_nil_r. 
+  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac. }
 
-{ subst. simpl.  rewrite list_rearr19.
- dia1l' rs G acm idtac ltac: (rewrite (list_rearr16' G)). }
++ { subst. simpl.  rewrite list_rearr19.
+ dia1l' rs acm idtac ltac: (rewrite (list_rearr16' G)). }
 
-subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction.
++ { subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction. }
+}
 
+{
 clear sppc.  acacD'. (* 3 subgoals *)
 
-{ subst. rewrite ?app_nil_r. 
-  dia1l' rs G acm ltac: (rewrite app_comm_cons) idtac. }
++ { subst. rewrite ?app_nil_r. 
+  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac. }
 
-{ subst. simpl.  rewrite list_rearr19.
- dia1l' rs G acm idtac ltac: (rewrite (list_rearr16' G)). }
++ { subst. simpl.  rewrite list_rearr19.
+ dia1l' rs acm idtac ltac: (rewrite (list_rearr16' G)). }
 
-subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction.
++ { subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction. }
+}
 
 Qed.
 
@@ -315,7 +325,9 @@ all : cycle 1.
 *)
 
 (* in progress L is 120 lines back 
-Lemma gen_swapR_step_dsr: forall V ps concl last_rule rules,
+Lemma gen_swapR_step_dsr: 
+
+Goal forall V ps concl last_rule rules,
   last_rule = nslrule (@dsrules V) ->
   gen_swapR_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapR_step.
@@ -329,11 +341,6 @@ unfold nslext in pp. subst.
 remember (Γ, Δ1 ++ Δ3 ++ Δ2 ++ Δ4) as seqe.
 acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
   relative to where the rule is active *)
-inversion sppc. (* solves first goal *)
-
-all: rewrite -> ?app_nil_r in *.
-all : cycle 1.
-
 inversion sppc. (* solves first goal *)
 
 all: rewrite -> ?app_nil_r in *.
@@ -353,11 +360,178 @@ all : cycle 1.
 (* now have two cases where one of the sequents involved in the rule is where
   the exchange takes place, they will be harder than exchange on the left *)
   
-clear nsr.  inversion sppc.
+{
+clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
-subst. clear sppc.  acacD'. (* 10 subgoals resulting *)
+{
+ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 10 subgoals resulting *)
 
-{ subst. simpl.  rewrite ?app_nil_r. 
-  (* simpl in drs.  rewrite -> dersrec_single in drs.  *)
-  use WDiaRs rule directly 
+{ 
+(*  use WDiaRs rule directly from drs *)
+  eapply derI.
+  unfold rsub in rs ; apply rs.
+  rewrite list_rearr20.
+  apply NSlctxt'.
+  list_assoc_l'.
+  (apply WDiaRs || apply BDiaRs).
+  exact drs.
+}
+{ (* move WDia A :: H5 over H2 *)
+clear drs.
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+rewrite list_rearr20 ;  rewrite <- nslext_def ;  apply NSlctxt ;
+idtac ; (apply WDiaRs || apply BDiaRs) |].
+
+rewrite dersrec_map_single.
+rewrite -> Forall_map_single in acm.
+unfold can_gen_swapR in acm. 
+unfold nslext.
+list_assoc_r'. simpl.
+eapply derrec_same_nsR.
+eapply acm.
+apply nslext2_def.
+eapply (@eq_trans _ _ (Γ, Δ1 ++ H2 ++ (WDia A :: H5) ++ Δ4)).
+list_eq_assoc.
+reflexivity.
+list_eq_assoc.
+}
+
+{ (* move H2 ++ WDia A :: H4 over Δ3 *)
+clear drs.
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+rewrite list_rearr20 ;  apply NSlctxt' ;
+assoc_single_mid ;
+(apply WDiaRs || apply BDiaRs) |].
+
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+unfold can_gen_swapR in acm ; 
+unfold nslext ; list_assoc_r' ; simpl ;
+eapply derrec_same_nsR.
+eapply acm.
+apply nslext2_def.
+eapply (@eq_trans _ _ (Γ, Δ1 ++ (H2 ++ WDia A :: H4) ++ Δ3 ++ Δ4)).
+list_eq_assoc.
+reflexivity.
+list_eq_assoc.
+}
+
+{ (* move H1 over Δ2 *)
+clear drs.
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+rewrite list_rearr20 ;  apply NSlctxt' ;
+assoc_single_mid ;
+(apply WDiaRs || apply BDiaRs) |
+
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+unfold can_gen_swapR in acm ; 
+unfold nslext ; list_assoc_r' ; simpl ;
+eapply derrec_same_nsR ] ; [> 
+eapply acm ; [> apply nslext2_def |] ; 
+eapply (@eq_trans _ _ (Γ, Δ1 ++ Δ2 ++ H1 ++ WDia A :: H1r)) ;
+[> list_eq_assoc | reflexivity] | list_eq_assoc].
+}
+
+{ (* move H1 ++ WDia A :: H6 over Δ2 *)
+clear drs.
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+rewrite list_rearr20 ;  apply NSlctxt' ;
+assoc_single_mid ;
+(apply WDiaRs || apply BDiaRs) |
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+unfold can_gen_swapR in acm ; 
+unfold nslext ; list_assoc_r' ; simpl ;
+eapply derrec_same_nsR ] ; [> 
+eapply acm ; [> apply nslext2_def |] ; 
+eapply (@eq_trans _ _ (Γ, Δ1 ++ Δ2 ++ (H1 ++ WDia A :: H6) ++ Δ4)) ;
+[> list_eq_assoc | reflexivity] | list_eq_assoc].
+}
+
+{ (* move Δ3 over Δ2 *)
+clear drs ;
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+rewrite list_rearr20 ;  apply NSlctxt' ;
+assoc_single_mid ;
+(apply WDiaRs || apply BDiaRs) |
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+unfold can_gen_swapR in acm ; 
+unfold nslext ; list_assoc_r' ; simpl ;
+eapply derrec_same_nsR ] ; [> 
+eapply acm ; [> apply nslext2_def |] ; 
+eapply (@eq_trans _ _ (Γ, Δ1 ++ Δ2 ++ Δ3 ++ H4 ++ WDia A :: H1r)) ;
+[> list_eq_assoc | reflexivity] | list_eq_assoc].
+}
+
+{ (* move Δ3 over Δ2 *)
+clear drs ;
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+rewrite list_rearr20 ;  apply NSlctxt' ;
+assoc_single_mid ;
+(apply WDiaRs || apply BDiaRs) |
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+unfold can_gen_swapR in acm ; 
+unfold nslext ; list_assoc_r' ; simpl ;
+eapply derrec_same_nsR ] ; [> 
+eapply acm ; [> apply nslext2_def |] ; 
+eapply (@eq_trans _ _ (Γ, Δ1 ++ Δ2 ++ Δ3 ++ H4 ++ WDia A :: H1r)) ;
+[> list_eq_assoc | reflexivity] | list_eq_assoc].
+}
+
+
+{ 
+(*  use WDiaRs rule directly from drs *)
+  eapply derI.
+  unfold rsub in rs ; apply rs.
+  rewrite list_rearr20.
+  apply NSlctxt'.
+  idtac.
+  (apply WDiaRs || apply BDiaRs).
+  exact drs.
+}
+{ 
+(*  use WDiaRs rule directly from drs *)
+  eapply derI.
+  unfold rsub in rs ; apply rs.
+  rewrite list_rearr20.
+  apply NSlctxt'.
+  idtac.
+  (apply WDiaRs || apply BDiaRs).
+  exact drs.
+}
+{ (* move Δ3 over WDia A :: H3 *)
+clear drs ;
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+rewrite list_rearr20 ;  apply NSlctxt' ;
+assoc_single_mid ;
+(apply WDiaRs || apply BDiaRs) |
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+unfold can_gen_swapR in acm ; 
+unfold nslext ; list_assoc_r' ; simpl ;
+eapply derrec_same_nsR ] ; [> 
+eapply acm ; [> apply nslext2_def |] ; 
+eapply (@eq_trans _ _ (Γ, H1l ++ (WDia A :: H3) ++ Δ3 ++ Δ4)) ;
+[> list_eq_assoc | reflexivity] | list_eq_assoc].
+}
+
+{ (* move Δ3 over Δ2 *)
+clear drs ;
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+rewrite list_rearr20 ;  apply NSlctxt' ;
+assoc_single_mid ;
+(apply WDiaRs || apply BDiaRs) |
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+unfold can_gen_swapR in acm ; 
+unfold nslext ; list_assoc_r' ; simpl ;
+eapply derrec_same_nsR ] ; [> 
+eapply acm ; [> apply nslext2_def |] ; 
+eapply (@eq_trans _ _ (Γ, (H1l ++ WDia A :: H1) ++ Δ2 ++ Δ3 ++ Δ4)) ;
+[> list_eq_assoc | reflexivity] | list_eq_assoc].
+}
 *)
+
