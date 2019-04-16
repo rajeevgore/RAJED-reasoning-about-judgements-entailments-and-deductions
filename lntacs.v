@@ -370,3 +370,23 @@ apply derI with pse ; [
   unfold nsext ; subst K ; subst seq ;
   list_eq_assoc ].
 
+(* version of above for the case when the rule affects a list of
+  sequents, not a single sequent, plus context (ie nslext, not nsext *)
+Ltac nsgen drs nsr rs c sppc q qin acm inps0 at1 at2 :=
+clear drs nsr ;
+eapply derI ; [> unfold rsub in rs ; apply rs ;
+assoc_mid c ; apply NSlctxt' ; exact sppc |
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; subst q ;
+rewrite -> Forall_forall in acm ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+eapply acm in inps0 ;
+unfold can_gen_swapL in inps0 ;
+unfold nslext ;
+at1 ;
+eapply inps0 ; [> | reflexivity] ;
+unfold nslext ;
+at2 ;
+reflexivity].
+

@@ -157,15 +157,33 @@ Proof.  intros.  eapply NSctxt in H0.  simpl in H0. exact H0.  Qed.
 Definition nstail {W : Type} H (d : dir) (seq : W) := (seq, d) :: H.
 Lemma nstail_def: forall {W : Type} H d seq, 
   nstail H (d : dir) (seq : W) = (seq, d) :: H.
-Proof.
-unfold nstail. reflexivity.
-Qed.
+Proof.  unfold nstail. reflexivity.  Qed.
 
 Lemma nstail_ext: forall (W : Type) H d seq, 
   nstail H (d : dir) (seq : W) = nsext [] H d seq.
-Proof.
-unfold nsext.  unfold nstail. reflexivity.
-Qed.
+Proof.  unfold nsext.  unfold nstail. reflexivity.  Qed.
+
+(* context of a nested sequent *)
+Definition nslext W (G H seqs : list W) := G ++ seqs ++ H.
+
+Lemma nslext_def: forall W G H seqs, @nslext W G H seqs = G ++ seqs ++ H.
+Proof.  unfold nslext. reflexivity.  Qed.
+
+Lemma nslext2_def: forall W G H seq1 seq2,
+  @nslext W G H [seq1 ; seq2] = G ++ seq1 :: seq2 :: H.
+Proof.  unfold nslext. simpl. reflexivity.  Qed.
+
+Lemma nslext2_def': forall W G H seq1 seq2,
+  @nslext W G H [seq1 ; seq2] = (G ++ [seq1]) ++ seq2 :: H.
+Proof.  unfold nslext. simpl. intros.  apply list_rearr22.  Qed.
+
+Inductive nslrule W (sr : rls (list W)) : rls (list W) :=
+  | NSlctxt : forall ps c G H, sr ps c ->
+    nslrule sr (map (nslext G H) ps) (nslext G H c).
+
+Lemma NSlctxt': forall W (sr : rls (list W)) ps c G H, sr ps c ->
+    nslrule sr (map (nslext G H) ps) (G ++ c ++ H).
+Proof. intros. rewrite <- nslext_def. apply NSlctxt. assumption. Qed.
 
 Check princrule.
 Check seqext.
