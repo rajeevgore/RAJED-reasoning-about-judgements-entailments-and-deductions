@@ -13,16 +13,16 @@ Inductive dir : Type :=
 | fwd : dir
 | bac : dir.
 
-(* definition of Propositional Formulas, parameterised over prim prop set *)
+(* definition of Propositional Formulas, parameterised over prim prop set,
+  note, we can have unused connectives as long as we don't want to prove
+  that the Id rule, restricted to atoms, is sufficient *)
 Inductive PropF (V : Set): Type :=
  | Var : V -> PropF V
  | Bot : PropF V
  | Imp : PropF V -> PropF V -> PropF V
- (*
  | Not : PropF V -> PropF V
  | And : PropF V -> PropF V -> PropF V
  | Or : PropF V -> PropF V -> PropF V
- *)
  | WBox : PropF V -> PropF V
  | WDia : PropF V -> PropF V
  | BBox : PropF V -> PropF V
@@ -81,6 +81,20 @@ Inductive princrule (V : Set) : rls (rel (list (PropF V))) :=
   | ImpL' : forall A B, princrule
     [pair [B] [] ; pair [] [A]] (pair [Imp A B] [])
   | BotL' : princrule [] (pair [Bot V] []).
+
+(* we may also want to refer to rules individually *)
+Inductive Idrule (V : Set) : rls (rel (list (PropF V))) :=
+  | Idrule_I : forall A, Idrule [] (pair [A] [A]).
+
+Inductive Botrule (V : Set) : rls (rel (list (PropF V))) :=
+  | Botrule_I : Botrule [] (pair [Bot V] []).
+
+Inductive ImpLrule (V : Set) : rls (rel (list (PropF V))) :=
+  | ImpLrule_I : forall A B,
+    ImpLrule [pair [B] [] ; pair [] [A]] (pair [Imp A B] []).
+
+Inductive ImpRrule (V : Set) : rls (rel (list (PropF V))) :=
+  | ImpRrule_I : forall A B, ImpRrule [pair [A] [B]] (pair [] [Imp A B]).
 
 Definition seqext (W : Type) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
   match seq with | pair U V => pair (Γ1 ++ U ++ Γ2) (Δ1 ++ V ++ Δ2) end.
@@ -296,6 +310,20 @@ Lemma princrule_R_oe : forall {V : Set} ps x y Γ,
     @princrule V ps (Γ, x ++ y) -> x = [] \/ y = [].
 Proof.
   intros. apply princrule_R in H. sD ; list_eq_nc ; tauto.
+Qed.
+
+Lemma Idrule_L_oe : forall {V : Set} ps x y Δ,
+    @Idrule V ps (x ++ y, Δ) -> x = [] \/ y = [].
+Proof.
+  intros. inversion H. subst. acacD'. tauto.
+  apply eq_sym in H1.  list_eq_nc. tauto.
+Qed.
+
+Lemma Idrule_R_oe : forall {V : Set} ps x y Γ,
+    @Idrule V ps (Γ, x ++ y) -> x = [] \/ y = [].
+Proof.
+  intros. inversion H. subst. acacD'. tauto.
+  apply eq_sym in H1.  list_eq_nc. tauto.
 Qed.
 
 Lemma exchL: forall (V : Set) ns 
