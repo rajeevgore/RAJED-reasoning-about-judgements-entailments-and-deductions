@@ -53,18 +53,13 @@ subst.
 (* do as much as possible for all rules at once *)
 acacD' ; (* gives 10 subgoals *)
 subst ;
-repeat ((list_eq_nc || (pose pr as Qpr ; apply Idrule_L_oe in Qpr)) ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply princrule_L_oe in Qpr)) ;
   sD ; subst ; simpl ; simpl in pr ;
   try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
 
 (* need to do stage1 rs pr. to see what next,
   and stage12ds rs acm qin1 qin3 pr ...,
   then all : solve_eqs. to see what next *)
-
-{ stage12ds rs acm qin1 qin3 pr sel3 ; solve_eqs ; 
-
-....
-
 
 { stage12altdsL rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l) ; reflexivity.  }
@@ -138,9 +133,7 @@ Qed.
 Check gen_swapL.
 
 (* now the same thing for each rule individually *)
-(*
-Lemma gen_swapL_step_Id: 
-Goal forall V ps concl 
+Lemma gen_swapL_step_Id: forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
   last_rule = nsrule (seqrule (@Idrule V)) ->
   gen_swapL_step last_rule rules ps concl.
@@ -172,7 +165,6 @@ destruct c0.
 injection se as sel ser.
 subst.
 
-
 (* do as much as possible for all rules at once *)
 acacD' ; (* gives 10 subgoals *)
 subst ;
@@ -180,8 +172,58 @@ repeat ((list_eq_nc || (pose pr as Qpr ; apply Idrule_L_oe in Qpr)) ;
   sD ; subst ; simpl ; simpl in pr ;
   try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
 
-(* need to do stage1 rs pr. to see what next,
-  and stage12ds rs acm qin1 qin3 pr ...,
+(* need to do stage1 rs pr. to see what is the last argument for,
+  stage12ds rs acm qin1 qin3 pr ...,
   then all : solve_eqs. to see what next *)
 
-*)
+{ stage12ds rs acm qin1 qin3 pr sel3 ; solve_eqs ; 
+  rewrite (app_assoc l) ; reflexivity. }
+
+{ stage12ds rs acm qin1 qin3 pr sel1 ; solve_eqs ; 
+  rewrite (app_assoc sel) ; reflexivity. }
+
+{ stage12altds rs drs acm qin1 qin3 pr sel5. } 
+
+{ stage12altds rs drs acm qin1 qin3 pr Γ3 ; solve_eqs ; reflexivity. } 
+
+{ stage12altds rs drs acm qin1 qin3 pr sel1. }
+
+{ stage12ds rs acm qin1 qin3 pr l ; solve_eqs ; 
+  rewrite (app_assoc l1) ; rewrite (app_assoc sel) ; reflexivity. }
+
+{ stage12ds rs acm qin1 qin3 pr sel5 ; solve_eqs ; reflexivity. }
+
+{ stage12ds rs acm qin1 qin3 pr sel3 ; solve_eqs ; 
+  rewrite (app_assoc sel1) ; reflexivity. }
+
+{ stage12ds rs acm qin1 qin3 pr l ; solve_eqs ; 
+  rewrite (app_assoc l1) ; rewrite (app_assoc sel1) ; reflexivity. }
+
+{ stage12ds rs acm qin1 qin3 pr l ; solve_eqs ; reflexivity. }
+
+{ stage12ds rs acm qin1 qin3 pr sel1 ; solve_eqs ;
+  rewrite (app_assoc l) ; reflexivity. }
+
+{ stage12ds rs acm qin1 qin3 pr sel ; solve_eqs ;
+  rewrite (app_assoc Φ1) ; reflexivity. }
+
+{ stage12altds rs drs acm qin1 qin3 pr sel3. }
+
+{ stage12ds rs acm qin1 qin3 pr Γ2 ; solve_eqs ; reflexivity. }
+
+{ stage12altds rs drs acm qin1 qin3 pr sel. }
+
+{ stage12altds rs drs acm qin1 qin3 pr sel5. }
+
+{ stage12altds rs drs acm qin1 qin3 pr Γ2. }
+
+{ stage12altds rs drs acm qin1 qin3 pr sel. }
+
+{ stage12altds rs drs acm qin1 qin3 pr sel. }
+
+{ stage12altds rs drs acm qin1 qin3 pr l ; solve_eqs ;
+  rewrite (app_assoc l1) ; rewrite (app_assoc Φ1) ; reflexivity. }
+
+Qed.
+
+Check gen_swapL_step_Id.
