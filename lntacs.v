@@ -58,14 +58,29 @@ Lemma applI: forall {T} (a b c : list T),
   a = b -> c ++ a = c ++ b.
 Proof. intros. subst. reflexivity. Qed.
 
-Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
-
 Definition app_assoc_cons A l m (x : A) xs := app_assoc l m (x :: xs).
 
 (* in ssreflect *)
 Ltac list_assoc_l' := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
 Ltac list_assoc_r' :=
   repeat (rewrite - !app_assoc || rewrite - !app_comm_cons).
+
+(* tactics to identify swapped lists, where one of swap is single list *)
+ 
+Ltac show_swapped_1 := 
+  list_assoc_r' ;
+  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleL ; list_eq_assoc) ;
+  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleR ; list_eq_assoc).
+ 
+Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
+Proof. intros.  show_swapped_1.  Qed.
+
+Goal forall T A B C D, swapped (D ++ A ++ B ++ C) (A ++ B ++ C ++ D : list T).
+Proof. intros.  show_swapped_1.  Qed.
+
+Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
 
 (* to rearrange a ++ b ++ l ++ d ++ e so that l is central, 
   ie to give (a ++ b) ++ l ++ (d ++ e) *)

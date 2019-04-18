@@ -1,5 +1,6 @@
 Require Import List Omega.
 Import ListNotations.
+Set Implicit Arguments.
 
 Require Import gen.
 
@@ -26,6 +27,42 @@ Ltac list_assoc_r_simp' := repeat
   (rewrite <- !app_assoc || rewrite <- !app_comm_cons || rewrite !app_nil_l
   || rewrite !app_nil_r).
 Ltac list_eq_assoc := list_assoc_r ; reflexivity.
+
+Inductive swapped T: list T -> list T -> Prop :=
+  | swapped_I : forall (X Y A B C D : list T), X = (A ++ B ++ C ++ D) -> 
+    Y = (A ++ C ++ B ++ D) -> swapped X Y.
+
+Lemma swapped_I': forall T (A B C D : list T),
+  swapped (A ++ B ++ C ++ D) (A ++ C ++ B ++ D).
+Proof.  intros.  eapply swapped_I ; reflexivity. Qed.
+   
+Lemma swapped_same: forall T X, swapped X (X : list T).
+Proof.  intros.  apply (swapped_I [] [] [] X) ; simpl ; reflexivity. Qed.
+
+Lemma swapped_L: forall T X Y Z,
+  swapped X (Y : list T) -> swapped (Z ++ X) (Z ++ Y).
+Proof.  intros. destruct H. subst. 
+  rewrite !(app_assoc Z). apply swapped_I'. Qed.
+
+Lemma swapped_R: forall T X Y Z,
+  swapped X (Y : list T) -> swapped (X ++ Z) (Y ++ Z).
+Proof.  intros. destruct H. subst. rewrite <- !app_assoc. apply swapped_I'. Qed.
+
+Lemma swapped_simple: forall T U V X Y,
+  U = X ++ Y -> V = Y ++ X -> swapped U (V : list T).
+Proof.  intros. subst. 
+  apply (swapped_I [] X Y []) ; simpl ; rewrite app_nil_r ; reflexivity. Qed.
+
+Lemma swapped_simple': forall T X Y, swapped (X ++ Y : list T) (Y ++ X).
+Proof.  intros. eapply swapped_simple ; reflexivity. Qed. 
+
+Lemma swapped_simpleL: forall T X Y Z,
+  Y = Z -> swapped (X ++ Y) (Z ++ X : list T).
+Proof.  intros. subst. apply swapped_simple'. Qed.
+
+Lemma swapped_simpleR: forall T X Y Z,
+  Y = Z -> swapped (Y ++ X) (X ++ Z : list T).
+Proof.  intros. subst. apply swapped_simple'. Qed.
 
 Lemma partition_2_2 : forall {A : Type} (l1 l2 l3 l4 : list A) a b,
 l1 ++ a :: l2 = l3 ++ b :: l4 ->
