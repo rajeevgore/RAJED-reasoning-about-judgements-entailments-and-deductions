@@ -334,6 +334,12 @@ Proof.
   apply eq_sym in H1.  list_eq_nc. tauto.
 Qed.
 
+Lemma Idrule_L_oe': forall V, rules_L_oe (@Idrule V).
+Proof. unfold rules_L_oe.  intros.  eapply Idrule_L_oe.  exact H.  Qed.
+
+Lemma Idrule_R_oe': forall V, rules_R_oe (@Idrule V).
+Proof. unfold rules_R_oe.  intros.  eapply Idrule_R_oe.  exact H.  Qed.
+
 Lemma exchL: forall (V : Set) ns 
   (D : derrec (nsrule (@proprule V)) (fun _ => False) ns),
   can_exchL (nsrule (@proprule V)) ns.
