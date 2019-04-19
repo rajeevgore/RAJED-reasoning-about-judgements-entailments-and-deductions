@@ -300,17 +300,25 @@ Ltac list_eq_nc :=
      | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
      end.
 
+Definition rules_L_oe {W : Set} (rules : rls (rel (list W))) := 
+  forall ps x y Δ, rules ps (x ++ y, Δ) -> x = [] \/ y = [].
+
+Definition rules_R_oe {W : Set} (rules : rls (rel (list W))) := 
+  forall ps x y Γ, rules ps (Γ, x ++ y) -> x = [] \/ y = [].
+
 Lemma princrule_L_oe : forall {V : Set} ps x y Δ,
     @princrule V ps (x ++ y, Δ) -> x = [] \/ y = [].
-Proof.
-  intros. apply princrule_L in H. sD ; list_eq_nc ; tauto.
-Qed.
+Proof.  intros. apply princrule_L in H. sD ; list_eq_nc ; tauto.  Qed.
 
 Lemma princrule_R_oe : forall {V : Set} ps x y Γ,
     @princrule V ps (Γ, x ++ y) -> x = [] \/ y = [].
-Proof.
-  intros. apply princrule_R in H. sD ; list_eq_nc ; tauto.
-Qed.
+Proof.  intros. apply princrule_R in H. sD ; list_eq_nc ; tauto.  Qed.
+
+Lemma princrule_L_oe': forall V, rules_L_oe (@princrule V).
+Proof. unfold rules_L_oe.  intros.  eapply princrule_L_oe.  exact H.  Qed.
+
+Lemma princrule_R_oe': forall V, rules_R_oe (@princrule V).
+Proof. unfold rules_R_oe.  intros.  eapply princrule_R_oe.  exact H.  Qed.
 
 Lemma Idrule_L_oe : forall {V : Set} ps x y Δ,
     @Idrule V ps (x ++ y, Δ) -> x = [] \/ y = [].
