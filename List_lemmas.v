@@ -335,6 +335,10 @@ Lemma list_rearr22 : forall {T : Type} (F G : list T) (a b : T),
   F ++ a :: b :: G = (F ++ [a]) ++ b :: G.
 Proof.  intros. list_assoc_r. simpl. reflexivity. Qed.
 
+Lemma list_rearr23 : forall {T : Type} (b a : T) (F G : list T),
+  a :: F ++ b :: G = (a :: F) ++ b :: G.
+Proof.  intros. list_assoc_r. simpl. reflexivity. Qed.
+
 Lemma cons_eq_app: forall (A : Type) (x y z : list A) (a : A),
   a :: x = y ++ z -> y = [] /\ z = a :: x \/
   exists (y' : list A), y = a :: y' /\ x = y' ++ z.

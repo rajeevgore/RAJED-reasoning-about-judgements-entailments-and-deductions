@@ -58,7 +58,7 @@ Lemma applI: forall {T} (a b c : list T),
   a = b -> c ++ a = c ++ b.
 Proof. intros. subst. reflexivity. Qed.
 
-Definition app_assoc_cons A l m (x : A) xs := app_assoc l m (x :: xs).
+Definition app_assoc_cons {A} (x : A) l m xs := app_assoc l m (x :: xs).
 
 (* in ssreflect *)
 Ltac list_assoc_l' := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
@@ -73,6 +73,10 @@ Ltac show_swapped_1 :=
     apply swapped_simpleL ; list_eq_assoc) ;
   try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
     apply swapped_simpleR ; list_eq_assoc).
+
+Ltac swap_tac :=
+  list_assoc_r ; try (apply swapped_same) ; repeat (apply swapped_L) ;  
+  list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
  
 Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
 Proof. intros.  show_swapped_1.  Qed.
@@ -92,9 +96,11 @@ Ltac assoc_mid l :=
 
 (* to rearrange a ++ b ++ x :: d ++ e so that x is central,
   ie to give (a ++ b) ++ x :: d ++ e *)
-Ltac assoc_single_mid :=
-  list_assoc_r' ; 
-  rewrite ?app_assoc_cons.
+Ltac assoc_single_mid := list_assoc_r' ; rewrite ?app_assoc_cons.
+
+(* as assoc_single_mid, but to specify x *)
+Ltac assoc_single_mid' x := list_assoc_r' ;
+  repeat (rewrite (app_assoc_cons x) || rewrite (list_rearr23 x)).  
 
 (* test of assoc_mid
 Lemma x : forall T (a b c d e f g : list T) (x y z : T),
@@ -332,6 +338,12 @@ Ltac stage12altdsRg princrules rs H0 H1 qin1 qin3 pr :=
     | [ H : princrules _ (_, ?x) |- _ ] =>
       stage12altds rs H0 H1 qin1 qin3 pr x end.
 
+Ltac midLg princrules := 
+  match goal with | [ H : princrules _ (?x, _) |- _ ] => assoc_mid x end.
+
+Ltac midRg princrules := 
+  match goal with | [ H : princrules _ (_, ?x) |- _ ] => assoc_mid x end.
+
 Ltac app_cancel := 
   (list_assoc_l' ; rewrite ?appr_cong ;
   list_assoc_r' ; rewrite ?appl_cong).
@@ -438,4 +450,45 @@ eapply inps0 ; [> | reflexivity] ;
 unfold nslext ;
 at2 ;
 reflexivity].
+
+(* for swap on left of propositional rules *)
+Ltac nsgenL nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap := 
+clear nsr ;
+assoc_single_mid' (l, l0, d) ;
+eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
+  apply NSctxt' ; exact sppc |
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; subst q ;
+rewrite -> Forall_forall in acm ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+eapply acm in inps0 ;
+rewrite -> can_gen_swapL_def' in inps0 ;
+unfold nsext ;
+assoc_single_mid' (Γ', Δ, d0) ;
+eapply inps0 ; [> exact swap | unfold nsext ; list_eq_assoc | reflexivity ]].
+
+Ltac nsprsameL princrules rs pr q qin inmps acm inps0 x0 := 
+match goal with | [ H : princrules _ (?x, _) |- _ ] => assoc_mid x end ;
+eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
+  apply NSctxt' ; apply Sctxt_e ; exact pr |] ;
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ; 
+rewrite -> Forall_forall in acm ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+eapply in_map in inps0 ;
+eapply acm in inps0 ;
+clear acm ;
+rewrite -> can_gen_swapL_def' in inps0 ;
+subst ;
+destruct x0 ;
+unfold seqext ;
+unfold nsext ;
+eapply inps0 ;
+  [> | unfold nsext ; reflexivity | unfold seqext ; reflexivity ] ;
+  swap_tac.
+
 

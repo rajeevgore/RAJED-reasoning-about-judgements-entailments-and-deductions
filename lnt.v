@@ -128,6 +128,11 @@ Lemma seqext_def : forall (W : Type) Φ1 Φ2 Ψ1 Ψ2 U V,
       @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof. reflexivity. Qed.
 
+Lemma Sctxt_e: forall (W : Type) (pr : rls (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
+  pr ps (U, V) ->
+  seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
+Proof. intros.  rewrite <- seqext_def. apply Sctxt. exact H. Qed.  
+
 Lemma seqext_defp : forall (W : Type) Φ1 Φ2 Ψ1 Ψ2 seq,
       @seqext W Φ1 Φ2 Ψ1 Ψ2 seq =
         let (U, V) := seq in (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
@@ -167,6 +172,10 @@ Inductive nsrule (W : Type) (sr : rls W) :
 Lemma NSctxt_nil: forall (W : Type) sr G H d c, (sr [] c : Prop) ->
   @nsrule W sr [] (nsext G H d c).
 Proof.  intros.  eapply NSctxt in H0.  simpl in H0. exact H0.  Qed.
+
+Lemma NSctxt': forall W (sr : rls W) ps c G H d, sr ps c ->
+    nsrule sr (map (nsext G H d) ps) (G ++ (c, d) :: H).
+Proof. intros. rewrite <- nsext_def. apply NSctxt. assumption. Qed.
 
 Definition nstail {W : Type} H (d : dir) (seq : W) := (seq, d) :: H.
 Lemma nstail_def: forall {W : Type} H d seq, 

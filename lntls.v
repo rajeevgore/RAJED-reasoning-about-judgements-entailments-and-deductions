@@ -20,7 +20,7 @@ Require Import lntacs.
 
 (* proof of exchange using step lemma *)
 (* version of step lemma generic as regards rules satisfying rules_L_oe *)
-Lemma gen_swapL_step_loe: forall V ps concl princrules
+Lemma gen_swapL_step_loe': forall V ps concl princrules
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
   rules_L_oe princrules -> 
   last_rule = nsrule (seqrule princrules) ->
@@ -119,15 +119,63 @@ rewrite (app_assoc l1) ; rewrite (app_assoc Φ1) ; reflexivity. }
 
 Qed.
 
-Check gen_swapL_step_loe.
+Check gen_swapL_step_loe'.
 
 Lemma gen_swapL_step_Id: forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
   last_rule = nsrule (seqrule (@Idrule V)) ->
   gen_swapL_step last_rule rules ps concl.
-Proof.  intros. eapply gen_swapL_step_loe. apply Idrule_L_oe'. exact H. Qed.
+Proof.  intros. eapply gen_swapL_step_loe'. apply Idrule_L_oe'. exact H. Qed.
 
 Check gen_swapL_step_Id.
+
+(* proof using swapped, don't need 20 separate cases!! *) 
+Lemma gen_swapL_step_loe: forall V ps concl princrules
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  rules_L_oe princrules -> 
+  last_rule = nsrule (seqrule princrules) ->
+  gen_swapL_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_swapL_step.
+intros loe lreq nsr drs acm rs. subst. clear drs.
+
+inversion nsr as [? ? ? K ? sppc mnsp nsc].
+unfold nsext in nsc.
+rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
+unfold nsext in pp.
+
+apply partition_2_2 in pp.
+
+destruct c.
+sE ; subst.
+
+{ nsgenL nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap. }
+all : cycle 1.
+{ nsgenL nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap. }
+
+(* now case where move and rule application occur in the same sequent *)
+injection H0 as. subst.
+inversion sppc as [? ? ? ? ? ? pr mse se].
+destruct c.
+unfold seqext in se.
+subst.  clear nsr. clear sppc.
+injection se as sel ser.
+subst.
+
+unfold rules_L_oe in loe.
+inversion_clear swap ; subst.
+
+(* do as much as possible for all rules at once *)
+acacD' ; (* gives 10 subgoals *)
+subst ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
+  sD ; subst ; simpl ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)) ;
+(* above produces 20 subgoals, following solves all of them!! *)
+nsprsameL princrules rs pr q qin inmps acm inps0 x0. 
+
+Qed.
+
+Check gen_swapL_step_loe.
 
 Lemma gen_swapL_step_pr: forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
@@ -155,4 +203,3 @@ intros.  assumption.
 Qed.
 
 Check gen_swapL.
-
