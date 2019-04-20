@@ -18,13 +18,14 @@ Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.
 
-(* proof using step lemma *)
-Lemma gen_swapR_step_pr: forall V ps concl 
+(* proof using version of step lemma which is generic for rules *)
+Lemma gen_swapR_step_roe: forall V ps concl princrules 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
-  last_rule = nsrule (seqrule (@princrule V)) ->
+  rules_R_oe princrules -> 
+  last_rule = nsrule (seqrule princrules) ->
   gen_swapR_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapR_step.
-intros lreq nsr drs acm rs. subst.
+intros roe lreq nsr drs acm rs. subst.
 
 inversion nsr as [? ? ? K ? sppc mnsp nsc].
 unfold nsext in nsc.
@@ -50,10 +51,12 @@ subst.  clear nsr. clear sppc.
 destruct c0. 
 injection se as sel ser.
 subst.
+
+unfold rules_R_oe in roe.
 (* do as much as possible for all rules at once *)
 acacD' ; (* gives 10 subgoals *)
 subst ;
-repeat ((list_eq_nc || (pose pr as Qpr ; apply princrule_R_oe in Qpr)) ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply roe in Qpr)) ;
   sD ; subst ; simpl ; simpl in pr ;
   try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
 
@@ -61,55 +64,63 @@ repeat ((list_eq_nc || (pose pr as Qpr ; apply princrule_R_oe in Qpr)) ;
   and stage12ds rs acm qin1 qin3 pr ...,
   then all : solve_eqs. to see what next *)
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l1) ; reflexivity.  }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc ser) ; reflexivity.  }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ; 
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ; 
 rewrite (app_assoc l2) ; rewrite (app_assoc ser) ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc ser1) ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l2) ; rewrite (app_assoc ser1) ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l1) ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc Ψ1) ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ; reflexivity. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs. }
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
 
-{ stage12altdsR rs drs acm qin1 qin3 pr ; solve_eqs ;
+{ stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l2) ; rewrite (app_assoc Ψ1) ; reflexivity. }
 
 Qed.
+
+Check gen_swapR_step_roe.
+
+Lemma gen_swapR_step_pr: forall V ps concl 
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  last_rule = nsrule (seqrule (@princrule V)) ->
+  gen_swapR_step last_rule rules ps concl.
+Proof.  intros. eapply gen_swapR_step_roe. apply princrule_R_oe'. exact H. Qed.
 
 Check gen_swapR_step_pr.
 
@@ -131,23 +142,4 @@ intros.  assumption.
 Qed.
 
 Check gen_swapR.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
