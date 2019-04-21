@@ -20,115 +20,6 @@ Require Import lntacs.
 
 (* proof of exchange using step lemma *)
 (* version of step lemma generic as regards rules satisfying rules_L_oe *)
-Lemma gen_swapL_step_loe': forall V ps concl princrules
-  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
-  rules_L_oe princrules -> 
-  last_rule = nsrule (seqrule princrules) ->
-  gen_swapL_step last_rule rules ps concl.
-Proof.  intros until 0.  unfold gen_swapL_step.
-intros loe lreq nsr drs acm rs. subst.
-
-inversion nsr as [? ? ? K ? sppc mnsp nsc].
-unfold nsext in nsc.
-unfold can_gen_swapL.   intros until 0. intros pp ss.
-unfold nsext in pp.
-
-apply partition_2_2 in pp.
-remember (Γ1 ++ Γ3 ++ Γ2 ++ Γ4, Δ) as seqe.
-
-decompose [or] pp. 
-
-{ nsright pp G0 seqe d0 x Ge HeqGe
-  K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
-all : revgoals.
-{ nsleft pp G0 seqe d0 x He HeqHe
-  K d ps ps0 inps0 pse K0 drs nsr acm G seq rs. }
-
-(* now case where move and rule application occur in the same sequent *)
-cE. clear pp. injection H0 as.
-inversion sppc as [? ? ? ? ? ? pr mse se].
-unfold seqext in se.
-subst.  clear nsr. clear sppc.
-destruct c0. 
-injection se as sel ser.
-subst.
-
-unfold rules_L_oe in loe.
-(* do as much as possible for all rules at once *)
-acacD' ; (* gives 10 subgoals *)
-subst ;
-repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
-  sD ; subst ; simpl ; simpl in pr ;
-  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
-
-(* need to do stage1 rs pr. to see what is the last argument for,
-  stage12ds rs acm qin1 qin3 pr ...,
-  then all : solve_eqs. to see what next *)
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-rewrite (app_assoc l) ; reflexivity.  }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-rewrite (app_assoc sel) ; reflexivity.  }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-  reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ; 
-rewrite (app_assoc l1) ; rewrite (app_assoc sel) ; reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-  reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-rewrite (app_assoc sel1) ; reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-rewrite (app_assoc l1) ; rewrite (app_assoc sel1) ; reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-  reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-rewrite (app_assoc l) ; reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-rewrite (app_assoc Φ1) ; reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-  reflexivity. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs. }
-
-{ stage12altdsLg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
-rewrite (app_assoc l1) ; rewrite (app_assoc Φ1) ; reflexivity. }
-
-Qed.
-
-Check gen_swapL_step_loe'.
-
-Lemma gen_swapL_step_Id: forall V ps concl 
-  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
-  last_rule = nsrule (seqrule (@Idrule V)) ->
-  gen_swapL_step last_rule rules ps concl.
-Proof.  intros. eapply gen_swapL_step_loe'. apply Idrule_L_oe'. exact H. Qed.
-
-Check gen_swapL_step_Id.
-
 (* proof using swapped, don't need 20 separate cases!! *) 
 Lemma gen_swapL_step_loe: forall V ps concl princrules
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
@@ -176,6 +67,14 @@ nsprsameL princrules rs pr q qin inmps acm inps0 x0.
 Qed.
 
 Check gen_swapL_step_loe.
+
+Lemma gen_swapL_step_Id: forall V ps concl 
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  last_rule = nsrule (seqrule (@Idrule V)) ->
+  gen_swapL_step last_rule rules ps concl.
+Proof.  intros. eapply gen_swapL_step_loe. apply Idrule_L_oe'. exact H. Qed.
+
+Check gen_swapL_step_Id.
 
 Lemma gen_swapL_step_pr: forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
