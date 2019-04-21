@@ -19,7 +19,7 @@ Require Import lnt.
 Require Import lntacs.
 
 (* proof using version of step lemma which is generic for rules *)
-Lemma gen_swapR_step_roe: forall V ps concl princrules 
+Lemma gen_swapR_step_roe': forall V ps concl princrules 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
   rules_R_oe princrules -> 
   last_rule = nsrule (seqrule princrules) ->
@@ -111,6 +111,54 @@ rewrite (app_assoc Ψ1) ; reflexivity. }
 
 { stage12altdsRg princrules rs drs acm qin1 qin3 pr ; solve_eqs ;
 rewrite (app_assoc l2) ; rewrite (app_assoc Ψ1) ; reflexivity. }
+
+Qed.
+
+Check gen_swapR_step_roe'.
+
+(* proof using swapped, don't need 20 separate cases!! *) 
+Lemma gen_swapR_step_roe: forall V ps concl princrules
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  rules_R_oe princrules -> 
+  last_rule = nsrule (seqrule princrules) ->
+  gen_swapR_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_swapR_step.
+intros roe lreq nsr drs acm rs. subst. clear drs.
+
+inversion nsr as [? ? ? K ? sppc mnsp nsc].
+unfold nsext in nsc.
+rewrite can_gen_swapR_def'.  intros until 0. intros swap pp ss.
+unfold nsext in pp.
+
+apply partition_2_2 in pp.
+
+destruct c.
+sE ; subst.
+
+{ nsgen_sw nsr rs sppc l l0 d Γ Δ' d0 q qin acm inps0 swap. }
+all : cycle 1.
+{ nsgen_sw nsr rs sppc l l0 d Γ Δ' d0 q qin acm inps0 swap. }
+
+(* now case where move and rule application occur in the same sequent *)
+injection H0 as. subst.
+inversion sppc as [? ? ? ? ? ? pr mse se].
+destruct c.
+unfold seqext in se.
+subst.  clear nsr. clear sppc.
+injection se as sel ser.
+subst.
+
+unfold rules_R_oe in roe.
+inversion_clear swap ; subst.
+
+(* do as much as possible for all rules at once *)
+acacD' ; (* gives 10 subgoals *)
+subst ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply roe in Qpr)) ;
+  sD ; subst ; simpl ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)) ;
+(* above produces 20 subgoals, following solves all of them!! *)
+nsprsameR princrules rs pr q qin inmps acm inps0 x0. 
 
 Qed.
 

@@ -148,9 +148,9 @@ apply partition_2_2 in pp.
 destruct c.
 sE ; subst.
 
-{ nsgenL nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap. }
+{ nsgen_sw nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap. }
 all : cycle 1.
-{ nsgenL nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap. }
+{ nsgen_sw nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap. }
 
 (* now case where move and rule application occur in the same sequent *)
 injection H0 as. subst.

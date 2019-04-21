@@ -87,7 +87,8 @@ Proof. intros.  show_swapped_1.  Qed.
 Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
 
 (* to rearrange a ++ b ++ l ++ d ++ e so that l is central, 
-  ie to give (a ++ b) ++ l ++ (d ++ e) *)
+  ie to give (a ++ b) ++ l ++ (d ++ e),
+  can affect terms not containing l *)
 Ltac assoc_mid l := 
   list_assoc_r' ;
   rewrite ?app_comm_cons ;
@@ -451,8 +452,8 @@ unfold nslext ;
 at2 ;
 reflexivity].
 
-(* for swap on left of propositional rules *)
-Ltac nsgenL nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap := 
+(* for using swap for propositional rules *)
+Ltac nsgen_sw nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap := 
 clear nsr ;
 assoc_single_mid' (l, l0, d) ;
 eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
@@ -463,15 +464,15 @@ rewrite -> in_map_iff in qin ; cE ; subst q ;
 rewrite -> Forall_forall in acm ;
 rename_last inps0 ;  eapply in_map in inps0 ;
 eapply acm in inps0 ;
-rewrite -> can_gen_swapL_def' in inps0 ;
+rewrite -> ?can_gen_swapL_def' in inps0 ;
+rewrite -> ?can_gen_swapR_def' in inps0 ;
 unfold nsext ;
 assoc_single_mid' (Γ', Δ, d0) ;
 eapply inps0 ; [> exact swap | unfold nsext ; list_eq_assoc | reflexivity ]].
 
-Ltac nsprsameL princrules rs pr q qin inmps acm inps0 x0 := 
-match goal with | [ H : princrules _ (?x, _) |- _ ] => assoc_mid x end ;
+Ltac nsprsame rs pr q qin inmps acm inps0 x0 := 
 eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
-  apply NSctxt' ; apply Sctxt_e ; exact pr |] ;
+  apply NSctxt' ; (apply Sctxt_e || apply Sctxt_e') ; exact pr |] ;
 rewrite dersrec_forall ;
 intros q qin ;
 rewrite -> in_map_iff in qin ; cE ; 
@@ -482,7 +483,8 @@ rename_last inps0 ;  eapply in_map in inps0 ;
 eapply in_map in inps0 ;
 eapply acm in inps0 ;
 clear acm ;
-rewrite -> can_gen_swapL_def' in inps0 ;
+rewrite -> ?can_gen_swapL_def' in inps0 ;
+rewrite -> ?can_gen_swapR_def' in inps0 ;
 subst ;
 destruct x0 ;
 unfold seqext ;
@@ -491,4 +493,11 @@ eapply inps0 ;
   [> | unfold nsext ; reflexivity | unfold seqext ; reflexivity ] ;
   swap_tac.
 
+Ltac nsprsameL princrules rs pr q qin inmps acm inps0 x0 := 
+match goal with | [ H : princrules _ (?x, _) |- _ ] => assoc_mid x end ;
+nsprsame rs pr q qin inmps acm inps0 x0.
+
+Ltac nsprsameR princrules rs pr q qin inmps acm inps0 x0 := 
+match goal with | [ H : princrules _ (_, ?x) |- _ ] => assoc_mid x end ;
+nsprsame rs pr q qin inmps acm inps0 x0.
 
