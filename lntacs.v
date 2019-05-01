@@ -453,11 +453,12 @@ at2 ;
 reflexivity].
 
 (* for using swap for propositional rules *)
-Ltac nsgen_sw nsr rs sppc l l0 d Γ' Δ d0 q qin acm inps0 swap := 
+Ltac nsgen_sw nsr rs sppc c c' acm inps0 swap := 
 clear nsr ;
-assoc_single_mid' (l, l0, d) ;
 eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
-  apply NSctxt' ; exact sppc |
+  ((assoc_mid c ; apply NSlctxt') || 
+    (assoc_single_mid' c ; apply NSctxt')) ;
+  exact sppc |
 rewrite dersrec_forall ;
 intros q qin ;
 rewrite -> in_map_iff in qin ; cE ; subst q ;
@@ -466,9 +467,10 @@ rename_last inps0 ;  eapply in_map in inps0 ;
 eapply acm in inps0 ;
 rewrite -> ?can_gen_swapL_def' in inps0 ;
 rewrite -> ?can_gen_swapR_def' in inps0 ;
-unfold nsext ;
-assoc_single_mid' (Γ', Δ, d0) ;
-eapply inps0 ; [> exact swap | unfold nsext ; list_eq_assoc | reflexivity ]].
+unfold nsext ; unfold nslext ;
+assoc_single_mid' c' ;
+eapply inps0 ; [> exact swap |
+  unfold nsext ; unfold nslext ; list_eq_assoc | reflexivity ]].
 
 Ltac nsprsame rs pr q qin inmps acm inps0 x0 := 
 eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;

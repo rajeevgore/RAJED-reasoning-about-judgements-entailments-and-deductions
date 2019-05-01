@@ -1,5 +1,5 @@
 
-(* modal rules *)
+(* try to adapt lntmr.v, which deals with diamond rules, to box rules *)
 
 Require Import ssreflect.
 Require Import Omega.
@@ -14,31 +14,21 @@ Require Import lntrs.
 
 Set Implicit Arguments.
 
-(* diamond rules, as in an earlier version of the system *)
-
-Inductive drules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
-  | WDiaR : forall A d, drules [[(pair [] [WDia A], d); (pair [] [A], fwd)]]
-      [(pair [] [WDia A], d); (pair [] [], fwd)]
-  | BDiaR : forall A d, drules [[(pair [] [BDia A], d); (pair [] [A], bac)]]
-      [(pair [] [WDia A], d); (pair [] [], bac)].
-      
-Lemma drules_conc_ne: forall V ps,  drules (V:=V) ps [] -> False.
-Proof.  intros. inversion H. Qed.
-
-(* try more specific way of defining modal rules, for drules,
+(* specific way of defining modal rules, for bsrules,
   restricted to two sequents plus context, and one premise *) 
-Inductive dsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
-  | WDiaRs : forall A d G1 G2 H1l H1r H2l H2r, dsrules 
-      [[(pair G1 (H1l ++ WDia A :: H1r), d);
-        (pair G2 (H2l ++ A :: H2r), fwd)]]
-      [(pair G1 (H1l ++ WDia A :: H1r), d); 
-        (pair G2 (H2l ++ H2r), fwd)]
-  | BDiaRs : forall A d G1 G2 H1l H1r H2l H2r, dsrules 
-      [[(pair G1 (H1l ++ BDia A :: H1r), d);
-        (pair G2 (H2l ++ A :: H2r), bac)]]
-      [(pair G1 (H1l ++ BDia A :: H1r), d); 
-        (pair G2 (H2l ++ H2r), bac)].
+Inductive bsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
+  | WBoxLs : forall A d H1l H1r H2l H2r K1 K2, bsrules 
+      [[(pair (H1l ++ WBox A :: H1r) K1, d);
+        (pair (H2l ++ A :: H2r) K2, fwd)]]
+      [(pair (H1l ++ WBox A :: H1r) K1, d); 
+        (pair (H2l ++ H2r) K2, fwd)]
+  | BBoxLs : forall A d H1l H1r H2l H2r K1 K2, bsrules 
+      [[(pair (H1l ++ BBox A :: H1r) K1, d);
+        (pair (H2l ++ A :: H2r) K2, bac)]]
+      [(pair (H1l ++ BBox A :: H1r) K1, d); 
+        (pair (H2l ++ H2r) K2, bac)].
 
+(* 
 Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Psrules : forall ps c,
     nsrule (seqrule (@princrule V)) ps c -> pdsrules ps c
@@ -57,19 +47,19 @@ Ltac dia1l' rs acm rw1 rw2 :=
   
 Ltac dia1l sppc rs acm := subst ; clear sppc ;
   dia1l' rs acm ltac: (rewrite app_comm_cons) idtac.
+*)
   
-Lemma gen_swapL_step_dsr: forall V ps concl last_rule rules,
-  last_rule = nslrule (@dsrules V) ->
+Lemma gen_swapL_step_bsr: forall V ps concl last_rule rules,
+  last_rule = nslrule (@bsrules V) ->
   gen_swapL_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapL_step.
 intros lreq nsr drs acm rs. subst.
 
 inversion nsr as [? ? ? K sppc mnsp nsc].
 unfold nslext in nsc.
-unfold can_gen_swapL.   intros until 0. intros pp ss.
+rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
 unfold nslext in pp. subst.
 
-remember (Γ1 ++ Γ3 ++ Γ2 ++ Γ4, Δ) as seqe.
 acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
   relative to where the rule is active *)
 inversion sppc. (* solves first goal *)
@@ -78,16 +68,16 @@ all: rewrite -> ?app_nil_r in *.
 all : cycle 1.
 
 (* case of exchange in sequent to the left of where rule applied *)
-{ nsgen drs nsr rs c sppc q qin acm inps0 list_assoc_r list_assoc_r'.  }
+{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
 (* case of exchange in sequent to the right of where rule applied *)
-{ nsgen drs nsr rs pp sppc q qin acm inps0 
-  ltac: (rewrite app_assoc) ltac: (rewrite app_assoc). }
-all : cycle 1.
-(* another case of exchange in sequent to the right of where rule applied *)
+{ nsgen_sw nsr rs sppc pp (Γ', Δ, d) acm inps0 swap. }
 
-{ nsgen drs nsr rs c sppc q qin acm inps0 
-  ltac: (rewrite app_assoc ; rewrite (app_assoc _ pp1))
-  ltac: (rewrite - !app_assoc). }
+all : cycle 1.
+
+(* another case of exchange in sequent to the right of where rule applied *)
+{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+
+OK TO HERE
 
 (* now have two cases where one of the sequents involved in the rule is 
   where the exchange takes place, they should be easy as the exchange
