@@ -28,6 +28,10 @@ Inductive bsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
       [(pair (H1l ++ BBox A :: H1r) K1, d); 
         (pair (H2l ++ H2r) K2, bac)].
 
+Lemma bsrules_eq_2L: forall V ps sd K l l', bsrules ps [sd ; (l, K, fwd)] ->
+  l = l' -> bsrules ps [sd ; (l' : list (PropF V), K, fwd)].
+Proof.  intros.  subst.  exact H. Qed.
+
 (* 
 Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Psrules : forall ps c,
@@ -49,6 +53,22 @@ Ltac dia1l sppc rs acm := subst ; clear sppc ;
   dia1l' rs acm ltac: (rewrite app_comm_cons) idtac.
 *)
   
+Ltac use_acmL acm rsub rs drs := 
+(* interchange two sublists of list of formulae *)
+clear drs ;
+eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
+rewrite list_rearr20 ;  apply NSlctxt' ;
+assoc_single_mid ;
+(apply WBoxLs || apply BBoxLs) |
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+rewrite -> ?can_gen_swapL_def' in acm ;
+rewrite -> ?can_gen_swapR_def' in acm ;
+unfold nslext ; list_assoc_r' ; simpl ;
+eapply derrec_same_nsL ] ; 
+[> eapply acm ; [> | apply nslext2_def | reflexivity ] | reflexivity ] ; 
+swap_tac.
+
 Lemma gen_swapL_step_bsr: forall V ps concl last_rule rules,
   last_rule = nslrule (@bsrules V) ->
   gen_swapL_step last_rule rules ps concl.
@@ -77,114 +97,60 @@ all : cycle 1.
 (* another case of exchange in sequent to the right of where rule applied *)
 { nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
 
-OK TO HERE
+(* swap in the first of the two sequents affected by the rule *)
+{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acmL acm rsub rs drs. }
+{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acmL acm rsub rs drs. }
+  }
 
-(* now have two cases where one of the sequents involved in the rule is 
-  where the exchange takes place, they should be easy as the exchange
-  is on the left and the rules operate on the right *)
-clear nsr.  inversion sppc.
+(* here, swap in either of the two sequents affected by the rule *)
+{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
-{ dia1l sppc rs acm. } (* for WDia *)
-{ dia1l sppc rs acm. } (* for BDia *)
+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acmL acm rsub rs drs. }
+(* swapping in second sequent of principal rule *) 
+{
+inversion_clear swap. subst.
+acacD' ; subst. (* 4 subgoals *)
 
-(* now where exchange is in the right one of the two sequents in the rule *)
-clear nsr.  inversion sppc. 
 
 {
-subst. clear sppc.  acacD'. (* 3 subgoals resulting *)
-
-+ { subst.  rewrite ?app_nil_r. 
-  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac. }
-
-+ { subst. simpl.  rewrite list_rearr19.
- dia1l' rs acm idtac ltac: (rewrite (list_rearr16' G)). }
-
-+ { subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction. }
-}
-
-{
-clear sppc.  acacD'. (* 3 subgoals *)
-
-+ { subst. rewrite ?app_nil_r. 
-  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac. }
-
-+ { subst. simpl.  rewrite list_rearr19.
- dia1l' rs acm idtac ltac: (rewrite (list_rearr16' G)). }
-
-+ { subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction. }
-}
-
-Qed.
-
-Check gen_swapL_step_dsr.
-
-(* including first modal rules, in the specific (dsrules) form *)
-Lemma gen_swapmsL: forall (V : Set) ns
-  (D : derrec (@pdsrules V) (fun _ => False) ns),
-    can_gen_swapL (@pdsrules V) ns.
-Proof. 
-intro.  intro.  intro.
-eapply derrec_all_ind in D.
-exact D. tauto.
-intros. inversion H. 
-subst.
-pose gen_swapL_step_pr.
-unfold gen_swapL_step in g.
-eapply g.  reflexivity. eassumption. assumption. assumption.
-unfold rsub. clear g. 
-intros. apply Psrules.  assumption.
-subst.
-pose gen_swapL_step_dsr.
-unfold gen_swapL_step in g.
-eapply g.  reflexivity. eassumption. assumption. assumption.
-unfold rsub. clear g. 
-intros. apply Dsrules.  assumption.
-Qed.
-
-Check gen_swapmsL.
-
-(*
-Lemma gen_swapL_step_dr: forall V ps concl last_rule rules,
-  last_rule = nslrule (seqlrule (@drules V)) ->
-  gen_swapL_step last_rule rules ps concl.
-Proof.  intros until 0.  unfold gen_swapL_step.
-intros lreq nsr drs acm rs. subst.
-
-inversion nsr as [? ? ? K sppc mnsp nsc].
-unfold nslext in nsc.
-unfold can_gen_swapL.   intros until 0. intros pp ss.
-unfold nslext in pp.
-
-remember (Γ1 ++ Γ3 ++ Γ2 ++ Γ4, Δ) as seqe.
-acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
-  relative to where the rule is active *)
-apply sdne in sppc. contradiction.
-
-all: rewrite -> ?app_nil_r in *.
+clear drs ;
+eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ; 
+rewrite list_rearr21 ;  apply NSlctxt' ;
+assoc_single_mid ; 
+eapply bsrules_eq_2L ; (apply WBoxLs || apply BBoxLs) |
 
 all : cycle 1.
 
-(* I think this will be too complicated, 
-  don't use seqlrule, but write rules explicitly 
-  using the fact that drules rules have exactly two sequents 
-  and one premise *)
-
-*)
-Ltac use_acm acm rsub rs drs trans_tm := 
-(* interchange two sublists of list of formulae *)
-clear drs ;
-eapply derI ; [> unfold rsub in rs ; apply rs ;
-rewrite list_rearr20 ;  apply NSlctxt' ;
-assoc_single_mid ;
-(apply WDiaRs || apply BDiaRs) |
 rewrite dersrec_map_single ;
 rewrite -> Forall_map_single in acm ;
-unfold can_gen_swapR in acm ; 
+rewrite -> ?can_gen_swapL_def' in acm ;
+rewrite -> ?can_gen_swapR_def' in acm ;
 unfold nslext ; list_assoc_r' ; simpl ;
-eapply derrec_same_nsR ] ; [> 
-eapply acm ; [> apply nslext2_def |] ; 
-eapply (@eq_trans _ _ trans_tm) ;
-[> list_eq_assoc | reflexivity] | list_eq_assoc].
+eapply derrec_same_nsL ] ; 
+
+[> rewrite list_rearr22 ; eapply acm ;
+  [> | apply nslext2_def (* need to fix this *)
+  | reflexivity ] | reflexivity ] ;
+  still can't do automatically, eg get
+   sg1 is 
+   swapped (A0 ++ H ++ A :: H1 ++ C ++ D) (?H2l ++ A :: ?H2r)
+
+   subgoal 2 is:
+    ?H2l ++ ?H2r = A0 ++ C ++ H ++ H1 ++ D
+
+here ?H2l ++ ?H2r comes from bsrules_eq_2L
+
+swap_tac.
+
+
 
 Ltac use_drs acm rsub rs rtac drs :=  
 (*  use WDiaRs rule directly from drs *)

@@ -48,6 +48,11 @@ Lemma swapped_R: forall T X Y Z,
   swapped X (Y : list T) -> swapped (X ++ Z) (Y ++ Z).
 Proof.  intros. destruct H. subst. rewrite <- !app_assoc. apply swapped_I'. Qed.
 
+Lemma swapped_cons: forall T (x : T) Y Z,
+  swapped Y Z -> swapped (x :: Y) (x :: Z).
+Proof.  intros. destruct H. subst. list_assoc_l. rewrite <- !app_assoc.
+  apply swapped_I'. Qed.
+
 Lemma swapped_simple: forall T U V X Y,
   U = X ++ Y -> V = Y ++ X -> swapped U (V : list T).
 Proof.  intros. subst. 

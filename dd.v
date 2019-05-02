@@ -220,6 +220,11 @@ Lemma derrec_same: forall X rules prems (c c' : X),
 Proof. intros. subst. assumption. Qed.
 
 (* further detailed versions of derrec_same *)
+Lemma derrec_same_nsL: forall Y X D rules prems G H Δ d (Γ Γ' : X),
+  derrec rules prems (G ++ (Γ : X, Δ : Y, d : D) :: H) ->
+    Γ = Γ' -> derrec rules prems (G ++ (Γ', Δ, d) :: H).
+Proof. intros. subst. assumption. Qed.
+
 Lemma derrec_same_nsR: forall Y X D rules prems G H Γ d (Δ Δ' : X),
   derrec rules prems (G ++ (Γ : Y, Δ : X, d : D) :: H) ->
     Δ = Δ' -> derrec rules prems (G ++ (Γ, Δ', d) :: H).
