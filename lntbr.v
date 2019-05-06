@@ -28,34 +28,8 @@ Inductive bsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
       [(pair (H1l ++ BBox A :: H1r) K1, d); 
         (pair (H2l ++ H2r) K2, bac)].
 
-Lemma bsrules_eq_2L: forall V ps sd K l l', bsrules ps [sd ; (l, K, fwd)] ->
-  l = l' -> bsrules ps [sd ; (l' : list (PropF V), K, fwd)].
-Proof.  intros.  subst.  exact H. Qed.
-
-(* 
-Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
-  | Psrules : forall ps c,
-    nsrule (seqrule (@princrule V)) ps c -> pdsrules ps c
-  | Dsrules : forall ps c,
-    nslrule (@dsrules V) ps c -> pdsrules ps c.
-
-(* for diamond rules, exchange on left, on 1st sequent *)
-Ltac dia1l' rs acm rw1 rw2 := 
-  eapply derI ; [> unfold rsub in rs ; apply rs ; rw1 ;  
-  apply NSlctxt' ; (apply WDiaRs || apply BDiaRs) | 
-  rewrite dersrec_single ;  rewrite -> Forall_map_single in acm ;
-  unfold can_gen_swapL in acm ;  unfold nslext ;
-  list_assoc_r ; simpl ; rw2 ;
-  eapply acm ; [> | reflexivity ] ; clear acm ;
-  unfold nslext ; list_assoc_r' ; simpl ; reflexivity]. 
-  
-Ltac dia1l sppc rs acm := subst ; clear sppc ;
-  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac.
-*)
-  
-Ltac use_acmL acm rsub rs drs := 
+Ltac use_acmL acm rsub rs := 
 (* interchange two sublists of list of formulae *)
-clear drs ;
 eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
 rewrite list_rearr20 ;  apply NSlctxt' ;
 assoc_single_mid ;
@@ -69,88 +43,101 @@ eapply derrec_same_nsL ] ;
 [> eapply acm ; [> | apply nslext2_def | reflexivity ] | reflexivity ] ; 
 swap_tac.
 
+Ltac use_acm2s acm rsub rs rw :=
+eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ; 
+rewrite list_rearr21 ;  apply NSlctxt' ;
+rw ; (* rewrite so as to identify two parts of context *)
+(apply WBoxLs || apply BBoxLs) |
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+rewrite -> ?can_gen_swapL_def' in acm ;
+rewrite -> ?can_gen_swapR_def' in acm ;
+unfold nslext ; list_assoc_r' ; simpl ;
+rewrite list_rearr22 ; eapply acm ] ;
+[> | rewrite list_rearr21 ; apply nslext_def | reflexivity ] ; swap_tac.
+
 Lemma gen_swapL_step_bsr: forall V ps concl last_rule rules,
   last_rule = nslrule (@bsrules V) ->
   gen_swapL_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapL_step.
-intros lreq nsr drs acm rs. subst.
+intros lreq nsr drs acm rs. clear drs. subst.
 
 inversion nsr as [? ? ? K sppc mnsp nsc].
 unfold nslext in nsc.
 rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
 unfold nslext in pp. subst.
 
-acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
-  relative to where the rule is active *)
-inversion sppc. (* solves first goal *)
+acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
+  where the exchange might be relative to where the rule is active *)
 
-all: rewrite -> ?app_nil_r in *.
-all : cycle 1.
-
-(* case of exchange in sequent to the left of where rule applied *)
-{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
-(* case of exchange in sequent to the right of where rule applied *)
-{ nsgen_sw nsr rs sppc pp (Γ', Δ, d) acm inps0 swap. }
-
-all : cycle 1.
-
-(* another case of exchange in sequent to the right of where rule applied *)
-{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+-inversion sppc. (* solves first goal *)
 
 (* swap in the first of the two sequents affected by the rule *)
-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-{ inversion_clear swap. subst.
+-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
++{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-  use_acmL acm rsub rs drs. }
-{ inversion_clear swap. subst.
+  use_acmL acm rsub rs. }
++{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-  use_acmL acm rsub rs drs. }
+  use_acmL acm rsub rs. }
   }
 
+(* case of exchange in sequent to the left of where rule applied *)
+-{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+(* case of exchange in sequent to the right of where rule applied *)
+-{ nsgen_sw nsr rs sppc pp (Γ', Δ, d) acm inps0 swap. }
+
 (* here, swap in either of the two sequents affected by the rule *)
-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
-{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
-{ inversion_clear swap. subst.
+(* WBox *)
++{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+*{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-  use_acmL acm rsub rs drs. }
+  use_acmL acm rsub rs. }
 (* swapping in second sequent of principal rule *) 
-{
+*{
 inversion_clear swap. subst.
-acacD' ; subst. (* 4 subgoals *)
+acacD' ; subst.
+(* 4 subgoals, cases of where swapping occurs in the two parts
+  of context in conclusion (where no principal formula) *)
+{ use_acm2s acm rsub rs ltac: (assoc_mid H1). }
+{ use_acm2s acm rsub rs ltac: (assoc_mid H3). }
+{ use_acm2s acm rsub rs list_assoc_l'. }
+{ use_acm2s acm rsub rs ltac: (assoc_mid H). }
+}
+
+*{ apply eq_sym in H4. list_eq_nc. contradiction. }
+}
+
+(* BBox *)
++{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+*{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acmL acm rsub rs. }
+(* swapping in second sequent of principal rule *) 
+*{
+inversion_clear swap. subst.
+acacD' ; subst.
+(* 4 subgoals, cases of where swapping occurs in the two parts
+  of context in conclusion (where no principal formula) *)
+{ use_acm2s acm rsub rs ltac: (assoc_mid H1). }
+{ use_acm2s acm rsub rs ltac: (assoc_mid H3). }
+{ use_acm2s acm rsub rs list_assoc_l'. }
+{ use_acm2s acm rsub rs ltac: (assoc_mid H). }
+}
+
+*{ apply eq_sym in H4. list_eq_nc. contradiction. }
+}
+}
+(* another case of exchange in sequent to the right of where rule applied *)
+-{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+
+Qed.
 
 
-{
-clear drs ;
-eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ; 
-rewrite list_rearr21 ;  apply NSlctxt' ;
-assoc_single_mid ; 
-eapply bsrules_eq_2L ; (apply WBoxLs || apply BBoxLs) |
 
-all : cycle 1.
-
-rewrite dersrec_map_single ;
-rewrite -> Forall_map_single in acm ;
-rewrite -> ?can_gen_swapL_def' in acm ;
-rewrite -> ?can_gen_swapR_def' in acm ;
-unfold nslext ; list_assoc_r' ; simpl ;
-eapply derrec_same_nsL ] ; 
-
-[> rewrite list_rearr22 ; eapply acm ;
-  [> | apply nslext2_def (* need to fix this *)
-  | reflexivity ] | reflexivity ] ;
-  still can't do automatically, eg get
-   sg1 is 
-   swapped (A0 ++ H ++ A :: H1 ++ C ++ D) (?H2l ++ A :: ?H2r)
-
-   subgoal 2 is:
-    ?H2l ++ ?H2r = A0 ++ C ++ H ++ H1 ++ D
-
-here ?H2l ++ ?H2r comes from bsrules_eq_2L
-
-swap_tac.
-
-
+(* following from lntmr.v
 
 Ltac use_drs acm rsub rs rtac drs :=  
 (*  use WDiaRs rule directly from drs *)
@@ -328,3 +315,4 @@ Qed.
 
 Check gen_swapmsR.
 
+*)
