@@ -38,19 +38,6 @@ Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Dsrules : forall ps c,
     nslrule (@dsrules V) ps c -> pdsrules ps c.
 
-(* for diamond rules, exchange on left, on 1st sequent *)
-Ltac dia1l' rs acm rw1 rw2 := 
-  eapply derI ; [> unfold rsub in rs ; apply rs ; rw1 ;  
-  apply NSlctxt' ; (apply WDiaRs || apply BDiaRs) | 
-  rewrite dersrec_single ;  rewrite -> Forall_map_single in acm ;
-  unfold can_gen_swapL in acm ;  unfold nslext ;
-  list_assoc_r ; simpl ; rw2 ;
-  eapply acm ; [> | reflexivity ] ; clear acm ;
-  unfold nslext ; list_assoc_r' ; simpl ; reflexivity]. 
-  
-Ltac dia1l sppc rs acm := subst ; clear sppc ;
-  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac.
-  
 Lemma gen_swapL_step_dsr: forall V ps concl last_rule rules,
   last_rule = nslrule (@dsrules V) ->
   gen_swapL_step last_rule rules ps concl.
@@ -150,48 +137,6 @@ all : cycle 1.
   and one premise *)
 
 *)
-Ltac use_acm acm rsub rs drs trans_tm := 
-(* interchange two sublists of list of formulae *)
-clear drs ;
-eapply derI ; [> unfold rsub in rs ; apply rs ;
-rewrite list_rearr20 ;  apply NSlctxt' ;
-assoc_single_mid ;
-(apply WDiaRs || apply BDiaRs) |
-rewrite dersrec_map_single ;
-rewrite -> Forall_map_single in acm ;
-unfold can_gen_swapR in acm ; 
-unfold nslext ; list_assoc_r' ; simpl ;
-eapply derrec_same_nsR ] ; [> 
-eapply acm ; [> apply nslext2_def |] ; 
-eapply (@eq_trans _ _ trans_tm) ;
-[> list_eq_assoc | reflexivity] | list_eq_assoc].
-
-Ltac use_drs acm rsub rs rtac drs :=  
-(*  use WDiaRs rule directly from drs *)
-  clear acm ;
-  eapply derI ; [> unfold rsub in rs ; apply rs ;
-  rewrite list_rearr20 ;
-  apply NSlctxt' ;
-  rtac ; (* rewrite using associativity if needed *)
-  (apply WDiaRs || apply BDiaRs) |
-  exact drs ].
-
-Ltac use_acm2 acm rsub rs drs rw trans_tm := 
-(* interchange two sublists of list of formulae *)
-clear drs ;
-eapply derI ; [> unfold rsub in rs ; apply rs ;
-rewrite list_rearr21 ;  apply NSlctxt' ;
-rw ; 
-(apply WDiaRs || apply BDiaRs) |
-rewrite dersrec_map_single ;
-rewrite -> Forall_map_single in acm ;
-unfold can_gen_swapR in acm ; 
-unfold nslext ; list_assoc_r' ; simpl ;
-rewrite list_rearr22 ;
-eapply derrec_same_nsR ] ; [> 
-eapply acm ; [> apply nslext2_def' |] ; 
-eapply (@eq_trans _ _ trans_tm) ;
-[> list_eq_assoc | reflexivity] | list_eq_assoc ].
 
 Lemma gen_swapR_step_dsr: forall V ps concl last_rule rules,
   last_rule = nslrule (@dsrules V) ->

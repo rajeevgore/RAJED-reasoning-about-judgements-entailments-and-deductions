@@ -214,3 +214,6 @@ Qed.
 
 Check gen_swapR_step_bsr.
 
+(* for examples of how to combine these with other rules, 
+  see lntmr.v, theorems gen_swapmsL and gen_swapmsR *)
+
