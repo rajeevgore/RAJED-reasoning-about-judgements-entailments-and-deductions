@@ -213,6 +213,10 @@ Lemma NSlctxt': forall W (sr : rls (list W)) ps c G H, sr ps c ->
     nslrule sr (map (nslext G H) ps) (G ++ c ++ H).
 Proof. intros. rewrite <- nslext_def. apply NSlctxt. assumption. Qed.
 
+Lemma NSlctxt2: forall W (sr : rls (list W)) ps x y G H, sr ps [x ; y] ->
+    nslrule sr (map (nslext G H) ps) (G ++ x :: y :: H).
+Proof. intros. rewrite list_rearr20. apply NSlctxt'. assumption. Qed.
+
 Check princrule.
 Check seqext.
 Check seqrule.

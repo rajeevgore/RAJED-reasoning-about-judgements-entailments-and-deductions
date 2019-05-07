@@ -350,6 +350,8 @@ Ltac app_cancel :=
   (list_assoc_l' ; rewrite ?appr_cong ;
   list_assoc_r' ; rewrite ?appl_cong).
 
+Ltac derIrs rs := eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs | ].
+
 Ltac solve_eqs := 
   prgt 33 ;
   repeat clear_one ;
@@ -457,8 +459,8 @@ reflexivity].
 Ltac nsgen_sw nsr rs sppc c c' acm inps0 swap := 
 clear nsr ;
 eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
-  ((assoc_mid c ; apply NSlctxt') || 
-    (assoc_single_mid' c ; apply NSctxt')) ;
+  (assoc_mid c ; apply NSlctxt') || 
+    (assoc_single_mid' c ; apply NSctxt') ;
   exact sppc |
 rewrite dersrec_forall ;
 intros q qin ;
@@ -474,8 +476,7 @@ eapply inps0 ; [> exact swap |
   unfold nsext ; unfold nslext ; list_eq_assoc | reflexivity ]].
 
 Ltac nsprsame rs pr q qin inmps acm inps0 x0 := 
-eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
-  apply NSctxt' ; (apply Sctxt_e || apply Sctxt_e') ; exact pr |] ;
+derIrs rs ; [> apply NSctxt' ; apply Sctxt_e || apply Sctxt_e' ; exact pr |] ;
 rewrite dersrec_forall ;
 intros q qin ;
 rewrite -> in_map_iff in qin ; cE ; 

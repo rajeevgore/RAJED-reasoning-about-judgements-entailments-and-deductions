@@ -11,6 +11,7 @@ Require Import lnt.
 Require Import lntacs.
 Require Import lntls.
 Require Import lntrs.
+Require Import lntbr.
 
 Set Implicit Arguments.
 
@@ -26,18 +27,10 @@ Lemma drules_conc_ne: forall V ps,  drules (V:=V) ps [] -> False.
 Proof.  intros. inversion H. Qed.
 
 (* try more specific way of defining modal rules, for drules,
-  restricted to two sequents plus context, and one premise *) 
+  restricted to two sequents plus context, and one premise 
 Inductive dsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
-  | WDiaRs : forall A d G1 G2 H1l H1r H2l H2r, dsrules 
-      [[(pair G1 (H1l ++ WDia A :: H1r), d);
-        (pair G2 (H2l ++ A :: H2r), fwd)]]
-      [(pair G1 (H1l ++ WDia A :: H1r), d); 
-        (pair G2 (H2l ++ H2r), fwd)]
-  | BDiaRs : forall A d G1 G2 H1l H1r H2l H2r, dsrules 
-      [[(pair G1 (H1l ++ BDia A :: H1r), d);
-        (pair G2 (H2l ++ A :: H2r), bac)]]
-      [(pair G1 (H1l ++ BDia A :: H1r), d); 
-        (pair G2 (H2l ++ H2r), bac)].
+  gives WDiaRs and DiaRs, now in lntbr.v
+  *)
 
 Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Psrules : forall ps c,
