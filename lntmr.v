@@ -55,71 +55,48 @@ Lemma gen_swapL_step_dsr: forall V ps concl last_rule rules,
   last_rule = nslrule (@dsrules V) ->
   gen_swapL_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapL_step.
-intros lreq nsr drs acm rs. subst.
+intros lreq nsr drs acm rs. clear drs. subst.
 
 inversion nsr as [? ? ? K sppc mnsp nsc].
 unfold nslext in nsc.
-unfold can_gen_swapL.   intros until 0. intros pp ss.
+rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
 unfold nslext in pp. subst.
 
-remember (Γ1 ++ Γ3 ++ Γ2 ++ Γ4, Δ) as seqe.
-acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
-  relative to where the rule is active *)
-inversion sppc. (* solves first goal *)
+acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
+  where the exchange might be relative to where the rule is active *)
 
-all: rewrite -> ?app_nil_r in *.
-all : cycle 1.
+-inversion sppc. (* solves first goal *)
+
+(* swap in the first of the two sequents affected by the rule *)
+(* here the exchange is on the right and the rules operate on the left *)
+-{ clear nsr.  inversion sppc ; subst ; clear sppc ; (* 2 subgoals *)
+  use_acm_sw_sep acm rs swap. }
 
 (* case of exchange in sequent to the left of where rule applied *)
-{ nsgen drs nsr rs c sppc q qin acm inps0 list_assoc_r list_assoc_r'.  }
+-{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
 (* case of exchange in sequent to the right of where rule applied *)
-{ nsgen drs nsr rs pp sppc q qin acm inps0 
-  ltac: (rewrite app_assoc) ltac: (rewrite app_assoc). }
-all : cycle 1.
+-{ nsgen_sw nsr rs sppc pp (Γ', Δ, d) acm inps0 swap. }
+
+-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
++{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+*{ use_acm_sw_sep acm rs swap. }
+*{ use_acm_sw_sep acm rs swap. }
+*{ apply eq_sym in H4. list_eq_nc. contradiction. }
+}
++{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+*{ use_acm_sw_sep acm rs swap. }
+*{ use_acm_sw_sep acm rs swap. }
+*{ apply eq_sym in H4. list_eq_nc. contradiction. }
+}
+}
+
 (* another case of exchange in sequent to the right of where rule applied *)
-
-{ nsgen drs nsr rs c sppc q qin acm inps0 
-  ltac: (rewrite app_assoc ; rewrite (app_assoc _ pp1))
-  ltac: (rewrite - !app_assoc). }
-
-(* now have two cases where one of the sequents involved in the rule is 
-  where the exchange takes place, they should be easy as the exchange
-  is on the left and the rules operate on the right *)
-clear nsr.  inversion sppc.
-
-{ dia1l sppc rs acm. } (* for WDia *)
-{ dia1l sppc rs acm. } (* for BDia *)
-
-(* now where exchange is in the right one of the two sequents in the rule *)
-clear nsr.  inversion sppc. 
-
-{
-subst. clear sppc.  acacD'. (* 3 subgoals resulting *)
-
-+ { subst.  rewrite ?app_nil_r. 
-  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac. }
-
-+ { subst. simpl.  rewrite list_rearr19.
- dia1l' rs acm idtac ltac: (rewrite (list_rearr16' G)). }
-
-+ { subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction. }
-}
-
-{
-clear sppc.  acacD'. (* 3 subgoals *)
-
-+ { subst. rewrite ?app_nil_r. 
-  dia1l' rs acm ltac: (rewrite app_comm_cons) idtac. }
-
-+ { subst. simpl.  rewrite list_rearr19.
- dia1l' rs acm idtac ltac: (rewrite (list_rearr16' G)). }
-
-+ { subst. simpl.  apply eq_sym in H4. list_eq_nc. contradiction. }
-}
+-{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
 
 Qed.
 
 Check gen_swapL_step_dsr.
+
 
 (* including first modal rules, in the specific (dsrules) form *)
 Lemma gen_swapmsL: forall (V : Set) ns
@@ -220,125 +197,83 @@ Lemma gen_swapR_step_dsr: forall V ps concl last_rule rules,
   last_rule = nslrule (@dsrules V) ->
   gen_swapR_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapR_step.
-intros lreq nsr drs acm rs. subst.
+intros lreq nsr drs acm rs. clear drs. subst.
 
 inversion nsr as [? ? ? K sppc mnsp nsc].
 unfold nslext in nsc.
-unfold can_gen_swapR.   intros until 0. intros pp ss.
+rewrite can_gen_swapR_def'.  intros until 0. intros swap pp ss.
 unfold nslext in pp. subst.
 
-remember (Γ, Δ1 ++ Δ3 ++ Δ2 ++ Δ4) as seqe.
-acacD' ; subst. (* 6 subgoals, the various locs where the exchange might be
-  relative to where the rule is active *)
-inversion sppc. (* solves first goal *)
+acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
+  where the exchange might be relative to where the rule is active *)
 
-all: rewrite -> ?app_nil_r in *.
-all : cycle 1.
+-inversion sppc. (* solves first goal *)
+
+(* swap in the first of the two sequents affected by the rule *)
+-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
++{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acm1 acm rs. }
++{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acm1 acm rs. }
+  }
 
 (* case of exchange in sequent to the left of where rule applied *)
-{ nsgen drs nsr rs c sppc q qin acm inps0 list_assoc_r list_assoc_r'.  }
+-{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
 (* case of exchange in sequent to the right of where rule applied *)
-{ nsgen drs nsr rs pp sppc q qin acm inps0 
-  ltac: (rewrite app_assoc) ltac: (rewrite app_assoc). }
-all : cycle 1.
-(* another case of exchange in sequent to the right of where rule applied *) 
-{ nsgen drs nsr rs c sppc q qin acm inps0 
-  ltac: (rewrite app_assoc ; rewrite (app_assoc _ pp1))
-  ltac: (rewrite - !app_assoc). }
+-{ nsgen_sw nsr rs sppc pp (Γ, Δ', d) acm inps0 swap. }
 
-(* now have two cases where one of the sequents involved in the rule is where
-  the exchange takes place, they will be harder than exchange on the left *)
-  
-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+(* here, swap in either of the two sequents affected by the rule *)
+-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
-{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 10 subgoals resulting *)
-{ use_drs acm rsub rs list_assoc_l' drs. }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ H2 ++ (WDia A :: H5) ++ Δ4). }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ (H2 ++ WDia A :: H4) ++ Δ3 ++ Δ4). }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ Δ2 ++ H1 ++ WDia A :: H1r). }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ Δ2 ++ (H1 ++ WDia A :: H6) ++ Δ4). }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ Δ2 ++ Δ3 ++ H4 ++ WDia A :: H1r). }
-{ use_drs acm rsub rs idtac drs. }
-{ use_drs acm rsub rs idtac drs. }
-{ use_acm acm rsub rs drs (Γ, H1l ++ (WDia A :: H3) ++ Δ3 ++ Δ4). }
-{ use_acm acm rsub rs drs (Γ, (H1l ++ WDia A :: H1) ++ Δ2 ++ Δ3 ++ Δ4). }
+(* WBox *)
++{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+*{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acm1 acm rs. }
+(* swapping in second sequent of principal rule *)
+*{
+inversion_clear swap. subst.
+acacD' ; subst.
+(* 4 subgoals, cases of where swapping occurs in the two parts
+  of context in conclusion (where no principal formula) *)
+{ use_acm2s acm rs ltac: (assoc_mid H1). }
+{ use_acm2s acm rs ltac: (assoc_mid H3). }
+{ use_acm2s acm rs list_assoc_l'. }
+{ use_acm2s acm rs ltac: (assoc_mid H). }
 }
 
-{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 10 subgoals resulting *)
-{ use_drs acm rsub rs list_assoc_l' drs. }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ H2 ++ (BDia A :: H5) ++ Δ4). }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ (H2 ++ BDia A :: H4) ++ Δ3 ++ Δ4). }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ Δ2 ++ H1 ++ BDia A :: H1r). }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ Δ2 ++ (H1 ++ BDia A :: H6) ++ Δ4). }
-{ use_acm acm rsub rs drs (Γ, Δ1 ++ Δ2 ++ Δ3 ++ H4 ++ BDia A :: H1r). }
-{ use_drs acm rsub rs idtac drs. }
-{ use_drs acm rsub rs idtac drs. }
-{ use_acm acm rsub rs drs (Γ, H1l ++ (BDia A :: H3) ++ Δ3 ++ Δ4). }
-{ use_acm acm rsub rs drs (Γ, (H1l ++ BDia A :: H1) ++ Δ2 ++ Δ3 ++ Δ4). }
-}
+*{ apply eq_sym in H4. list_eq_nc. contradiction. }
 }
 
-{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-
-{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 15 subgoals resulting *)
-{ use_drs acm rsub rs idtac drs. }
-{ use_drs acm rsub rs idtac drs. }
-{ use_acm acm rsub rs drs (G1, H1l ++ (WDia A :: H6) ++ Δ3 ++ Δ4). }
-{ use_acm acm rsub rs drs (G1, (H1l ++ WDia A :: H5) ++ Δ2 ++ Δ3 ++ Δ4). }
-{ use_drs acm rsub rs list_assoc_l' drs. }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ H2 ++ (WDia A :: H8) ++ Δ4). }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ (H2 ++ WDia A :: H7) ++ Δ3 ++ Δ4). }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ Δ2 ++ H5 ++ WDia A :: H1r). }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ Δ2 ++ (H5 ++ WDia A :: H9) ++ Δ4). }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ Δ2 ++ Δ3 ++ H7 ++ WDia A :: H1r). }
-(* now instances of exchange in second sequent of the rule *)
-
-{ use_acm2 acm rsub rs drs list_assoc_r'
-  (G2, (H2l ++ A :: H4) ++ Δ2 ++ Δ3 ++ Δ4). }
-
-{ use_acm2 acm rsub rs drs ltac: (assoc_mid H7)
-  (G2, Δ1 ++ (H4 ++ A :: H7) ++ Δ3 ++ Δ4). }
-
-{ use_acm2 acm rsub rs drs ltac: (assoc_mid H9)
-  (G2, Δ1 ++ Δ2 ++ (H7 ++ A :: H9) ++ Δ4). }
-
-{ use_acm2 acm rsub rs drs list_assoc_l' 
-  (G2, Δ1 ++ Δ2 ++ Δ3 ++ (H9 ++ A :: H2r)). }
-
-{ apply eq_sym in H4. list_eq_nc. contradiction. }
+(* BBox *)
++{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+*{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acm1 acm rs. }
+(* swapping in second sequent of principal rule *)
+*{
+inversion_clear swap. subst.
+acacD' ; subst.
+(* 4 subgoals, cases of where swapping occurs in the two parts
+  of context in conclusion (where no principal formula) *)
+{ use_acm2s acm rs ltac: (assoc_mid H1). }
+{ use_acm2s acm rs ltac: (assoc_mid H3). }
+{ use_acm2s acm rs list_assoc_l'. }
+{ use_acm2s acm rs ltac: (assoc_mid H). }
 }
 
-{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 15 subgoals resulting *)
-{ use_drs acm rsub rs idtac drs. }
-{ use_drs acm rsub rs idtac drs. }
-{ use_acm acm rsub rs drs (G1, H1l ++ (BDia A :: H6) ++ Δ3 ++ Δ4). }
-{ use_acm acm rsub rs drs (G1, (H1l ++ BDia A :: H5) ++ Δ2 ++ Δ3 ++ Δ4). }
-{ use_drs acm rsub rs list_assoc_l' drs. }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ H2 ++ (BDia A :: H8) ++ Δ4). }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ (H2 ++ BDia A :: H7) ++ Δ3 ++ Δ4). }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ Δ2 ++ H5 ++ BDia A :: H1r). }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ Δ2 ++ (H5 ++ BDia A :: H9) ++ Δ4). }
-{ use_acm acm rsub rs drs (G1, Δ1 ++ Δ2 ++ Δ3 ++ H7 ++ BDia A :: H1r). }
-(* now instances of exchange in second sequent of the rule *)
-
-{ use_acm2 acm rsub rs drs list_assoc_r'
-  (G2, (H2l ++ A :: H4) ++ Δ2 ++ Δ3 ++ Δ4). }
-
-{ use_acm2 acm rsub rs drs ltac: (assoc_mid H7)
-  (G2, Δ1 ++ (H4 ++ A :: H7) ++ Δ3 ++ Δ4). }
-
-{ use_acm2 acm rsub rs drs ltac: (assoc_mid H9)
-  (G2, Δ1 ++ Δ2 ++ (H7 ++ A :: H9) ++ Δ4). }
-
-{ use_acm2 acm rsub rs drs list_assoc_l' 
-  (G2, Δ1 ++ Δ2 ++ Δ3 ++ (H9 ++ A :: H2r)). }
-
-{ apply eq_sym in H4. list_eq_nc. contradiction. }
+*{ apply eq_sym in H4. list_eq_nc. contradiction. }
 }
 }
+(* another case of exchange in sequent to the right of where rule applied *)
+-{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
+
 Qed.
 
 Check gen_swapR_step_dsr.
+
 
 (* including first modal rules, in the specific (dsrules) form *)
 Lemma gen_swapmsR: forall (V : Set) ns

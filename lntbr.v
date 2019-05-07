@@ -48,7 +48,7 @@ rewrite -> ?can_gen_swapL_def' in acm ;
 rewrite -> ?can_gen_swapR_def' in acm ;
 unfold nslext.
 
-(* where exahange is in the forst of two sequents of the modal rule *)
+(* where exchange is in the first of two sequents of the modal rule *)
 Ltac use_acm1 acm rs := 
 (* interchange two sublists of list of formulae *)
 derIrs rs ; [> 
