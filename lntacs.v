@@ -435,32 +435,15 @@ apply derI with pse ; [
   unfold nsext ; subst K ; subst seq ;
   list_eq_assoc ].
 
-(* version of above for the case when the rule affects a list of
-  sequents, not a single sequent, plus context (ie nslext, not nsext *)
-Ltac nsgen drs nsr rs c sppc q qin acm inps0 at1 at2 :=
-clear drs nsr ;
-eapply derI ; [> unfold rsub in rs ; apply rs ;
-assoc_mid c ; apply NSlctxt' ; exact sppc |
-rewrite dersrec_forall ;
-intros q qin ;
-rewrite -> in_map_iff in qin ; cE ; subst q ;
-rewrite -> Forall_forall in acm ;
-rename_last inps0 ;  eapply in_map in inps0 ;
-eapply acm in inps0 ;
-unfold can_gen_swapL in inps0 ;
-unfold nslext ;
-at1 ;
-eapply inps0 ; [> | reflexivity] ;
-unfold nslext ;
-at2 ;
-reflexivity].
-
-(* for using swap for propositional rules *)
-Ltac nsgen_sw nsr rs sppc c c' acm inps0 swap := 
+(* for using swap for propositional rules,
+  for the case when the rule affects a list of
+  sequents or a single sequent, plus context (ie nslext or nsext *)
+Ltac nsgen_sw nsr rs sppc c c' acm inps0 swap :=
 clear nsr ;
-eapply derI ; [> unfold rsub in rs ; apply rs ; clear rs ;
-  (assoc_mid c ; apply NSlctxt') || 
-    (assoc_single_mid' c ; apply NSctxt') ;
+derIrs rs ; [>
+  (assoc_mid c ; apply NSlctxt') ||
+  (assoc_single_mid' c ; apply NSctxt') ||
+  (list_assoc_l' ; apply NSlcctxt') ;
   exact sppc |
 rewrite dersrec_forall ;
 intros q qin ;
@@ -470,13 +453,15 @@ rename_last inps0 ;  eapply in_map in inps0 ;
 eapply acm in inps0 ;
 rewrite -> ?can_gen_swapL_def' in inps0 ;
 rewrite -> ?can_gen_swapR_def' in inps0 ;
-unfold nsext ; unfold nslext ;
+unfold nsext ; unfold nslext ;  unfold nslcext ;
 assoc_single_mid' c' ;
 eapply inps0 ; [> exact swap |
-  unfold nsext ; unfold nslext ; list_eq_assoc | reflexivity ]].
+  unfold nsext ; unfold nslext ;  unfold nslcext ;
+ list_eq_assoc | reflexivity ]].
 
 Ltac nsprsame rs pr q qin inmps acm inps0 x0 := 
-derIrs rs ; [> apply NSctxt' ; apply Sctxt_e || apply Sctxt_e' ; exact pr |] ;
+derIrs rs ; [> apply NSctxt' || apply NSlcctxt' ;
+  apply Sctxt_e || apply Sctxt_e' ; exact pr |] ;
 rewrite dersrec_forall ;
 intros q qin ;
 rewrite -> in_map_iff in qin ; cE ; 
@@ -492,9 +477,10 @@ rewrite -> ?can_gen_swapR_def' in inps0 ;
 subst ;
 destruct x0 ;
 unfold seqext ;
-unfold nsext ;
+unfold nsext ; unfold nslcext ;
 eapply inps0 ;
-  [> | unfold nsext ; reflexivity | unfold seqext ; reflexivity ] ;
+  [> | unfold nsext ; unfold nslcext ; reflexivity |
+    unfold seqext ; reflexivity ] ;
   swap_tac.
 
 Ltac nsprsameL princrules rs pr q qin inmps acm inps0 x0 := 

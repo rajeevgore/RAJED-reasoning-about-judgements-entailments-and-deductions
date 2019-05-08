@@ -163,11 +163,10 @@ to be completed.
 
 (* w : Set fails *)
 Definition nsext (W : Type) G H (d : dir) (seq : W) := G ++ (seq, d) :: H.
+
 Lemma nsext_def: forall (W : Type) G H d seq, 
   @nsext W G H (d : dir) (seq : W) = G ++ (seq, d) :: H.
-Proof.
-unfold nsext. reflexivity.
-Qed.
+Proof.  unfold nsext. reflexivity.  Qed.
 
 Inductive nsrule (W : Type) (sr : rls W) : 
     rls (list (W * dir)) :=
@@ -190,6 +189,36 @@ Proof.  unfold nstail. reflexivity.  Qed.
 Lemma nstail_ext: forall (W : Type) H d seq, 
   nstail H (d : dir) (seq : W) = nsext [] H d seq.
 Proof.  unfold nsext.  unfold nstail. reflexivity.  Qed.
+
+(* as above but where context allowed on left only (names ns -> nslc) *)
+Definition nslcext (W : Type) G (d : dir) (seq : W) := G ++ [(seq, d)].
+
+Lemma nslcext_def: forall (W : Type) G d seq, 
+  @nslcext W G (d : dir) (seq : W) = G ++ [(seq, d)].
+Proof.  unfold nslcext. reflexivity.  Qed.
+
+Inductive nslcrule (W : Type) (sr : rls W) : 
+    rls (list (W * dir)) :=
+  | NSlcctxt : forall ps c G d, sr ps c -> 
+    nslcrule sr (map (nslcext G d) ps) (nslcext G d c).
+
+Lemma NSlcctxt_nil: forall (W : Type) sr G d c, (sr [] c : Prop) ->
+  @nslcrule W sr [] (nslcext G d c).
+Proof.  intros.  eapply NSlcctxt in H.  simpl in H. exact H.  Qed.
+
+Lemma NSlcctxt': forall W (sr : rls W) ps c G d, sr ps c ->
+    nslcrule sr (map (nslcext G d) ps) (G ++ [(c, d)]).
+Proof. intros. rewrite <- nslcext_def. apply NSlcctxt. assumption. Qed.
+
+Definition nslctail {W : Type} (d : dir) (seq : W) := (seq, d) :: [].
+Lemma nslctail_def: forall {W : Type} d seq, 
+  nslctail (d : dir) (seq : W) = (seq, d) :: [].
+Proof.  unfold nslctail. reflexivity.  Qed.
+
+Lemma nslctail_ext: forall (W : Type) d seq, 
+  nslctail (d : dir) (seq : W) = nslcext [] d seq.
+Proof.  unfold nslcext.  unfold nslctail. reflexivity.  Qed.
+
 
 (* context of a nested sequent *)
 Definition nslext W (G H seqs : list W) := G ++ seqs ++ H.
