@@ -69,6 +69,18 @@ Lemma swapped_simpleR: forall T X Y Z,
   Y = Z -> swapped (Y ++ X) (X ++ Z : list T).
 Proof.  intros. subst. apply swapped_simple'. Qed.
 
+Lemma if_eq_rev_eq: forall {T} (a b : list T),
+  a = b -> (rev a = rev b).
+Proof. intros. subst. reflexivity. Qed.
+
+Lemma if_rev_eq: forall {T} (a b : list T),
+  (rev a = rev b) -> a = b.
+Proof. intros. 
+pose (@if_eq_rev_eq T (rev a) (rev b) H).
+rewrite -> !rev_involutive in e.
+exact e.
+Qed.
+
 Lemma partition_2_2 : forall {A : Type} (l1 l2 l3 l4 : list A) a b,
 l1 ++ a :: l2 = l3 ++ b :: l4 ->
   (exists l5, l1 = l3 ++ b :: l5 /\ l4 = l5 ++ a :: l2) \/
@@ -144,6 +156,22 @@ Proof.
 Unshelve.    
 all : try assumption.
 Qed.
+
+Lemma eq_app_canc1 : forall {A : Type} (l1 l2 l2': list A),
+  (l1 ++ l2 = l1 ++ l2') <-> (l2 = l2').
+Proof. intros.  unfold iff. split ; intros.
+  induction l1. simpl in H. exact H.
+  eapply IHl1. simpl in H. inversion H. reflexivity.
+  subst. reflexivity. Qed.
+
+Lemma eq_app_canc2 : forall {A : Type} (l1 l1' l2: list A),
+  (l1 ++ l2 = l1' ++ l2) <-> (l1 = l1').
+Proof. intros.  unfold iff. split ; intros.
+  apply if_eq_rev_eq in H.
+  rewrite -> !rev_app_distr in H.
+  rewrite -> eq_app_canc1 in H.
+  apply if_rev_eq in H. exact H.
+  subst. reflexivity. Qed.
 
 Lemma app_cons_single : forall {A : Type} (l1 l2 : list A) a,
   l1 ++ a :: l2 = (l1 ++ [a]) ++ l2.

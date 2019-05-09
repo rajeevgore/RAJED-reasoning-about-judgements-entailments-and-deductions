@@ -244,7 +244,33 @@ Proof. intros. rewrite <- nslext_def. apply NSlctxt. assumption. Qed.
 
 Lemma NSlctxt2: forall W (sr : rls (list W)) ps x y G H, sr ps [x ; y] ->
     nslrule sr (map (nslext G H) ps) (G ++ x :: y :: H).
-Proof. intros. rewrite list_rearr20. apply NSlctxt'. assumption. Qed.
+Proof. intros. rewrite list_rearr20. apply NSlctxt'. assumption. Qed.  
+
+(* left context of a nested sequent *)
+Definition nslclext W (G seqs : list W) := G ++ seqs.
+
+Lemma nslclext_def: forall W G seqs, @nslclext W G seqs = G ++ seqs.
+Proof.  unfold nslclext. reflexivity.  Qed.
+
+Lemma nslclext2_def: forall W G seq1 seq2,
+  @nslclext W G [seq1 ; seq2] = G ++ [seq1; seq2].
+Proof.  unfold nslclext. simpl. reflexivity.  Qed.
+
+Lemma nslclext2_def': forall W G seq1 seq2,
+  @nslclext W G [seq1 ; seq2] = (G ++ [seq1]) ++ [seq2].
+Proof.  unfold nslclext. simpl. intros.  apply list_rearr22.  Qed.
+
+Inductive nslclrule W (sr : rls (list W)) : rls (list W) :=
+  | NSlclctxt : forall ps c G, sr ps c ->
+    nslclrule sr (map (nslclext G) ps) (nslclext G c).
+
+Lemma NSlclctxt': forall W (sr : rls (list W)) ps c G, sr ps c ->
+    nslclrule sr (map (nslclext G) ps) (G ++ c).
+Proof. intros. rewrite <- nslclext_def. apply NSlclctxt. assumption. Qed.
+
+Lemma NSlclctxt2: forall W (sr : rls (list W)) ps x y G, sr ps [x ; y] ->
+    nslclrule sr (map (nslclext G) ps) (G ++ [x ; y]).
+Proof. intros. rewrite list_rearr20. apply NSlclctxt'. assumption. Qed.
 
 Check princrule.
 Check seqext.
@@ -262,7 +288,7 @@ Lemma princrule_L : forall {V : Set} ps Γ Δ,
 Proof.
   intros V ps Γ Δ P.
   inversion P as [ A P2| P2 | A B P2 | P2];
-                       try (left; reflexivity).
+    try (left; reflexivity).
   right. exists A. reflexivity.
   right. exists (Imp A B). reflexivity.
   right. exists (Bot V). reflexivity.

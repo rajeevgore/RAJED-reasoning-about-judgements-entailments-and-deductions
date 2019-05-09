@@ -20,18 +20,6 @@ Lemma apprI: forall T (a b c : list T),
   a = b -> a ++ c = b ++ c.
 Proof. intros. subst. reflexivity. Qed.
 
-Lemma if_eq_rev_eq: forall {T} (a b : list T),
-  a = b -> (rev a = rev b).
-Proof. intros. subst. reflexivity. Qed.
-
-Lemma if_rev_eq: forall {T} (a b : list T),
-  (rev a = rev b) -> a = b.
-Proof. intros. 
-pose (if_eq_rev_eq (rev a) (rev b) H).
-rewrite -> !rev_involutive in e.
-exact e.
-Qed.
-
 Lemma appl_cong: forall {T} (a b c : list T),
   (c ++ a = c ++ b) <-> (a = b).
 Proof.  intros. unfold iff. apply conj ; intro.  
@@ -42,7 +30,7 @@ Proof.  intros. unfold iff. apply conj ; intro.
 Lemma appr_cong: forall {T} (a b c : list T),
   (a ++ c = b ++ c) <-> (a = b).
 Proof.  intros. unfold iff. apply conj ; intro.  
-pose (if_eq_rev_eq (a ++ c) (b ++ c) H).
+pose (@if_eq_rev_eq T (a ++ c) (b ++ c) H).
 rewrite -> !rev_app_distr in e.
 rewrite -> appl_cong in e.
 apply if_rev_eq in e.  exact e.
@@ -64,6 +52,9 @@ Definition app_assoc_cons {A} (x : A) l m xs := app_assoc l m (x :: xs).
 Ltac list_assoc_l' := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
 Ltac list_assoc_r' :=
   repeat (rewrite - !app_assoc || rewrite - !app_comm_cons).
+(* tactic to strip off same sublists on lhs or rhs of append sequence *)
+Ltac apps_eq_tac := list_assoc_r' ; rewrite ?eq_app_canc1 ;
+  list_assoc_l' ; rewrite ?eq_app_canc2 ; reflexivity.
 
 (* tactics to identify swapped lists, where one of swap is single list *)
  
@@ -443,6 +434,7 @@ clear nsr ;
 derIrs rs ; [>
   (assoc_mid c ; apply NSlctxt') ||
   (assoc_single_mid' c ; apply NSctxt') ||
+  (list_assoc_l' ; apply NSlclctxt') ||
   (list_assoc_l' ; apply NSlcctxt') ;
   exact sppc |
 rewrite dersrec_forall ;
@@ -453,10 +445,10 @@ rename_last inps0 ;  eapply in_map in inps0 ;
 eapply acm in inps0 ;
 rewrite -> ?can_gen_swapL_def' in inps0 ;
 rewrite -> ?can_gen_swapR_def' in inps0 ;
-unfold nsext ; unfold nslext ;  unfold nslcext ;
+unfold nsext ; unfold nslext ;  unfold nslcext ; unfold nslclext ;
 assoc_single_mid' c' ;
 eapply inps0 ; [> exact swap |
-  unfold nsext ; unfold nslext ;  unfold nslcext ;
+  unfold nsext ; unfold nslext ;  unfold nslcext ; unfold nslclext ;
  list_eq_assoc | reflexivity ]].
 
 Ltac nsprsame rs pr q qin inmps acm inps0 x0 := 

@@ -34,10 +34,13 @@ Proof. intros. subst. reflexivity. Qed.
 Lemma arg_cong: forall T U f x y, x = y -> (f (x : U) : T) = f y.
 Proof. intros. subst. reflexivity. Qed.
 
-Lemma arg1_cong_imp: forall U V f x y z, x = y -> f (x : U) (z : V) -> f y z.
+Lemma arg_cong_imp: forall U f x y, x = y -> f (x : U) -> f y.
 Proof. intros. subst. assumption. Qed.
 
-Lemma arg_cong_imp: forall U f x y, x = y -> f (x : U) -> f y.
+Lemma arg_cong_imp': forall U f x y, f (x : U) -> x = y -> f y.
+Proof. intros. subst. assumption. Qed.
+
+Lemma arg1_cong_imp: forall U V f x y z, x = y -> f (x : U) (z : V) -> f y z.
 Proof. intros. subst. assumption. Qed.
 
 Lemma iffD1: forall x y, (x = y) -> x -> y.
