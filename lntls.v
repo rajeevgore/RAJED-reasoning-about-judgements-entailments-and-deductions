@@ -150,7 +150,7 @@ repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
 nsprsameL princrules rs pr q qin inmps acm inps0 x0. 
 }
 
-{ apply eq_sym in H1. list_eq_nc. contradiction. }
+{ list_eq_nc. contradiction. }
 
 Qed.
 

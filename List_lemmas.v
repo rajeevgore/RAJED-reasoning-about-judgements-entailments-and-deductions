@@ -385,9 +385,15 @@ Lemma list_eq_single: forall (A : Type) (x y : list A) (u v : A),
 Proof.  intros.  apply app_eq_cons in H.  sD.  injection H0 as.  subst.  tauto.
   apply app_cons_not_nil in H1.  contradiction.  Qed.
 
+Definition single_eq_list A x y u v p := @list_eq_single A x y u v (eq_sym p).
+
 Lemma list_eq_nil: forall (A : Type) (x y : list A) (u : A),
   x ++ u :: y = [] -> False.
 Proof.  intros.  apply app_eq_nil in H.  cD.  discriminate.  Qed.
+
+Definition nil_eq_list A x y u p := @list_eq_nil A x y u (eq_sym p).
+Definition nil_eq_app A u v p := @app_eq_nil A u v (eq_sym p).
+Definition unit_eq_app A x y a p := @app_eq_unit A x y a (eq_sym p).
 
 Lemma nnn_app_eq: forall {A : Type} (x : list A), [] ++ [] ++ [] ++ x = x.
 Proof.  intros.  simpl. reflexivity. Qed.

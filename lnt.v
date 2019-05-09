@@ -307,9 +307,13 @@ Ltac acacD' :=
 Ltac list_eq_nc :=
    match goal with
      | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H
+     | [ H : [] = _ ++ _ :: _  |- _ ] => apply nil_eq_list in H
      | [ H : _ ++ _ = [] |- _ ] => apply app_eq_nil in H
+     | [ H : [] = _ ++ _ |- _ ] => apply nil_eq_app in H
      | [ H : _ ++ _ = [_] |- _ ] => apply app_eq_unit in H
+     | [ H : [_] = _ ++ _ |- _ ] => apply unit_eq_app in H
      | [ H : _ ++ _ :: _ = [_] |- _ ] => apply list_eq_single in H
+     | [ H : [_] = _ ++ _ :: _ |- _ ] => apply single_eq_list in H
      | [ H : _ :: _ = [] |- _ ] => discriminate H
      | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
      end.
@@ -338,14 +342,14 @@ Lemma Idrule_L_oe : forall {V : Set} ps x y Δ,
     @Idrule V ps (x ++ y, Δ) -> x = [] \/ y = [].
 Proof.
   intros. inversion H. subst. acacD'. tauto.
-  apply eq_sym in H1.  list_eq_nc. tauto.
+  list_eq_nc. tauto.
 Qed.
 
 Lemma Idrule_R_oe : forall {V : Set} ps x y Γ,
     @Idrule V ps (Γ, x ++ y) -> x = [] \/ y = [].
 Proof.
   intros. inversion H. subst. acacD'. tauto.
-  apply eq_sym in H1.  list_eq_nc. tauto.
+  list_eq_nc. tauto.
 Qed.
 
 Lemma Idrule_L_oe': forall V, rules_L_oe (@Idrule V).

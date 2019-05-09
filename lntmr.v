@@ -68,12 +68,12 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ use_acm_sw_sep acm rs swap. }
 *{ use_acm_sw_sep acm rs swap. }
-*{ apply eq_sym in H4. list_eq_nc. contradiction. }
+*{ list_eq_nc. contradiction. }
 }
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ use_acm_sw_sep acm rs swap. }
 *{ use_acm_sw_sep acm rs swap. }
-*{ apply eq_sym in H4. list_eq_nc. contradiction. }
+*{ list_eq_nc. contradiction. }
 }
 }
 
@@ -189,7 +189,7 @@ acacD' ; subst.
 { use_acm2s acm rs ltac: (assoc_mid H). }
 }
 
-*{ apply eq_sym in H4. list_eq_nc. contradiction. }
+*{ list_eq_nc. contradiction. }
 }
 
 (* BBox *)
@@ -209,7 +209,7 @@ acacD' ; subst.
 { use_acm2s acm rs ltac: (assoc_mid H). }
 }
 
-*{ apply eq_sym in H4. list_eq_nc. contradiction. }
+*{ list_eq_nc. contradiction. }
 }
 }
 (* another case of exchange in sequent to the right of where rule applied *)
