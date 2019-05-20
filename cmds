@@ -4,6 +4,7 @@ coqc dd.v
 coqc List_lemmas.v
 coqc lnt.v
 coqc lntacs.v
+coqc lntmtacs.v
 coqc lntom.v
 coqc lntrm.v
 coqc lntls.v

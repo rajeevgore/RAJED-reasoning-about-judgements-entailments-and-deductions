@@ -9,9 +9,9 @@ Require Import dd.
 Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.
+Require Import lntmtacs.
 Require Import lntls.
 Require Import lntrs.
-Require Import lntb1L.
 
 Set Implicit Arguments.
 
@@ -46,17 +46,17 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
-  * use_acm2s' acm rs WBox2Ls ltac: (assoc_mid H1). 
-  * use_acm2s' acm rs WBox2Ls ltac: (assoc_mid H3). 
-  * use_acm2s' acm rs WBox2Ls list_assoc_l'. 
-  * use_acm2s' acm rs WBox2Ls ltac: (assoc_mid H). 
+  * use_acm2s acm rs WBox2Ls ltac: (assoc_mid H1). 
+  * use_acm2s acm rs WBox2Ls ltac: (assoc_mid H3). 
+  * use_acm2s acm rs WBox2Ls list_assoc_l'. 
+  * use_acm2s acm rs WBox2Ls ltac: (assoc_mid H). 
   }
 +{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
-  * use_acm2s' acm rs BBox2Ls ltac: (assoc_mid H1). 
-  * use_acm2s' acm rs BBox2Ls ltac: (assoc_mid H3). 
-  * use_acm2s' acm rs BBox2Ls list_assoc_l'. 
-  * use_acm2s' acm rs BBox2Ls ltac: (assoc_mid H). 
+  * use_acm2s acm rs BBox2Ls ltac: (assoc_mid H1). 
+  * use_acm2s acm rs BBox2Ls ltac: (assoc_mid H3). 
+  * use_acm2s acm rs BBox2Ls list_assoc_l'. 
+  * use_acm2s acm rs BBox2Ls ltac: (assoc_mid H). 
   } }
 
 (* case of exchange in sequent to the left of where rule applied *)
@@ -69,10 +69,10 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
-  ** use_acm2s' acm rs WBox2Ls ltac: (assoc_mid H1). 
-  ** use_acm2s' acm rs WBox2Ls ltac: (assoc_mid H3). 
-  ** use_acm2s' acm rs WBox2Ls list_assoc_l'. 
-  ** use_acm2s' acm rs WBox2Ls ltac: (assoc_mid H). 
+  ** use_acm2s acm rs WBox2Ls ltac: (assoc_mid H1). 
+  ** use_acm2s acm rs WBox2Ls ltac: (assoc_mid H3). 
+  ** use_acm2s acm rs WBox2Ls list_assoc_l'. 
+  ** use_acm2s acm rs WBox2Ls ltac: (assoc_mid H). 
   }
 (* swapping in second sequent of principal rule *) 
 *{
@@ -88,10 +88,10 @@ use_drs_mid rs drs WBox2Ls. }
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
-  ** use_acm2s' acm rs BBox2Ls ltac: (assoc_mid H1). 
-  ** use_acm2s' acm rs BBox2Ls ltac: (assoc_mid H3). 
-  ** use_acm2s' acm rs BBox2Ls list_assoc_l'. 
-  ** use_acm2s' acm rs BBox2Ls ltac: (assoc_mid H). 
+  ** use_acm2s acm rs BBox2Ls ltac: (assoc_mid H1). 
+  ** use_acm2s acm rs BBox2Ls ltac: (assoc_mid H3). 
+  ** use_acm2s acm rs BBox2Ls list_assoc_l'. 
+  ** use_acm2s acm rs BBox2Ls ltac: (assoc_mid H). 
   }
 (* swapping in second sequent of principal rule *) 
 *{
@@ -122,18 +122,18 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
   where the exchange might be relative to where the rule is active *)
 
 -{ inversion sppc ; subst ; 
-  [> use_acm_sw_sep' acm rs swap WBox2Ls |
-     use_acm_sw_sep' acm rs swap BBox2Ls ]. }
+  [> use_acm_sw_sep acm rs swap WBox2Ls |
+     use_acm_sw_sep acm rs swap BBox2Ls ]. }
 -{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
 
 -{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
-*{ use_acm_sw_sep' acm rs swap WBox2Ls. }
+*{ use_acm_sw_sep acm rs swap WBox2Ls. }
 *{ use_drs rs drs WBox2Ls. }
 *{ list_eq_nc. contradiction. }
 }
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
-*{ use_acm_sw_sep' acm rs swap BBox2Ls. }
+*{ use_acm_sw_sep acm rs swap BBox2Ls. }
 *{ use_drs rs drs BBox2Ls. }
 *{ list_eq_nc. contradiction. }
 }

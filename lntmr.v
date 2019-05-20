@@ -9,10 +9,9 @@ Require Import dd.
 Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.
+Require Import lntmtacs.
 Require Import lntls.
 Require Import lntrs.
-Require Import lntb1L.
-Require Import lntb2L.
 
 Set Implicit Arguments.
 
@@ -28,10 +27,18 @@ Lemma drules_conc_ne: forall V ps,  drules (V:=V) ps [] -> False.
 Proof.  intros. inversion H. Qed.
 
 (* try more specific way of defining modal rules, for drules,
-  restricted to two sequents plus context, and one premise 
+  restricted to two sequents plus context, and one premise *)
 Inductive dsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
-  gives WDiaRs and DiaRs, now in lntb1L.v
-  *)
+  | WDiaRs : forall A d G1 G2 H1l H1r H2l H2r, dsrules 
+      [[(pair G1 (H1l ++ WDia A :: H1r), d);
+        (pair G2 (H2l ++ A :: H2r), fwd)]]
+      [(pair G1 (H1l ++ WDia A :: H1r), d); 
+        (pair G2 (H2l ++ H2r), fwd)]
+  | BDiaRs : forall A d G1 G2 H1l H1r H2l H2r, dsrules 
+      [[(pair G1 (H1l ++ BDia A :: H1r), d);
+        (pair G2 (H2l ++ A :: H2r), bac)]]
+      [(pair G1 (H1l ++ BDia A :: H1r), d); 
+        (pair G2 (H2l ++ H2r), bac)].
 
 Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | Psrules : forall ps c,
@@ -58,7 +65,8 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 (* swap in the first of the two sequents affected by the rule *)
 (* here the exchange is on the right and the rules operate on the left *)
 -{ clear nsr.  inversion sppc ; subst ; clear sppc ; (* 2 subgoals *)
-  use_acm_sw_sep acm rs swap. }
+   [> use_acm_sw_sep acm rs swap WDiaRs |
+     use_acm_sw_sep acm rs swap BDiaRs ]. }
 
 (* case of exchange in sequent to the left of where rule applied *)
 -{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
@@ -67,13 +75,13 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 
 -{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
-*{ use_acm_sw_sep acm rs swap. }
-*{ use_acm_sw_sep acm rs swap. }
+*{ use_acm_sw_sep acm rs swap WDiaRs. }
+*{ use_acm_sw_sep acm rs swap WDiaRs. }
 *{ list_eq_nc. contradiction. }
 }
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
-*{ use_acm_sw_sep acm rs swap. }
-*{ use_acm_sw_sep acm rs swap. }
+*{ use_acm_sw_sep acm rs swap BDiaRs. }
+*{ use_acm_sw_sep acm rs swap BDiaRs. }
 *{ list_eq_nc. contradiction. }
 }
 }
@@ -159,10 +167,10 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 -{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-  use_acm1 acm rs. }
+  use_acm1 acm rs WDiaRs. }
 +{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-  use_acm1 acm rs. }
+  use_acm1 acm rs BDiaRs. }
   }
 
 (* case of exchange in sequent to the left of where rule applied *)
@@ -177,17 +185,17 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-  use_acm1 acm rs. }
+  use_acm1 acm rs WDiaRs. }
 (* swapping in second sequent of principal rule *)
 *{
 inversion_clear swap. subst.
 acacD' ; subst.
 (* 4 subgoals, cases of where swapping occurs in the two parts
   of context in conclusion (where no principal formula) *)
-{ use_acm2s' acm rs WDiaRs ltac: (assoc_mid H1). }
-{ use_acm2s' acm rs WDiaRs ltac: (assoc_mid H3). }
-{ use_acm2s' acm rs WDiaRs list_assoc_l'. }
-{ use_acm2s' acm rs WDiaRs ltac: (assoc_mid H). }
+{ use_acm2s acm rs WDiaRs ltac: (assoc_mid H1). }
+{ use_acm2s acm rs WDiaRs ltac: (assoc_mid H3). }
+{ use_acm2s acm rs WDiaRs list_assoc_l'. }
+{ use_acm2s acm rs WDiaRs ltac: (assoc_mid H). }
 }
 
 *{ list_eq_nc. contradiction. }
@@ -197,17 +205,17 @@ acacD' ; subst.
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-  use_acm1 acm rs. }
+  use_acm1 acm rs BDiaRs. }
 (* swapping in second sequent of principal rule *)
 *{
 inversion_clear swap. subst.
 acacD' ; subst.
 (* 4 subgoals, cases of where swapping occurs in the two parts
   of context in conclusion (where no principal formula) *)
-{ use_acm2s' acm rs BDiaRs ltac: (assoc_mid H1). }
-{ use_acm2s' acm rs BDiaRs ltac: (assoc_mid H3). }
-{ use_acm2s' acm rs BDiaRs list_assoc_l'. }
-{ use_acm2s' acm rs BDiaRs ltac: (assoc_mid H). }
+{ use_acm2s acm rs BDiaRs ltac: (assoc_mid H1). }
+{ use_acm2s acm rs BDiaRs ltac: (assoc_mid H3). }
+{ use_acm2s acm rs BDiaRs list_assoc_l'. }
+{ use_acm2s acm rs BDiaRs ltac: (assoc_mid H). }
 }
 
 *{ list_eq_nc. contradiction. }
