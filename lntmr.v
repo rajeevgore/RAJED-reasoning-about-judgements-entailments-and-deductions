@@ -11,7 +11,7 @@ Require Import lnt.
 Require Import lntacs.
 Require Import lntls.
 Require Import lntrs.
-Require Import lntbr.
+Require Import lntb1L.
 
 Set Implicit Arguments.
 
@@ -29,7 +29,7 @@ Proof.  intros. inversion H. Qed.
 (* try more specific way of defining modal rules, for drules,
   restricted to two sequents plus context, and one premise 
 Inductive dsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
-  gives WDiaRs and DiaRs, now in lntbr.v
+  gives WDiaRs and DiaRs, now in lntb1L.v
   *)
 
 Inductive pdsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=

@@ -14,15 +14,16 @@ Require Import lntrs.
 
 Set Implicit Arguments.
 
-(* specific way of defining modal rules, for bsrules,
+(* specific way of defining modal rules, for b1lrules,
   restricted to two sequents plus context, and one premise *) 
-Inductive bsrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
-  | WBoxLs : forall A d H1l H1r H2l H2r K1 K2, bsrules 
+(* version in paper 23/4/19, Fig 2, \wbx_L^1, \bbx_L^1 *)
+Inductive b1lrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
+  | WBox1Ls : forall A d H1l H1r H2l H2r K1 K2, b1lrules 
       [[(pair (H1l ++ WBox A :: H1r) K1, d);
         (pair (H2l ++ A :: H2r) K2, fwd)]]
       [(pair (H1l ++ WBox A :: H1r) K1, d); 
         (pair (H2l ++ H2r) K2, fwd)]
-  | BBoxLs : forall A d H1l H1r H2l H2r K1 K2, bsrules 
+  | BBox1Ls : forall A d H1l H1r H2l H2r K1 K2, b1lrules 
       [[(pair (H1l ++ BBox A :: H1r) K1, d);
         (pair (H2l ++ A :: H2r) K2, bac)]]
       [(pair (H1l ++ BBox A :: H1r) K1, d); 
@@ -54,7 +55,7 @@ Ltac use_acm1 acm rs :=
 derIrs rs ; [> 
 apply NSlctxt2 || apply NSlclctxt2 ;
 assoc_single_mid ;
-apply WBoxLs || apply BBoxLs || apply WDiaRs || apply BDiaRs |
+apply WBox1Ls || apply BBox1Ls || apply WDiaRs || apply BDiaRs |
 ms_cgs acm ;
 list_assoc_r' ; simpl ; eapply acm ] ; [> | 
   unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
@@ -67,15 +68,15 @@ Ltac use_acm2s acm rs rw :=
 derIrs rs ; [> 
 list_assoc_r' ; simpl ; apply NSlctxt2 || apply NSlclctxt2 ;
 rw ; (* rewrite so as to identify two parts of context *)
-apply WBoxLs || apply BBoxLs || apply WDiaRs || apply BDiaRs |
+apply WBox1Ls || apply BBox1Ls || apply WDiaRs || apply BDiaRs |
 ms_cgs acm ;
 list_assoc_r' ; simpl ;
 rewrite list_rearr22 ; eapply acm ] ; [> | 
   unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
   reflexivity ] ; swap_tac.
 
-Lemma gen_swapL_step_bsr: forall V ps concl last_rule rules,
-  last_rule = nslrule (@bsrules V) ->
+Lemma gen_swapL_step_b1L: forall V ps concl last_rule rules,
+  last_rule = nslrule (@b1lrules V) ->
   gen_swapL_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapL_step.
 intros lreq nsr drs acm rs. clear drs. subst.
@@ -153,14 +154,14 @@ acacD' ; subst.
 
 Qed.
 
-Check gen_swapL_step_bsr.
+Check gen_swapL_step_b1L.
 
 Ltac use_acm_sw_sep acm rs swap :=
 (* interchange two sublists of list of formulae,
   no need to expand swap (swap separate from where rule is applied) *)
 derIrs rs ; [> 
 list_assoc_r' ; simpl ; apply NSlclctxt2 || apply NSlctxt2 ;
-apply WBoxLs || apply BBoxLs || apply WDiaRs || apply BDiaRs |
+apply WBox1Ls || apply BBox1Ls || apply WDiaRs || apply BDiaRs |
 ms_cgs acm ;
 eapply acm in swap ] ;
 [> (rewrite - list_rearr21 ; eapply swap) || 
@@ -168,8 +169,8 @@ eapply acm in swap ] ;
   unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
   reflexivity ].
 
-Lemma gen_swapR_step_bsr: forall V ps concl last_rule rules,
-  last_rule = nslrule (@bsrules V) ->
+Lemma gen_swapR_step_b1L: forall V ps concl last_rule rules,
+  last_rule = nslrule (@b1lrules V) ->
   gen_swapR_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapR_step.
 intros lreq nsr drs acm rs. clear drs. subst.
@@ -212,7 +213,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 
 Qed.
 
-Check gen_swapR_step_bsr.
+Check gen_swapR_step_b1L.
 
 (* for examples of how to combine these with other rules, 
   see lntmr.v, theorems gen_swapmsL and gen_swapmsR *)
@@ -221,8 +222,8 @@ Check gen_swapR_step_bsr.
   no need to expand swap or the underlying rule *)
 
 (** now want to do the same for left context only **)
-Lemma gen_swapL_step_bsr_lc: forall V ps concl last_rule rules,
-  last_rule = nslclrule (@bsrules V) ->
+Lemma gen_swapL_step_b1L_lc: forall V ps concl last_rule rules,
+  last_rule = nslclrule (@b1lrules V) ->
   gen_swapL_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapL_step.
 intros lreq nsr drs acm rs. clear drs. subst.
@@ -293,10 +294,10 @@ acacD' ; subst.
 }
 Qed.
 
-Check gen_swapL_step_bsr_lc.
+Check gen_swapL_step_b1L_lc.
 
-Lemma gen_swapR_step_bsr_lc: forall V ps concl last_rule rules,
-  last_rule = nslclrule (@bsrules V) ->
+Lemma gen_swapR_step_b1L_lc: forall V ps concl last_rule rules,
+  last_rule = nslclrule (@b1lrules V) ->
   gen_swapR_step last_rule rules ps concl.
 Proof.  intros until 0.  unfold gen_swapR_step.
 intros lreq nsr drs acm rs. clear drs. subst.
@@ -327,4 +328,5 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 
 Qed.
 
-Check gen_swapR_step_bsr_lc.
+Check gen_swapR_step_b1L_lc.
+
