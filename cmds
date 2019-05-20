@@ -9,6 +9,7 @@ coqc lntrm.v
 coqc lntls.v
 coqc lntrs.v
 coqc lntb1L.v
+coqc lntb2L.v
 coqc lntmr.v
 coqc seqlrule.v # not used any more
 

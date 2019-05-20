@@ -50,6 +50,29 @@ rewrite -> ?can_gen_swapR_def' in acm ;
 unfold nslclext ; unfold nslext.
 
 (* where exchange is in the first of two sequents of the modal rule *)
+Ltac use_acm1' acm rs ith := 
+(* interchange two sublists of list of formulae *)
+derIrs rs ; [> 
+apply NSlctxt2 || apply NSlclctxt2 ;
+assoc_single_mid ;
+apply ith |
+ms_cgs acm ;
+list_assoc_r' ; simpl ; eapply acm ] ; [> | 
+  unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
+  reflexivity ] ; 
+swap_tac.
+
+Ltac use_acm2s' acm rs ith rw :=
+derIrs rs ; [> 
+list_assoc_r' ; simpl ; apply NSlctxt2 || apply NSlclctxt2 ;
+rw ; (* rewrite so as to identify two parts of context *)
+apply ith |
+ms_cgs acm ;
+list_assoc_r' ; simpl ;
+rewrite ?list_rearr22 ; eapply acm ] ; [> | 
+  unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
+  reflexivity ] ; swap_tac.
+
 Ltac use_acm1 acm rs := 
 (* interchange two sublists of list of formulae *)
 derIrs rs ; [> 
@@ -120,10 +143,10 @@ inversion_clear swap. subst.
 acacD' ; subst.
 (* 4 subgoals, cases of where swapping occurs in the two parts
   of context in conclusion (where no principal formula) *)
-{ use_acm2s acm rs ltac: (assoc_mid H1). }
-{ use_acm2s acm rs ltac: (assoc_mid H3). }
-{ use_acm2s acm rs list_assoc_l'. }
-{ use_acm2s acm rs ltac: (assoc_mid H). }
+{ use_acm2s' acm rs WBox1Ls ltac: (assoc_mid H1). }
+{ use_acm2s' acm rs WBox1Ls ltac: (assoc_mid H3). }
+{ use_acm2s' acm rs WBox1Ls list_assoc_l'. }
+{ use_acm2s' acm rs WBox1Ls ltac: (assoc_mid H). }
 }
 
 *{ list_eq_nc. contradiction. }
@@ -140,10 +163,10 @@ inversion_clear swap. subst.
 acacD' ; subst.
 (* 4 subgoals, cases of where swapping occurs in the two parts
   of context in conclusion (where no principal formula) *)
-{ use_acm2s acm rs ltac: (assoc_mid H1). }
-{ use_acm2s acm rs ltac: (assoc_mid H3). }
-{ use_acm2s acm rs list_assoc_l'. }
-{ use_acm2s acm rs ltac: (assoc_mid H). }
+{ use_acm2s' acm rs BBox1Ls ltac: (assoc_mid H1). }
+{ use_acm2s' acm rs BBox1Ls ltac: (assoc_mid H3). }
+{ use_acm2s' acm rs BBox1Ls list_assoc_l'. }
+{ use_acm2s' acm rs BBox1Ls ltac: (assoc_mid H). }
 }
 
 *{ list_eq_nc. contradiction. }
@@ -155,6 +178,33 @@ acacD' ; subst.
 Qed.
 
 Check gen_swapL_step_b1L.
+
+Ltac use_drs_mid rs drs ith :=
+(* interchange two sublists of list of formulae,
+  no need to expand swap (swap separate from where rule is applied) *)
+derIrs rs ; [> 
+list_assoc_r' ; simpl ; apply NSlclctxt2 || apply NSlctxt2 ;
+assoc_single_mid ; apply ith | exact drs].
+
+Ltac use_drs rs drs ith :=
+(* interchange two sublists of list of formulae,
+  no need to expand swap (swap separate from where rule is applied) *)
+derIrs rs ; [> 
+list_assoc_r' ; simpl ; apply NSlclctxt2 || apply NSlctxt2 ;
+apply ith | exact drs].
+
+Ltac use_acm_sw_sep' acm rs swap ith :=
+(* interchange two sublists of list of formulae,
+  no need to expand swap (swap separate from where rule is applied) *)
+derIrs rs ; [> 
+list_assoc_r' ; simpl ; apply NSlclctxt2 || apply NSlctxt2 ;
+apply ith |
+ms_cgs acm ;
+eapply acm in swap ] ;
+[> (rewrite - list_rearr21 ; eapply swap) || 
+  (list_assoc_r' ; simpl ; eapply swap) |
+  unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
+  reflexivity ].
 
 Ltac use_acm_sw_sep acm rs swap :=
 (* interchange two sublists of list of formulae,
@@ -263,10 +313,10 @@ inversion_clear swap. subst.
 acacD' ; subst.
 (* 4 subgoals, cases of where swapping occurs in the two parts
   of context in conclusion (where no principal formula) *)
-{ use_acm2s acm rs ltac: (assoc_mid H1). }
-{ use_acm2s acm rs ltac: (assoc_mid H3). }
-{ use_acm2s acm rs list_assoc_l'. }
-{ use_acm2s acm rs ltac: (assoc_mid H). }
+{ use_acm2s' acm rs WBox1Ls ltac: (assoc_mid H1). }
+{ use_acm2s' acm rs WBox1Ls ltac: (assoc_mid H3). }
+{ use_acm2s' acm rs WBox1Ls list_assoc_l'. }
+{ use_acm2s' acm rs WBox1Ls ltac: (assoc_mid H). }
 }
 
 *{ list_eq_nc. contradiction. }
@@ -283,10 +333,10 @@ inversion_clear swap. subst.
 acacD' ; subst.
 (* 4 subgoals, cases of where swapping occurs in the two parts
   of context in conclusion (where no principal formula) *)
-{ use_acm2s acm rs ltac: (assoc_mid H1). }
-{ use_acm2s acm rs ltac: (assoc_mid H3). }
-{ use_acm2s acm rs list_assoc_l'. }
-{ use_acm2s acm rs ltac: (assoc_mid H). }
+{ use_acm2s' acm rs BBox1Ls ltac: (assoc_mid H1). }
+{ use_acm2s' acm rs BBox1Ls ltac: (assoc_mid H3). }
+{ use_acm2s' acm rs BBox1Ls list_assoc_l'. }
+{ use_acm2s' acm rs BBox1Ls ltac: (assoc_mid H). }
 }
 
 *{ list_eq_nc. contradiction. }

@@ -12,6 +12,7 @@ Require Import lntacs.
 Require Import lntls.
 Require Import lntrs.
 Require Import lntb1L.
+Require Import lntb2L.
 
 Set Implicit Arguments.
 
@@ -172,7 +173,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 (* here, swap in either of the two sequents affected by the rule *)
 -{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
-(* WBox *)
+(* WDia *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
@@ -183,16 +184,16 @@ inversion_clear swap. subst.
 acacD' ; subst.
 (* 4 subgoals, cases of where swapping occurs in the two parts
   of context in conclusion (where no principal formula) *)
-{ use_acm2s acm rs ltac: (assoc_mid H1). }
-{ use_acm2s acm rs ltac: (assoc_mid H3). }
-{ use_acm2s acm rs list_assoc_l'. }
-{ use_acm2s acm rs ltac: (assoc_mid H). }
+{ use_acm2s' acm rs WDiaRs ltac: (assoc_mid H1). }
+{ use_acm2s' acm rs WDiaRs ltac: (assoc_mid H3). }
+{ use_acm2s' acm rs WDiaRs list_assoc_l'. }
+{ use_acm2s' acm rs WDiaRs ltac: (assoc_mid H). }
 }
 
 *{ list_eq_nc. contradiction. }
 }
 
-(* BBox *)
+(* BDia *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
@@ -203,10 +204,10 @@ inversion_clear swap. subst.
 acacD' ; subst.
 (* 4 subgoals, cases of where swapping occurs in the two parts
   of context in conclusion (where no principal formula) *)
-{ use_acm2s acm rs ltac: (assoc_mid H1). }
-{ use_acm2s acm rs ltac: (assoc_mid H3). }
-{ use_acm2s acm rs list_assoc_l'. }
-{ use_acm2s acm rs ltac: (assoc_mid H). }
+{ use_acm2s' acm rs BDiaRs ltac: (assoc_mid H1). }
+{ use_acm2s' acm rs BDiaRs ltac: (assoc_mid H3). }
+{ use_acm2s' acm rs BDiaRs list_assoc_l'. }
+{ use_acm2s' acm rs BDiaRs ltac: (assoc_mid H). }
 }
 
 *{ list_eq_nc. contradiction. }
