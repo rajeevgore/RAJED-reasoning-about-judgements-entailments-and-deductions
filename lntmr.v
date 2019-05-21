@@ -52,7 +52,7 @@ Lemma gen_swapL_step_dsr: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapL_step.
 intros lreq nsr drs acm rs. clear drs. subst.
 
-inversion nsr as [? ? ? K sppc mnsp nsc].
+inversion nsr as [? ? ? K sppc mnsp nsc]. clear nsr.
 unfold nslext in nsc.
 rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
 unfold nslext in pp. subst.
@@ -64,16 +64,16 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 
 (* swap in the first of the two sequents affected by the rule *)
 (* here the exchange is on the right and the rules operate on the left *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc ; (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc ; (* 2 subgoals *)
    [> use_acm_sw_sep acm rs swap WDiaRs |
      use_acm_sw_sep acm rs swap BDiaRs ]. }
 
 (* case of exchange in sequent to the left of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 (* case of exchange in sequent to the right of where rule applied *)
--{ nsgen_sw nsr rs sppc pp (Γ', Δ, d) acm inps0 swap. }
+-{ nsgen_sw rs sppc pp (Γ', Δ, d) acm inps0 swap. }
 
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ use_acm_sw_sep acm rs swap WDiaRs. }
 *{ use_acm_sw_sep acm rs swap WDiaRs. }
@@ -87,7 +87,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 }
 
 (* another case of exchange in sequent to the right of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 
 Qed.
 
@@ -126,7 +126,7 @@ Lemma gen_swapL_step_dr: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapL_step.
 intros lreq nsr drs acm rs. subst.
 
-inversion nsr as [? ? ? K sppc mnsp nsc].
+inversion nsr as [? ? ? K sppc mnsp nsc]. clear nsr.
 unfold nslext in nsc.
 unfold can_gen_swapL.   intros until 0. intros pp ss.
 unfold nslext in pp.
@@ -153,7 +153,7 @@ Lemma gen_swapR_step_dsr: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapR_step.
 intros lreq nsr drs acm rs. clear drs. subst.
 
-inversion nsr as [? ? ? K sppc mnsp nsc].
+inversion nsr as [? ? ? K sppc mnsp nsc]. clear nsr.
 unfold nslext in nsc.
 rewrite can_gen_swapR_def'.  intros until 0. intros swap pp ss.
 unfold nslext in pp. subst.
@@ -164,7 +164,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 -inversion sppc. (* solves first goal *)
 
 (* swap in the first of the two sequents affected by the rule *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
   use_acm1 acm rs WDiaRs. }
@@ -174,12 +174,12 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
   }
 
 (* case of exchange in sequent to the left of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 (* case of exchange in sequent to the right of where rule applied *)
--{ nsgen_sw nsr rs sppc pp (Γ, Δ', d) acm inps0 swap. }
+-{ nsgen_sw rs sppc pp (Γ, Δ', d) acm inps0 swap. }
 
 (* here, swap in either of the two sequents affected by the rule *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
 (* WDia *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
@@ -222,7 +222,7 @@ acacD' ; subst.
 }
 }
 (* another case of exchange in sequent to the right of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 
 Qed.
 

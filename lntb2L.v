@@ -10,8 +10,6 @@ Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.
 Require Import lntmtacs.
-Require Import lntls.
-Require Import lntrs.
 
 Set Implicit Arguments.
 
@@ -34,7 +32,7 @@ Lemma gen_swapL_step_b2L_lc: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapL_step.
 intros lreq nsr drs acm rs. (* no clear drs. *) subst.
 
-inversion nsr as [? ? ? sppc mnsp nsc].
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
 unfold nslclext in nsc.
 rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
 unfold nslclext in pp. subst.
@@ -43,7 +41,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
   where the exchange might be relative to where the rule is active *)
 
 (* swap in the first of the two sequents affected by the rule *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
   * use_acm2s acm rs WBox2Ls ltac: (assoc_mid H1). 
@@ -60,10 +58,10 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
   } }
 
 (* case of exchange in sequent to the left of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 
 (* here, swap in either of the two sequents affected by the rule *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
 (* WBox *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
@@ -113,7 +111,7 @@ Lemma gen_swapR_step_b2L_lc: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapR_step.
 intros lreq nsr drs acm rs. (* no clear drs! *) subst.
 
-inversion nsr as [? ? ? sppc mnsp nsc].
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
 unfold nslclext in nsc.
 rewrite can_gen_swapR_def'.  intros until 0. intros swap pp ss.
 unfold nslclext in pp. subst.
@@ -124,9 +122,9 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ inversion sppc ; subst ; 
   [> use_acm_sw_sep acm rs swap WBox2Ls |
      use_acm_sw_sep acm rs swap BBox2Ls ]. }
--{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ use_acm_sw_sep acm rs swap WBox2Ls. }
 *{ use_drs rs drs WBox2Ls. }

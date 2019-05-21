@@ -28,7 +28,7 @@ Lemma gen_swapR_step_roe: forall V ps concl princrules
 Proof.  intros until 0.  unfold gen_swapR_step.
 intros roe lreq nsr drs acm rs. subst. clear drs.
 
-inversion nsr as [? ? ? K ? sppc mnsp nsc].
+inversion nsr as [? ? ? K ? sppc mnsp nsc]. clear nsr.
 unfold nsext in nsc.
 rewrite can_gen_swapR_def'.  intros until 0. intros swap pp ss.
 unfold nsext in pp.
@@ -38,9 +38,9 @@ apply partition_2_2 in pp.
 destruct c.
 sE ; subst.
 
-{ nsgen_sw nsr rs sppc (l, l0, d) (Γ, Δ', d0) acm inps0 swap. }
+{ nsgen_sw rs sppc (l, l0, d) (Γ, Δ', d0) acm inps0 swap. }
 all : cycle 1.
-{ nsgen_sw nsr rs sppc (l, l0, d) (Γ, Δ', d0) acm inps0 swap. }
+{ nsgen_sw rs sppc (l, l0, d) (Γ, Δ', d0) acm inps0 swap. }
 
 (* now case where move and rule application occur in the same sequent *)
 {
@@ -48,7 +48,7 @@ injection H0 as. subst.
 inversion sppc as [? ? ? ? ? ? pr mse se].
 destruct c.
 unfold seqext in se.
-subst.  clear nsr. clear sppc.
+subst. clear sppc.
 injection se as sel ser.
 subst.
 
@@ -105,7 +105,7 @@ Lemma gen_swapR_step_roe_lc: forall V ps concl princrules
 Proof.  intros until 0.  unfold gen_swapR_step.
 intros roe lreq nsr drs acm rs. subst. clear drs.
 
-inversion nsr as [? ? ? ? sppc mnsp nsc].
+inversion nsr as [? ? ? ? sppc mnsp nsc]. clear nsr.
 unfold nsext in nsc.
 rewrite can_gen_swapR_def'.  intros until 0. intros swap pp ss.
 unfold nslcext in pp.
@@ -115,7 +115,7 @@ apply partition_2_2 in pp.
 destruct c.
 sE ; subst.
 
-{ nsgen_sw nsr rs sppc (l, l0, d) (Γ, Δ', d0) acm inps0 swap. }
+{ nsgen_sw rs sppc (l, l0, d) (Γ, Δ', d0) acm inps0 swap. }
 
 (* now case where move and rule application occur in the same sequent *)
 {
@@ -123,7 +123,7 @@ injection H0 as. subst.
 inversion sppc as [? ? ? ? ? ? pr mse se].
 destruct c.
 unfold seqext in se.
-subst.  clear nsr. clear sppc.
+subst. clear sppc.
 injection se as sel ser.
 subst.
 

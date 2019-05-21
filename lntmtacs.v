@@ -18,7 +18,7 @@ unfold nslclext ; unfold nslext.
 Ltac use_acm1 acm rs ith := 
 (* interchange two sublists of list of formulae *)
 derIrs rs ; [> 
-apply NSlctxt2 || apply NSlclctxt2 ;
+apply NSlctxt2 || apply NSlclctxt' ;
 assoc_single_mid ;
 apply ith |
 ms_cgs acm ;
@@ -31,7 +31,7 @@ swap_tac.
   in which conclusion has no principal formula *)
 Ltac use_acm2s acm rs ith rw :=
 derIrs rs ; [> 
-list_assoc_r' ; simpl ; apply NSlctxt2 || apply NSlclctxt2 ;
+list_assoc_r' ; simpl ; apply NSlctxt2 || apply NSlclctxt' ;
 rw ; (* rewrite so as to identify two parts of context *)
 apply ith |
 ms_cgs acm ;
@@ -44,7 +44,7 @@ Ltac use_acm_sw_sep acm rs swap ith :=
 (* interchange two sublists of list of formulae,
   no need to expand swap (swap separate from where rule is applied) *)
 derIrs rs ; [> 
-list_assoc_r' ; simpl ; apply NSlclctxt2 || apply NSlctxt2 ;
+list_assoc_r' ; simpl ; apply NSlclctxt' || apply NSlctxt2 ;
 apply ith |
 ms_cgs acm ;
 eapply acm in swap ] ;
@@ -57,13 +57,24 @@ Ltac use_drs rs drs ith :=
 (* interchange two sublists of list of formulae,
   no need to expand swap (swap separate from where rule is applied) *)
 derIrs rs ; [> 
-list_assoc_r' ; simpl ; apply NSlclctxt2 || apply NSlctxt2 ;
+list_assoc_r' ; simpl ; apply NSlclctxt' || apply NSlctxt2 ;
 apply ith | exact drs].
 
 Ltac use_drs_mid rs drs ith :=
 (* interchange two sublists of list of formulae,
   no need to expand swap (swap separate from where rule is applied) *)
 derIrs rs ; [> 
-list_assoc_r' ; simpl ; apply NSlclctxt2 || apply NSlctxt2 ;
+list_assoc_r' ; simpl ; apply NSlclctxt' || apply NSlctxt2 ;
 assoc_single_mid ; apply ith | exact drs].
+
+Ltac use_acm_os acm rs swap ith :=
+(* swap in opposite side from where rule active *)
+derIrs rs ; [> 
+apply NSlclctxt || apply NSlctxt ;
+apply ith |
+ms_cgs acm ;
+eapply acm in swap ] ;
+[> eapply swap |
+  unfold nslext ; unfold nslclext ; reflexivity |
+  reflexivity ].
 

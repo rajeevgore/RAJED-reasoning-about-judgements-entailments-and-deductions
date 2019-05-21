@@ -429,8 +429,7 @@ apply derI with pse ; [
 (* for using swap for propositional rules,
   for the case when the rule affects a list of
   sequents or a single sequent, plus context (ie nslext or nsext *)
-Ltac nsgen_sw nsr rs sppc c c' acm inps0 swap :=
-clear nsr ;
+Ltac nsgen_sw rs sppc c c' acm inps0 swap :=
 derIrs rs ; [>
   (assoc_mid c ; apply NSlctxt') ||
   (assoc_single_mid' c ; apply NSctxt') ||

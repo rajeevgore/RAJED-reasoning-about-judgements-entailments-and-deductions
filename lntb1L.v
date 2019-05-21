@@ -10,8 +10,6 @@ Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.
 Require Import lntmtacs.
-Require Import lntls.
-Require Import lntrs.
 
 Set Implicit Arguments.
 
@@ -36,7 +34,7 @@ Lemma gen_swapL_step_b1L: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapL_step.
 intros lreq nsr drs acm rs. clear drs. subst.
 
-inversion nsr as [? ? ? K sppc mnsp nsc].
+inversion nsr as [? ? ? K sppc mnsp nsc]. clear nsr.
 unfold nslext in nsc.
 rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
 unfold nslext in pp. subst.
@@ -47,7 +45,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 -inversion sppc. (* solves first goal *)
 
 (* swap in the first of the two sequents affected by the rule *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
   use_acm1 acm rs WBox1Ls. }
@@ -57,12 +55,12 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
   }
 
 (* case of exchange in sequent to the left of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 (* case of exchange in sequent to the right of where rule applied *)
--{ nsgen_sw nsr rs sppc pp (Γ', Δ, d) acm inps0 swap. }
+-{ nsgen_sw rs sppc pp (Γ', Δ, d) acm inps0 swap. }
 
 (* here, swap in either of the two sequents affected by the rule *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
 (* WBox *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
@@ -105,7 +103,7 @@ acacD' ; subst.
 }
 }
 (* another case of exchange in sequent to the right of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 
 Qed.
 
@@ -117,7 +115,7 @@ Lemma gen_swapR_step_b1L: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapR_step.
 intros lreq nsr drs acm rs. clear drs. subst.
 
-inversion nsr as [? ? ? K sppc mnsp nsc].
+inversion nsr as [? ? ? K sppc mnsp nsc]. clear nsr.
 unfold nslext in nsc.
 rewrite can_gen_swapR_def'.  intros until 0. intros swap pp ss.
 unfold nslext in pp. subst.
@@ -129,16 +127,16 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 
 (* swap in the first of the two sequents affected by the rule *)
 (* here the exchange is on the right and the rules operate on the left *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc ; (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc ; (* 2 subgoals *)
    [> use_acm_sw_sep acm rs swap WBox1Ls |
      use_acm_sw_sep acm rs swap BBox1Ls ]. }
 
 (* case of exchange in sequent to the left of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 (* case of exchange in sequent to the right of where rule applied *)
--{ nsgen_sw nsr rs sppc pp (Γ, Δ', d) acm inps0 swap. }
+-{ nsgen_sw rs sppc pp (Γ, Δ', d) acm inps0 swap. }
 
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ use_acm_sw_sep acm rs swap WBox1Ls. }
 *{ use_acm_sw_sep acm rs swap WBox1Ls. }
@@ -152,7 +150,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 }  
 
 (* another case of exchange in sequent to the right of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 
 Qed.
 
@@ -171,7 +169,7 @@ Lemma gen_swapL_step_b1L_lc: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapL_step.
 intros lreq nsr drs acm rs. clear drs. subst.
 
-inversion nsr as [? ? ? sppc mnsp nsc].
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
 unfold nslclext in nsc.
 rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
 unfold nslclext in pp. subst.
@@ -180,7 +178,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
   where the exchange might be relative to where the rule is active *)
 
 (* swap in the first of the two sequents affected by the rule *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
   use_acm1 acm rs WBox1Ls. }
@@ -190,10 +188,10 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
   }
 
 (* case of exchange in sequent to the left of where rule applied *)
--{ nsgen_sw nsr rs sppc c (Γ', Δ, d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 
 (* here, swap in either of the two sequents affected by the rule *)
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
 (* WBox *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
@@ -245,7 +243,7 @@ Lemma gen_swapR_step_b1L_lc: forall V ps concl last_rule rules,
 Proof.  intros until 0.  unfold gen_swapR_step.
 intros lreq nsr drs acm rs. clear drs. subst.
 
-inversion nsr as [? ? ? sppc mnsp nsc].
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
 unfold nslclext in nsc.
 rewrite can_gen_swapR_def'.  intros until 0. intros swap pp ss.
 unfold nslclext in pp. subst.
@@ -256,9 +254,9 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ inversion sppc ; subst ; [> 
   use_acm_sw_sep acm rs swap WBox1Ls |
   use_acm_sw_sep acm rs swap BBox1Ls ]. }
--{ nsgen_sw nsr rs sppc c (Γ, Δ', d) acm inps0 swap. }
+-{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 
--{ clear nsr.  inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
 *{ use_acm_sw_sep acm rs swap WBox1Ls. }
 *{ use_acm_sw_sep acm rs swap WBox1Ls. }
