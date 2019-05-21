@@ -18,8 +18,8 @@ Set Implicit Arguments.
 (* version in paper 23/4/19, Fig 2, \wbx_R^2, \bbx_R^2 *)
 Inductive b2rrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | WBox2Rs : forall A H1 K1l K1r, b2rrules 
-      [[(pair H1 (K1l ++ WBox A :: K1r), bac) ; (pair [] [A], bac) ]]
-      [(pair H1 (K1l ++ WBox A :: K1r), bac)]
+      [[(pair H1 (K1l ++ WBox A :: K1r), fwd) ; (pair [] [A], fwd) ]]
+      [(pair H1 (K1l ++ WBox A :: K1r), fwd)]
   | BBox2Rs : forall A H1 K1l K1r, b2rrules 
       [[(pair H1 (K1l ++ BBox A :: K1r), bac) ; (pair [] [A], bac) ]]
       [(pair H1 (K1l ++ BBox A :: K1r), bac)].
@@ -98,3 +98,17 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 Qed.
 
 Check gen_swapR_step_b2R_lc.
+
+(* now for the Box1R rules, which will be more difficult *)
+Inductive b1rrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
+  | WBox1Rs : forall A d H1 H2 K1l K1r K2l K2r, b1rrules 
+    [[(pair H1 (K1l ++ A :: K1r), d) ; (pair H2 (K2l ++ WBox A :: K2r), bac) ] ;
+       [(pair H1 (K1l ++ K1r), d) ; (pair H2 (K2l ++ WBox A :: K2r), bac) ;
+         (pair [] [A], fwd)] ]
+      [(pair H1 (K1l ++ K1r), d) ; (pair H2 (K2l ++ WBox A :: K2r), bac)]
+  | BBox1Rs : forall A d H1 H2 K1l K1r K2l K2r, b1rrules 
+    [[(pair H1 (K1l ++ A :: K1r), d) ; (pair H2 (K2l ++ BBox A :: K2r), fwd) ] ;
+       [(pair H1 (K1l ++ K1r), d) ; (pair H2 (K2l ++ BBox A :: K2r), fwd) ;
+         (pair [] [A], bac)] ]
+      [(pair H1 (K1l ++ K1r), d) ; (pair H2 (K2l ++ BBox A :: K2r), fwd)].
+
