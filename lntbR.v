@@ -112,3 +112,39 @@ Inductive b1rrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
          (pair [] [A], bac)] ]
       [(pair H1 (K1l ++ K1r), d) ; (pair H2 (K2l ++ BBox A :: K2r), fwd)].
 
+(*
+Lemma gen_swapL_step_b1R_lc: forall V ps concl last_rule rules,
+  last_rule = nslclrule (@b1rrules V) ->
+  gen_swapL_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_swapL_step.
+intros lreq nsr drs acm rs. clear drs. subst.
+
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
+unfold nslclext in nsc.
+rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
+unfold nslclext in pp. subst.
+
+acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
+  where the exchange might be relative to where the rule is active *)
+
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
++
+
++ use_acm_os acm rs swap WBox1Rs.
++ use_acm_os acm rs swap BBox1Rs. }
+(* case of exchange in sequent to the left of where rule applied *)
+-{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+    * use_acm_os acm rs swap WBox1Rs.
+    * { list_eq_nc. contradiction. }
+    }
+  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+    * use_acm_os acm rs swap BBox1Rs.
+    * { list_eq_nc. contradiction. }
+    }
+  }
+Qed.
+
+Check gen_swapL_step_b2R_lc.
+*)

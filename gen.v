@@ -196,3 +196,12 @@ Lemma Forall_map_single: forall (A B : Type) P (f : A -> B) x,
   Forall P (map f [x]) <-> P (f x).
 Proof.  simpl. intros. apply Forall_single. Qed.
 
+Lemma Forall_map_2: forall (A B : Type) P (f : A -> B) x y, 
+  Forall P (map f [x; y]) <-> P (f x) /\ P (f y).
+Proof.  intros. rewrite Forall_forall. unfold iff. split.
+  intros. split. 
+  pose (H (f x)). apply p. rewrite in_map_iff. exists x. simpl. tauto.
+  pose (H (f y)). apply p. rewrite in_map_iff. exists y. simpl. tauto.
+  intros. rewrite -> in_map_iff in H0. cD. simpl in H3.
+  sD ; subst ; assumption.  Qed.
+
