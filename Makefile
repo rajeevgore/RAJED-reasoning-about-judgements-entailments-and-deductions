@@ -17,9 +17,9 @@ lntrs.vo : lntls.vo lntrs.v
 
 lntmtacs.vo : lntrs.vo lntmtacs.v
 
-lntbr.vo : lntmtacs.vo lntbr.v
+lntbR.vo : lntmtacs.vo lntbR.v
 
-lntb1L.vo : lntbr.vo lntb1L.v
+lntb1L.vo : lntbR.vo lntb1L.v
 
 lntb2L.vo : lntb1L.vo lntb2L.v 
 
