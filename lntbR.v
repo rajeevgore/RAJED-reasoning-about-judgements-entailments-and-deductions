@@ -112,7 +112,6 @@ Inductive b1rrules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
          (pair [] [A], bac)] ]
       [(pair H1 (K1l ++ K1r), d) ; (pair H2 (K2l ++ BBox A :: K2r), fwd)].
 
-(*
 Lemma gen_swapL_step_b1R_lc: forall V ps concl last_rule rules,
   last_rule = nslclrule (@b1rrules V) ->
   gen_swapL_step last_rule rules ps concl.
@@ -128,52 +127,32 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
   where the exchange might be relative to where the rule is active *)
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-(* swapping in antecedent of first sequent in skeleton rule *)
+(* swapping in antecedent of first sequent in rule skeleton *)
 + use_acm_2 acm rs swap WBox1Rs.
 + use_acm_2 acm rs swap BBox1Rs. }
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-(* swapping to the left of first sequent in skeleton rule *)
-+{
-derIrs rs.
- list_assoc_l'.
- apply NSlclctxt'.
- apply WBox1Rs.
- ms_cgs acm.
- destruct acm as [acm1 acm2]
-split.
-list_assoc_r'.
-eapply acm1. 
-exact swap.
-unfold nslclext.
-list_assoc_r'.
-reflexivity.
-reflexivity.
+(* swapping to the left of the sequents in rule skeleton *)
++ use_acm_2_ass acm rs swap WBox1Rs.
++ use_acm_2_ass acm rs swap BBox1Rs. }
 
-list_assoc_r'.
-eapply acm2. 
-exact swap.
-unfold nslclext.
-list_assoc_r'.
-reflexivity.
-reflexivity.
-}
-
- use_acm_os acm rs swap WBox1Rs.
-+ use_acm_os acm rs swap BBox1Rs. }
-(* case of exchange in sequent to the left of where rule applied *)
--{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
-    * use_acm_os acm rs swap WBox1Rs.
-    * { list_eq_nc. contradiction. }
-    }
-  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
-    * use_acm_os acm rs swap BBox1Rs.
-    * { list_eq_nc. contradiction. }
-    }
-  }
+  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+(* swapping in antecedent of first sequent in rule skeleton *)
+* use_acm_2 acm rs swap WBox1Rs.
+(* swapping in antecedent of second sequent in rule skeleton *)
+* use_acm_2_snd acm rs swap WBox1Rs.
+* { list_eq_nc. contradiction. }
+}
++{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+(* swapping in antecedent of first sequent in rule skeleton *)
+* use_acm_2 acm rs swap BBox1Rs.
+(* swapping in antecedent of second sequent in rule skeleton *)
+* use_acm_2_snd acm rs swap BBox1Rs.
+* { list_eq_nc. contradiction. }
+} }
+  
 Qed.
 
-Check gen_swapL_step_b2R_lc.
-*)
+Check gen_swapL_step_b1R_lc.
+
