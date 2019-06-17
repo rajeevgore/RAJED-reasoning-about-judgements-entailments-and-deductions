@@ -256,6 +256,11 @@ Lemma dersrec_map_single: forall X Y (f : X -> Y) rules prems c,
   dersrec rules prems (map f [c]) <-> derrec rules prems (f c).
 Proof.  intros.  simpl. rewrite dersrec_single. tauto. Qed.
 
+Lemma dersrec_map_2: forall X Y (f : X -> Y) rules prems c d,
+  dersrec rules prems (map f [c ; d]) <->
+    derrec rules prems (f c) /\ derrec rules prems (f d).
+Proof.  intros. rewrite dersrec_all. rewrite Forall_map_2. reflexivity. Qed.
+
 (* try using the induction principle derrec_all_ind *)
 Lemma derrec_rmono: forall W (rulesa rulesb : rls W) prems concl,
   rsub rulesa rulesb -> 

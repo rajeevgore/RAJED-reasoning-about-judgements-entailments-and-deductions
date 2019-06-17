@@ -8,8 +8,10 @@ Require Import lnt.
 Require Import lntacs.
 
 Ltac ms_cgs acm := 
-rewrite dersrec_map_single ;
-rewrite -> Forall_map_single in acm ;
+rewrite ?dersrec_map_2 ;
+rewrite ?dersrec_map_single ;
+rewrite -> ?Forall_map_single in acm ;
+rewrite -> ?Forall_map_2 in acm ;
 rewrite -> ?can_gen_swapL_def' in acm ;
 rewrite -> ?can_gen_swapR_def' in acm ;
 unfold nslclext ; unfold nslext.
@@ -77,4 +79,15 @@ eapply acm in swap ] ;
 [> eapply swap |
   unfold nslext ; unfold nslclext ; reflexivity |
   reflexivity ].
+
+Ltac use_acm_2 acm rs swap ith :=
+derIrs rs ; [>
+apply NSlclctxt' || apply NSlctxt2 ;
+apply ith |
+ms_cgs acm ;
+destruct acm as [acm1 acm2] ;
+split ; [> eapply acm1 ; [> exact swap | apply nslclext_def | reflexivity ] 
+  | eapply acm2 ; [> exact swap | apply nslclext_def | reflexivity ] ]
+].
+
 
