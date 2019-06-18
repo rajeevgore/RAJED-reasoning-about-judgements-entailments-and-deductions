@@ -87,8 +87,7 @@ Ltac use_acm_2 acm rs swap ith :=
 derIrs rs ; [>
 apply NSlclctxt' || apply NSlctxt2 ;
 apply ith |
-ms_cgs acm ;
-destruct acm as [acm1 acm2] ;
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
 split ; [> acmi_snr acm1 swap | acmi_snr acm2 swap ]
 ].
 
@@ -101,8 +100,7 @@ Ltac use_acm_2_ass acm rs swap ith :=
 derIrs rs ; [> list_assoc_l' ;
 apply NSlclctxt' || apply NSlctxt2 ;
 apply ith |
-ms_cgs acm ;
-destruct acm as [acm1 acm2] ;
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
 split ; [> acmi_snr_ass acm1 swap | acmi_snr_ass acm2 swap ]
 ].
 
@@ -115,10 +113,21 @@ Ltac use_acm_2_snd acm rs swap ith :=
 derIrs rs ; [> list_assoc_r' ;
 apply NSlclctxt' || apply NSlctxt2 ;
 apply ith |
-ms_cgs acm ;
-destruct acm as [acm1 acm2] ;
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
 split ; [> acmi_snr_snd acm1 swap | acmi_snr_snd acm2 swap ]
 ].
+
+Ltac acmi_snr_sw acmi swap := eapply acmi ;
+  [> | apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
+Ltac use_acm_2_sw acm rs swap rw ith :=
+derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+rw ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; [> acmi_snr_sw acm1 swap | acmi_snr_sw acm2 swap ]
+].
+
 
 
 

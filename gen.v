@@ -43,11 +43,19 @@ Proof. intros. subst. assumption. Qed.
 Lemma arg1_cong_imp: forall U V f x y z, x = y -> f (x : U) (z : V) -> f y z.
 Proof. intros. subst. assumption. Qed.
 
+(* iffD1, iffD2 for Type *)
 Lemma iffD1: forall x y, (x = y) -> x -> y.
 Proof. intros.  subst.  assumption. Qed.
 
 Lemma iffD2: forall x y, (x = y) -> y -> x.
 Proof. intros.  subst.  assumption. Qed.
+
+(* PiffD1, PiffD2 for Prop *)
+Lemma PiffD1: forall x y, (x <-> y) -> x -> y.
+Proof. intros.  rewrite -> H in H0.  assumption. Qed.
+
+Lemma PiffD2: forall x y, (x <-> y) -> y -> x.
+Proof. intros.  rewrite <- H in H0.  assumption. Qed.
 
 Definition rsub_imp U V (f g : U -> V -> Type) := iffD1 (@rsub_def U V f g).
 

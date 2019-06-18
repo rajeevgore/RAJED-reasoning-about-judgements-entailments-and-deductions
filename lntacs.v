@@ -179,6 +179,22 @@ Proof.  intros.  unfold iff.  split ; intros.
   unfold can_gen_swapR. intros. eapply H.
   2: exact H0.  2: exact H1. apply swapped_I'. Qed.
 
+Lemma can_gen_swapL_imp: forall {V : Set} 
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns,
+  can_gen_swapL rules ns -> forall G K seq Γ Δ Γ' (d : dir), 
+  swapped Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+    derrec rules (fun _ => False) (G ++ (pair Γ' Δ, d) :: K).
+Proof.  intros until 0. intro.
+  rewrite -> can_gen_swapL_def' in H. exact H. Qed.
+
+Lemma can_gen_swapR_imp: forall {V : Set} 
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns,
+  can_gen_swapR rules ns -> forall G K seq Γ Δ Δ' (d : dir), 
+  swapped Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+    derrec rules (fun _ => False) (G ++ (pair Γ Δ', d) :: K).
+Proof.  intros until 0. intro.
+  rewrite -> can_gen_swapR_def' in H. exact H. Qed.
+
 Lemma can_gen_moveL_mono: forall {V : Set}
   (rulesa rulesb : rls (list (rel (list (PropF V)) * dir))) ns,
   rsub rulesa rulesb ->
