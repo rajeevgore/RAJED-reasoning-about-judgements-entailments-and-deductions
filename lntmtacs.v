@@ -120,6 +120,9 @@ split ; [> acmi_snr_snd acm1 swap | acmi_snr_snd acm2 swap ]
 Ltac acmi_snr_sw acmi swap := eapply acmi ;
   [> | apply nslclext_def | reflexivity ] ; [> swap_tac ].
 
+Ltac acmi_snr_sw'' acmi swap rw3 rw4 := rw3 ; eapply acmi ;
+  [> | rw4 ; apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
 Ltac use_acm_2_sw acm rs swap rw ith :=
 derIrs rs ; [> 
 apply NSlclctxt' || apply NSlctxt2 ;
@@ -127,6 +130,31 @@ rw ; apply ith |
 ms_cgs acm ; destruct acm as [acm1 acm2] ; 
 split ; [> acmi_snr_sw acm1 swap | acmi_snr_sw acm2 swap ]
 ].
+
+Ltac use_acm_2_sw'' acm rs swap rw1 rw2 rw3 rw4 ith :=
+derIrs rs ; [> rw1 ;
+apply NSlclctxt' || apply NSlctxt2 ;
+rw2 ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; [> acmi_snr_sw'' acm1 swap rw3 rw4 | 
+        acmi_snr_sw'' acm2 swap rw3 rw4 ]
+].
+
+Ltac exchL2 rs sppc acm swap :=
+derIrs rs ; [> list_assoc_l' ;
+    apply NSlclctxt' || apply NSlctxt2 ; exact sppc | ] ;
+rewrite dersrec_forall ; intros L H ;
+rewrite -> in_map_iff in H ; destruct H ; destruct H as [H1 H2] ; subst ;
+rewrite -> Forall_forall in acm ; eapply in_map in H2 ; eapply acm in H2 ;
+eapply can_gen_swapL_imp in H2 || eapply can_gen_swapR_imp in H2 ;
+  [> | exact swap | | reflexivity ] ;
+  [> unfold nslclext ; list_assoc_r' ; exact H2
+    | unfold nslclext ; list_assoc_r' ; reflexivity].
+
+
+
+
+
 
 
 

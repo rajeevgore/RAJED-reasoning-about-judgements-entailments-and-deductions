@@ -326,6 +326,21 @@ Ltac acacD' :=
     | [ H : [] = _ :: _ |- _ ] => discriminate H
     end.
 
+Ltac acacDe' :=
+  match goal with
+    | [ H : _ ++ _ = _ ++ _ |- _ ] => apply app_eq_app in H ; sD
+    | [ H : _ :: _ = _ ++ _ |- _ ] => apply cons_eq_app in H ; sD
+    | [ H : _ ++ _ = _ :: _ |- _ ] => apply app_eq_cons in H ; sD
+    | [ H : _ :: _ = _ :: _ |- _ ] => injection H as ?H ?H 
+    | [ H : (_, _) = (_, _) |- _ ] => injection H as ?H ?H 
+    | [ H : _ :: _ = [] |- _ ] => discriminate H
+    | [ H : [] = _ :: _ |- _ ] => discriminate H
+    | [ H : _ ++ _ = [] |- _ ] => apply app_eq_nil in H
+    | [ H : [] = _ ++ _ |- _ ] => apply nil_eq_app in H
+    end.
+
+Ltac acacDe := repeat (sD' || acacDe').
+
 Ltac list_eq_nc :=
    match goal with
      | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H

@@ -35,7 +35,7 @@ unfold nslclext in nsc.
 rewrite can_gen_swapL_def'.  intros until 0. intros swap pp ss.
 unfold nslclext in pp. subst.
 
-acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
+acacDe ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
   where the exchange might be relative to where the rule is active *)
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
@@ -44,14 +44,10 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 (* case of exchange in sequent to the left of where rule applied *)
 -{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
-    * use_acm_os acm rs swap WBox2Rs.
-    * { list_eq_nc. contradiction. }
-    }
-  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
-    * use_acm_os acm rs swap BBox2Rs.
-    * { list_eq_nc. contradiction. }
-    }
+  +{ acacDe ; subst ; simpl ; rewrite ?app_nil_r ; (* 1 subgoal *)
+    use_acm_os acm rs swap WBox2Rs.  }
+  +{ acacDe ; subst ; simpl ; rewrite ?app_nil_r ; (* 1 subgoal *)
+    use_acm_os acm rs swap BBox2Rs.  }
   }
 Qed.
 
@@ -82,18 +78,16 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 -{ inversion sppc ; subst ; clear sppc.  (* 2 subgoals *)
 (* WBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
-*{ inversion_clear swap. subst.
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 1 subgoal *)
+  inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-    use_acm1 acm rs WBox2Rs. }
-*{ list_eq_nc. contradiction. }
+    use_acm1 acm rs WBox2Rs. 
 }
 (* BBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
-*{ inversion_clear swap. subst.
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 1 subgoal *)
+  inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
-    use_acm1 acm rs BBox2Rs. }
-*{ list_eq_nc. contradiction. }
+    use_acm1 acm rs BBox2Rs. 
 } }
 Qed.
 
@@ -137,26 +131,23 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 + use_acm_2_ass acm rs swap BBox1Rs. }
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
+  +{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 (* swapping in antecedent of first sequent in rule skeleton *)
 * use_acm_2 acm rs swap WBox1Rs.
 (* swapping in antecedent of second sequent in rule skeleton *)
 * use_acm_2_snd acm rs swap WBox1Rs.
-* { list_eq_nc. contradiction. }
 }
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 (* swapping in antecedent of first sequent in rule skeleton *)
 * use_acm_2 acm rs swap BBox1Rs.
 (* swapping in antecedent of second sequent in rule skeleton *)
 * use_acm_2_snd acm rs swap BBox1Rs.
-* { list_eq_nc. contradiction. }
 } }
   
 Qed.
 
 Check gen_swapL_step_b1R_lc.
 
-(*
 Lemma gen_swapR_step_b1R_lc: forall V ps concl last_rule rules,
   last_rule = nslclrule (@b1rrules V) ->
   gen_swapR_step last_rule rules ps concl.
@@ -188,32 +179,11 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 } 
 }
 (* case of exchange in sequent to the left of where rule applied,
-  no need to expand sppc *) 
--{ 
-list_assoc_l'.
-derIrs rs.
-apply NSlctxt2 || apply NSlclctxt'.
-exact sppc.
-rewrite dersrec_forall.
-intros.
-rewrite -> in_map_iff in H. destruct H. destruct H. subst.
-rewrite -> Forall_forall in acm.
-eapply in_map in H0.
-eapply acm in H0.
-eapply can_gen_swapR_imp in H0.
-2: exact swap.
-3: reflexivity.
-all: cycle 1.
-unfold nslclext.
-list_assoc_r'.
-reflexivity.
-unfold nslclext.
-list_assoc_r'.
-exact H0.
-}
+  no need to expand sppc - check where else this may hold *) 
+- exchL2 rs sppc acm swap. 
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals, WBox and BBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 (* swap in first sequent in rule skeleton *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
@@ -224,44 +194,30 @@ exact H0.
 }
 (* swap in second sequent in rule skeleton *)
 *{ inversion_clear swap. subst.
-  acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 10 subgoals *)
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acm_2_sw'' acm rs swap ltac: (list_assoc_r' ; simpl) assoc_single_mid
+    ltac: (rewrite list_rearr16') ltac: (rewrite - list_rearr16') WBox1Rs. }
 
-{
-(* no swap required - why ?
- NB - should investigate where else this might be the case *)
-derIrs rs.
-list_assoc_r'. simpl.
-apply NSlclctxt' || apply NSlctxt2
-assoc_single_mid.
-apply WBox1Rs.
-ms_cgs acm ; destruct acm as [acm1 acm2] ;
-split ;
-eapply acm1.
-apply swapped_same.
-apply nslclext_def.
-reflexivity.
 }
 
-{
-derIrs rs.
-apply NSlclctxt' || apply NSlctxt2
-assoc_single_mid.
-apply WBox1Rs.
-ms_cgs acm ; destruct acm as [acm1 acm2] ;
-split ;
-rewrite list_rearr16'.
-eapply acm1.
-2: rewrite - list_rearr16'.
-2: apply nslclext_def.
-2: reflexivity.
-swap_tac.
-
-rewrite list_rearr16'.
-eapply acm2.
-2: rewrite - list_rearr16'.
-2: apply nslclext_def.
-2: reflexivity.
-swap_tac.
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+(* swap in first sequent in rule skeleton *)
+*{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
+** use_acm_2_sw acm rs swap ltac: (assoc_mid H3) BBox1Rs.
+** use_acm_2_sw acm rs swap ltac: (assoc_mid H5) BBox1Rs.
+** use_acm_2_sw acm rs swap list_assoc_l' BBox1Rs.
+** use_acm_2_sw acm rs swap ltac: (assoc_mid H) BBox1Rs.
 }
+(* swap in second sequent in rule skeleton *)
+*{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acm_2_sw'' acm rs swap ltac: (list_assoc_r' ; simpl) assoc_single_mid
+    ltac: (rewrite list_rearr16') ltac: (rewrite - list_rearr16') BBox1Rs. }
 
-*)
+}
+}
+Qed.
+
+Check gen_swapR_step_b1R_lc.
+
