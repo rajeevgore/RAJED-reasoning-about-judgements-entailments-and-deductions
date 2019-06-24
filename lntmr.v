@@ -74,15 +74,13 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 -{ nsgen_sw rs sppc pp (Γ', Δ, d) acm inps0 swap. }
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ use_acm_sw_sep acm rs swap WDiaRs. }
 *{ use_acm_sw_sep acm rs swap WDiaRs. }
-*{ list_eq_nc. contradiction. }
 }
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ use_acm_sw_sep acm rs swap BDiaRs. }
 *{ use_acm_sw_sep acm rs swap BDiaRs. }
-*{ list_eq_nc. contradiction. }
 }
 }
 
@@ -182,7 +180,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 6 subgoals, the various locs
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
 (* WDia *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
   use_acm1 acm rs WDiaRs. }
@@ -196,13 +194,11 @@ acacD' ; subst.
 { use_acm2s acm rs WDiaRs ltac: (assoc_mid H3). }
 { use_acm2s acm rs WDiaRs list_assoc_l'. }
 { use_acm2s acm rs WDiaRs ltac: (assoc_mid H). }
-}
-
-*{ list_eq_nc. contradiction. }
+} 
 }
 
 (* BDia *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
   use_acm1 acm rs BDiaRs. }
@@ -217,8 +213,6 @@ acacD' ; subst.
 { use_acm2s acm rs BDiaRs list_assoc_l'. }
 { use_acm2s acm rs BDiaRs ltac: (assoc_mid H). }
 }
-
-*{ list_eq_nc. contradiction. }
 }
 }
 (* another case of exchange in sequent to the right of where rule applied *)

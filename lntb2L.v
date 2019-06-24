@@ -64,7 +64,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
 (* WBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
   ** use_acm2s acm rs WBox2Ls ltac: (assoc_mid H1). 
@@ -79,11 +79,10 @@ acacD' ; subst ; simpl ; rewrite ?app_nil_r ;
 (* 10 subgoals, cases of where swapping occurs in conclusion,
  but swap does not appear in premises *)
 use_drs_mid rs drs WBox2Ls. }
-*{ list_eq_nc. contradiction. }
 }
 
 (* BBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ inversion_clear swap. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
   ** use_acm2s acm rs BBox2Ls ltac: (assoc_mid H1). 
@@ -98,7 +97,6 @@ acacD' ; subst ; simpl ; rewrite ?app_nil_r ;
 (* 10 subgoals, cases of where swapping occurs in conclusion,
  but swap does not appear in premises *)
 use_drs_mid rs drs BBox2Ls. }
-*{ list_eq_nc. contradiction. }
 }
 }
 Qed.
@@ -125,15 +123,13 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
-*{ use_acm_sw_sep acm rs swap WBox2Ls. }
-*{ use_drs rs drs WBox2Ls. }
-*{ list_eq_nc. contradiction. }
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+* use_acm_sw_sep acm rs swap WBox2Ls.
+* use_drs rs drs WBox2Ls.
 }
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
-*{ use_acm_sw_sep acm rs swap BBox2Ls. }
-*{ use_drs rs drs BBox2Ls. }
-*{ list_eq_nc. contradiction. }
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+* use_acm_sw_sep acm rs swap BBox2Ls.
+* use_drs rs drs BBox2Ls.
 }
 }  
 

@@ -376,13 +376,11 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 (* case of exchange in sequent to the left of where rule applied *)
 -{ nsgen_sw_weak rs sppc c (Γ', Δ, d) acm inps0 weak. }
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+  +{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 1 subgoals *)
     * use_acm_os_weak acm rs weak WBox2Rs.
-    * { list_eq_nc. contradiction. }
     }
-  +{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+  +{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 1 subgoals *)
     * use_acm_os_weak acm rs weak BBox2Rs.
-    * { list_eq_nc. contradiction. }
     }
   }
 Qed.
@@ -413,18 +411,16 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ nsgen_sw_weak rs sppc c (Γ, Δ', d) acm inps0 weak. }
 -{ inversion sppc ; subst ; clear sppc.  (* 2 subgoals *)
 (* WBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 1 subgoals *)
 *{ inversion_clear weak. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
     use_acm1_weak acm rs WBox2Rs. }
-*{ list_eq_nc. contradiction. }
 }
 (* BBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 1 subgoals *)
 *{ inversion_clear weak. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
     use_acm1_weak acm rs BBox2Rs. }
-*{ list_eq_nc. contradiction. }
 } }
 Qed.
 
@@ -487,7 +483,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
 (* WBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ inversion_clear weak. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
   use_acm1_weak acm rs WBox1Ls. }
@@ -501,12 +497,10 @@ acacD' ; subst.
 
   use_acm2s_weak acm rs WBox1Ls ltac: (assoc_mid H). }
 (* { use_acm2s_weak acm rs WBox1Ls ltac: (assoc_mid H). } } *)
-
-*{ list_eq_nc. contradiction. }
 }
 
 (* BBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ inversion_clear weak. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
   use_acm1_weak acm rs BBox1Ls. }
@@ -518,8 +512,6 @@ acacD' ; subst.
   of context in conclusion (where no principal formula) *)
 { use_acm2s_weak acm rs BBox1Ls ltac: (do 2 rewrite app_assoc). }
 { use_acm2s_weak acm rs BBox1Ls ltac: (assoc_mid H). } }
-
-*{ list_eq_nc. contradiction. }
 }
 }
 Qed.
@@ -544,15 +536,13 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ nsgen_sw_weak rs sppc c (Γ, Δ', d) acm inps0 weak. }
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ use_acm_sw_sep_weak acm rs weak WBox1Ls. }
 *{ use_acm_sw_sep_weak acm rs weak WBox1Ls. }
-*{ list_eq_nc. contradiction. }
 }
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ use_acm_sw_sep_weak acm rs weak BBox1Ls. }
 *{ use_acm_sw_sep_weak acm rs weak BBox1Ls. }
-*{ list_eq_nc. contradiction. }
 }
 }  
 
@@ -596,7 +586,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 
 (* WBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ inversion_clear weak. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
   ** use_acm2s_weak acm rs WBox2Ls ltac: (do 2 rewrite app_assoc). 
@@ -609,11 +599,10 @@ acacD' ; subst ; simpl ; rewrite ?app_nil_r ;
 (* 10 subgoals, cases of where swapping occurs in conclusion,
  but swap does not appear in premises *)
 use_drs_mid rs drs WBox2Ls. }
-*{ list_eq_nc. contradiction. }
 }
 
 (* BBox *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ inversion_clear weak. subst.
   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
   ** use_acm2s_weak acm rs BBox2Ls ltac: (do 2 rewrite app_assoc). 
@@ -626,7 +615,6 @@ acacD' ; subst ; simpl ; rewrite ?app_nil_r ;
 (* 10 subgoals, cases of where swapping occurs in conclusion,
  but swap does not appear in premises *)
 use_drs_mid rs drs BBox2Ls. }
-*{ list_eq_nc. contradiction. }
 }
 }
 Qed.
@@ -651,15 +639,13 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ nsgen_sw_weak rs sppc c (Γ, Δ', d) acm inps0 weak. }
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ use_acm_sw_sep_weak acm rs weak WBox2Ls. }
 *{ use_drs rs drs WBox2Ls. }
-*{ list_eq_nc. contradiction. }
 }
-+{ acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 3 subgoals *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
 *{ use_acm_sw_sep_weak acm rs weak BBox2Ls. }
 *{ use_drs rs drs BBox2Ls. }
-*{ list_eq_nc. contradiction. }
 }
 }  
 Qed.
