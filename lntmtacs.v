@@ -140,6 +140,8 @@ split ; [> acmi_snr_sw'' acm1 swap rw3 rw4 |
         acmi_snr_sw'' acm2 swap rw3 rw4 ]
 ].
 
+(* case of exchange in sequent to the left of where rule applied,
+  no need to expand sppc *) 
 Ltac exchL2 rs sppc acm swap :=
 derIrs rs ; [> list_assoc_l' ;
     apply NSlclctxt' || apply NSlctxt2 ; exact sppc | ] ;

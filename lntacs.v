@@ -442,9 +442,11 @@ apply derI with pse ; [
   unfold nsext ; subst K ; subst seq ;
   list_eq_assoc ].
 
-(* for using swap for propositional rules,
-  for the case when the rule affects a list of
-  sequents or a single sequent, plus context (ie nslext or nsext *)
+(* for using swap in the case when the rule affects a list of
+  sequents or a single sequent, plus context (ie nslext or nsext), and
+  the operation of the rule is distinct from the sequent where the swap is;
+  note, where the context is on the left only,
+  exchL2 rs sppc acm swap. generally seems to work also *)
 Ltac nsgen_sw rs sppc c c' acm inps0 swap :=
 derIrs rs ; [>
   (assoc_mid c ; apply NSlctxt') ||

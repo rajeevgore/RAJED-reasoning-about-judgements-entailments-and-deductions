@@ -181,7 +181,8 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
   use_acm1 acm rs BBox1Ls. }
   }
 
-(* case of exchange in sequent to the left of where rule applied *)
+(* case of exchange in sequent to the left of where rule applied,
+  also can use exchL2 rs sppc acm swap. *)
 -{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 
 (* here, swap in either of the two sequents affected by the rule *)
@@ -244,6 +245,8 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ inversion sppc ; subst ; [> 
   use_acm_sw_sep acm rs swap WBox1Ls |
   use_acm_sw_sep acm rs swap BBox1Ls ]. }
+(* case of exchange in sequent to the left of where rule applied,
+  also can use exchL2 rs sppc acm swap. *)
 -{ nsgen_sw rs sppc c (Γ, Δ', d) acm inps0 swap. }
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)

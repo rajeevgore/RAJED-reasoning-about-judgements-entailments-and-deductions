@@ -41,7 +41,8 @@ acacDe ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 + use_acm_os acm rs swap WBox2Rs.
 + use_acm_os acm rs swap BBox2Rs. }
-(* case of exchange in sequent to the left of where rule applied *)
+(* case of exchange in sequent to the left of where rule applied
+  note, this works here also - exchL2 rs sppc acm swap. *)
 -{ nsgen_sw rs sppc c (Γ', Δ, d) acm inps0 swap. }
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
   +{ acacDe ; subst ; simpl ; rewrite ?app_nil_r ; (* 1 subgoal *)
@@ -125,10 +126,9 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 + use_acm_2 acm rs swap WBox1Rs.
 + use_acm_2 acm rs swap BBox1Rs. }
 
--{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
-(* swapping to the left of the sequents in rule skeleton *)
-+ use_acm_2_ass acm rs swap WBox1Rs.
-+ use_acm_2_ass acm rs swap BBox1Rs. }
+(* case of exchange in sequent to the left of where rule applied,
+  no need to expand sppc *) 
+- exchL2 rs sppc acm swap.
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
   +{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
@@ -179,7 +179,7 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 } 
 }
 (* case of exchange in sequent to the left of where rule applied,
-  no need to expand sppc - check where else this may hold *) 
+  no need to expand sppc *) 
 - exchL2 rs sppc acm swap. 
 
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals, WBox and BBox *)
