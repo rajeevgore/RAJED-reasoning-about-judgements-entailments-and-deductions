@@ -23,8 +23,7 @@ lntb1L.vo : lntbR.vo lntb1L.v
 
 lntb2L.vo : lntb1L.vo lntb2L.v 
 
-
-
+lntkt_exch.vo : lntb1L.vo lntb2L.vo lntbR.vo lntkt_exch.v
 
 
 clean : 
