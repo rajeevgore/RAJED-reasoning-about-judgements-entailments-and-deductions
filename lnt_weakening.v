@@ -649,3 +649,429 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 }
 }  
 Qed.
+
+
+(* ---------------------- *)
+(* WEAKENING FOR B1RRULES *)
+(* ---------------------- *)
+Require Import lntkt_exch.
+
+Lemma cons_singleton : forall {A : Type} (l : list A) a,
+    a :: l = [a] ++ l.
+Proof. induction l; intros b; firstorder. Qed.
+
+
+Ltac list_cons_singleton a := repeat rewrite (cons_singleton _ a).
+Ltac tac_cons_singleton_arg a l :=
+    match l with
+    | nil => idtac
+    | _ => rewrite (cons_singleton l a)
+    end.
+
+Ltac tac_cons_singleton :=
+  repeat
+  match goal with
+   | [ |- context [?a :: ?l]] => progress (tac_cons_singleton_arg a l)
+  end.
+
+Ltac acmi_snr_sw_weak acmi := eapply acmi ;
+  [>  apply nslclext_def|] ;  [>swap_tac; reflexivity].
+
+Ltac use_acm_2_sw_weak_exch acm rs swap rw ith Hexch A B :=
+derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+rw ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split; [>
+        try tac_cons_singleton; eapply Hexch; auto | ];
+     assoc_mid B; [>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
+
+Ltac use_acm_2_sw_weak acm rs swap rw ith B :=
+derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+rw ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split; assoc_mid B; [>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
+
+Lemma can_gen_weakL_imp: forall {V : Set} 
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns,
+  can_gen_weakL rules ns -> forall G K seq Γ Δ Γ' (d : dir), 
+  weakened Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+    derrec rules (fun _ => False) (G ++ (pair Γ' Δ, d) :: K).
+Proof.  intros until 0. intro.
+  rewrite -> can_gen_weakL_def' in H. exact H. Qed.
+
+Lemma can_gen_weakR_imp: forall {V : Set} 
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns,
+  can_gen_weakR rules ns -> forall G K seq Γ Δ Δ' (d : dir), 
+  weakened Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+    derrec rules (fun _ => False) (G ++ (pair Γ Δ', d) :: K).
+Proof.  intros until 0. intro.
+  rewrite -> can_gen_weakR_def' in H. exact H. Qed.
+
+Ltac weakL2 rs sppc acm swap :=
+derIrs rs ; [> list_assoc_l' ;
+    apply NSlclctxt' || apply NSlctxt2 ; exact sppc | ] ;
+rewrite dersrec_forall ; intros L H ;
+rewrite -> in_map_iff in H ; destruct H ; destruct H as [H1 H2] ; subst ;
+rewrite -> Forall_forall in acm ; eapply in_map in H2 ; eapply acm in H2 ;
+eapply can_gen_weakL_imp in H2 || eapply can_gen_weakR_imp in H2 ;
+  [> | exact swap | | reflexivity ] ;
+  [> unfold nslclext ; list_assoc_r' ; exact H2
+    | unfold nslclext ; list_assoc_r' ; reflexivity].
+
+Ltac acmi_snr_sw''_weak acmi swap rw3 rw4 := rw3 ; eapply acmi ;
+  [> rw4 ;  apply nslclext_def | swap_tac; reflexivity ].
+
+Ltac use_acm_2_sw''_weak acm rs swap rw1 rw2 rw3 rw4 ith :=
+derIrs rs ; [> rw1 ;
+apply NSlclctxt' || apply NSlctxt2 ;
+rw2 ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; [> acmi_snr_sw''_weak acm1 swap rw3 rw4 | 
+        acmi_snr_sw''_weak acm2 swap rw3 rw4 ]
+            ].
+
+Lemma gen_weakR_step_b1R_lc: forall V ps concl last_rule rules,
+(forall (V : Set) ns
+  (D : derrec rules (fun _ => False) ns),
+      can_gen_swapR rules ns) ->
+  last_rule = nslclrule (@b1rrules V) ->
+  gen_weakR_step last_rule rules ps concl.
+Proof.  intros until 0. intros Hexch. unfold gen_weakR_step.
+intros lreq nsr drs acm rs. clear drs. subst.
+
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
+unfold nslclext in nsc.
+rewrite can_gen_weakR_def'.  intros until 0. intros swap pp ss.
+unfold nslclext in pp. subst.
+
+acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
+  where the exchange might be relative to where the rule is active *)
+
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals, WBox and BBox *)
++{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
+   * use_acm_2_sw_weak_exch acm rs swap ltac : (assoc_mid H) WBox1Rs Hexch A B.
+   * use_acm_2_sw_weak acm rs swap ltac : (assoc_mid H) WBox1Rs B.
+}
++{ inversion_clear swap. subst.
+   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
+   * use_acm_2_sw_weak_exch acm rs swap ltac : (assoc_mid H) BBox1Rs Hexch A B.
+   * use_acm_2_sw_weak acm rs swap ltac : (assoc_mid H) BBox1Rs B.
+} 
+}
+(* case of exchange in sequent to the left of where rule applied,
+  no need to expand sppc *) 
+- weakL2 rs sppc acm swap. 
+
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals, WBox and BBox *)
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+(* swap in first sequent in rule skeleton *)
+*{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
+** use_acm_2_sw_weak_exch acm rs swap ltac: (assoc_mid H) WBox1Rs Hexch A B.
+** use_acm_2_sw_weak acm rs swap ltac: (assoc_mid H) WBox1Rs B.
+}
+(* swap in second sequent in rule skeleton *)
+*{ inversion_clear swap. subst.
+   acacD' ; subst ; simpl ; rewrite ?app_nil_r . (* 10 subgoals *)
+  use_acm_2_sw''_weak acm rs swap ltac: (list_assoc_r' ; simpl) assoc_single_mid
+    ltac: (rewrite list_rearr16';assoc_mid B) ltac: (rewrite - list_rearr16') WBox1Rs. 
+  use_acm_2_sw''_weak acm rs swap ltac: (list_assoc_r' ; simpl) assoc_single_mid
+    ltac: (rewrite list_rearr16';assoc_mid B) ltac: (rewrite - list_rearr16') WBox1Rs. 
+  use_acm_2_sw''_weak acm rs swap ltac: (list_assoc_r' ; simpl) assoc_single_mid
+                                                                ltac: (rewrite list_rearr16';assoc_mid B) ltac: (rewrite - list_rearr16') WBox1Rs.
+}
+ }
+
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+(* swap in first sequent in rule skeleton *)
+*{ inversion_clear swap. subst.
+   acacD' ; subst ; simpl ; rewrite ?app_nil_r. (* 4 subgoals *)
+** use_acm_2_sw_weak_exch acm rs swap ltac: (assoc_mid H) BBox1Rs Hexch A B.
+** use_acm_2_sw_weak acm rs swap ltac: (assoc_mid H) BBox1Rs B.
+}
+(* swap in second sequent in rule skeleton *)
+*{ inversion_clear swap. subst.
+  acacD' ; subst ; simpl ; rewrite ?app_nil_r ; (* 10 subgoals *)
+  use_acm_2_sw''_weak acm rs swap ltac: (list_assoc_r' ; simpl) assoc_single_mid
+    ltac: (rewrite list_rearr16'; assoc_mid B) ltac: (rewrite - list_rearr16') BBox1Rs. }
+}
+}
+Qed.
+
+(* 
+* use_acm_2_sw acm rs swap ltac: (assoc_mid H1) BBox1Rs.
+* use_acm_2_sw acm rs swap ltac: (assoc_mid H4) BBox1Rs.
+* use_acm_2_sw acm rs swap list_assoc_l' BBox1Rs.
+* use_acm_2_sw acm rs swap ltac: (assoc_mid H) BBox1Rs.
+*)
+
+ (*
+** use_acm_2_sw acm rs swap list_assoc_l' WBox1Rs.
+** use_acm_2_sw acm rs swap ltac: (assoc_mid H) WBox1Rs.
+*)
+
+(* 
+  derIrs rs ; [> (list_assoc_r';simpl) ;
+apply NSlclctxt' || apply NSlctxt2 ;
+assoc_single_mid ; apply WBox1Rs |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ].
+
+acmi_snr_sw''_weak acm1 swap ltac : (rewrite list_rearr16'; assoc_mid B)
+                                      ltac : (rewrite - list_rearr16').
+acmi_snr_sw''_weak acm2 swap ltac : (rewrite list_rearr16'; assoc_mid B)
+                                      ltac : (rewrite - list_rearr16').
+
+
+rewrite list_rearr16'; assoc_mid B ; eapply acm1 ;
+  [> rewrite - list_rearr16';  apply nslclext_def | swap_tac; reflexivity].
+
+
+
+
+
+rewrite list_rearr16'; assoc_mid B ; eapply acm1 ;
+[>rewrite - list_rearr16';  apply nslclext_def | swap_tac; reflexivity].
+
+
+2 : reflexivity. swap_tac. apply nslclext_def.
+  [>  apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
+
+acmi_snr_sw''_weak acm1 swap ltac: (rewrite list_rearr16'; assoc_mid B)
+                                     ltac : (rewrite - list_rearr16').
+   
+
+rewrite list_rearr16'.
+assoc_mid B.
+eapply acm1.
+rewrite - list_rearr16'.
+apply nslclext_def. swap_tac. reflexivity.
+
+
+rewrite list_rearr16' ; eapply acm1.
+  [> | rw4 ; apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
+acmi_snr_sw'' acm1 swap ltac : (rewrite list_rearr16') ltac : (rewrite - list_rearr16').
+[> acmi_snr_sw'' acm1 swap ltac : (rewrite list_rearr16') ltac : (rewrite - list_rearr16') | 
+        acmi_snr_sw'' acm2 swap rw3 rw4 ]
+            ].
+
+   
+  use_acm_2_sw'' acm rs swap ltac: (list_assoc_r' ; simpl) assoc_single_mid
+    ltac: (rewrite list_rearr16';assoc_mid B) ltac: (rewrite - list_rearr16') WBox1Rs. }
+
+}
+*)
+
+(*   
+** use_acm_2_sw_weak acm rs swap ltac: (assoc_mid H) BBox1Rs.
+** use_acm_2_sw acm rs swap ltac: (assoc_mid H5) BBox1Rs.
+** use_acm_2_sw acm rs swap list_assoc_l' BBox1Rs.
+** use_acm_2_sw acm rs swap ltac: (assoc_mid H) BBox1Rs.
+*)
+
+
+(*
+     use_acm_2_sw acm rs swap ltac: (assoc_mid H1) WBox1Rs.
+     *)
+(*
+     derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+assoc_mid H ; apply WBox1Rs |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split; assoc_mid B; [>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
+
+
+     derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+(assoc_mid H) ; apply WBox1Rs |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ]. assoc_mid B.
+unfold can_gen_weakR in acm1. 
+eapply acm1. 2 : reflexivity.
+[>
+        try tac_cons_singleton; auto | ];
+assoc_mid B ].
+eapply acm1. 2:reflexivity. swap_tac. apply nslclext_def. ;
+  [>  apply nslclext_def|] ;  [>swap_tac; idtac].
+
+acmi_snr_sw_weak acm1.
+[>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
+
+
+
+
+
+     use_acm_2_sw_weak acm rs swap ltac: (assoc_mid H) WBox1Rs Hexch A B.
+ *)
+     (*
+* use_acm_2_sw acm rs swap list_assoc_l' WBox1Rs.
+* use_acm_2_sw acm rs swap ltac: (assoc_mid H) WBox1Rs. *)
+
+(*     derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+assoc_mid H ; apply WBox1Rs |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split
+
+     ; [> 
+        rewrite (lem _ A); eapply Hexch; auto | ];
+     assoc_mid B; [> acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2] ].
+     use_acm_2_sw_weak acm rs swap ltac : (assoc_mid H) WBox1Rs.
+
+     derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+assoc_mid H ; apply WBox1Rs |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split
+
+     ; [> 
+        rewrite (lem _ A); eapply Hexch; auto | ]];
+     assoc_mid B; [> acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2].
+
+
+
+; [> acmi_snr_sw acm1 swap | acmi_snr_sw acm2 swap ]
+].
+
+     eapply acm1 ; [>
+                    apply nslclext_def|] ;
+     [>swap_tac; reflexivity] |
+     eapply acm2     ; [>
+                    apply nslclext_def|] ;
+     [>swap_tac; reflexivity]].
+
+     ; [> 
+        rewrite (lem _ A); eapply Hexch; auto | ]];
+     assoc_mid B; [
+     eapply acm1 ; [>
+                    apply nslclext_def|] ;
+     [>swap_tac; reflexivity] |
+     eapply acm2     ; [>
+                    apply nslclext_def|] ;
+     [>swap_tac; reflexivity]].
+  [>  | apply nslclext_def  | reflexivity ] ; [> swap_tac ].
+     ;
+acmi_snr_sw acm1 swap | acmi_snr_sw acm2 swap ]
+                 ].
+
+     Ltac acmi_snr_sw_weak acmi swap :=
+     change (A :: H ++ K1r) with ( [A] ++ H ++ K1r).
+
+       eapply acmi ;
+  [> | apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
+     derIrs rs. apply NSlclctxt'.
+     assoc_mid H.
+     apply WBox1Rs.
+     
+     ms_cgs acm.
+     destruct acm as [acm1 acm2].
+     split. rewrite (lem _ A).
+     eapply Hexch.
+     auto. 2-3 : reflexivity.
+     assoc_mid B.
+     eapply acm1 . apply nslclext_def; reflexivity.
+     swap_tac. reflexivity.
+
+     assoc_mid B.
+     eapply acm2.
+     apply nslclext_def. swap_tac. reflexivity.
+
+   *
+
+     use_acm_2_sw acm rs swap ltac: (assoc_mid H1) WBox1Rs.
+
+Ltac acmi_snr_sw acmi swap := eapply acmi ;
+  [> | apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
+     Ltac use_acm_2_sw acm rs swap rw ith :=
+derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+rw ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; [> acmi_snr_sw acm1 swap | acmi_snr_sw acm2 swap ]
+].
+
+     *
+     
+  [> | apply nslclext_def | reflexivity ] ; [> swap_tac ].
+     acmi_snr_sw acm2 swap.
+     
+     unfold can_gen_weakR in acm2.
+     change (A :: H ++ K1r) with ( [A] ++ H ++ K1r).
+     unfold can_gen_swapR in Hexch.
+     eapply Hexch.
+     auto. 2-3 : reflexivity.
+     assoc_mid B.
+     eapply acm1 . apply nslclext_def; reflexivity.
+     swap_tac. reflexivity.
+
+     
+  [> | apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
+     assert (
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+    (G0 ++ [(Γ, A0 ++ B ++ H ++ A :: K1r, d); (H2, K2l ++ WBox A :: K2r, bac)]) ->
+         derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+                (G0 ++ [(Γ, A0 ++ B ++ (A :: H) ++ K1r, d); (H2, K2l ++ WBox A :: K2r, bac)])) as Hass.
+     intros HH.
+     pose proof LNSKt_exchR as HH2.
+     unfold can_gen_swapR in HH2.
+     eapply HH2.
+     
+     eapply acm1 . apply nslclext_def; reflexivity.
+     swap_tac.
+  [> | apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
+
+     Ltac acmi_snr_sw acmi swap := eapply acmi ;
+  [> | apply nslclext_def | reflexivity ] ; [> swap_tac ].
+
+     
+       acmi_snr_sw acm1 swap. | acmi_snr_sw acm2 swap ].
+     
+     apply NSlctxt2.
+     ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+rw ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; [> acmi_snr_sw acm1 swap | acmi_snr_sw acm2 swap ]
+].
+
+
+
+ *)
+
+
+(*
+Ltac use_acm_2_sw_weak acm rs swap rw ith Hexch A B :=
+derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+rw ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split; [>
+        rewrite (cons_singleton _ A); eapply Hexch; auto | ];
+     assoc_mid B; [>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
+ *)
+
+(*
+    match l with
+    | nil => idtac
+    | _ => rewrite (cons_singleton l a)
+    end
+      end.
+*)
+
+  
+(*
+Ltac list_assoc_l' := repeat (rewrite !app_assoc || rewrite !app_comm_cons).
+Ltac list_assoc_r' :=
+  repeat (rewrite - !app_assoc || rewrite - !app_comm_cons).
+*)
+(* Write a tactic that replaces every instance of (x :: l) with ([x]++l).
+Then replace "rewrite (lem _ A)" with that tactic. *)
