@@ -5,6 +5,7 @@ Require Import dd.
 Require Import List_lemmas.
 Require Import lnt lntacs lntls lntbR lntmtacs.
 Require Import lntb1L lntb2L.
+Require Import lntkt_exch.
 
 
 Inductive weakened {T} : list T -> list T -> Prop :=
@@ -654,12 +655,10 @@ Qed.
 (* ---------------------- *)
 (* WEAKENING FOR B1RRULES *)
 (* ---------------------- *)
-Require Import lntkt_exch.
 
 Lemma cons_singleton : forall {A : Type} (l : list A) a,
     a :: l = [a] ++ l.
 Proof. induction l; intros b; firstorder. Qed.
-
 
 Ltac list_cons_singleton a := repeat rewrite (cons_singleton _ a).
 Ltac tac_cons_singleton_arg a l :=
@@ -732,6 +731,72 @@ split ; [> acmi_snr_sw''_weak acm1 swap rw3 rw4 |
         acmi_snr_sw''_weak acm2 swap rw3 rw4 ]
             ].
 
+Ltac acmi_snr_weak acmi swap := 
+  eapply acmi ; [> apply nslclext_def | reflexivity ].
+
+Ltac use_acm_2_weak acm rs swap ith :=
+derIrs rs ; [>
+apply NSlclctxt' || apply NSlctxt2 ;
+apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; inversion swap; subst;
+[> acmi_snr_weak acm1 swap | acmi_snr_weak acm2 swap ]
+].     
+
+Ltac acmi_snr_snd_weak acmi swap := rewrite list_rearr16' ; eapply acmi ;
+  [>  list_assoc_r' ; simpl ; apply nslclext_def |
+    reflexivity ].
+
+Ltac use_acm_2_snd_weak acm rs swap ith :=
+derIrs rs ; [> list_assoc_r' ;
+apply NSlclctxt' || apply NSlctxt2 ;
+apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; inversion swap; subst;
+[> acmi_snr_snd_weak acm1 swap | acmi_snr_snd_weak acm2 swap ]
+            ].
+
+Lemma gen_weakL_step_b1R_lc: forall V ps concl last_rule rules,
+  last_rule = nslclrule (@b1rrules V) ->
+  gen_weakL_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_swapL_step.
+intros lreq nsr drs acm rs. clear drs. subst.
+
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
+unfold nslclext in nsc.
+rewrite can_gen_weakL_def'.  intros until 0. intros swap pp ss.
+unfold nslclext in pp. subst.
+
+acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
+  where the exchange might be relative to where the rule is active *)
+
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+(* swapping in antecedent of first sequent in rule skeleton *)
+   + use_acm_2_weak acm rs swap WBox1Rs.
+
++ use_acm_2_weak acm rs swap BBox1Rs. }
+
+(* case of exchange in sequent to the left of where rule applied,
+  no need to expand sppc *) 
+- weakL2 rs sppc acm swap.
+
+-{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
+  +{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+(* swapping in antecedent of first sequent in rule skeleton *)
+* use_acm_2_weak acm rs swap WBox1Rs.
+(* swapping in antecedent of second sequent in rule skeleton *)
+* use_acm_2_snd_weak acm rs swap WBox1Rs.
+
+}
++{ acacDe ; subst ; simpl ; rewrite ?app_nil_r. (* 2 subgoals *)
+(* swapping in antecedent of first sequent in rule skeleton *)
+* use_acm_2_weak acm rs swap BBox1Rs.
+(* swapping in antecedent of second sequent in rule skeleton *)
+* use_acm_2_snd_weak acm rs swap BBox1Rs.
+} }
+  
+Qed.
+
 Lemma gen_weakR_step_b1R_lc: forall V ps concl last_rule rules,
 (forall (V : Set) ns
   (D : derrec rules (fun _ => False) ns),
@@ -800,3 +865,95 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 }
 }
 Qed.
+
+
+
+(*
+derIrs rs ; [>
+apply NSlclctxt' || apply NSlctxt2 ;
+apply WBox1Rs |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split; inversion swap; subst];
+[> eapply acm1; [> apply nslclext_def | reflexivity] |
+eapply acm2; [> apply nslclext_def | reflexivity]].
+acmi_snr acm1 swap.
+[> acmi_snr acm1 swap | acmi_snr acm2 swap ]
+].     
+
+
+  
+acmi_snr_weak acm1 swap.
+acmi_snr_weak acm2 swap.
+eapply acm1.
+apply nslclext_def.
+acmi_snr acm1 swap.
+
+unfold can_gen_weakL in acm1.
+
+  eapply acm1. ; [> exact swap | apply nslclext_def | reflexivity ].
+
+
+acmi_snr acm1 swap.
+
+; [> acmi_snr acm1 swap | acmi_snr acm2 swap ]
+].
+
+Ltac acmi_snr acmi swap := 
+  eapply acmi ; [> exact swap | apply nslclext_def | reflexivity ].
+
+ 
+Ltac use_acm_2 acm rs swap ith :=
+derIrs rs ; [>
+apply NSlclctxt' || apply NSlctxt2 ;
+apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; [> acmi_snr acm1 swap | acmi_snr acm2 swap ]
+].     
+
+(*     eapply Forall_forall in acm. 
+     eapply can_gen_weakL_imp.
+     2:exact swap.
+     2-3: reflexivity.
+     unfold can_gen_weakL.
+     intros G K seq d0 Γ1 Γ2 Γ3 Δ HH1 HH2.
+     subst.
+     exact acm. exact swap.
+     apply nslclext_def. 
+
+     eapply can_gen_weakL_imp.
+     eapply Forall_forall in acm.
+     exact acm.
+     2 : exact swap.
+     2-3 : reflexivity.
+     simpl. right.
+     SearchAbout Forall.
+SearchAbout  can_gen_swapL swapped. *)
+     use_acm_2 acm rs swap WBox1Rs. *)
+
+(*
+derIrs rs ; [> list_assoc_r' ;
+apply NSlclctxt' || apply NSlctxt2 ;
+apply WBox1Rs |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split].
+inversion swap; subst.
+
+rewrite list_rearr16'; eapply acm1.
+
+acmi_snr_snd acm1 swap.
+rewrite list_rearr16'.
+unfold can_gen_weakL in acm1.
+
+; eapply acm1 ;
+  [> exact swap | 
+    list_assoc_r' ; simpl ; apply nslclext_def |
+    reflexivity ].
+acmi_snr_snd acm1 swap.
+; [> acmi_snr_snd acm1 swap | acmi_snr_snd acm2 swap ]
+].
+
+
+
+
+  use_acm_2_snd acm rs swap WBox1Rs.
+*)
