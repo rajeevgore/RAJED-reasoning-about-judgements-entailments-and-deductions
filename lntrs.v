@@ -148,16 +148,16 @@ Check gen_swapR_step_roe_lc.
 
 Lemma gen_swapR_step_pr_lc: forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
-  last_rule = nslcrule (seqrule (@princrule V)) ->
+  last_rule = nslcrule (seqrule (@princrule_pfc V)) ->
   gen_swapR_step last_rule rules ps concl.
 Proof.  intros. eapply gen_swapR_step_roe_lc.
-  apply princrule_R_oe'. exact H. Qed.
+  apply princrule_pfc_R_oe'. exact H. Qed.
 
 Check gen_swapR_step_pr_lc.
 
 Lemma gen_swapR_lc: forall {V : Set} ns
-  (D : derrec (nslcrule (seqrule (@princrule V))) (fun _ => False) ns),
-  can_gen_swapR (nslcrule (seqrule (@princrule V))) ns.
+  (D : derrec (nslcrule (seqrule (@princrule_pfc V))) (fun _ => False) ns),
+  can_gen_swapR (nslcrule (seqrule (@princrule_pfc V))) ns.
 
 Proof. 
 intro.  intro.  intro.

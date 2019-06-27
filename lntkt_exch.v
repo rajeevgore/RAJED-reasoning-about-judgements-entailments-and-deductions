@@ -92,7 +92,7 @@ Inductive LNSKt_rules (V : Set) : rls (list (rel (list (PropF V)) * dir)) :=
   | b1l : forall ps c, nslclrule (@b1lrules V) ps c -> LNSKt_rules ps c
   | nEW : forall ps c, nslclrule (@EW_rule V) ps c -> LNSKt_rules ps c
   | prop : forall ps c, 
-    nslcrule (seqrule (@princrule V)) ps c -> LNSKt_rules ps c.
+    nslcrule (seqrule (@princrule_pfc V)) ps c -> LNSKt_rules ps c.
 
 Ltac egx g := eapply g ; [>
   reflexivity | eassumption | assumption | assumption | ].

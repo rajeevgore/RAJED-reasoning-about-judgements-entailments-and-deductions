@@ -82,9 +82,23 @@ Inductive princrule (V : Set) : rls (rel (list (PropF V))) :=
     [pair [B] [] ; pair [] [A]] (pair [Imp A B] [])
   | BotL' : princrule [] (pair [Bot V] []).
 
+(* principal formula rules, where principal formula copied into premises
+  (for the Imp rules), propositional version of Idrule *)
+Inductive princrule_pfc (V : Set) : rls (rel (list (PropF V))) :=
+  | Id_pfc : forall p, princrule_pfc [] (pair [Var p] [Var p])
+  | ImpR_pfc : forall A B,
+    princrule_pfc [pair [A] [Imp A B ; B]] (pair [] [Imp A B])
+  | ImpL_pfc : forall A B, princrule_pfc
+      [pair [Imp A B ; B] [] ; pair [Imp A B] [A]] (pair [Imp A B] [])
+  | BotL_pfc : princrule_pfc [] (pair [Bot V] []).
+
 (* we may also want to refer to rules individually *)
 Inductive Idrule (V : Set) : rls (rel (list (PropF V))) :=
   | Idrule_I : forall A, Idrule [] (pair [A] [A]).
+
+(* propositional version of axiom rule *)
+Inductive Idrule_p (V : Set) : rls (rel (list (PropF V))) :=
+  | Idrule_p_I : forall p, Idrule_p [] (pair [Var p] [Var p]).
 
 Inductive Botrule (V : Set) : rls (rel (list (PropF V))) :=
   | Botrule_I : Botrule [] (pair [Bot V] []).
@@ -300,6 +314,28 @@ Proof.
   right. exists (Imp A B). reflexivity.
 Qed.
 
+Lemma princrule_pfc_L : forall {V : Set} ps Γ Δ,
+    @princrule_pfc V ps (Γ, Δ) ->
+    Γ = [] \/ exists E, Γ = [E].
+Proof.
+  intros V ps Γ Δ P.
+  inversion P as [ p P2| P2 | A B P2 | P2];
+    try (left; reflexivity).
+  right. exists (Var p). reflexivity.
+  right. exists (Imp A B). reflexivity.
+  right. exists (Bot V). reflexivity.
+Qed.
+
+Lemma princrule_pfc_R : forall {V : Set} ps Γ Δ,
+    @princrule_pfc V ps (Γ, Δ) ->
+    Δ = [] \/ exists E, Δ = [E].
+Proof.
+  intros V ps Γ Δ P. inversion P as [ p P2| A B P2 | P2 | P2];
+                       try (left; reflexivity).
+  right. exists (Var p). reflexivity.
+  right. exists (Imp A B). reflexivity.
+Qed.
+
 Ltac acacE :=
   repeat match goal with
     | [ H : _ |- _ ] => apply app_eq_app in H ; sE
@@ -375,6 +411,20 @@ Proof. unfold rules_L_oe.  intros.  eapply princrule_L_oe.  exact H.  Qed.
 Lemma princrule_R_oe': forall V, rules_R_oe (@princrule V).
 Proof. unfold rules_R_oe.  intros.  eapply princrule_R_oe.  exact H.  Qed.
 
+Lemma princrule_pfc_L_oe : forall {V : Set} ps x y Δ,
+    @princrule_pfc V ps (x ++ y, Δ) -> x = [] \/ y = [].
+Proof.  intros. apply princrule_pfc_L in H. sD ; list_eq_nc ; tauto.  Qed.
+
+Lemma princrule_pfc_R_oe : forall {V : Set} ps x y Γ,
+    @princrule_pfc V ps (Γ, x ++ y) -> x = [] \/ y = [].
+Proof.  intros. apply princrule_pfc_R in H. sD ; list_eq_nc ; tauto.  Qed.
+
+Lemma princrule_pfc_L_oe': forall V, rules_L_oe (@princrule_pfc V).
+Proof. unfold rules_L_oe.  intros.  eapply princrule_pfc_L_oe.  exact H.  Qed.
+
+Lemma princrule_pfc_R_oe': forall V, rules_R_oe (@princrule_pfc V).
+Proof. unfold rules_R_oe.  intros.  eapply princrule_pfc_R_oe.  exact H.  Qed.
+
 Lemma Idrule_L_oe : forall {V : Set} ps x y Δ,
     @Idrule V ps (x ++ y, Δ) -> x = [] \/ y = [].
 Proof.
@@ -389,9 +439,29 @@ Proof.
   list_eq_nc. tauto.
 Qed.
 
+Lemma Idrule_p_L_oe : forall {V : Set} ps x y Δ,
+    @Idrule_p V ps (x ++ y, Δ) -> x = [] \/ y = [].
+Proof.
+  intros. inversion H. subst. acacD'. tauto.
+  list_eq_nc. tauto.
+Qed.
+
+Lemma Idrule_p_R_oe : forall {V : Set} ps x y Γ,
+    @Idrule_p V ps (Γ, x ++ y) -> x = [] \/ y = [].
+Proof.
+  intros. inversion H. subst. acacD'. tauto.
+  list_eq_nc. tauto.
+Qed.
+
 Lemma Idrule_L_oe': forall V, rules_L_oe (@Idrule V).
 Proof. unfold rules_L_oe.  intros.  eapply Idrule_L_oe.  exact H.  Qed.
 
 Lemma Idrule_R_oe': forall V, rules_R_oe (@Idrule V).
 Proof. unfold rules_R_oe.  intros.  eapply Idrule_R_oe.  exact H.  Qed.
+
+Lemma Idrule_p_L_oe': forall V, rules_L_oe (@Idrule_p V).
+Proof. unfold rules_L_oe.  intros.  eapply Idrule_p_L_oe.  exact H.  Qed.
+
+Lemma Idrule_p_R_oe': forall V, rules_R_oe (@Idrule_p V).
+Proof. unfold rules_R_oe.  intros.  eapply Idrule_p_R_oe.  exact H.  Qed.
 
