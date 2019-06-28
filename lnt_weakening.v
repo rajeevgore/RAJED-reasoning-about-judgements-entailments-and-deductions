@@ -72,9 +72,9 @@ Proof.  intros.  unfold iff.  split ; intros.
   unfold can_gen_weakR. intros. eapply H.
   2: exact H0.  2: exact H1. apply weakened_I'. auto. Qed.
 
-(* ----------------- *)
-(* WEAKENING TACTICS *)
-(* ----------------- *)
+(* -------------------------- *)
+(* WEAKENING LEMMAS & TACTICS *)
+(* -------------------------- *)
 
 Ltac nsgen_sw_weak rs sppc c c' acm inps0 swap :=
 derIrs rs ; [>
@@ -172,6 +172,165 @@ Ltac nsprsameR_weak princrules rs pr q qin inmps acm inps0 x0 :=
 match goal with | [ H : princrules _ (_, ?x) |- _ ] => assoc_mid x end ;
 nsprsame_weak rs pr q qin inmps acm inps0 x0.
 
+Ltac ms_cgs_weak acm := 
+rewrite dersrec_map_single ;
+rewrite -> Forall_map_single in acm ;
+rewrite -> ?can_gen_weakL_def' in acm ;
+rewrite -> ?can_gen_weakR_def' in acm ;
+unfold nslclext ; unfold nslext.
+
+Ltac use_acm1_weak acm rs ith :=
+derIrs rs; [> 
+apply NSlctxt2 || apply NSlclctxt' ;
+assoc_single_mid ;
+apply ith | 
+ms_cgs acm ;
+  list_assoc_r' ; simpl];
+(* unfold can_gen_weakR in acm. *)
+   (*   assoc_mid B; *)
+
+   first [eapply acm | list_assoc_l'; rewrite <- app_assoc; eapply acm];
+   unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl; reflexivity.
+
+Ltac use_acm_os_weak acm rs swap ith :=
+(* swap in opposite side from where rule active *)
+derIrs rs ; [> 
+apply NSlclctxt || apply NSlctxt ;
+apply ith |
+ms_cgs_weak acm ;
+eapply acm in swap ] ;
+[> eapply swap |
+  unfold nslext ; unfold nslclext ; reflexivity |
+  reflexivity ].
+
+Ltac use_acm2s_weak acm rs ith rw:=
+derIrs rs ; [> 
+list_assoc_r' ; simpl ; apply NSlctxt2 || apply NSlclctxt' ;
+rw ; (* rewrite so as to identify two parts of context *)
+apply ith |
+ms_cgs_weak acm ;
+list_assoc_r' ; simpl ;
+rewrite ?list_rearr22 ; eapply acm ] ; [> | 
+  unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
+  reflexivity ] ; weak_tacX.
+
+Ltac use_acm_sw_sep_weak acm rs weak ith :=
+(* interchange two sublists of list of formulae,
+  no need to expand swap (swap separate from where rule is applied) *)
+derIrs rs ; [> 
+list_assoc_r' ; simpl ; apply NSlclctxt' || apply NSlctxt2 ;
+apply ith |
+ms_cgs_weak acm ;
+eapply acm in weak ] ;
+[> (rewrite - list_rearr21 ; eapply weak) || 
+  (list_assoc_r' ; simpl ; eapply weak) |
+  unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
+  reflexivity ].
+
+Lemma cons_singleton : forall {A : Type} (l : list A) a,
+    a :: l = [a] ++ l.
+Proof. induction l; intros b; firstorder. Qed.
+
+Ltac list_cons_singleton a := repeat rewrite (cons_singleton _ a).
+Ltac tac_cons_singleton_arg a l :=
+    match l with
+    | nil => idtac
+    | _ => rewrite (cons_singleton l a)
+    end.
+
+Ltac tac_cons_singleton :=
+  repeat
+  match goal with
+   | [ |- context [?a :: ?l]] => progress (tac_cons_singleton_arg a l)
+  end.
+
+Ltac acmi_snr_sw_weak acmi := eapply acmi ;
+  [>  apply nslclext_def|] ;  [>swap_tac; reflexivity].
+
+Ltac use_acm_2_sw_weak_exch acm rs swap rw ith Hexch A B :=
+derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+rw ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split; [>
+        try tac_cons_singleton; eapply Hexch; auto | ];
+     assoc_mid B; [>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
+
+Ltac use_acm_2_sw_weak acm rs swap rw ith B :=
+derIrs rs ; [> 
+apply NSlclctxt' || apply NSlctxt2 ;
+rw ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split; assoc_mid B; [>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
+
+Lemma can_gen_weakL_imp: forall {V : Set} 
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns,
+  can_gen_weakL rules ns -> forall G K seq Γ Δ Γ' (d : dir), 
+  weakened Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+    derrec rules (fun _ => False) (G ++ (pair Γ' Δ, d) :: K).
+Proof.  intros until 0. intro.
+  rewrite -> can_gen_weakL_def' in H. exact H. Qed.
+
+Lemma can_gen_weakR_imp: forall {V : Set} 
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns,
+  can_gen_weakR rules ns -> forall G K seq Γ Δ Δ' (d : dir), 
+  weakened Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+    derrec rules (fun _ => False) (G ++ (pair Γ Δ', d) :: K).
+Proof.  intros until 0. intro.
+  rewrite -> can_gen_weakR_def' in H. exact H. Qed.
+
+Ltac weakL2 rs sppc acm swap :=
+derIrs rs ; [> list_assoc_l' ;
+    apply NSlclctxt' || apply NSlctxt2 ; exact sppc | ] ;
+rewrite dersrec_forall ; intros L H ;
+rewrite -> in_map_iff in H ; destruct H ; destruct H as [H1 H2] ; subst ;
+rewrite -> Forall_forall in acm ; eapply in_map in H2 ; eapply acm in H2 ;
+eapply can_gen_weakL_imp in H2 || eapply can_gen_weakR_imp in H2 ;
+  [> | exact swap | | reflexivity ] ;
+  [> unfold nslclext ; list_assoc_r' ; exact H2
+    | unfold nslclext ; list_assoc_r' ; reflexivity].
+
+Ltac acmi_snr_sw''_weak acmi swap rw3 rw4 := rw3 ; eapply acmi ;
+  [> rw4 ;  apply nslclext_def | swap_tac; reflexivity ].
+
+Ltac use_acm_2_sw''_weak acm rs swap rw1 rw2 rw3 rw4 ith :=
+derIrs rs ; [> rw1 ;
+apply NSlclctxt' || apply NSlctxt2 ;
+rw2 ; apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; [> acmi_snr_sw''_weak acm1 swap rw3 rw4 | 
+        acmi_snr_sw''_weak acm2 swap rw3 rw4 ]
+            ].
+
+Ltac acmi_snr_weak acmi swap := 
+  eapply acmi ; [> apply nslclext_def | reflexivity ].
+
+Ltac use_acm_2_weak acm rs swap ith :=
+derIrs rs ; [>
+apply NSlclctxt' || apply NSlctxt2 ;
+apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; inversion swap; subst;
+[> acmi_snr_weak acm1 swap | acmi_snr_weak acm2 swap ]
+].     
+
+Ltac acmi_snr_snd_weak acmi swap := rewrite list_rearr16' ; eapply acmi ;
+  [>  list_assoc_r' ; simpl ; apply nslclext_def |
+    reflexivity ].
+
+Ltac use_acm_2_snd_weak acm rs swap ith :=
+derIrs rs ; [> list_assoc_r' ;
+apply NSlclctxt' || apply NSlctxt2 ;
+apply ith |
+ms_cgs acm ; destruct acm as [acm1 acm2] ; 
+split ; inversion swap; subst;
+[> acmi_snr_snd_weak acm1 swap | acmi_snr_snd_weak acm2 swap ]
+            ].
+
+Ltac egx_app g exch := eapply g; [> intros; apply exch; assumption |
+                                  reflexivity | eassumption | assumption | assumption | ].
+
+
 (* ----------------------------- *)
 (* LEFT WEAKENING FOR PRINCRULES *)
 (* ----------------------------- *)
@@ -223,17 +382,41 @@ nsprsameL_weak princrules rs pr q qin inmps acm inps0 x0.
 
 Qed.
 
-Lemma gen_weakL_step_pr_lc: forall V ps concl 
+(* Old pr rules. *)
+Lemma gen_weakL_step_pr_lc_old: forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
   last_rule = nslcrule (seqrule (@princrule V)) ->
   gen_weakL_step last_rule rules ps concl.
 Proof.  intros. eapply gen_weakL_step_loe_lc.
   apply princrule_L_oe'. exact H. Qed.
 
-Lemma gen_weakL_lc: forall {V : Set} ns
+Lemma gen_weakL_lc_old: forall {V : Set} ns
   (D : derrec (nslcrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_gen_weakL (nslcrule (seqrule (@princrule V))) ns.
+Proof. 
+intro.  intro.  intro.
+eapply derrec_all_ind in D.
+exact D. tauto.
+intros. inversion H. 
+subst.
+pose gen_weakL_step_pr_lc_old.
+unfold gen_weakL_step in g.
+eapply g. reflexivity. eassumption. assumption. assumption.
+unfold rsub. clear g. 
+intros.  assumption.
+Qed.
 
+(* New pr rules. *)
+Lemma gen_weakL_step_pr_lc: forall V ps concl 
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  last_rule = nslcrule (seqrule (@princrule_pfc V)) ->
+  gen_weakL_step last_rule rules ps concl.
+Proof.  intros. eapply gen_weakL_step_loe_lc.
+  apply princrule_pfc_L_oe'. exact H. Qed.
+
+Lemma gen_weakL_lc: forall {V : Set} ns
+  (D : derrec (nslcrule (seqrule (@princrule_pfc V))) (fun _ => False) ns),
+  can_gen_weakL (nslcrule (seqrule (@princrule_pfc V))) ns.
 Proof. 
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
@@ -246,6 +429,7 @@ eapply g. reflexivity. eassumption. assumption. assumption.
 unfold rsub. clear g. 
 intros.  assumption.
 Qed.
+
 
 (* ------------------------------ *)
 (* RIGHT WEAKENING FOR PRINCRULES *)
@@ -298,16 +482,41 @@ nsprsameR_weak princrules rs pr q qin inmps acm inps0 x0.
 
 Qed.
 
-Lemma gen_weakR_step_pr_lc: forall V ps concl 
+(* Old pr rules. *)
+Lemma gen_weakR_step_pr_lc_old: forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
   last_rule = nslcrule (seqrule (@princrule V)) ->
   gen_weakR_step last_rule rules ps concl.
 Proof.  intros. eapply gen_weakR_step_loe_lc.
         apply princrule_R_oe'. exact H. Qed.
 
-Lemma gen_weakR_lc: forall {V : Set} ns
+Lemma gen_weakR_lc_old: forall {V : Set} ns
   (D : derrec (nslcrule (seqrule (@princrule V))) (fun _ => False) ns),
   can_gen_weakR (nslcrule (seqrule (@princrule V))) ns.
+Proof. 
+intro.  intro.  intro.
+eapply derrec_all_ind in D.
+exact D. tauto.
+intros. inversion H. 
+subst.
+pose gen_weakR_step_pr_lc_old.
+unfold gen_weakR_step in g.
+eapply g. reflexivity. eassumption. assumption. assumption.
+unfold rsub. clear g. 
+intros.  assumption.
+Qed.
+
+(* New pr rules. *)
+Lemma gen_weakR_step_pr_lc: forall V ps concl 
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  last_rule = nslcrule (seqrule (@princrule_pfc V)) ->
+  gen_weakR_step last_rule rules ps concl.
+Proof.  intros. eapply gen_weakR_step_loe_lc.
+        apply princrule_pfc_R_oe'. exact H. Qed.
+
+Lemma gen_weakR_lc: forall {V : Set} ns
+  (D : derrec (nslcrule (seqrule (@princrule_pfc V))) (fun _ => False) ns),
+  can_gen_weakR (nslcrule (seqrule (@princrule_pfc V))) ns.
 Proof. 
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
@@ -321,41 +530,10 @@ unfold rsub. clear g.
 intros.  assumption.
 Qed.
 
+
 (* ---------------------- *)
 (* WEAKENING FOR B2RRULES *)
 (* ---------------------- *)
-
-Ltac ms_cgs_weak acm := 
-rewrite dersrec_map_single ;
-rewrite -> Forall_map_single in acm ;
-rewrite -> ?can_gen_weakL_def' in acm ;
-rewrite -> ?can_gen_weakR_def' in acm ;
-unfold nslclext ; unfold nslext.
-
-Ltac use_acm1_weak acm rs ith :=
-derIrs rs; [> 
-apply NSlctxt2 || apply NSlclctxt' ;
-assoc_single_mid ;
-apply ith | 
-ms_cgs acm ;
-  list_assoc_r' ; simpl];
-(* unfold can_gen_weakR in acm. *)
-   (*   assoc_mid B; *)
-
-   first [eapply acm | list_assoc_l'; rewrite <- app_assoc; eapply acm];
-   unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl; reflexivity.
-
-
-Ltac use_acm_os_weak acm rs swap ith :=
-(* swap in opposite side from where rule active *)
-derIrs rs ; [> 
-apply NSlclctxt || apply NSlctxt ;
-apply ith |
-ms_cgs_weak acm ;
-eapply acm in swap ] ;
-[> eapply swap |
-  unfold nslext ; unfold nslclext ; reflexivity |
-  reflexivity ].
 
 Lemma gen_weakL_step_b2R_lc: forall V ps concl last_rule rules,
   last_rule = nslclrule (@b2rrules V) ->
@@ -425,33 +603,10 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 } }
 Qed.
 
+
 (* ---------------------- *)
 (* WEAKENING FOR B1LRULES *)
 (* ---------------------- *)
-
-Ltac use_acm2s_weak acm rs ith rw:=
-derIrs rs ; [> 
-list_assoc_r' ; simpl ; apply NSlctxt2 || apply NSlclctxt' ;
-rw ; (* rewrite so as to identify two parts of context *)
-apply ith |
-ms_cgs_weak acm ;
-list_assoc_r' ; simpl ;
-rewrite ?list_rearr22 ; eapply acm ] ; [> | 
-  unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
-  reflexivity ] ; weak_tacX.
-
-Ltac use_acm_sw_sep_weak acm rs weak ith :=
-(* interchange two sublists of list of formulae,
-  no need to expand swap (swap separate from where rule is applied) *)
-derIrs rs ; [> 
-list_assoc_r' ; simpl ; apply NSlclctxt' || apply NSlctxt2 ;
-apply ith |
-ms_cgs_weak acm ;
-eapply acm in weak ] ;
-[> (rewrite - list_rearr21 ; eapply weak) || 
-  (list_assoc_r' ; simpl ; eapply weak) |
-  unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
-  reflexivity ].
 
 Lemma gen_weakL_step_b1L_lc: forall V ps concl last_rule rules,
   last_rule = nslclrule (@b1lrules V) ->
@@ -546,8 +701,8 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 *{ use_acm_sw_sep_weak acm rs weak BBox1Ls. }
 }
 }  
-
 Qed.
+
 
 (* ---------------------- *)
 (* WEAKENING FOR B2LRULES *)
@@ -655,106 +810,6 @@ Qed.
 (* ---------------------- *)
 (* WEAKENING FOR B1RRULES *)
 (* ---------------------- *)
-
-Lemma cons_singleton : forall {A : Type} (l : list A) a,
-    a :: l = [a] ++ l.
-Proof. induction l; intros b; firstorder. Qed.
-
-Ltac list_cons_singleton a := repeat rewrite (cons_singleton _ a).
-Ltac tac_cons_singleton_arg a l :=
-    match l with
-    | nil => idtac
-    | _ => rewrite (cons_singleton l a)
-    end.
-
-Ltac tac_cons_singleton :=
-  repeat
-  match goal with
-   | [ |- context [?a :: ?l]] => progress (tac_cons_singleton_arg a l)
-  end.
-
-Ltac acmi_snr_sw_weak acmi := eapply acmi ;
-  [>  apply nslclext_def|] ;  [>swap_tac; reflexivity].
-
-Ltac use_acm_2_sw_weak_exch acm rs swap rw ith Hexch A B :=
-derIrs rs ; [> 
-apply NSlclctxt' || apply NSlctxt2 ;
-rw ; apply ith |
-ms_cgs acm ; destruct acm as [acm1 acm2] ; 
-split; [>
-        try tac_cons_singleton; eapply Hexch; auto | ];
-     assoc_mid B; [>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
-
-Ltac use_acm_2_sw_weak acm rs swap rw ith B :=
-derIrs rs ; [> 
-apply NSlclctxt' || apply NSlctxt2 ;
-rw ; apply ith |
-ms_cgs acm ; destruct acm as [acm1 acm2] ; 
-split; assoc_mid B; [>  acmi_snr_sw_weak acm1 | acmi_snr_sw_weak acm2]].
-
-Lemma can_gen_weakL_imp: forall {V : Set} 
-  (rules : rls (list (rel (list (PropF V)) * dir))) ns,
-  can_gen_weakL rules ns -> forall G K seq Γ Δ Γ' (d : dir), 
-  weakened Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
-    derrec rules (fun _ => False) (G ++ (pair Γ' Δ, d) :: K).
-Proof.  intros until 0. intro.
-  rewrite -> can_gen_weakL_def' in H. exact H. Qed.
-
-Lemma can_gen_weakR_imp: forall {V : Set} 
-  (rules : rls (list (rel (list (PropF V)) * dir))) ns,
-  can_gen_weakR rules ns -> forall G K seq Γ Δ Δ' (d : dir), 
-  weakened Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
-    derrec rules (fun _ => False) (G ++ (pair Γ Δ', d) :: K).
-Proof.  intros until 0. intro.
-  rewrite -> can_gen_weakR_def' in H. exact H. Qed.
-
-Ltac weakL2 rs sppc acm swap :=
-derIrs rs ; [> list_assoc_l' ;
-    apply NSlclctxt' || apply NSlctxt2 ; exact sppc | ] ;
-rewrite dersrec_forall ; intros L H ;
-rewrite -> in_map_iff in H ; destruct H ; destruct H as [H1 H2] ; subst ;
-rewrite -> Forall_forall in acm ; eapply in_map in H2 ; eapply acm in H2 ;
-eapply can_gen_weakL_imp in H2 || eapply can_gen_weakR_imp in H2 ;
-  [> | exact swap | | reflexivity ] ;
-  [> unfold nslclext ; list_assoc_r' ; exact H2
-    | unfold nslclext ; list_assoc_r' ; reflexivity].
-
-Ltac acmi_snr_sw''_weak acmi swap rw3 rw4 := rw3 ; eapply acmi ;
-  [> rw4 ;  apply nslclext_def | swap_tac; reflexivity ].
-
-Ltac use_acm_2_sw''_weak acm rs swap rw1 rw2 rw3 rw4 ith :=
-derIrs rs ; [> rw1 ;
-apply NSlclctxt' || apply NSlctxt2 ;
-rw2 ; apply ith |
-ms_cgs acm ; destruct acm as [acm1 acm2] ; 
-split ; [> acmi_snr_sw''_weak acm1 swap rw3 rw4 | 
-        acmi_snr_sw''_weak acm2 swap rw3 rw4 ]
-            ].
-
-Ltac acmi_snr_weak acmi swap := 
-  eapply acmi ; [> apply nslclext_def | reflexivity ].
-
-Ltac use_acm_2_weak acm rs swap ith :=
-derIrs rs ; [>
-apply NSlclctxt' || apply NSlctxt2 ;
-apply ith |
-ms_cgs acm ; destruct acm as [acm1 acm2] ; 
-split ; inversion swap; subst;
-[> acmi_snr_weak acm1 swap | acmi_snr_weak acm2 swap ]
-].     
-
-Ltac acmi_snr_snd_weak acmi swap := rewrite list_rearr16' ; eapply acmi ;
-  [>  list_assoc_r' ; simpl ; apply nslclext_def |
-    reflexivity ].
-
-Ltac use_acm_2_snd_weak acm rs swap ith :=
-derIrs rs ; [> list_assoc_r' ;
-apply NSlclctxt' || apply NSlctxt2 ;
-apply ith |
-ms_cgs acm ; destruct acm as [acm1 acm2] ; 
-split ; inversion swap; subst;
-[> acmi_snr_snd_weak acm1 swap | acmi_snr_snd_weak acm2 swap ]
-            ].
 
 Lemma gen_weakL_step_b1R_lc: forall V ps concl last_rule rules,
   last_rule = nslclrule (@b1rrules V) ->
@@ -866,7 +921,106 @@ acacD' ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 }
 Qed.
 
-(* TODO
-Update weakening lemmas for new princrules.
-Write full weakening lemma.
-*)
+
+(* ---------------- *)
+(* WEAKENING FOR EW *)
+(* ---------------- *)
+
+Lemma gen_weakR_step_EW_lc: forall V ps concl last_rule rules,
+  last_rule = nslclrule (@EW_rule V) ->
+  gen_weakR_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_weakR_step.
+intros lreq nsr drs acm rs. subst. (* keep drs in this case *)
+
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
+unfold nslclext in nsc.
+rewrite can_gen_weakR_def'.  intros until 0. intros swap pp ss.
+unfold nslclext in pp. subst.
+
+acacDe ; subst ; rewrite -> ?app_nil_r in *. 
+
+- inversion sppc ; subst ; clear sppc.
+
++ derIrs rs.
+* apply NSlclctxt.  apply EW.
+* apply drs.
+
+- weakL2 rs sppc acm swap.
+
+- inversion sppc ; subst ; clear sppc.
+acacDe ; subst ; rewrite -> ?app_nil_r in *.
+derIrs rs.
++ apply NSlclctxt.  apply EW.
++ apply drs.
+Qed.
+
+Lemma gen_weakL_step_EW_lc: forall V ps concl last_rule rules,
+  last_rule = nslclrule (@EW_rule V) ->
+  gen_weakL_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_swapL_step.
+intros lreq nsr drs acm rs. subst. (* keep drs in this case *)
+
+inversion nsr as [? ? ? sppc mnsp nsc]. clear nsr.
+unfold nslclext in nsc.
+rewrite can_gen_weakL_def'.  intros until 0. intros swap pp ss.
+unfold nslclext in pp. subst.
+
+acacDe ; subst ; rewrite -> ?app_nil_r in *. 
+
+- inversion sppc ; subst ; clear sppc.
+
++ derIrs rs.
+* apply NSlclctxt.  apply EW.
+* apply drs.
+
+- weakL2 rs sppc acm swap.
+
+- inversion sppc ; subst ; clear sppc.
+acacDe ; subst ; rewrite -> ?app_nil_r in *.
+derIrs rs.
++ apply NSlclctxt.  apply EW.
++ apply drs.
+Qed.
+
+
+(* --------------------------------------- *)
+(* FULL LEFT AND RIGHT WEAKENING FOR LNTKT *)
+(* --------------------------------------- *)
+
+Lemma LNSKt_weakR: forall (V : Set) ns
+  (D : derrec (@LNSKt_rules V) (fun _ => False) ns),
+      can_gen_weakR (@LNSKt_rules V) ns.
+Proof.
+intro.  intro.  intro.
+eapply derrec_all_ind in D.
+exact D. tauto.
+intros. inversion H ; subst ; [> pose gen_weakR_step_b2R_lc 
+  | pose gen_weakR_step_b1R_lc; egx_app g LNSKt_exchR
+  | pose gen_weakR_step_b2L_lc
+  | pose gen_weakR_step_b1L_lc
+  | pose gen_weakR_step_EW_lc
+  | pose gen_weakR_step_pr_lc ] ; 
+        unfold gen_weakR_step in g; try egx g;
+  clear g ; unfold rsub ; intros ; [> 
+  apply b2r | apply b1r | apply b2l | apply b1l | apply nEW | apply prop ] ;
+  assumption.
+Qed.
+
+Lemma LNSKt_weakL: forall (V : Set) ns
+  (D : derrec (@LNSKt_rules V) (fun _ => False) ns),
+      can_gen_weakL (@LNSKt_rules V) ns.
+Proof.
+intro.  intro.  intro.
+eapply derrec_all_ind in D.
+exact D. tauto.
+intros. inversion H ; subst ; [> pose gen_weakL_step_b2R_lc 
+  | pose gen_weakL_step_b1R_lc
+  | pose gen_weakL_step_b2L_lc
+  | pose gen_weakL_step_b1L_lc
+  | pose gen_weakL_step_EW_lc
+  | pose gen_weakL_step_pr_lc ] ; 
+unfold gen_weakL_step in g ; egx g ;
+  clear g ; unfold rsub ; intros ; [> 
+  apply b2r | apply b1r | apply b2l | apply b1l | apply nEW | apply prop ] ;
+  assumption.
+Qed.
