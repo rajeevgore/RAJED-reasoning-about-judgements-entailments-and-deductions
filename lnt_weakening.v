@@ -984,7 +984,7 @@ Qed.
 
 
 (* --------------------------------------- *)
-(* FULL LEFT AND RIGHT WEAKENING FOR LNTKT *)
+(* FULL LEFT AND RIGHT WEAKENING FOR LNSKT *)
 (* --------------------------------------- *)
 
 Lemma LNSKt_weakR: forall (V : Set) ns
