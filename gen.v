@@ -91,7 +91,10 @@ Ltac cE :=
 Ltac cD' :=
   match goal with
     | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
+    | [ H : prod _ _ |- _ ] => destruct H as [?H ?H]
     | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    | [ H : sig _ |- _ ] => destruct H as [?H ?H]
+    | [ H : sigT _ |- _ ] => destruct H as [?H ?H]
     | [ H : False |- _ ] => contradiction H
     end.
 
@@ -108,8 +111,13 @@ Ltac sE :=
 Ltac sD' :=
   match goal with
     | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
+    | [ H : prod _ _ |- _ ] => destruct H as [?H ?H]
     | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
+    | [ H : sumbool _ _ |- _ ] => destruct H as [?H | ?H]
+    | [ H : sum _ _ |- _ ] => destruct H as [?H | ?H]
     | [ H : ex _ |- _ ] => destruct H as [?H ?H]
+    | [ H : sig _ |- _ ] => destruct H as [?H ?H]
+    | [ H : sigT _ |- _ ] => destruct H as [?H ?H]
     | [ H : False |- _ ] => contradiction H
     end.
 
@@ -117,6 +125,8 @@ Ltac sD' :=
 Ltac sDx :=
   match goal with
     | [ H : _ \/ _ |- _ ] => destruct H as [?H | ?H]
+    | [ H : sumbool _ _ |- _ ] => destruct H as [?H | ?H]
+    | [ H : sum _ _ |- _ ] => destruct H as [?H | ?H]
     end.
 
 Ltac sD := repeat (cD' || sDx).
