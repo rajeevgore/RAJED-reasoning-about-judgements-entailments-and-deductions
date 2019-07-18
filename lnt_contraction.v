@@ -1823,6 +1823,24 @@ Proof.
   reflexivity. assumption. assumption.
 Qed.
 
+Lemma can_gen_swapL_derrec_nslcext : forall {V} rules G d0 seq1 seq2 Γ Ψ Γ',
+  (forall ns : list (rel (list (PropF V)) * dir),
+         derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules ns) ->
+  swapped Γ Γ' ->
+  seq1 = (Γ, Ψ) ->
+  seq2 = (Γ', Ψ) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq1) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq2).
+Proof.
+  intros until 0. intros Hexch Hswap Hs1 Hs2 Hd.
+  subst. eapply can_gen_swapL_derrec_n; auto.
+  eapply swapped_n_I. exact Hswap.
+  exact Hd.
+Qed.
+
 Lemma swapped_app_L : forall {T} n (l A B : list T),
     swapped_n n A B ->
     swapped_n n (l ++ A) (l ++ B).
@@ -2030,6 +2048,22 @@ Ltac list_assoc_r'_arg H :=
 Ltac list_assoc_l'_arg_conc H := list_assoc_l'; list_assoc_l'_arg H.
 Ltac list_assoc_r'_arg_conc H := list_assoc_r'; list_assoc_r'_arg H.
 
+Ltac tac_cons_singleton_arg_hyp H a l :=
+    match l with
+    | nil => idtac
+    | _ => rewrite (cons_singleton l a) in H
+    end.
+
+
+Ltac tac_cons_singleton_hyp H :=
+  repeat
+  match goal with
+   | [ H : context [?a :: ?l] |- _] => progress (tac_cons_singleton_arg_hyp H a l)
+  end.
+
+Ltac list_assoc_r'_singleton_hyp H :=
+  list_assoc_r'_arg H; tac_cons_singleton_hyp H.
+  
 
     Ltac look_for_swap Hexch :=
       match goal with
@@ -2040,8 +2074,9 @@ Ltac list_assoc_r'_arg_conc H := list_assoc_r'; list_assoc_r'_arg H.
         | Γ1 => exact Hcont
         | _  => eapply (can_gen_swapL_dersrec _ _ _ Γ1); [exact Hexch|  swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont]
         end;
-        match Γ1 with
-        | Γ1' => exact Hcont
+        try 
+        match Γ2' with
+        | Γ2 => exact Hcont
         | _  => eapply (can_gen_swapL_dersrec _ _ _ Γ1); [exact Hexch | swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont]
         end
       end
@@ -2297,13 +2332,13 @@ list_assoc_r';
 
 Ltac check_head l1 l2 :=
   match l1 with
-  | l2 ++ ?l3 => idtac 100
+  | l2 ++ ?l3 => idtac
   | _ => fail
   end.
 
 Ltac check_tail l1 l2 :=
   match l1 with
-  | ?l3 ++ l2 => idtac 100
+  | ?l3 ++ l2 => idtac
   | _ => fail
   end.
 
@@ -2311,14 +2346,14 @@ Ltac cont_rem_head :=
   list_assoc_r'; rewrite ?app_comm_cons;
   repeat match goal with
   | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
-    (tryif check_head l1 [a] then idtac 200 else apply cont_gen_spec_L)
+    (tryif check_head l1 [a] then idtac else apply cont_gen_spec_L)
   end.
 
 Ltac cont_rem_tail :=
   list_assoc_l'; rewrite ?app_comm_cons;
   repeat match goal with
   | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
-    (tryif check_tail l1 [a] then idtac 200 else apply cont_gen_spec_R)
+    (tryif check_tail l1 [a] then idtac else apply cont_gen_spec_R)
          end.
 
 Ltac cont_rem_mid_simp :=
@@ -2353,9 +2388,33 @@ Ltac list_assoc_r'_arg H :=
   repeat (rewrite - !app_assoc in H || rewrite - !app_comm_cons in H).
 Ltac list_assoc_l'_arg_conc H := list_assoc_l'; list_assoc_l'_arg H.
 Ltac list_assoc_r'_arg_conc H := list_assoc_r'; list_assoc_r'_arg H.
-*)
+ *)
+
+  Ltac app_bracket_middle_arg l :=
+    repeat match l with
+           | ?l1 ++ ?l2 ++ ?l3 ++ ?l4 => rewrite (app_assoc l2)
+           end.
+
+  Ltac app_bracket_middle_L :=
+    match goal with
+    | [ |- contracted_gen_spec _ ?l1 ?l2 ] => app_bracket_middle_arg l1
+    end.
+
+    Ltac app_bracket_middle_R :=
+    match goal with
+    | [ |- contracted_gen_spec _ ?l1 ?l2 ] => app_bracket_middle_arg l2
+    end.
+
+    Ltac app_bracket_middle :=
+      app_bracket_middle_L; app_bracket_middle_R.
+
 (* Use this one *)
 Ltac cont_solve a :=
+  cont_rem_head; cont_rem_tail;
+  list_assoc_r'_single; app_bracket_middle;
+  cont_rem_mid_simp.
+
+Ltac cont_solve2 a :=
   cont_rem_head; cont_rem_tail;
   list_assoc_r'_single; cont_rem_mid_simp.
 
@@ -2368,6 +2427,144 @@ Ltac cont_rem_mid_solve :=
            end
          end.
  *)
+
+
+(* eapply (can_gen_swapL_dersrec _ _ _ Γ1) *)
+(* Left it here 17/07/19
+. This is the problem ^ *)
+
+    Ltac look_for_swap3 Hexch :=
+      match goal with
+      | [ Hcont :  dersrec ?rules ?f  (map ?nscl (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |-
+          dersrec ?rules ?f (map ?nscl (map (seqext ?Γ1' ?Γ2' ?Ψ1 ?Ψ2) ?ps)) ]
+        =>
+        match Γ1' with
+        | Γ1 => exact Hcont
+        | _  => eapply (can_gen_swapL_dersrec _ _ _ Γ1) in Hcont
+                (*[exact Hexch|  swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont] *)
+        end;
+        try 
+        match Γ2' with
+        | Γ2 => exact Hcont
+        | _  => eapply (can_gen_swapL_dersrec _ _ _ Γ1) in Hcont
+                (*[exact Hexch | swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont] *)
+        end
+      end
+    .
+
+(*    Ltac look_for_swap3 Hexch :=
+      match goal with
+      | [ Hcont :  dersrec ?rules ?f  (map ?nscl (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |-
+          dersrec ?rules ?f (map ?nscl (map (seqext ?Γ1' ?Γ2' ?Ψ1 ?Ψ2) ?ps)) ]
+        =>
+        match Γ1' with
+        | Γ1 => exact Hcont
+        | _  => eapply (can_gen_swapL_dersrec _ _ _ Γ1); [exact Hexch|  swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont]
+        end;
+        try 
+        match Γ2' with
+        | Γ2 => exact Hcont
+        | _  => eapply (can_gen_swapL_dersrec _ _ _ Γ1); [exact Hexch | swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont]
+        end
+      end
+    .
+ *)
+
+    Ltac derrec_swapL acm exch :=
+      eapply (can_gen_swapL_derrec_nslcext) in acm;
+      [exact acm | exact exch | | reflexivity | reflexivity ]; swap_tac.
+
+    Ltac destruct_princ :=
+  match goal with
+  | [ |- context[ (nslcext _ _  (seqext _ _ _ _ ?x)) ]] => destruct x
+  end.
+
+    Ltac nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch := 
+    derIrs rs  ;
+[apply NSlcctxt'; apply Sctxt_e'; exact pr |];
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 ;
+subst;
+eapply dersrec_forall in acm;
+[| apply inps0];
+destruct_princ;
+derrec_swapL acm exch.
+
+Ltac lt1 a Hexch :=
+  list_assoc_r'_single;
+  match goal with
+  | [ pr  : ?princrules ?ps (?l1, ?l2),
+      rs  : rsub (nslcrule (seqrule ?princrules)) ?rules,
+      acm : Forall (can_gen_contL_gen ?rules)
+                   (map (nslcext ?G ?d0) (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |- _ ] =>
+    match l1 with
+    | context[ [a] ] => idtac
+    | _ => eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact Hexch | cont_solve a]
+    end
+  end.
+
+Definition rules_L_oc {W : Set} (rules : rls (rel (list W))) :=
+forall (ps : list (rel (list W))) a (x Δ : list W),
+rules ps (a :: x, Δ) -> x = [].
+
+Lemma loe_imp_loc : forall {V} (princrules : rls (rel (list (PropF V)))),
+  rules_L_oe princrules -> rules_L_oc princrules.
+Proof.
+  intros V princrules Hoe.
+  unfold rules_L_oe in Hoe.
+  intros ps a x l Hrules.
+  change (a :: x) with ([a] ++ x) in Hrules.
+  apply Hoe in Hrules. destruct Hrules.
+  discriminate. assumption.
+Qed.
+
+Ltac check_nil_contradiction :=
+  repeat (try discriminate;
+  match goal with
+  | [ H : ?l1 ++ ?l2 = [] |- _ ] =>
+    apply app_eq_nil_iff in H; destruct H as [H HH]
+  end).
+
+Ltac check_contradiction_pr_pre :=
+  match goal with
+  | [   rs : rsub (nslcrule (seqrule ?princrules)) ?rules,
+        pr : ?princrules ?ps (?l1, ?l2),
+        loe : forall (ps : list (rel (list (PropF ?V)))) (x y Δ : list (PropF ?V)),
+            ?princrules ps (x ++ y, Δ) -> x = [] \/ y = [] |- _ ] =>
+    match l1 with
+    | ?A ++ ?B => let ph := fresh "H" in specialize (loe _ _ _ _ pr) as H;
+                  destruct ph as [ph | ph]; rewrite ph in pr; check_nil_contradiction;
+                  try rewrite app_nil_l in pr
+    end
+  end.
+
+Ltac check_contradiction_pr :=
+  match goal with
+  | [ pr  : ?princrules ?ps (?l1, ?l2),
+      rs  : rsub (nslcrule (seqrule ?princrules)) ?rules |- _ ] =>
+    repeat (list_assoc_r'_singleton_hyp pr; check_contradiction_pr_pre)
+  end.
+
+Ltac cont_setup_nil :=
+  match goal with
+    | [ acm : dersrec _ _ (map _ (map (seqext ?l1 ?l2 ?Ψ1 ?Ψ2) ?ps)) |- _ ] =>
+       add_empty_goal_R l1 || (rewrite app_assoc;  add_empty_goal_R l1)
+  end.
+
+Ltac cont_setup  :=
+  match goal with
+  | [ pr  : ?princrules ?ps (?l1, ?l2),
+            rs  : rsub (nslcrule (seqrule ?princrules)) ?rules |- _ ] =>
+    match l1 with
+    | nil => cont_setup_nil
+    | _ => assoc_mid l1; rewrite app_assoc
+    end
+  end.
 
 
 
@@ -2414,20 +2611,9 @@ subst.
 unfold rules_L_oe in loe.
 inversion_clear swap ; subst.
 
+{
 unfold rules_L_carry2 in carry.
 
-Ltac lt1 a Hexch :=
-  list_assoc_r'_single;
-  match goal with
-  | [ pr  : ?princrules ?ps (?l1, ?l2),
-      rs  : rsub (nslcrule (seqrule ?princrules)) ?rules,
-      acm : Forall (can_gen_contL_gen ?rules)
-                   (map (nslcext ?G ?d0) (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |- _ ] =>
-    match l1 with
-    | context[ [a] ] => idtac
-    | _ => eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact Hexch | cont_solve a]
-    end
-  end.
 
 
 (* do as much as possible for all rules at once *)
@@ -2437,9 +2623,25 @@ repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
   sD ; subst  ; simpl in pr ;
   try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr);
   try rewrite app_nil_r in acm;
-  try rewrite app_nil_l in acm).
+  try rewrite app_nil_l in acm);
+try solve [check_contradiction_pr];
+try (lt1 a exch; cont_setup;
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
 
-(* Left it here 16/07/19 *)
+
+
+
+(* Left it here 18/07/19 *)
+(* 
+Keep going! Finished all the goals except those with a in pr. 
+Work on those, clean up, then work on the second (and last) 
+major goal which should be a mirror of sorts.
+*)
+
+
+
+
+
 (* 
 Work on the best way to use can_gen_contL_gen_Forall_dersrec, cont_solve, etc.
 In particular, consider
@@ -2449,26 +2651,120 @@ try nsgen_sw_cont_gen2 rs sppc c c' acm inps0 swap pr inmps;
 try cont_solve a.
 
 
-*)
-
-
+ *)
 
 admit.
-try lt1 a exch.
+admit.
+admit.
+
+admit.
+
+admit.
+admit.
+
+admit.
+
+admit.
+admit.
+admit.
+
+admit.
+admit.
+
+
+
+
+
+admit. (* [a] in pr *)
+
+
+
 assoc_mid H3; rewrite app_assoc.
-    derIrs rs  ; [apply NSlcctxt'; apply Sctxt_e'; exact pr |].
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+
+assoc_mid B; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+
+admit. (* [a] in pr *)
+admit. (* [a] in pr && *)
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+assoc_mid H3; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+admit. (* [a] in pr && *)
+assoc_mid l; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+
+assoc_mid H7; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+assoc_mid l; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+rewrite app_assoc;  add_empty_goal_R (Φ1 ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+assoc_mid H; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+admit. (* [a] in pr && *)
+admit. (* [a] in pr && *)
+
+assoc_mid l; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+}
+
+
+assoc_mid H3; rewrite app_assoc;
+    derIrs rs  ; [apply NSlcctxt'; apply Sctxt_e'; exact pr |];
 rewrite dersrec_forall ;
 intros q qin ;
-rewrite -> in_map_iff in qin ; cE ; 
+rewrite -> in_map_iff in qin ; cE ;
 rename_last inmps ;
 rewrite -> in_map_iff in inmps ; cE ;
 rename_last inps0 ;  eapply in_map in inps0 ;
   eapply in_map in inps0 ;
 subst;
 eapply dersrec_forall in acm;
-[| apply inps0].
-destruct x0.
-list_assoc_r'_single_arg acm. look_for_swap exch.
+[| apply inps0];
+destruct_princ.
+
+derrec_swapL acm exch.
+
+
+swap_tac.
+
+SearchAbout derrec nslcext can_gen_swapL.
+eapply (can_gen_swapL_dersrec _ _ _ A). in acm. ; [exact Hexch|  swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont].
+list_assoc_r'_singleton_hyp acm; rem_nil.
+look_for_swap exch.
+list_assoc_r'_arg_single_hyp acm. look_for_swap exch.
 eapply can_gen_swapL_derrec_n.
 exact exch. 2 : exact acm.
 constructor. look_for_swap exch.
