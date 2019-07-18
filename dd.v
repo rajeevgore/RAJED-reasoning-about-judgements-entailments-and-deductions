@@ -279,28 +279,6 @@ intros. eapply derI. eassumption.
 rewrite dersrec_all.  assumption.
 Qed.
 
-Lemma eq_TrueI: forall (P : Prop), (P -> (P <-> True)).
-intros. unfold iff. apply conj ; intro.  apply I. assumption.
-Qed.
-
-Lemma Forall_cons_inv: forall A (P : A -> Prop) (x : A) (l : list A),
-  Forall P (x :: l) -> P x /\ Forall P l.
-Proof. intros. inversion H. tauto. Qed.
-
-Lemma Forall_cons_iff: forall A (P : A -> Prop) (x : A) (l : list A),
-  Forall P (x :: l) <-> P x /\ Forall P l.
-Proof.  intros. unfold iff. apply conj ; intro. 
-apply Forall_cons_inv. assumption.
-inversion H.  apply Forall_cons ; assumption.
-Qed.
-
-Lemma Forall_append: forall X P (xs ys: list X),
-  Forall P (xs ++ ys) <-> Forall P xs /\ Forall P ys.
-Proof.
-intros.  induction xs.  easy.
-simpl.  rewrite !Forall_cons_iff.  rewrite IHxs.  tauto.
-Qed.
-
 Theorem derl_derrec_trans: forall X rules prems rps (concl : X),
   derl rules rps concl -> dersrec rules prems rps -> derrec rules prems concl.
 Proof. 

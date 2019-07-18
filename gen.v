@@ -57,6 +57,10 @@ Proof. intros.  rewrite -> H in H0.  assumption. Qed.
 Lemma PiffD2: forall x y, (x <-> y) -> y -> x.
 Proof. intros.  rewrite <- H in H0.  assumption. Qed.
 
+Lemma eq_TrueI: forall (P : Prop), (P -> (P <-> True)).
+intros. unfold iff. apply conj ; intro.  apply I. assumption.
+Qed.
+
 Definition rsub_imp U V (f g : U -> V -> Type) := iffD1 (@rsub_def U V f g).
 
 (* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
@@ -202,6 +206,24 @@ Proof. intros. unfold iff. split ; intros.
   subst. reflexivity.
   apply in_nil in H. contradiction.
   subst.  apply in_eq. Qed.
+
+Lemma Forall_cons_inv: forall A (P : A -> Prop) (x : A) (l : list A),
+  Forall P (x :: l) -> P x /\ Forall P l.
+Proof. intros. inversion H. tauto. Qed.
+
+Lemma Forall_cons_iff: forall A (P : A -> Prop) (x : A) (l : list A),
+  Forall P (x :: l) <-> P x /\ Forall P l.
+Proof.  intros. unfold iff. apply conj ; intro. 
+apply Forall_cons_inv. assumption.
+inversion H.  apply Forall_cons ; assumption.
+Qed.
+
+Lemma Forall_append: forall X P (xs ys: list X),
+  Forall P (xs ++ ys) <-> Forall P xs /\ Forall P ys.
+Proof.
+intros.  induction xs.  easy.
+simpl.  rewrite !Forall_cons_iff.  rewrite IHxs.  tauto.
+Qed.
 
 Lemma Forall_single: forall (A : Type) P x, @Forall A P [x] <-> P x.
 Proof. intros. unfold iff. rewrite Forall_forall. 
