@@ -6,6 +6,7 @@ Require Import List_lemmas.
 Require Import lnt lntacs lntls lntbR lntmtacs.
 Require Import lntb1L lntb2L.
 Require Import lnt_weakening.
+Require Import lntkt_exch.
 
 
 Inductive contracted {T} : list T -> list T -> Prop :=
@@ -918,6 +919,21 @@ Proof.
   all : reflexivity.
 Qed.
 
+Lemma lem13b2: forall {T} (a : T) A Γ1 C H5,
+    In a C ->
+ contracted_gen (A ++ [a] ++ Γ1 ++ C ++ H5) (A ++ Γ1 ++ C ++ H5).
+Proof.
+  intros. apply in_split in H.
+  destruct H as [l1 [l2 H]].
+  subst.   list_assoc_r'.
+  simpl.
+  do 2 change (a :: (?x ++ ?y)) with ([a] ++ (x ++ y)).
+  eapply contracted_genR_I.
+  do 2 apply applI.
+  rewrite app_assoc.  reflexivity.
+  list_assoc_r'. reflexivity.
+Qed.
+
   Lemma lem13c: forall {T} (a : T) A Γ1 C,
     In a Γ1 ->
 contracted_gen (A ++ Γ1 ++ [a] ++ C) (A ++ Γ1 ++ C).
@@ -954,7 +970,7 @@ Proof.
 Qed.
 
 
-Lemma prop_contL_step1: forall {V} (princrules : rls (rel (list (PropF V)))) (rules : rls (list (rel (list (PropF V)) * dir))) ps a l0 G d0 A H5 C Ψ1 Ψ2,
+Lemma prop_contL_step1_OPP: forall {V} (princrules : rls (rel (list (PropF V)))) (rules : rls (list (rel (list (PropF V)) * dir))) ps a l0 G d0 A H5 C Ψ1 Ψ2,
   rules_L_carry2 princrules ->
   rules_L_ne princrules ->
   rsub (nslcrule (seqrule princrules)) rules ->
@@ -979,6 +995,141 @@ Proof.
   apply H6.
   clear H3.
   apply lem13.
+  eapply lem14; auto.
+  apply H. apply H0. apply H1. apply Hin.
+Qed.
+
+Ltac cont_partial_solve_old a :=
+list_assoc_r'; 
+(eapply contracted_genL_spec_I; reflexivity) ||
+(eapply contracted_genR_spec_I; reflexivity).
+
+Ltac check_head l1 l2 :=
+  match l1 with
+  | l2 ++ ?l3 => idtac
+  | _ => fail
+  end.
+
+Ltac check_tail l1 l2 :=
+  match l1 with
+  | ?l3 ++ l2 => idtac
+  | _ => fail
+  end.
+
+Ltac cont_rem_head :=
+  list_assoc_r'; rewrite ?app_comm_cons;
+  repeat match goal with
+  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
+    (tryif check_head l1 [a] then idtac else apply cont_gen_spec_L)
+  end.
+
+Ltac cont_rem_tail :=
+  list_assoc_l'; rewrite ?app_comm_cons;
+  repeat match goal with
+  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
+    (tryif check_tail l1 [a] then idtac else apply cont_gen_spec_R)
+         end.
+
+Ltac cont_rem_mid_simp :=
+  apply cont_gen_spec_basic || apply cont_gen_spec_rem_sml_L.
+
+(*
+Ltac cont_rem_mid :=
+  list_assoc_r'; rewrite ?app_comm_cons;
+  match goal with
+  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] => 
+   repeat match l1 with
+    | [a] ++ ?A => once idtac 500
+    | ?A ++ ?B => do 2 rewrite (app_assoc A); apply cont_gen_spec_mid;
+                  do 2 rewrite <- (app_assoc A)
+    end
+  end.
+*)
+Ltac single_app :=
+repeat match goal with
+| [ |- context[ ?a :: [] ++ ?B ] ] => rewrite (app_comm_cons _ _ a)
+end.
+
+Ltac rem_nil_goal := repeat rewrite app_nil_l; repeat rewrite app_nil_l.
+Ltac rem_nil_hyp_arg H := repeat rewrite app_nil_l in H; repeat rewrite app_nil_l in H.
+Ltac rem_nil_hyp :=
+  match goal with
+  | [ H : context[ [] ++ ?A ] |- _ ] => rem_nil_hyp_arg H
+  | [ H : context[ ?A ++ [] ] |- _ ] => rem_nil_hyp_arg H
+  | _ => idtac
+  end.
+
+Ltac rem_nil := rem_nil_hyp; rem_nil_goal.
+
+Ltac list_assoc_r'_single :=
+  list_assoc_r'; tac_cons_singleton; rem_nil.
+
+  Ltac app_bracket_middle_arg l :=
+    repeat match l with
+           | ?l1 ++ ?l2 ++ ?l3 ++ ?l4 => rewrite (app_assoc l2)
+           end.
+
+  Ltac app_bracket_middle_L :=
+    match goal with
+    | [ |- contracted_gen_spec _ ?l1 ?l2 ] => app_bracket_middle_arg l1
+    end.
+
+    Ltac app_bracket_middle_R :=
+    match goal with
+    | [ |- contracted_gen_spec _ ?l1 ?l2 ] => app_bracket_middle_arg l2
+    end.
+
+    Ltac app_bracket_middle :=
+      app_bracket_middle_L; app_bracket_middle_R.
+
+    
+(* Use this one *)
+Ltac cont_solve :=
+  cont_rem_head; cont_rem_tail;
+  list_assoc_r'_single; app_bracket_middle;
+  cont_rem_mid_simp.
+
+Ltac cont_solve2 a :=
+  cont_rem_head; cont_rem_tail;
+  list_assoc_r'_single; cont_rem_mid_simp.
+
+(*
+Ltac cont_rem_mid_solve :=
+  repeat match goal with
+         | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
+           repeat match l1 with
+           | [a] ++ ?A ++ ?B => apply cont_gen_spec_rem_sml_L || apply cont_gen_spec_rem_lge_L
+           end
+         end.
+ *)
+
+
+Lemma prop_contL_step1: forall {V} (princrules : rls (rel (list (PropF V)))) (rules : rls (list (rel (list (PropF V)) * dir))) ps a l0 G d0 A H5 C Ψ1 Ψ2,
+  rules_L_carry2 princrules ->
+  rules_L_ne princrules ->
+  rsub (nslcrule (seqrule princrules)) rules ->
+  princrules ps ([a], l0) ->
+Forall (can_gen_contL_gen rules)
+       (map (nslcext G d0) (map (seqext (H5 ++ [a] ++ C) A Ψ1 Ψ2) ps)) ->
+(dersrec rules (fun _ => False) (map (nslcext G d0) (map (seqext (H5 ++ C) (A) Ψ1 Ψ2) ps))).
+Proof.
+  intros. pose proof Forall_forall as H4.
+  edestruct H4 as [fwd rev].
+  pose proof (fwd H2) as H3. clear fwd rev.
+  apply dersrec_forall.
+  intros c Hin.
+  apply in_nslc_seq in Hin.
+  destruct Hin as [[Γ1 Γ2] [Heq Hin]].
+  subst.
+  specialize (H3 (nslcext G d0 (seqext (H5 ++ [a] ++ C) A Ψ1 Ψ2 (Γ1, Γ2)))).
+  pose proof (H3 (lem8 _ _ _ _ _ _ _ _ _ _ Hin)) as H6.
+  clear H3.
+  clear H4.
+  eapply can_gen_contL_gen_def' in H6; try reflexivity.
+  apply H6.
+  clear H3.
+  list_assoc_r'_single.
+  apply lem13b2.
   eapply lem14; auto.
   apply H. apply H0. apply H1. apply Hin.
 Qed.
@@ -1626,16 +1777,6 @@ Ltac rem_empty_goal_L l :=  rewrite (app_nil_l l).
 Ltac rem_empty_hyp_R l H :=  rewrite (app_nil_r l) in H.
 Ltac rem_empty_goal_R l :=  rewrite (app_nil_r l).
 
-Ltac rem_nil_goal := repeat rewrite app_nil_l; repeat rewrite app_nil_l.
-Ltac rem_nil_hyp_arg H := repeat rewrite app_nil_l in H; repeat rewrite app_nil_l in H.
-Ltac rem_nil_hyp :=
-  match goal with
-  | [ H : context[ [] ++ ?A ] |- _ ] => rem_nil_hyp_arg H
-  | [ H : context[ ?A ++ [] ] |- _ ] => rem_nil_hyp_arg H
-  | _ => idtac
-  end.
-
-Ltac rem_nil := rem_nil_hyp; rem_nil_goal.
 
 
 Ltac breakdown :=
@@ -1800,46 +1941,15 @@ Lemma can_gen_swapL_derrec : forall {V} l rules d0 Γ1 Γ2 Ψ Γ1' Γ2',
          [(Γ1' ++ l ++ Γ2', Ψ, d0)].
 Proof.
 Admitted.
-*)
+ *)
+Inductive swapped_gen {T} Γ Δ  :=
+  swapped_gen_I : (exists n, @swapped_n T n Γ Δ) -> swapped_gen Γ Δ.
 
-Lemma can_gen_swapL_derrec_n : forall {V} n rules G d0 Γ Ψ Γ',
-  (forall ns : list (rel (list (PropF V)) * dir),
-         derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
-         can_gen_swapL rules ns) ->
-  swapped_n n Γ Γ' ->
-  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
-         (nslcext G d0 (Γ, Ψ)) ->
-  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
-         (nslcext G d0 (Γ', Ψ)).
-Proof.
-  induction n;
-    intros until 0; intros Hcan Hswap Hder.
-  inversion Hswap. subst.
-  eapply can_gen_swapL_imp. apply Hcan. apply Hder.
-  apply H. reflexivity. reflexivity.
-  inversion Hswap. subst. eapply IHn in H0.
-  eapply can_gen_swapL_imp. apply Hcan. apply H0.
-  apply H1. reflexivity.
-  reflexivity. assumption. assumption.
-Qed.
-
-Lemma can_gen_swapL_derrec_nslcext : forall {V} rules G d0 seq1 seq2 Γ Ψ Γ',
-  (forall ns : list (rel (list (PropF V)) * dir),
-         derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
-         can_gen_swapL rules ns) ->
-  swapped Γ Γ' ->
-  seq1 = (Γ, Ψ) ->
-  seq2 = (Γ', Ψ) ->
-  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
-         (nslcext G d0 seq1) ->
-  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
-         (nslcext G d0 seq2).
-Proof.
-  intros until 0. intros Hexch Hswap Hs1 Hs2 Hd.
-  subst. eapply can_gen_swapL_derrec_n; auto.
-  eapply swapped_n_I. exact Hswap.
-  exact Hd.
-Qed.
+(*
+Lemma swapped_n_front_mid : forall {T} n (A B C D : list T),
+    swapped_n n B C ->
+    exists m, swapped_n m (A ++ B ++ C) ().
+ *)
 
 Lemma swapped_app_L : forall {T} n (l A B : list T),
     swapped_n n A B ->
@@ -1866,21 +1976,6 @@ Proof.
   apply H1. apply H3. apply H0.
 Qed.
 
-Lemma swapped_n_trans_exact : forall {T} n1 n2 (l1 l2 l3 : list T),
-    swapped_n n1 l1 l2 ->
-    swapped_n n2 l2 l3 ->
-    swapped_n (S (n1 + n2)) l1 l3.
-Proof.
-  induction n2; intros until 0; intros H1 H2.
-  inversion H2. subst. rewrite PeanoNat.Nat.add_0_r. 
-  econstructor. apply H1. apply H.
-  inversion H2. subst.
-  eapply IHn2 in H1. simpl.  econstructor.
-  rewrite <- PeanoNat.Nat.add_succ_comm.
-  apply H1. apply H3. assumption.
-Qed.
-
-
 Lemma swapped_comm : forall {T} (A B : list T),
     swapped A B ->
     swapped B A.
@@ -1897,6 +1992,20 @@ Proof.
   econstructor. apply IHn.
   apply swapped_same.
 Qed.  
+
+Lemma swapped_n_trans_exact : forall {T} n1 n2 (l1 l2 l3 : list T),
+    swapped_n n1 l1 l2 ->
+    swapped_n n2 l2 l3 ->
+    swapped_n (S (n1 + n2)) l1 l3.
+Proof.
+  induction n2; intros until 0; intros H1 H2.
+  inversion H2. subst. rewrite PeanoNat.Nat.add_0_r. 
+  econstructor. apply H1. apply H.
+  inversion H2. subst.
+  eapply IHn2 in H1. simpl.  econstructor.
+  rewrite <- PeanoNat.Nat.add_succ_comm.
+  apply H1. apply H3. assumption.
+Qed.
 
 Lemma swapped_n_comm : forall {T} n (A B : list T),
     swapped_n n A B ->
@@ -1934,6 +2043,45 @@ Proof.
   apply Hswap.
 Qed.
 
+
+Lemma swapped_app_mid_R : forall {T} n (A B C D E : list T),
+    swapped_n n E (A ++ B ++ C ++ D) ->
+    swapped_n (S n) E (A ++ C ++ B ++ D).
+Proof.
+  intros until 0; intros H.
+  eapply swapped_n_comm in H.
+  eapply swapped_n_comm.
+  eapply swapped_app_mid_L.
+  apply H.
+Qed.
+
+
+Lemma swapped_n_front_mid : forall {T} n (A B C D : list T),
+    swapped_n n B (C ++ D) ->
+    exists m, swapped_n m (A ++ B) (C ++ A ++ D).
+Proof.
+  intros T n A B C D Hswap.
+  eapply swapped_app_L in Hswap.
+  eapply swapped_n_trans. exact Hswap.
+  rewrite <- app_nil_l.
+  eapply swapped_app_mid_R.
+  apply swapped_n_refl.
+  Unshelve. apply 0.
+Qed.
+
+Lemma swapped_gen_front_mid : forall {T} (A B C D : list T),
+    swapped_gen B (C ++ D) ->
+    swapped_gen (A ++ B) (C ++ A ++ D).
+Proof.
+  intros T A B C D Hswap. inversion Hswap as [Hs].
+  destruct Hs as [n Hs].
+  constructor.
+  eapply swapped_n_front_mid. exact Hs.
+Qed.
+
+
+
+
 (*
 Lemma swapped_app_mid_L : forall {T} n (A B C D E : list T),
     swapped_n n (A ++ B ++ C ++ D) E ->
@@ -1959,16 +2107,6 @@ Proof.
   2 : eapply H2. auto.
 Qed.
 
-Lemma swapped_app_mid_R : forall {T} n (A B C D E : list T),
-    swapped_n n E (A ++ B ++ C ++ D) ->
-    swapped_n (S n) E (A ++ C ++ B ++ D).
-Proof.
-  intros until 0; intros H.
-  eapply swapped_n_comm in H.
-  eapply swapped_n_comm.
-  eapply swapped_app_mid_L.
-  apply H.
-Qed.
 
 Lemma swapped__n_mid : forall {T} m (l Γ1 Γ2 Γ1' Γ2' : list T),
     swapped_n m (Γ1 ++ Γ2) (Γ1' ++ Γ2') ->
@@ -1983,6 +2121,207 @@ Proof.
   do 2 rewrite app_nil_l in H.
   exists (S (S m)). exact H.
 Qed.
+
+Ltac swap_tac_n :=
+  try solve [apply swapped_n_I; swap_tac]; idtac.
+
+Lemma swapped__gen : forall {T} (A B : list T),
+  swapped A B ->
+  swapped_gen A B.
+Proof.
+  intros T A B H.
+  constructor.
+  exists 0. constructor. exact H.
+Qed.
+
+Ltac swap_tac_gen :=
+  try solve [apply swapped__gen; swap_tac]; idtac.
+
+(*
+  list_assoc_r ; try (apply swapped_same) ; 
+    repeat (apply swapped_L || apply swapped_cons) ;  
+  list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
+*)
+
+
+Lemma can_gen_swapL_derrec_n : forall {V} n rules G d0 Γ Ψ Γ',
+  (forall ns : list (rel (list (PropF V)) * dir),
+         derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules ns) ->
+  swapped_n n Γ Γ' ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 (Γ, Ψ)) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 (Γ', Ψ)).
+Proof.
+  induction n;
+    intros until 0; intros Hcan Hswap Hder.
+  inversion Hswap. subst.
+  eapply can_gen_swapL_imp. apply Hcan. apply Hder.
+  apply H. reflexivity. reflexivity.
+  inversion Hswap. subst. eapply IHn in H0.
+  eapply can_gen_swapL_imp. apply Hcan. apply H0.
+  apply H1. reflexivity.
+  reflexivity. assumption. assumption.
+Qed.
+
+Lemma can_gen_swapL_derrec_n_RLS : forall {V} n (rules : list (list (rel (list (PropF V)) * dir)) ->
+  list (rel (list (PropF V)) * dir) -> Prop) rules0 G d0 Γ Ψ Γ',
+  (forall ns : list (rel (list (PropF V)) * dir),
+         derrec rules0 (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules0 ns) ->
+  rsub rules0 rules ->
+  swapped_n n Γ Γ' ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 (Γ, Ψ)) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 (Γ', Ψ)).
+Proof.
+Admitted.
+(*
+  induction n;
+    intros until 0; intros Hcan Hsub Hswap Hder.
+  inversion Hswap. subst. 
+  eapply can_gen_swapL_derrec.
+  eapply can_gen_swapL_imp.
+  2 : exact H. 2-3: reflexivity.
+  2 : exact Hder.
+  eapply can_gen_swapL_mono. exact Hsub. apply Hcan.
+
+  apply Hder.
+  apply H. reflexivity. reflexivity.
+  inversion Hswap. subst. eapply IHn in H0.
+  eapply can_gen_swapL_imp. apply Hcan. apply H0.
+  apply H1. reflexivity.
+  reflexivity. assumption. assumption.
+Qed.
+*)
+
+Lemma can_gen_swapL_derrec_nslcext : forall {V} rules G d0 seq1 seq2 Γ Ψ Γ',
+  (forall ns : list (rel (list (PropF V)) * dir),
+         derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules ns) ->
+  swapped Γ Γ' ->
+  seq1 = (Γ, Ψ) ->
+  seq2 = (Γ', Ψ) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq1) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq2).
+Proof.
+  intros until 0. intros Hexch Hswap Hs1 Hs2 Hd.
+  subst. eapply can_gen_swapL_derrec_n; auto.
+  eapply swapped_n_I. exact Hswap.
+  exact Hd.
+Qed.
+
+Lemma can_gen_swapL_derrec_nslcext_RLS : forall {V} (rules : list (list (rel (list (PropF V)) * dir)) -> list (rel (list (PropF V)) * dir) -> Prop) rules0 G d0 seq1 seq2 Γ Ψ Γ',
+  (forall (ns : list (rel (list (PropF V)) * dir)),
+         derrec rules0 (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules0 ns) ->
+  rsub rules0 rules ->
+  swapped Γ Γ' ->
+  seq1 = (Γ, Ψ) ->
+  seq2 = (Γ', Ψ) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq1) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq2).
+Proof.
+  intros until 0. intros Hexch Hswap Hs1 Hs2 Hd.
+  subst. eapply can_gen_swapL_derrec_n_RLS; auto.
+  eapply swapped_n_I. exact Hs1.
+Qed.
+
+Lemma can_gen_swapL_derrec_nslcext_n : forall {V} n rules G d0 seq1 seq2 Γ Ψ Γ',
+  (forall ns : list (rel (list (PropF V)) * dir),
+         derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules ns) ->
+  swapped_n n Γ Γ' ->
+  seq1 = (Γ, Ψ) ->
+  seq2 = (Γ', Ψ) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq1) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq2).
+Proof.
+  induction n; intros until 0; intros Hexch Hswap Hs1 Hs2 Hd.
+  subst; eapply can_gen_swapL_derrec_nslcext in Hd.
+  exact Hd. exact Hexch. inversion Hswap. exact H.
+  reflexivity. reflexivity.
+
+  inversion Hswap. subst. eapply IHn in H0.
+  eapply can_gen_swapL_derrec_nslcext in H0.
+  exact H0. exact Hexch. exact H1.
+  reflexivity. reflexivity.
+  exact Hexch. reflexivity. reflexivity.
+  exact Hd.
+Qed.
+
+Lemma can_gen_swapL_derrec_nslcext_n_RLS : forall {V} n (rules : list (list (rel (list (PropF V)) * dir)) -> list (rel (list (PropF V)) * dir) -> Prop) rules0 G d0 seq1 seq2 Γ Ψ Γ',
+  (forall (ns : list (rel (list (PropF V)) * dir)),
+         derrec rules0 (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules0 ns) ->
+  rsub rules0 rules ->
+  swapped_n n Γ Γ' ->
+  seq1 = (Γ, Ψ) ->
+  seq2 = (Γ', Ψ) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq1) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq2).
+Proof.
+  induction n; intros until 0; intros Hexch Hrsub Hswap Hs1 Hs2 Hd.
+  subst; eapply can_gen_swapL_derrec_nslcext_RLS in Hd.
+  exact Hd. exact Hexch. exact Hrsub. inversion Hswap. exact H.
+  reflexivity. reflexivity.
+
+  inversion Hswap. subst. eapply IHn in H0.
+  eapply can_gen_swapL_derrec_nslcext_RLS in H0.
+  exact H0. exact Hexch. exact Hrsub. exact H1.
+  reflexivity. reflexivity.
+  exact Hexch. exact Hrsub. reflexivity. reflexivity.
+  exact Hd.
+Qed. 
+
+Lemma can_gen_swapL_derrec_nslcext_gen : forall {V} rules G d0 seq1 seq2 Γ Ψ Γ',
+  (forall ns : list (rel (list (PropF V)) * dir),
+         derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules ns) ->
+  swapped_gen Γ Γ' ->
+  seq1 = (Γ, Ψ) ->
+  seq2 = (Γ', Ψ) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq1) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq2).
+Proof.
+  intros until 0; intros Hexch Hswap Hs1 Hs2 Hd.
+  inversion Hswap as [H]. destruct H as [n H].
+  eapply can_gen_swapL_derrec_nslcext_n in Hd.
+  exact Hd. exact Hexch. exact H. exact Hs1. exact Hs2.
+Qed.
+
+Lemma can_gen_swapL_derrec_nslcext_gen_RLS : forall {V} (rules : list (list (rel (list (PropF V)) * dir)) ->
+  list (rel (list (PropF V)) * dir) -> Prop) rules0 G d0 seq1 seq2 Γ Ψ Γ',
+  (forall (ns : list (rel (list (PropF V)) * dir)),
+         derrec rules0 (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+         can_gen_swapL rules0 ns) ->
+  rsub rules0 rules ->
+  swapped_gen Γ Γ' ->
+  seq1 = (Γ, Ψ) ->
+  seq2 = (Γ', Ψ) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq1) ->
+  derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
+         (nslcext G d0 seq2).
+Proof.
+  intros until 0; intros Hexch Hrsub Hswap Hs1 Hs2 Hd.
+  inversion Hswap as [H]. destruct H as [n H].
+  eapply can_gen_swapL_derrec_nslcext_n_RLS in Hd.
+  exact Hd. exact Hexch. exact Hrsub. exact H. exact Hs1. exact Hs2.
+Qed.
+
 
 Lemma can_gen_swapL_derrec : forall {V} l rules G d0 Γ1 Γ2 Ψ Γ1' Γ2',
   (forall ns : list (rel (list (PropF V)) * dir),
@@ -2132,6 +2471,41 @@ Proof.
   }
 Qed.
 
+Lemma can_gen_contL_gen_Forall_dersrec_RLS : forall  {V}  a rules0 (rules : rls (list (rel (list (PropF V)) * dir))) ps G d0 Γ1 Γ2 Ψ1 Ψ2 Γ1' Γ2',
+    (*    In a Γ1 -> In a Γ2 -> *)
+    (forall (ns : list (rel (list (PropF V)) * dir)),
+        derrec rules0
+               (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+        can_gen_swapL rules0 ns) ->
+    rsub rules0 rules ->
+    contracted_gen_spec a (Γ1 ++ Γ2) (Γ1' ++ Γ2')->
+  Forall (can_gen_contL_gen rules)
+         (map (nslcext G d0) (map (seqext Γ1 Γ2 Ψ1 Ψ2) ps)) ->
+  dersrec rules (fun _ => False)
+         (map (nslcext G d0) (map (seqext Γ1' Γ2' Ψ1 Ψ2) ps)).
+Proof.
+Admitted.
+(*
+intros until 0. intros (* Hin1 Hin2 *) Hexch Hcon Hcont.
+  inversion  Hcon; subst.
+  { breakdown; clear Hcon;     cont_make_gen_L_hyp;
+
+      try cont_solve_gen1;
+      try solve [(eapply prop_contL_step10 in Hcont; look_for_swap Hexch)];
+      try solve[(eapply prop_contL_step3 in Hcont; look_for_swap Hexch)];
+      try solve[(eapply prop_contL_step7 in Hcont;  look_for_swap Hexch)];
+      try solve [eapply prop_contL_step8 in Hcont; look_for_swap Hexch].
+  }
+  { breakdown; clear Hcon;     cont_make_gen_L_hyp;
+
+      try cont_solve_gen1;
+      try solve [(eapply prop_contL_step10_OPP in Hcont; look_for_swap Hexch)];
+      try solve[(eapply prop_contL_step3_OPP in Hcont; look_for_swap Hexch)];
+      try solve[(eapply prop_contL_step7_OPP in Hcont;  look_for_swap Hexch)];
+      try solve [eapply prop_contL_step8_OPP in Hcont; look_for_swap Hexch].
+  }
+Qed.
+*)
 Ltac cont_np_old pr :=
   match type of pr with
   | ?princrules ?ps ([], ?l) =>
@@ -2325,60 +2699,7 @@ eapply dersrec_forall in acm;
 [| apply inps0];
 try rewrite app_nil_r in acm; exact acm.
 
-Ltac cont_partial_solve_old a :=
-list_assoc_r'; 
-(eapply contracted_genL_spec_I; reflexivity) ||
-(eapply contracted_genR_spec_I; reflexivity).
 
-Ltac check_head l1 l2 :=
-  match l1 with
-  | l2 ++ ?l3 => idtac
-  | _ => fail
-  end.
-
-Ltac check_tail l1 l2 :=
-  match l1 with
-  | ?l3 ++ l2 => idtac
-  | _ => fail
-  end.
-
-Ltac cont_rem_head :=
-  list_assoc_r'; rewrite ?app_comm_cons;
-  repeat match goal with
-  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
-    (tryif check_head l1 [a] then idtac else apply cont_gen_spec_L)
-  end.
-
-Ltac cont_rem_tail :=
-  list_assoc_l'; rewrite ?app_comm_cons;
-  repeat match goal with
-  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
-    (tryif check_tail l1 [a] then idtac else apply cont_gen_spec_R)
-         end.
-
-Ltac cont_rem_mid_simp :=
-  apply cont_gen_spec_basic || apply cont_gen_spec_rem_sml_L.
-
-(*
-Ltac cont_rem_mid :=
-  list_assoc_r'; rewrite ?app_comm_cons;
-  match goal with
-  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] => 
-   repeat match l1 with
-    | [a] ++ ?A => once idtac 500
-    | ?A ++ ?B => do 2 rewrite (app_assoc A); apply cont_gen_spec_mid;
-                  do 2 rewrite <- (app_assoc A)
-    end
-  end.
-*)
-Ltac single_app :=
-repeat match goal with
-| [ |- context[ ?a :: [] ++ ?B ] ] => rewrite (app_comm_cons _ _ a)
-end.
-
-
-Ltac list_assoc_r'_single :=
-  list_assoc_r'; tac_cons_singleton; rem_nil.
 
 (*
 Ltac list_assoc_l'_single_arg H :=
@@ -2390,43 +2711,7 @@ Ltac list_assoc_l'_arg_conc H := list_assoc_l'; list_assoc_l'_arg H.
 Ltac list_assoc_r'_arg_conc H := list_assoc_r'; list_assoc_r'_arg H.
  *)
 
-  Ltac app_bracket_middle_arg l :=
-    repeat match l with
-           | ?l1 ++ ?l2 ++ ?l3 ++ ?l4 => rewrite (app_assoc l2)
-           end.
 
-  Ltac app_bracket_middle_L :=
-    match goal with
-    | [ |- contracted_gen_spec _ ?l1 ?l2 ] => app_bracket_middle_arg l1
-    end.
-
-    Ltac app_bracket_middle_R :=
-    match goal with
-    | [ |- contracted_gen_spec _ ?l1 ?l2 ] => app_bracket_middle_arg l2
-    end.
-
-    Ltac app_bracket_middle :=
-      app_bracket_middle_L; app_bracket_middle_R.
-
-(* Use this one *)
-Ltac cont_solve a :=
-  cont_rem_head; cont_rem_tail;
-  list_assoc_r'_single; app_bracket_middle;
-  cont_rem_mid_simp.
-
-Ltac cont_solve2 a :=
-  cont_rem_head; cont_rem_tail;
-  list_assoc_r'_single; cont_rem_mid_simp.
-
-(*
-Ltac cont_rem_mid_solve :=
-  repeat match goal with
-         | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
-           repeat match l1 with
-           | [a] ++ ?A ++ ?B => apply cont_gen_spec_rem_sml_L || apply cont_gen_spec_rem_lge_L
-           end
-         end.
- *)
 
 
 (* eapply (can_gen_swapL_dersrec _ _ _ Γ1) *)
@@ -2470,11 +2755,60 @@ Ltac cont_rem_mid_solve :=
     .
  *)
 
-    Ltac derrec_swapL acm exch :=
+    
+
+Lemma swapped_gen_app_L : forall {T} (l A B : list T),
+    swapped_gen A B ->
+    swapped_gen (l ++ A) (l ++ B).
+Proof.
+  intros T l A B H. inversion H as [H2].
+  destruct H2 as [n H2]. constructor.
+  eapply swapped_app_L in H2. exists n. exact H2.
+Qed.
+
+Lemma swapped_gen_refl : forall {T} (A : list T),
+    swapped_gen A A.
+Proof.
+  intros T A. constructor.
+  exists 0. apply swapped_n_refl.
+Qed.  
+
+
+
+Ltac swapped_gen_tac_pre :=
+ match goal with
+  | [ |- swapped_gen ?l1 ?l2] =>
+    match l1 with
+    | ?A ++ ?B =>
+      match l2 with
+      | ?A ++ ?C => apply swapped_gen_app_L (* strip off front *)
+      | _ => let t := fresh "t" in remember l1 as t;
+                 assoc_mid A; subst t; apply swapped_gen_front_mid
+      end
+    end
+ end.
+
+Ltac swap_gen_tac :=
+  repeat ( try list_assoc_r'_single;
+   swapped_gen_tac_pre; try apply swapped_gen_refl).
+
+Ltac derrec_swapL acm exch :=
       eapply (can_gen_swapL_derrec_nslcext) in acm;
       [exact acm | exact exch | | reflexivity | reflexivity ]; swap_tac.
 
-    Ltac destruct_princ :=
+Ltac derrec_swapL2 acm exch :=
+      eapply (can_gen_swapL_derrec_nslcext_gen) in acm;
+      [exact acm | exact exch | | reflexivity | reflexivity ]; swap_tac_n.
+
+Ltac derrec_swapL3 acm exch :=
+      eapply (can_gen_swapL_derrec_nslcext_gen) in acm;
+      [exact acm | exact exch | | reflexivity | reflexivity ]; swap_gen_tac.
+
+Ltac derrec_swapL3_RLS acm exch :=
+      eapply (can_gen_swapL_derrec_nslcext_gen_RLS) in acm;
+      [exact acm | exact exch | | reflexivity | reflexivity ]; swap_gen_tac.
+
+Ltac destruct_princ :=
   match goal with
   | [ |- context[ (nslcext _ _  (seqext _ _ _ _ ?x)) ]] => destruct x
   end.
@@ -2495,7 +2829,126 @@ eapply dersrec_forall in acm;
 destruct_princ;
 derrec_swapL acm exch.
 
-Ltac lt1 a Hexch :=
+Ltac nsgen_sw_cont_gen4 rs sppc c c' acm inps0 swap pr inmps exch := 
+    derIrs rs  ;
+[apply NSlcctxt'; apply Sctxt_e'; exact pr |];
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 ;
+subst;
+eapply dersrec_forall in acm;
+[| apply inps0];
+destruct_princ;
+derrec_swapL2 acm exch.
+
+Ltac nsgen_sw_cont_gen5 rs sppc c c' acm inps0 swap pr inmps exch := 
+    derIrs rs  ;
+[apply NSlcctxt'; apply Sctxt_e'; exact pr |];
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 ;
+subst;
+eapply dersrec_forall in acm;
+[| apply inps0];
+destruct_princ;
+derrec_swapL3 acm exch.
+
+Ltac nsgen_sw_cont_gen5_RLS rs sppc c c' acm inps0 swap pr inmps exch := 
+    derIrs rs  ;
+[apply NSlcctxt'; apply Sctxt_e'; exact pr |];
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 ;
+subst;
+eapply dersrec_forall in acm;
+[| apply inps0];
+destruct_princ;
+derrec_swapL3_RLS acm exch.
+
+
+Lemma rules_L_oe_cons_nil_blind : forall {V} princrules ps a l1 l2,
+    @rules_L_oe V princrules -> 
+    princrules ps (a :: l1, l2) ->
+    l1 = nil.
+Proof.
+  intros until 0; intros H1 H2.
+  unfold rules_L_oe in H1.
+  change (a :: l1) with ([a] ++ l1) in H2.
+  eapply H1 in H2. destruct H2.
+  discriminate. assumption.
+Qed.
+
+(* Makes progress on princrules ps (l1, l2) goals *)
+Ltac lt1 a acm Hexch :=
+  list_assoc_r'_single;
+  eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact Hexch | cont_solve].
+
+
+Ltac lt1_RLS a acm Hexch :=
+  list_assoc_r'_single;
+  eapply (can_gen_contL_gen_Forall_dersrec_RLS a) in acm; [| exact Hexch | cont_solve].
+
+Ltac lt2 a Hexch :=
+  match goal with
+  | [ pr  : ?princrules ?ps (?l1, ?l2),
+      rs  : rsub (nslcrule (seqrule ?princrules)) ?rules,
+      acm : Forall (can_gen_contL_gen ?rules)
+                   (map (nslcext ?G ?d0) (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |- _ ] =>
+    match Γ1 with
+    | ?A ++ [?a] ++ ?B => eapply prop_contL_step1 in acm
+    | ?A ++ [?a] => eapply prop_contL_step4 in acm
+    | _ => match Γ2 with
+           | ?A ++ [?a] ++ ?B => eapply prop_contL_step1_OPP in acm
+           | [?a] ++ ?A => eapply prop_contL_step2 in acm
+           end
+    end
+  end.
+
+Ltac lt3 a Hexch rs carry psfull loe :=
+  match goal with
+  | [ pr  : ?princrules ?ps (?l1, ?l2),
+      acm : Forall (can_gen_contL_gen ?rules)
+                   (map (nslcext ?G ?d0) (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |- _ ] =>
+    match l1 with
+    | context[ a :: [] ] =>
+      lt2 a Hexch; [| exact carry | exact psfull| exact rs| exact pr]
+    | context[ a :: ?l2 ] =>
+      pose proof (rules_L_oe_cons_nil_blind _ _ _ _ _ loe pr); subst;
+      lt2 a Hexch; [| exact carry | exact psfull| exact rs| exact pr]
+    | _ => lt1 a acm Hexch
+    end
+  end.
+
+Ltac lt3_RLS a Hexch rs carry psfull loe :=
+  match goal with
+  | [ pr  : ?princrules ?ps (?l1, ?l2),
+      acm : Forall (can_gen_contL_gen ?rules)
+                   (map (nslcext ?G ?d0) (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |- _ ] =>
+    match l1 with
+    | context[ a :: [] ] =>
+      lt2 a Hexch; [| exact carry | exact psfull| exact rs| exact pr]
+    | context[ a :: ?l2 ] =>
+      pose proof (rules_L_oe_cons_nil_blind _ _ _ _ _ loe pr); subst;
+      lt2 a Hexch; [| exact carry | exact psfull| exact rs| exact pr]
+    | _ => lt1_RLS a acm Hexch
+    end
+  end.
+
+
+(* Makes progress on princrules ps (l1, l2) goals *)
+Ltac lt1' a Hexch :=
   list_assoc_r'_single;
   match goal with
   | [ pr  : ?princrules ?ps (?l1, ?l2),
@@ -2504,7 +2957,39 @@ Ltac lt1 a Hexch :=
                    (map (nslcext ?G ?d0) (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |- _ ] =>
     match l1 with
     | context[ [a] ] => idtac
-    | _ => eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact Hexch | cont_solve a]
+    | _ => eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact Hexch | cont_solve]
+    end
+  end.
+
+Ltac lt2' Hexch :=
+  match goal with
+  | [ pr  : ?princrules ?ps (?l1, ?l2),
+      rs  : rsub (nslcrule (seqrule ?princrules)) ?rules,
+      acm : Forall (can_gen_contL_gen ?rules)
+                   (map (nslcext ?G ?d0) (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)) |- _ ] =>
+    match Γ1 with
+    | ?A ++ [?a] ++ ?B => eapply prop_contL_step1 in acm
+    | ?A ++ [?a] => eapply prop_contL_step4 in acm
+    | _ => match Γ2 with
+           | ?A ++ [?a] ++ ?B => eapply prop_contL_step1_OPP in acm
+           | [?a] ++ ?A => eapply prop_contL_step2 in acm
+           end
+    end
+  end.
+
+(* Makes progress on princrules ps ([a], l2) goals *)
+Ltac lt3' a Hexch :=
+  list_assoc_r'_single;
+  match goal with
+  | [ pr  : ?princrules ?ps (?l1, ?l2),
+      rs  : rsub (nslcrule (seqrule ?princrules)) ?rules,
+      acm : Forall (can_gen_contL_gen ?rules)
+                   (map (nslcext ?G ?d0) (map (seqext ?Γ1 ?Γ2 ?Ψ1 ?Ψ2) ?ps)),
+      carry : rules_L_carry2 ?princrules,
+      psfull : rules_L_ne ?princrules |- _ ] =>
+    match l1 with
+    | context[ [a] ] => lt2 a Hexch; [| exact carry | exact psfull| exact rs| exact pr]
+    | _ => idtac
     end
   end.
 
@@ -2566,9 +3051,97 @@ Ltac cont_setup  :=
     end
   end.
 
-
-
+(*
+(nslcrule (seqrule (@princrule_pfc V)))
+*)
 Lemma gen_contL_gen_step_loe_lc: forall V ps concl princrules
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  rules_L_oe princrules -> 
+  rules_L_carry2 princrules ->
+  rules_L_ne princrules ->
+      (forall (ns : list (rel (list (PropF V)) * dir)),
+        derrec last_rule
+               (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+        can_gen_swapL last_rule ns) ->
+
+(*   premises_fullL_ns dir ps -> *)
+(*  Forall (fun ps' => premises_fullL (fst ps')) ps -> *)
+(*   premises_fullL ps -> *)
+  last_rule = nslcrule (seqrule princrules) ->
+  gen_contL_gen_step last_rule rules ps concl.
+Proof.
+Admitted.
+(*
+  intros until 0.  unfold gen_contL_step.
+intros loe carry psfull exch lreq nsr drs acm rs. subst. clear drs.
+
+inversion nsr as [? ? ? ? sppc mnsp nsc]. clear nsr.
+unfold nslcext in nsc.
+rewrite can_gen_contL_gen_def'.  intros until 0. intros swap pp ss.
+unfold nslcext in pp.
+
+apply partition_2_2 in pp.
+
+destruct c.
+sE ; subst.
+
+{ nsgen_sw_cont_gen rs sppc (l, l0, d) (Γ', Δ, d0) acm inps0 swap. }
+
+(* now case where move and rule application occur in the same sequent *)
+{
+injection H0 as. subst.
+inversion sppc as [? ? ? ? ? ? pr mse se].
+destruct c.
+unfold seqext in se.
+subst.  clear sppc.
+injection se as sel ser.
+subst.
+
+unfold rules_L_oe in loe.
+inversion_clear swap ; subst.
+
+{
+(* unfold rules_L_carry2 in carry. *)
+
+
+
+(* do as much as possible for all rules at once *)
+acacD' ; (* gives 10 subgoals *)
+subst ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
+  sD ; subst  ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr);
+  try rewrite app_nil_r in acm;
+  try rewrite app_nil_l in acm);
+try solve [check_contradiction_pr];
+try (lt3_RLS a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen5_RLS rs sppc c c' acm inps0 swap pr inmps exch).
+
+}
+
+{
+(* unfold rules_L_carry2 in carry. *)
+
+
+
+(* do as much as possible for all rules at once *)
+acacD' ; (* gives 10 subgoals *)
+subst ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
+  sD ; subst  ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr);
+  try rewrite app_nil_r in acm;
+  try rewrite app_nil_l in acm);
+try solve [check_contradiction_pr];
+try (lt3_RLS a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen5_RLS rs sppc c c' acm inps0 swap pr inmps exch).
+}
+}
+{ list_eq_nc. contradiction. }
+
+Qed.
+*)
+Lemma gen_contL_gen_step_loe_lc_old: forall V ps concl princrules
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
   rules_L_oe princrules -> 
   rules_L_carry2 princrules ->
@@ -2612,7 +3185,7 @@ unfold rules_L_oe in loe.
 inversion_clear swap ; subst.
 
 {
-unfold rules_L_carry2 in carry.
+(* unfold rules_L_carry2 in carry. *)
 
 
 
@@ -2625,849 +3198,196 @@ repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
   try rewrite app_nil_r in acm;
   try rewrite app_nil_l in acm);
 try solve [check_contradiction_pr];
-try (lt1 a exch; cont_setup;
-    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
-
-
-
-
-(* Left it here 18/07/19 *)
-(* 
-Keep going! Finished all the goals except those with a in pr. 
-Work on those, clean up, then work on the second (and last) 
-major goal which should be a mirror of sorts.
-*)
-
-
-
-
-
-(* 
-Work on the best way to use can_gen_contL_gen_Forall_dersrec, cont_solve, etc.
-In particular, consider
-
-cont_np_gen;
-try nsgen_sw_cont_gen2 rs sppc c c' acm inps0 swap pr inmps;
-try cont_solve a.
-
-
- *)
-
-admit.
-admit.
-admit.
-
-admit.
-
-admit.
-admit.
-
-admit.
-
-admit.
-admit.
-admit.
-
-admit.
-admit.
-
-
-
-
-
-admit. (* [a] in pr *)
-
-
-
-assoc_mid H3; rewrite app_assoc.
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-admit. (* [a] in pr *)
-
-assoc_mid B; rewrite app_assoc.
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-
-admit. (* [a] in pr *)
-admit. (* [a] in pr && *)
-
-rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-admit. (* [a] in pr *)
-
-rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-assoc_mid H3; rewrite app_assoc.
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-admit. (* [a] in pr *)
-admit. (* [a] in pr && *)
-assoc_mid l; rewrite app_assoc.
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-admit. (* [a] in pr *)
-
-assoc_mid H7; rewrite app_assoc.
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-admit. (* [a] in pr *)
-
-rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-assoc_mid l; rewrite app_assoc.
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-rewrite app_assoc;  add_empty_goal_R (Φ1 ++ [a]).
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-assoc_mid H; rewrite app_assoc.
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
-
-admit. (* [a] in pr *)
-admit. (* [a] in pr && *)
-admit. (* [a] in pr && *)
-
-assoc_mid l; rewrite app_assoc.
-nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+try (lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen5 rs sppc c c' acm inps0 swap pr inmps exch).
 }
 
-
-assoc_mid H3; rewrite app_assoc;
-    derIrs rs  ; [apply NSlcctxt'; apply Sctxt_e'; exact pr |];
-rewrite dersrec_forall ;
-intros q qin ;
-rewrite -> in_map_iff in qin ; cE ;
-rename_last inmps ;
-rewrite -> in_map_iff in inmps ; cE ;
-rename_last inps0 ;  eapply in_map in inps0 ;
-  eapply in_map in inps0 ;
-subst;
-eapply dersrec_forall in acm;
-[| apply inps0];
-destruct_princ.
-
-derrec_swapL acm exch.
-
-
-swap_tac.
-
-SearchAbout derrec nslcext can_gen_swapL.
-eapply (can_gen_swapL_dersrec _ _ _ A). in acm. ; [exact Hexch|  swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont].
-list_assoc_r'_singleton_hyp acm; rem_nil.
-look_for_swap exch.
-list_assoc_r'_arg_single_hyp acm. look_for_swap exch.
-eapply can_gen_swapL_derrec_n.
-exact exch. 2 : exact acm.
-constructor. look_for_swap exch.
-Search derrec swapped_n.
-try rewrite app_nil_r in acm; exact acm.
-
-
-admit.
-assoc_mid H3.
-try nsgen_sw_cont_gen2 rs sppc c c' acm inps0 swap pr inmps.
+{
+(* unfold rules_L_carry2 in carry. *)
 
 
 
-eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact exch | ].
-2 : 
-
-  list_assoc_r'_single;
-  apply cont_gen_spec_basic.
-  apply cont_gen_spec_rem_sml_L.
-  2 : (cont_rem_head; cont_rem_tail; cont_rem_mid_simp;
-  list_assoc_r'_single; apply cont_gen_spec_basic).
-
-
-
-2 : cont_solve a.
-try lt1 a exch.
-eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact exch|].
-2 : cont_solve a.
-2 : cont_rem_head.
-2 : cont_rem_tail.
-
-2 : apply cont_gen_spec_rem_sml_L.
-
-
-  cont_rem_head; cont_rem_tail; cont_rem_mid_simp;
-  apply cont_gen_spec_basic.
-
-
-Focus 2.
-  cont_rem_head; cont_rem_tail; cont_rem_mid_simp;
-  apply cont_gen_spec_basic.
-
-try lt1 a exch.
-
-
-
-admit.
-admit.
-cont_solve a.
-Ltac cont_gen_spec_solve :=
-  list_assoc_r'; tac_cons_singleton; rem_nil;
-  match goal with
-  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
-    match l1 with
-    | 
-Search cont_gen_spec.
-admit.
-eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [ | exact exch | ].
-
-cont_np_gen;
-try nsgen_sw_cont_gen2 rs sppc c c' acm inps0 swap pr inmps;
-try cont_solve a.
-
-
-(* Left it here 13/07/19 *)
-(* Keep working on 
-cont_np_gen to solve the following goals.
-Then clean it up and make the tactic simpler.
-Along the way I may need to add to cont_solve, 
-but I think it should be good.
-*)
-
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
-admit.
+(* do as much as possible for all rules at once *)
+acacD' ; (* gives 10 subgoals *)
+subst ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
+  sD ; subst  ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr);
+  try rewrite app_nil_r in acm;
+  try rewrite app_nil_l in acm);
+try solve [check_contradiction_pr];
+try (lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen5 rs sppc c c' acm inps0 swap pr inmps exch).
 }
-destruct x; discriminate.
-Admitted.
+}
+{ list_eq_nc. contradiction. }
 
+Qed.
 
-  + admit.
-  + rewrite app_comm_cons;  rewrite app_assoc.
-eapply lem16 in acm.
-      derIrs rs  ;
-[apply NSlcctxt'; apply Sctxt_e'; exact pr |];
-rewrite dersrec_forall ;
-intros q qin ;
-rewrite -> in_map_iff in qin ; cE ; 
-rename_last inmps ;
-rewrite -> in_map_iff in inmps ; cE ;
-rename_last inps0 ;  eapply in_map in inps0 ;
-  eapply in_map in inps0 ;
-subst;
-eapply dersrec_forall in acm;
-[| apply inps0]; 
-try rewrite app_nil_r in acm; exact acm.
-
-
-(* GOOD STUFF
-+ eapply lem12 in acm.
-  2 : exact carry.
-  2 : exact psfull.
-  2 : exact rs.
-  2 : exact pr.
-
-  rewrite (app_cons_single _ _ a).
-  derIrs rs  .
-apply NSlcctxt'; apply Sctxt_e'; exact pr.
-rewrite dersrec_forall ;
-intros q qin ;
-rewrite -> in_map_iff in qin ; cE ; 
-rename_last inmps ;
-rewrite -> in_map_iff in inmps ; cE ;
-rename_last inps0 ;  eapply in_map in inps0 ;
-  eapply in_map in inps0 .
-subst.
-eapply dersrec_forall in acm.
-2 : apply inps0.
-rewrite app_nil_r in acm. auto.
-
-+ eapply lem15 in acm.
-    2 : exact carry.
-  2 : exact psfull.
-  2 : exact rs.
-  2 : exact pr.
-
-
-  rewrite (app_cons_single _ _ a).
-    assoc_mid H3.
-    rewrite app_assoc.
-    derIrs rs  .
-apply NSlcctxt'; apply Sctxt_e'; exact pr.
-rewrite dersrec_forall ;
-intros q qin ;
-rewrite -> in_map_iff in qin ; cE ; 
-rename_last inmps ;
-rewrite -> in_map_iff in inmps ; cE ;
-rename_last inps0 ;  eapply in_map in inps0 ;
-  eapply in_map in inps0 .
-subst.
-eapply dersrec_forall in acm.
-2 : apply inps0. auto.
-+
-  rewrite app_nil_r in acm.
-  change ([a]++C) with ([] ++ [a] ++ C) in acm.
-  eapply lem12 in acm.
-  2 : exact carry.
-  2 : exact psfull.
-  2 : exact rs.
-  2 : exact pr.
-
-  rewrite (app_cons_single _ _ a).
-  derIrs rs  .
-apply NSlcctxt'; apply Sctxt_e'; exact pr.
-rewrite dersrec_forall ;
-intros q qin ;
-rewrite -> in_map_iff in qin ; cE ; 
-rename_last inmps ;
-rewrite -> in_map_iff in inmps ; cE ;
-rename_last inps0 ;  eapply in_map in inps0 ;
-  eapply in_map in inps0 .
-subst.
-eapply dersrec_forall in acm.
-2 : apply inps0.
-auto.
+Lemma princrule_pfc_L_carry2 : forall {V : Set} ps a x Δ,
+  princrule_pfc ps (a :: x, Δ) ->
+  Forall (fun ps' : list (PropF V) * list (PropF V) => a = hd a (fst ps')) ps.
+Proof.  intros. inversion H; subst; auto. Qed.
   
-+
-    change ([a]++C) with ([] ++ [a] ++ C) in acm.
- eapply lem15 in acm.
-    2 : exact carry.
-  2 : exact psfull.
-  2 : exact rs.
-  2 : exact pr.
+Lemma princrule_pfc_L_carry2' : forall V, rules_L_carry2 (@princrule_pfc V).
+Proof. unfold rules_L_carry2.  intros.
+       eapply princrule_pfc_L_carry2.  exact H.
+Qed.
 
-
-  rewrite (app_cons_single _ _ a).
-    assoc_mid B.
-    rewrite app_assoc.
-    derIrs rs  .
-apply NSlcctxt'; apply Sctxt_e'; exact pr.
-rewrite dersrec_forall ;
-intros q qin ;
-rewrite -> in_map_iff in qin ; cE ; 
-rename_last inmps ;
-rewrite -> in_map_iff in inmps ; cE ;
-rename_last inps0 ;  eapply in_map in inps0 ;
-  eapply in_map in inps0 .
-subst.
-eapply dersrec_forall in acm.
-2 : apply inps0. auto.
-*)
-+ admit.
-
-+
+Lemma princrule_pfc_L_ne : forall {V : Set} ps C,
+  princrule_pfc ps C ->
+  non_empty ps ->
+  Forall (fun p : list (PropF V) * list (PropF V) => fst p <> []) ps.
+Proof.
+  intros. inversion H; subst; auto;
+  apply Forall_forall; intros [l1 l2] Hxx;
+    simpl in *; destruct Hxx as [H1 | H1].
+  2 : contradiction.
+  inversion H1; subst; intros HH; discriminate.
+  inversion H1; subst; intros HH; discriminate.
+  destruct H1.
+  inversion H1; subst; intros HH; discriminate.
+  contradiction.
+Qed.
   
+Lemma princrule_pfc_L_ne' : forall V, rules_L_ne (@princrule_pfc V).
+Proof.
+  unfold rules_L_ne. intros until 0; intros H1 H2.
+  eapply princrule_pfc_L_ne. exact H1. exact H2. 
+Qed.
 
-  rewrite (app_cons_single _ _ a).
-
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-cont_tacX.
-
-unfold rules_L_ne in psfull.
-assert ( In (l, l1) ps) as Hin.
-apply lem9 in HH. auto.
-pose proof pr as Cpr.
-apply carry in Cpr.
-assert (a = hd a (fst (l,l1))).
-eapply Forall_forall in Cpr; [exact Cpr|]; auto.
-pose proof pr as Fpr. apply psfull in Fpr.
-assert (fst (l,l1) <> []).
-eapply Forall_forall in Fpr; [exact Fpr|]; auto.
-destruct l. simpl in *. contradiction.
-simpl in *. subst.
-eapply (contracted_I _ _ _ [] l);
-apps_eq_tac.
-destruct ps; simpl; auto. 
-
-+ 
-rewrite (app_cons_single _ _ a).
-
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-
-apply cont_R. apply cont_L.
-apply cont_small.
-
-+
-change ([a] ++ B) with ([] ++ [a] ++ B).  
-destruct l. simpl in H4. subst.
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-admit.
-simpl in H4. inversion H4 as [[H6 H5]].
-destruct l.
-simpl in H5. subst.
-simpl.
-rewrite (app_cons_single _ _ p).
-
-
-
-eapply lem11 in acm. simpl in acm.
-apply lem7' in acm.
-eapply lem11' in acm.
-
-derIrs rs ; [> apply NSctxt' || apply NSlcctxt' ;
-             apply Sctxt_e || apply Sctxt_e' ; exact pr |] .
-apply dersrec_all. rewrite app_nil_r in acm. auto.
-unfold rules_L_carry2. apply carry.
-apply psfull. apply pr.
-unfold rules_L_carry2. eapply carry.
-apply psfull. apply pr.
-admit. apply rs.
-subst. change (p :: p0 :: l) with ([p] ++ [p0] ++ l) in pr.
-apply loe in pr. destruct pr; discriminate.
-
-
-
-
-Lemma gen_contL_step_loe_lc: forall V ps concl princrules
+Lemma gen_contL_gen_step_loe_lc_FAKE: forall V ps concl princrules
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
   rules_L_oe princrules -> 
   rules_L_carry2 princrules ->
   rules_L_ne princrules ->
+      (forall ns : list (rel (list (PropF V)) * dir),
+        derrec rules
+               (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+        can_gen_swapL rules ns) ->
+
 (*   premises_fullL_ns dir ps -> *)
 (*  Forall (fun ps' => premises_fullL (fst ps')) ps -> *)
 (*   premises_fullL ps -> *)
   last_rule = nslcrule (seqrule princrules) ->
-  gen_contL_step last_rule rules ps concl.
-Proof.  intros until 0.  unfold gen_contL_step.
-intros loe carry psfull lreq nsr drs acm rs. subst. clear drs.
+  gen_contL_gen_step last_rule rules ps concl.
+Admitted.
 
-inversion nsr as [? ? ? ? sppc mnsp nsc]. clear nsr.
-unfold nslcext in nsc.
-rewrite can_gen_contL_def'.  intros until 0. intros swap pp ss.
-unfold nslcext in pp.
 
-apply partition_2_2 in pp.
-
-destruct c.
-sE ; subst.
-
-{ nsgen_sw_cont rs sppc (l, l0, d) (Γ', Δ, d0) acm inps0 swap. }
-
-(* now case where move and rule application occur in the same sequent *)
-{
-injection H0 as. subst.
-inversion sppc as [? ? ? ? ? ? pr mse se].
-destruct c.
-unfold seqext in se.
-subst.  clear sppc.
-injection se as sel ser.
-subst.
-
-unfold rules_L_oe in loe.
-inversion_clear swap ; subst.
-
-unfold rules_L_carry2 in carry.
-
-(* do as much as possible for all rules at once *)
-acacD' ; (* gives 10 subgoals *)
-subst ;
-repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
-  sD ; subst ; simpl ; simpl in pr ;
-  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
-
-+ change ([a;a]) with ([a] ++ [a]) in pr.
-  apply loe in pr; destruct pr; discriminate.
-+ 
-rewrite (app_cons_single _ _ a).
-
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-cont_tacX.
-
-unfold rules_L_ne in psfull.
-assert ( In (l, l1) ps) as Hin.
-apply lem9 in HH. auto.
-pose proof pr as Cpr.
-apply carry in Cpr.
-assert (a = hd a (fst (l,l1))).
-eapply Forall_forall in Cpr; [exact Cpr|]; auto.
-pose proof pr as Fpr. apply psfull in Fpr.
-assert (fst (l,l1) <> []).
-eapply Forall_forall in Fpr; [exact Fpr|]; auto.
-destruct l. simpl in *. contradiction.
-simpl in *. subst.
-eapply (contracted_I _ _ _ [] l);
-apps_eq_tac.
-destruct ps; simpl; auto. 
-
-+ 
-rewrite (app_cons_single _ _ a).
-
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-
-apply cont_R. apply cont_L.
-apply cont_small.
-
-+
-change ([a] ++ B) with ([] ++ [a] ++ B).  
-destruct l. simpl in H4. subst.
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-admit.
-simpl in H4. inversion H4 as [[H6 H5]].
-destruct l.
-simpl in H5. subst.
-simpl.
-rewrite (app_cons_single _ _ p).
-
-
-
-eapply lem11 in acm. simpl in acm.
-apply lem7' in acm.
-eapply lem11' in acm.
-
-derIrs rs ; [> apply NSctxt' || apply NSlcctxt' ;
-             apply Sctxt_e || apply Sctxt_e' ; exact pr |] .
-apply dersrec_all. rewrite app_nil_r in acm. auto.
-unfold rules_L_carry2. apply carry.
-apply psfull. apply pr.
-unfold rules_L_carry2. eapply carry.
-apply psfull. apply pr.
-admit. apply rs.
-subst. change (p :: p0 :: l) with ([p] ++ [p0] ++ l) in pr.
-apply loe in pr. destruct pr; discriminate.
-
-
-
-
-simpl in *.inversion H5. subst.
-apply loe in pr.
-
-rewrite dersrec_forall ;
-intros q qin ;
-rewrite -> in_map_iff in qin ; cE ; 
-rename_last inmps ;
-rewrite -> in_map_iff in inmps ; cE ; 
-rewrite -> Forall_forall in acm ;
-rename_last inps0 ;  eapply in_map in inps0 ;
-eapply in_map in inps0 ;
-pose proof inps0 as HH .
-eapply acm in inps0 .
-clear acm .
-subst.
-rewrite -> ?can_gen_contL_def' in inps0 ;
-rewrite -> ?can_gen_contR_def' in inps0 ;
-subst ;
-destruct x0 ;
-unfold seqext ;
-unfold nsext ; unfold nslcext .
-eapply inps0 ;
-  [> | unfold nsext ; unfold nslcext ; reflexivity |
-   unfold seqext ; reflexivity ].
-Print can_gen_contL.
-Print contracted.
-
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-
-
-
-eapply lem10 in acm.
-apply lem7' in acm.
-eapply lem10 in acm.
-
-
-SearchAbout Forall can_gen_contL.
-
-  rules_L_carry2 princrules ->
-  rules_L_ne princrules ->
-Forall P (map (nslcext G d0
-   (map (seqext Γ1 Γ2 Ψ1 Ψ2) ps))) ->
-Forall P (map (nslcext G d0
-   (map (seqext Γ1 ([p] ++ Γ2) Ψ1 Ψ2)
-      (map (fun p =>(rem_hd (fst p), snd p)) ps)))).
-
-
-(* Left it here, try to write the above lemma. *)
-(* Not really sure how to incorporate the 
-exchange lemmas. *)
-
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-admit.
-(*
-rewrite (app_cons_single _ _ a).
-*)
-destruct l.
-- simpl in *.
-subst. rewrite <- app_assoc.
-
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-cont_tacX.
-simpl.
-apply cont_L. apply cont_small.
-- simpl in *. inversion H4. subst.
-  destruct l. simpl in *.
-  subst.
-
-rewrite <- app_assoc.
-nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
-admit.
-admit.
-
-unfold rules_L_ne in psfull.
-assert ( In (l, l1) ps) as Hin.
-apply lem9 in HH. auto.
-pose proof pr as Cpr.
-apply carry in Cpr.
-assert (a = hd a (fst (l,l1))).
-eapply Forall_forall in Cpr; [exact Cpr|]; auto.
-pose proof pr as Fpr. apply psfull in Fpr.
-assert (fst (l,l1) <> []).
-eapply Forall_forall in Fpr; [exact Fpr|]; auto.
-destruct l. simpl in *. contradiction.
-simpl in *. subst.
-eapply (contracted_I _ _ _ [] l);
-apps_eq_tac.
-destruct ps; simpl; auto. 
-
-cont_tacX.
-simpl.
-apply cont_L. apply cont_small.
-  
-unfold rules_L_ne in psfull.
-
-assert ( In (l, l1) ps) as Hin.
-apply lem9 in HH. auto.
-pose proof pr as Cpr.
-apply carry in Cpr.
-assert (a = hd a (fst (l,l1))).
-eapply Forall_forall in Cpr; [exact Cpr|]; auto.
-pose proof pr as Fpr. apply psfull in Fpr.
-assert (fst (l,l1) <> []).
-eapply Forall_forall in Fpr; [exact Fpr|]; auto.
-destruct l. simpl in *. contradiction.
-simpl in *. subst.
-eapply (contracted_I _ _ _ [] l);
-apps_eq_tac.
-destruct ps; simpl; auto. 
-
-  
-Search contracted.
-
-
-(*
-derIrs rs ; [> eapply NSctxt' || eapply NSlcctxt' ;
-  apply Sctxt_e || apply Sctxt_e' ; exact pr |] .
-rewrite dersrec_forall .
-intros q qin .
-rewrite -> in_map_iff in qin ; cE .
-rename_last inmps ;
-rewrite -> in_map_iff in inmps ; cE . 
-rewrite -> Forall_forall in acm .
-rename_last inps0 ;  eapply in_map in inps0 ;
-  eapply in_map in inps0 .
-pose proof inps0 as HH.
-eapply acm in inps0 .
-(*clear acm ; *)
-rewrite -> ?can_gen_contL_def' in inps0 ;
-rewrite -> ?can_gen_contR_def' in inps0 .
-subst .
-destruct x0 .
-unfold seqext .
-unfold nsext ; unfold nslcext .
-eapply inps0 .
-2 : reflexivity.
-2 : reflexivity. 
-unfold can_gen_contL in acm.
-clear acm. *)
-
-
-cont_tacX.
-
-apply in_map_iff in HH. destruct HH as [xx [HH HH2]].
-
-SearchAbout In map.
-SearchAbout Forall .
-Check Forall_forall.
-
-Print contracted.
-
-cont_tacX.
-
-
-[> | unfold nsext ; unfold nslcext ; reflexivity |
-    unfold seqext ; reflexivity ] ;
-  cont_tacX.
-
-Print contracted.
-apply (contracted_I _ _ _ nil (a :: l)).
-econstructor.
-
-(*
-  pose pr as Qpr ; apply carry in Qpr.
-  unfold rules_L_ne in psfull.
-  pose pr as Qpr2 ; apply psfull in Qpr2.
-  rewrite (lem _ _ _ a) in acm; auto.
-  intros HH. auto.
-  rewrite <- app_assoc in acm.
-  apply lem7 in acm.
-  rewrite <- lem in acm; auto.
-  *)
-
-unfold contracted.
-admit.
- nsprsame_cont2  rs pr q qin inmps acm inps0 x0.
-
-  Search derrec.
-
-  unfold rsub in rs.
-  eapply derI.
-  apply rs.
-  apply NSlcctxt.
-  rewrite app_cons_single.
-  apply Sctxt_e'. apply pr.
-  SearchAbout dersrec.
-  rewrite <- app_assoc.
-  
-  Search seqrule.
-  Search derrec.
-  admit.
-  intros HH. auto.
-  admit.
-  
-  apply Qpr. unfold premises_fullL. auto.
-  admit.
-  Qpr2.
-  unfold premises_fullL. intros. auto.
-  SearchAbout Forall map.
-Print can_gen_contL.
-  Lemma lem6 : forall G d0 seq P,
-    Forall (can_gen_contL rules)
-          (map (nslcext G d0)
-             (map (seqext (A ++ [a; a]) Φ2 Ψ1 Ψ2)
-                (map
-                   (fun p : list (PropF V) * list (PropF V) =>
-                      (rem_hd (fst p), snd p)) ps))) ->
-    
-  
-  Definition rem_hd {A : Type} (l : list A) :=
-    match l with
-    | nil => nil
-    | [a] => nil
-    | a::l' => l'
-    end.
-
-(Forall (fun ps' : list (PropF V) * list (PropF V) =>
-             a = hd a (fst ps')) ps) ->
-     (map (seqext (A ++ [a]) Φ2 Ψ1 Ψ2) ps) =
-     (map (seqext (A ++ [a;a]) Φ2 Ψ1 Ψ2)
-          (map (fun p => rem_hd (fst p)) ps)).
-
-
-  
-  admit.
-+
-  SearchAbout Forall can_gen_swapL.
-SearchAbout Forall can_gen_contL.
-  admit.
-destruct l. simpl in *. subst.
-(* above produces 20 subgoals, following solves all of them!! *)
-nsprsameL_cont princrules rs pr q qin inmps acm inps0 x0.
-}
-
-{ list_eq_nc. contradiction. }
-
-Qed.
-
-
-
-
-
-
-
-Proof.  intros until 0.  unfold gen_contL_step.
-intros loe lreq nsr drs acm rs. subst. clear drs.
-
-inversion nsr as [? ? ? ? sppc mnsp nsc]. clear nsr.
-unfold nslcext in nsc.
-rewrite can_gen_contL_def'.  intros until 0. intros swap pp ss.
-unfold nslcext in pp.
-
-apply partition_2_2 in pp.
-
-destruct c.
-sE ; subst.
-
-{ nsgen_sw_cont rs sppc (l, l0, d) (Γ', Δ, d0) acm inps0 swap. }
-
-(* now case where move and rule application occur in the same sequent *)
-{
-injection H0 as. subst.
-inversion sppc as [? ? ? ? ? ? pr mse se].
-destruct c.
-unfold seqext in se.
-subst.  clear sppc.
-injection se as sel ser.
-subst.
-
-unfold rules_L_oe in loe.
-inversion_clear swap ; subst.
-
-(* do as much as possible for all rules at once *)
-acacD' ; (* gives 10 subgoals *)
-  subst.
-
-
-  repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
-  sD ; subst ; simpl ; simpl in pr ;
-  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)). 
-(* above produces 20 subgoals, following solves all of them!! *)
-change [a;a] with ([a] ++ [a]) in *. apply loe in pr.
-
-
-nsprsameL_cont princrules rs pr q qin inmps acm inps0 x0.
-}
-
-
-((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
-  sD ; subst ; simpl ; simpl in pr ;
-  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
-nsprsame_cont rs pr q qin inmps acm inps0 x0.
-
-
-(* above produces 20 subgoals, following solves all of them!! *)
-nsprsameL_cont princrules rs pr q qin inmps acm inps0 x0.
-}
-
-
-repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
-  sD ; subst ; simpl ; simpl in pr ;
-  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)) ;
-(* above produces 20 subgoals, following solves all of them!! *)
-nsprsameL_cont princrules rs pr q qin inmps acm inps0 x0.
-}
-
-{ list_eq_nc. contradiction. }
-
-Qed.
-
-Lemma gen_weakL_step_pr_lc: forall V ps concl 
+(* New pr rules. *)
+Lemma gen_contL_gen_step_pr_lc: forall V ps concl 
   (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
-  last_rule = nslcrule (seqrule (@princrule V)) ->
-  gen_weakL_step last_rule rules ps concl.
-Proof.  intros. eapply gen_weakL_step_loe_lc.
-  apply princrule_L_oe'. exact H. Qed.
+    last_rule = nslcrule (seqrule (@princrule_pfc V)) ->
+    (forall ns : list (rel (list (PropF V)) * dir),
+        derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
+        can_gen_swapL rules ns) ->
+  gen_contL_gen_step last_rule rules ps concl.
+Proof.
+  intros until 0. intros Hl Hswap H2 H3 H4 H5.
+  subst.
+  eapply gen_contL_gen_step_loe_lc_old.
+  apply princrule_pfc_L_oe'.
+  apply princrule_pfc_L_carry2'. 
+  apply princrule_pfc_L_ne'.
+  exact Hswap.
+  reflexivity.
+  exact H2.
+  all : assumption.
+Qed.
+
+Lemma rsub_princrule_pfc_LNSKt_rules : forall V,
+  rsub (nslcrule (seqrule (princrule_pfc (V:=V)))) (LNSKt_rules (V:=V)).
+Proof. 
+  unfold rsub. intros V u v H. 
+  eapply prop. exact H.
+Qed.
+
+Lemma LNSKt_contL: forall (V : Set) ns
+  (D : derrec (@LNSKt_rules V) (fun _ => False) ns),
+      can_gen_contL_gen (@LNSKt_rules V) ns.
+Proof.
+intro.  intro.  intro.
+eapply derrec_all_ind in D.
+exact D. tauto.
+intros. inversion H ; subst.
+admit.
+admit.
+admit.
+admit.
+admit.
+eapply gen_contL_gen_step_pr_lc; try reflexivity; try assumption.
+eapply LNSKt_exchL.
+exact H2.
+assumption.
+assumption.
+apply rsub_princrule_pfc_LNSKt_rules.
+Qed.
+
+
+all : assumption.
+pose proof gen_contL_gen_step_pr_lc as HH.
+unfold gen_contL_gen_step in HH.
+eapply HH.
+eapply gen_contL_gen_step_pr_lc.
+; [> pose gen_weakL_step_b2R_lc 
+  | pose gen_weakL_step_b1R_lc
+  | pose gen_weakL_step_b2L_lc
+  | pose gen_weakL_step_b1L_lc
+  | pose gen_weakL_step_EW_lc
+  | pose gen_weakL_step_pr_lc ] ; 
+unfold gen_weakL_step in g ; egx g ;
+  clear g ; unfold rsub ; intros ; [> 
+  apply b2r | apply b1r | apply b2l | apply b1l | apply nEW | apply prop ] ;
+  assumption.
+Qed.
+  2 : reflexivity.
+  2 : exact H2.
+  2 : exact H3.
+  2 : exact H4.
+  2 : exact H5.
+  intros ns Hder.
+  unfold can_gen_swapL.
+  
+  eapply can_gen_swapL_mono. exact H5.
+  eapply gen_swapL_lc.
+  exact Hder.
+  Search can_gen_swapL.
+  eapply gen_swapL_lc.
+  subst. 2 : exact H2.
+  admit.
+  subst. apply gen_swapL_lc.
+  exact H.
+Qed.
+
+
+
+Lemma gen_contL_gen_step_pr_lc: forall V ps concl 
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  last_rule = nslcrule (seqrule (@princrule_pfc V)) ->
+  gen_contL_gen_step last_rule rules ps concl.
+Proof.
+
+
+  eapply derrec_rmono in H. exact H.
+  rsub
+  SearchAbout derrec "mono".
+  exact H.
+  
+  subst. apply gen_swapL_lc.
+  exact H.
+
+
+  intros. eapply gen_contL_gen_step_loe_lc_FAKE.
+  apply princrule_pfc_L_oe'.
+  apply princrule_pfc_L_carry2'. 
+  apply princrule_pfc_L_ne'.
+  subst. apply gen_swapL_lc.
+  exact H.
+Qed.
 
 Lemma gen_weakL_lc: forall {V : Set} ns
-  (D : derrec (nslcrule (seqrule (@princrule V))) (fun _ => False) ns),
-  can_gen_weakL (nslcrule (seqrule (@princrule V))) ns.
-
+  (D : derrec (nslcrule (seqrule (@princrule_pfc V))) (fun _ => False) ns),
+  can_gen_weakL (nslcrule (seqrule (@princrule_pfc V))) ns.
 Proof. 
 intro.  intro.  intro.
 eapply derrec_all_ind in D.
@@ -4553,4 +4473,1072 @@ admit.
        apply app_eq_app in H3.
        destruct H3 as [m3 [[H31 H32] | [H31 H32]]]; subst.      
 Admitted.
+ *)
+
+
+(*
+
+
+swapped_gen_tac.
+swapped_gen_tac.
+swapped_gen_tac.
+
+Search swapped_gen.
+swapped_gen (l ++ A) (B ++ l ++ C)
+Ltac lntacs.assoc_mid l :=
+  list_assoc_r'; rewrite ?app_comm_cons;
+   repeat (rewrite -(app_assoc _ l _); fail 1) || rewrite app_assoc; rewrite
+   -(app_assoc _ l _)
+
+
+
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen4 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+ nsgen_sw_cont_gen4 rs sppc c c' acm inps0 swap pr inmps exch).
+
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+ nsgen_sw_cont_gen4 rs sppc c c' acm inps0 swap pr inmps exch).
+
+lt3 a exch rs carry psfull loe. repeat rewrite app_nil_l. cont_setup.
+derrec_swapL.
+can_gen_swapL_derrec_nslcext.
+ nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+
+
+
+admit.
+
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+ nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+
+
+admit.
+
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+ nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+
+admit.
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+(lt3 a exch rs carry psfull loe; repeat rewrite app_nil_l; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+
+
+
+
+}
+
+{
+
+
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+  nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+  nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+  nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+pose proof (rules_L_oe_cons_nil_blind _ _ _ _ _ loe pr); subst;  
+lt2 a Hexch; [| exact carry | exact psfull| exact rs| exact pr];
+rewrite app_nil_l; cont_setup;
+  nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+lt3 a exch rs carry psfull loe; cont_setup; 
+  nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+pose proof (rules_L_oe_cons_nil_blind _ _ _ _ _ loe pr); subst;  
+lt2 a Hexch; [| exact carry | exact psfull| exact rs| exact pr];
+rewrite app_nil_l; cont_setup;
+  nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+lt3 a exch rs carry psfull loe; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+
+pose proof (rules_L_oe_cons_nil_blind _ _ _ _ _ loe pr); subst;
+lt3 a exch rs carry psfull; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit.
+admit.
+
+pose proof (rules_L_oe_cons_nil_blind _ _ _ _ _ loe pr); subst;
+lt3 a exch rs carry psfull; cont_setup;
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+pose proof (rules_L_oe_cons_nil_blind _ _ _ _ _ loe pr); subst;
+lt3 a exch rs carry psfull; cont_setup;
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+
+admit.
+
+pose proof (rules_L_oe_cons_nil_blind _ _ _ _ _ loe pr); subst;
+lt3 a exch rs carry psfull; cont_setup; 
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+
+try ( lt1 a exch ; cont_setup;
+    nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+try ( lt3 a exch ; cont_setup;
+      nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+
+lt1 a acm exch.
+
+
+try (lt2 a exch; [| exact carry | exact psfull| exact rs| exact pr];
+cont_setup;
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch).
+
+eapply prop_contL_step1_OPP in acm; [| exact carry | exact psfull| exact rs| exact pr].
+cont_setup.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+eapply prop_contL_step2 in acm; [| exact carry | exact psfull| exact rs| exact pr].
+cont_setup.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+eapply prop_contL_step4 in acm; [| exact carry | exact psfull| exact rs| exact pr].
+cont_setup.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit.
+
+eapply prop_contL_step1_OPP in acm; [| exact carry | exact psfull| exact rs| exact pr].
+cont_setup.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+eapply prop_contL_step1 in acm; [| exact carry | exact psfull| exact rs| exact pr].
+cont_setup.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit.
+
+eapply prop_contL_step1 in acm; [| exact carry | exact psfull| exact rs| exact pr].
+cont_setup.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+admit.
+
+eapply prop_contL_step1 in acm; [| exact carry | exact psfull| exact rs| exact pr].
+cont_setup.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+eapply prop_contL_step1_OPP in acm; [| exact carry | exact psfull| exact rs| exact pr].
+cont_setup.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit.
+admit.
+
+
+
+(* Left it here 18/07/19 *)
+(* 
+Keep going! Finished all the goals except those with a in pr. 
+Work on those, clean up, then work on the second (and last) 
+major goal which should be a mirror of sorts.
+*)
+
+
+
+
+
+(* 
+Work on the best way to use can_gen_contL_gen_Forall_dersrec, cont_solve, etc.
+In particular, consider
+
+cont_np_gen;
+try nsgen_sw_cont_gen2 rs sppc c c' acm inps0 swap pr inmps;
+try cont_solve a.
+
+
+ *)
+
+admit.
+admit.
+admit.
+
+admit.
+
+admit.
+admit.
+
+admit.
+
+admit.
+admit.
+admit.
+
+admit.
+admit.
+
+
+
+
+
+admit. (* [a] in pr *)
+
+
+
+assoc_mid H3; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+
+assoc_mid B; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+
+admit. (* [a] in pr *)
+admit. (* [a] in pr && *)
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+assoc_mid H3; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+admit. (* [a] in pr && *)
+assoc_mid l; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+
+assoc_mid H7; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+
+rewrite app_assoc;  add_empty_goal_R (A ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+assoc_mid l; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+rewrite app_assoc;  add_empty_goal_R (Φ1 ++ [a]).
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+assoc_mid H; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+
+admit. (* [a] in pr *)
+admit. (* [a] in pr && *)
+admit. (* [a] in pr && *)
+
+assoc_mid l; rewrite app_assoc.
+nsgen_sw_cont_gen3 rs sppc c c' acm inps0 swap pr inmps exch.
+}
+
+
+assoc_mid H3; rewrite app_assoc;
+    derIrs rs  ; [apply NSlcctxt'; apply Sctxt_e'; exact pr |];
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ;
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 ;
+subst;
+eapply dersrec_forall in acm;
+[| apply inps0];
+destruct_princ.
+
+derrec_swapL acm exch.
+
+
+swap_tac.
+
+SearchAbout derrec nslcext can_gen_swapL.
+eapply (can_gen_swapL_dersrec _ _ _ A). in acm. ; [exact Hexch|  swap_tac | list_assoc_r'_arg_conc Hcont; tac_cons_singleton; rem_nil; apply Hcont].
+list_assoc_r'_singleton_hyp acm; rem_nil.
+look_for_swap exch.
+list_assoc_r'_arg_single_hyp acm. look_for_swap exch.
+eapply can_gen_swapL_derrec_n.
+exact exch. 2 : exact acm.
+constructor. look_for_swap exch.
+Search derrec swapped_n.
+try rewrite app_nil_r in acm; exact acm.
+
+
+admit.
+assoc_mid H3.
+try nsgen_sw_cont_gen2 rs sppc c c' acm inps0 swap pr inmps.
+
+
+
+eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact exch | ].
+2 : 
+
+  list_assoc_r'_single;
+  apply cont_gen_spec_basic.
+  apply cont_gen_spec_rem_sml_L.
+  2 : (cont_rem_head; cont_rem_tail; cont_rem_mid_simp;
+  list_assoc_r'_single; apply cont_gen_spec_basic).
+
+
+
+2 : cont_solve a.
+try lt1 a exch.
+eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [| exact exch|].
+2 : cont_solve a.
+2 : cont_rem_head.
+2 : cont_rem_tail.
+
+2 : apply cont_gen_spec_rem_sml_L.
+
+
+  cont_rem_head; cont_rem_tail; cont_rem_mid_simp;
+  apply cont_gen_spec_basic.
+
+
+Focus 2.
+  cont_rem_head; cont_rem_tail; cont_rem_mid_simp;
+  apply cont_gen_spec_basic.
+
+try lt1 a exch.
+
+
+
+admit.
+admit.
+cont_solve a.
+Ltac cont_gen_spec_solve :=
+  list_assoc_r'; tac_cons_singleton; rem_nil;
+  match goal with
+  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
+    match l1 with
+    | 
+Search cont_gen_spec.
+admit.
+eapply (can_gen_contL_gen_Forall_dersrec a) in acm; [ | exact exch | ].
+
+cont_np_gen;
+try nsgen_sw_cont_gen2 rs sppc c c' acm inps0 swap pr inmps;
+try cont_solve a.
+
+
+(* Left it here 13/07/19 *)
+(* Keep working on 
+cont_np_gen to solve the following goals.
+Then clean it up and make the tactic simpler.
+Along the way I may need to add to cont_solve, 
+but I think it should be good.
+*)
+
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+}
+destruct x; discriminate.
+Admitted.
+
+
+  + admit.
+  + rewrite app_comm_cons;  rewrite app_assoc.
+eapply lem16 in acm.
+      derIrs rs  ;
+[apply NSlcctxt'; apply Sctxt_e'; exact pr |];
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 ;
+subst;
+eapply dersrec_forall in acm;
+[| apply inps0]; 
+try rewrite app_nil_r in acm; exact acm.
+
+
+
+ *)
+
+
+
+(* GOOD STUFF
++ eapply lem12 in acm.
+  2 : exact carry.
+  2 : exact psfull.
+  2 : exact rs.
+  2 : exact pr.
+
+  rewrite (app_cons_single _ _ a).
+  derIrs rs  .
+apply NSlcctxt'; apply Sctxt_e'; exact pr.
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 .
+subst.
+eapply dersrec_forall in acm.
+2 : apply inps0.
+rewrite app_nil_r in acm. auto.
+
++ eapply lem15 in acm.
+    2 : exact carry.
+  2 : exact psfull.
+  2 : exact rs.
+  2 : exact pr.
+
+
+  rewrite (app_cons_single _ _ a).
+    assoc_mid H3.
+    rewrite app_assoc.
+    derIrs rs  .
+apply NSlcctxt'; apply Sctxt_e'; exact pr.
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 .
+subst.
+eapply dersrec_forall in acm.
+2 : apply inps0. auto.
++
+  rewrite app_nil_r in acm.
+  change ([a]++C) with ([] ++ [a] ++ C) in acm.
+  eapply lem12 in acm.
+  2 : exact carry.
+  2 : exact psfull.
+  2 : exact rs.
+  2 : exact pr.
+
+  rewrite (app_cons_single _ _ a).
+  derIrs rs  .
+apply NSlcctxt'; apply Sctxt_e'; exact pr.
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 .
+subst.
+eapply dersrec_forall in acm.
+2 : apply inps0.
+auto.
+  
++
+    change ([a]++C) with ([] ++ [a] ++ C) in acm.
+ eapply lem15 in acm.
+    2 : exact carry.
+  2 : exact psfull.
+  2 : exact rs.
+  2 : exact pr.
+
+
+  rewrite (app_cons_single _ _ a).
+    assoc_mid B.
+    rewrite app_assoc.
+    derIrs rs  .
+apply NSlcctxt'; apply Sctxt_e'; exact pr.
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 .
+subst.
+eapply dersrec_forall in acm.
+2 : apply inps0. auto.
+ *)
+
+
+(*
++ admit.
+
++
+  
+
+  rewrite (app_cons_single _ _ a).
+
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+cont_tacX.
+
+unfold rules_L_ne in psfull.
+assert ( In (l, l1) ps) as Hin.
+apply lem9 in HH. auto.
+pose proof pr as Cpr.
+apply carry in Cpr.
+assert (a = hd a (fst (l,l1))).
+eapply Forall_forall in Cpr; [exact Cpr|]; auto.
+pose proof pr as Fpr. apply psfull in Fpr.
+assert (fst (l,l1) <> []).
+eapply Forall_forall in Fpr; [exact Fpr|]; auto.
+destruct l. simpl in *. contradiction.
+simpl in *. subst.
+eapply (contracted_I _ _ _ [] l);
+apps_eq_tac.
+destruct ps; simpl; auto. 
+
++ 
+rewrite (app_cons_single _ _ a).
+
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+
+apply cont_R. apply cont_L.
+apply cont_small.
+
++
+change ([a] ++ B) with ([] ++ [a] ++ B).  
+destruct l. simpl in H4. subst.
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+admit.
+simpl in H4. inversion H4 as [[H6 H5]].
+destruct l.
+simpl in H5. subst.
+simpl.
+rewrite (app_cons_single _ _ p).
+
+
+
+eapply lem11 in acm. simpl in acm.
+apply lem7' in acm.
+eapply lem11' in acm.
+
+derIrs rs ; [> apply NSctxt' || apply NSlcctxt' ;
+             apply Sctxt_e || apply Sctxt_e' ; exact pr |] .
+apply dersrec_all. rewrite app_nil_r in acm. auto.
+unfold rules_L_carry2. apply carry.
+apply psfull. apply pr.
+unfold rules_L_carry2. eapply carry.
+apply psfull. apply pr.
+admit. apply rs.
+subst. change (p :: p0 :: l) with ([p] ++ [p0] ++ l) in pr.
+apply loe in pr. destruct pr; discriminate.
+
+Lemma gen_contL_step_loe_lc: forall V ps concl princrules
+  (last_rule rules : rls (list (rel (list (PropF V)) * dir))),
+  rules_L_oe princrules -> 
+  rules_L_carry2 princrules ->
+  rules_L_ne princrules ->
+(*   premises_fullL_ns dir ps -> *)
+(*  Forall (fun ps' => premises_fullL (fst ps')) ps -> *)
+(*   premises_fullL ps -> *)
+  last_rule = nslcrule (seqrule princrules) ->
+  gen_contL_step last_rule rules ps concl.
+Proof.  intros until 0.  unfold gen_contL_step.
+intros loe carry psfull lreq nsr drs acm rs. subst. clear drs.
+
+inversion nsr as [? ? ? ? sppc mnsp nsc]. clear nsr.
+unfold nslcext in nsc.
+rewrite can_gen_contL_def'.  intros until 0. intros swap pp ss.
+unfold nslcext in pp.
+
+apply partition_2_2 in pp.
+
+destruct c.
+sE ; subst.
+
+{ nsgen_sw_cont rs sppc (l, l0, d) (Γ', Δ, d0) acm inps0 swap. }
+
+(* now case where move and rule application occur in the same sequent *)
+{
+injection H0 as. subst.
+inversion sppc as [? ? ? ? ? ? pr mse se].
+destruct c.
+unfold seqext in se.
+subst.  clear sppc.
+injection se as sel ser.
+subst.
+
+unfold rules_L_oe in loe.
+inversion_clear swap ; subst.
+
+unfold rules_L_carry2 in carry.
+
+(* do as much as possible for all rules at once *)
+acacD' ; (* gives 10 subgoals *)
+subst ;
+repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
+  sD ; subst ; simpl ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
+
++ change ([a;a]) with ([a] ++ [a]) in pr.
+  apply loe in pr; destruct pr; discriminate.
++ 
+rewrite (app_cons_single _ _ a).
+
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+cont_tacX.
+
+unfold rules_L_ne in psfull.
+assert ( In (l, l1) ps) as Hin.
+apply lem9 in HH. auto.
+pose proof pr as Cpr.
+apply carry in Cpr.
+assert (a = hd a (fst (l,l1))).
+eapply Forall_forall in Cpr; [exact Cpr|]; auto.
+pose proof pr as Fpr. apply psfull in Fpr.
+assert (fst (l,l1) <> []).
+eapply Forall_forall in Fpr; [exact Fpr|]; auto.
+destruct l. simpl in *. contradiction.
+simpl in *. subst.
+eapply (contracted_I _ _ _ [] l);
+apps_eq_tac.
+destruct ps; simpl; auto. 
+
++ 
+rewrite (app_cons_single _ _ a).
+
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+
+apply cont_R. apply cont_L.
+apply cont_small.
+
++
+change ([a] ++ B) with ([] ++ [a] ++ B).  
+destruct l. simpl in H4. subst.
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+admit.
+simpl in H4. inversion H4 as [[H6 H5]].
+destruct l.
+simpl in H5. subst.
+simpl.
+rewrite (app_cons_single _ _ p).
+
+
+
+eapply lem11 in acm. simpl in acm.
+apply lem7' in acm.
+eapply lem11' in acm.
+
+derIrs rs ; [> apply NSctxt' || apply NSlcctxt' ;
+             apply Sctxt_e || apply Sctxt_e' ; exact pr |] .
+apply dersrec_all. rewrite app_nil_r in acm. auto.
+unfold rules_L_carry2. apply carry.
+apply psfull. apply pr.
+unfold rules_L_carry2. eapply carry.
+apply psfull. apply pr.
+admit. apply rs.
+subst. change (p :: p0 :: l) with ([p] ++ [p0] ++ l) in pr.
+apply loe in pr. destruct pr; discriminate.
+
+
+
+
+simpl in *.inversion H5. subst.
+apply loe in pr.
+
+rewrite dersrec_forall ;
+intros q qin ;
+rewrite -> in_map_iff in qin ; cE ; 
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE ; 
+rewrite -> Forall_forall in acm ;
+rename_last inps0 ;  eapply in_map in inps0 ;
+eapply in_map in inps0 ;
+pose proof inps0 as HH .
+eapply acm in inps0 .
+clear acm .
+subst.
+rewrite -> ?can_gen_contL_def' in inps0 ;
+rewrite -> ?can_gen_contR_def' in inps0 ;
+subst ;
+destruct x0 ;
+unfold seqext ;
+unfold nsext ; unfold nslcext .
+eapply inps0 ;
+  [> | unfold nsext ; unfold nslcext ; reflexivity |
+   unfold seqext ; reflexivity ].
+Print can_gen_contL.
+Print contracted.
+
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+
+
+
+eapply lem10 in acm.
+apply lem7' in acm.
+eapply lem10 in acm.
+
+
+SearchAbout Forall can_gen_contL.
+
+  rules_L_carry2 princrules ->
+  rules_L_ne princrules ->
+Forall P (map (nslcext G d0
+   (map (seqext Γ1 Γ2 Ψ1 Ψ2) ps))) ->
+Forall P (map (nslcext G d0
+   (map (seqext Γ1 ([p] ++ Γ2) Ψ1 Ψ2)
+      (map (fun p =>(rem_hd (fst p), snd p)) ps)))).
+
+
+(* Left it here, try to write the above lemma. *)
+(* Not really sure how to incorporate the 
+exchange lemmas. *)
+
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+admit.
+(*
+rewrite (app_cons_single _ _ a).
+*)
+destruct l.
+- simpl in *.
+subst. rewrite <- app_assoc.
+
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+cont_tacX.
+simpl.
+apply cont_L. apply cont_small.
+- simpl in *. inversion H4. subst.
+  destruct l. simpl in *.
+  subst.
+
+rewrite <- app_assoc.
+nsprsame_cont2 rs pr q qin inmps acm inps0 x0.
+admit.
+admit.
+
+unfold rules_L_ne in psfull.
+assert ( In (l, l1) ps) as Hin.
+apply lem9 in HH. auto.
+pose proof pr as Cpr.
+apply carry in Cpr.
+assert (a = hd a (fst (l,l1))).
+eapply Forall_forall in Cpr; [exact Cpr|]; auto.
+pose proof pr as Fpr. apply psfull in Fpr.
+assert (fst (l,l1) <> []).
+eapply Forall_forall in Fpr; [exact Fpr|]; auto.
+destruct l. simpl in *. contradiction.
+simpl in *. subst.
+eapply (contracted_I _ _ _ [] l);
+apps_eq_tac.
+destruct ps; simpl; auto. 
+
+cont_tacX.
+simpl.
+apply cont_L. apply cont_small.
+  
+unfold rules_L_ne in psfull.
+
+assert ( In (l, l1) ps) as Hin.
+apply lem9 in HH. auto.
+pose proof pr as Cpr.
+apply carry in Cpr.
+assert (a = hd a (fst (l,l1))).
+eapply Forall_forall in Cpr; [exact Cpr|]; auto.
+pose proof pr as Fpr. apply psfull in Fpr.
+assert (fst (l,l1) <> []).
+eapply Forall_forall in Fpr; [exact Fpr|]; auto.
+destruct l. simpl in *. contradiction.
+simpl in *. subst.
+eapply (contracted_I _ _ _ [] l);
+apps_eq_tac.
+destruct ps; simpl; auto. 
+
+  
+Search contracted.
+
+
+(*
+derIrs rs ; [> eapply NSctxt' || eapply NSlcctxt' ;
+  apply Sctxt_e || apply Sctxt_e' ; exact pr |] .
+rewrite dersrec_forall .
+intros q qin .
+rewrite -> in_map_iff in qin ; cE .
+rename_last inmps ;
+rewrite -> in_map_iff in inmps ; cE . 
+rewrite -> Forall_forall in acm .
+rename_last inps0 ;  eapply in_map in inps0 ;
+  eapply in_map in inps0 .
+pose proof inps0 as HH.
+eapply acm in inps0 .
+(*clear acm ; *)
+rewrite -> ?can_gen_contL_def' in inps0 ;
+rewrite -> ?can_gen_contR_def' in inps0 .
+subst .
+destruct x0 .
+unfold seqext .
+unfold nsext ; unfold nslcext .
+eapply inps0 .
+2 : reflexivity.
+2 : reflexivity. 
+unfold can_gen_contL in acm.
+clear acm. *)
+
+
+cont_tacX.
+
+apply in_map_iff in HH. destruct HH as [xx [HH HH2]].
+
+SearchAbout In map.
+SearchAbout Forall .
+Check Forall_forall.
+
+Print contracted.
+
+cont_tacX.
+
+
+[> | unfold nsext ; unfold nslcext ; reflexivity |
+    unfold seqext ; reflexivity ] ;
+  cont_tacX.
+
+Print contracted.
+apply (contracted_I _ _ _ nil (a :: l)).
+econstructor.
+
+(*
+  pose pr as Qpr ; apply carry in Qpr.
+  unfold rules_L_ne in psfull.
+  pose pr as Qpr2 ; apply psfull in Qpr2.
+  rewrite (lem _ _ _ a) in acm; auto.
+  intros HH. auto.
+  rewrite <- app_assoc in acm.
+  apply lem7 in acm.
+  rewrite <- lem in acm; auto.
+  *)
+
+unfold contracted.
+admit.
+ nsprsame_cont2  rs pr q qin inmps acm inps0 x0.
+
+  Search derrec.
+
+  unfold rsub in rs.
+  eapply derI.
+  apply rs.
+  apply NSlcctxt.
+  rewrite app_cons_single.
+  apply Sctxt_e'. apply pr.
+  SearchAbout dersrec.
+  rewrite <- app_assoc.
+  
+  Search seqrule.
+  Search derrec.
+  admit.
+  intros HH. auto.
+  admit.
+  
+  apply Qpr. unfold premises_fullL. auto.
+  admit.
+  Qpr2.
+  unfold premises_fullL. intros. auto.
+  SearchAbout Forall map.
+Print can_gen_contL.
+  Lemma lem6 : forall G d0 seq P,
+    Forall (can_gen_contL rules)
+          (map (nslcext G d0)
+             (map (seqext (A ++ [a; a]) Φ2 Ψ1 Ψ2)
+                (map
+                   (fun p : list (PropF V) * list (PropF V) =>
+                      (rem_hd (fst p), snd p)) ps))) ->
+    
+  
+  Definition rem_hd {A : Type} (l : list A) :=
+    match l with
+    | nil => nil
+    | [a] => nil
+    | a::l' => l'
+    end.
+
+(Forall (fun ps' : list (PropF V) * list (PropF V) =>
+             a = hd a (fst ps')) ps) ->
+     (map (seqext (A ++ [a]) Φ2 Ψ1 Ψ2) ps) =
+     (map (seqext (A ++ [a;a]) Φ2 Ψ1 Ψ2)
+          (map (fun p => rem_hd (fst p)) ps)).
+
+
+  
+  admit.
++
+  SearchAbout Forall can_gen_swapL.
+SearchAbout Forall can_gen_contL.
+  admit.
+destruct l. simpl in *. subst.
+(* above produces 20 subgoals, following solves all of them!! *)
+nsprsameL_cont princrules rs pr q qin inmps acm inps0 x0.
+}
+
+{ list_eq_nc. contradiction. }
+
+Qed.
+
+
+
+
+
+
+
+Proof.  intros until 0.  unfold gen_contL_step.
+intros loe lreq nsr drs acm rs. subst. clear drs.
+
+inversion nsr as [? ? ? ? sppc mnsp nsc]. clear nsr.
+unfold nslcext in nsc.
+rewrite can_gen_contL_def'.  intros until 0. intros swap pp ss.
+unfold nslcext in pp.
+
+apply partition_2_2 in pp.
+
+destruct c.
+sE ; subst.
+
+{ nsgen_sw_cont rs sppc (l, l0, d) (Γ', Δ, d0) acm inps0 swap. }
+
+(* now case where move and rule application occur in the same sequent *)
+{
+injection H0 as. subst.
+inversion sppc as [? ? ? ? ? ? pr mse se].
+destruct c.
+unfold seqext in se.
+subst.  clear sppc.
+injection se as sel ser.
+subst.
+
+unfold rules_L_oe in loe.
+inversion_clear swap ; subst.
+
+(* do as much as possible for all rules at once *)
+acacD' ; (* gives 10 subgoals *)
+  subst.
+
+
+  repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
+  sD ; subst ; simpl ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)). 
+(* above produces 20 subgoals, following solves all of them!! *)
+change [a;a] with ([a] ++ [a]) in *. apply loe in pr.
+
+
+nsprsameL_cont princrules rs pr q qin inmps acm inps0 x0.
+}
+
+
+((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
+  sD ; subst ; simpl ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)).
+nsprsame_cont rs pr q qin inmps acm inps0 x0.
+
+
+(* above produces 20 subgoals, following solves all of them!! *)
+nsprsameL_cont princrules rs pr q qin inmps acm inps0 x0.
+}
+
+
+repeat ((list_eq_nc || (pose pr as Qpr ; apply loe in Qpr)) ;
+  sD ; subst ; simpl ; simpl in pr ;
+  try (rewrite app_nil_r) ; try (rewrite app_nil_r in pr)) ;
+(* above produces 20 subgoals, following solves all of them!! *)
+nsprsameL_cont princrules rs pr q qin inmps acm inps0 x0.
+}
+
+{ list_eq_nc. contradiction. }
+
+Qed.
+
 *)
