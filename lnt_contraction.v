@@ -2679,6 +2679,3 @@ assumption.
 apply rsub_princrule_pfc_LNSKt_rules.
 Qed.
  *)
-
-(* Testing workflow. *)
-(* git testing. *)
