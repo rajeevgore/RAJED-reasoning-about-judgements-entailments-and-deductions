@@ -429,4 +429,116 @@ Proof.  intros.  simpl. reflexivity. Qed.
 Definition eq_nnn_app {A : Type} (x : list A) := eq_sym (nnn_app_eq x).
 
 
+(* Caitlin added from here for weakening. *)
+
+Lemma cons_singleton : forall {A : Type} (l : list A) a,
+    a :: l = [a] ++ l.
+Proof. induction l; intros b; firstorder. Qed.
+
+Ltac list_cons_singleton a := repeat rewrite (cons_singleton _ a).
+Ltac tac_cons_singleton_arg a l :=
+    match l with
+    | nil => idtac
+    | _ => rewrite (cons_singleton l a)
+    end.
+
+Ltac tac_cons_singleton :=
+  repeat
+  match goal with
+   | [ |- context [?a :: ?l]] => progress (tac_cons_singleton_arg a l)
+  end.
+
+(* Caitlin added from here for contraction. *)
+
+Ltac rem_nil_goal := repeat rewrite app_nil_l; repeat rewrite app_nil_r.
+Ltac rem_nil_hyp_arg H := repeat rewrite app_nil_l in H; repeat rewrite app_nil_r in H.
+Ltac rem_nil_hyp :=
+  match goal with
+  | [ H : context[ [] ++ ?A ] |- _ ] => rem_nil_hyp_arg H
+  | [ H : context[ ?A ++ [] ] |- _ ] => rem_nil_hyp_arg H
+  | _ => idtac
+  end.
+
+Ltac rem_nil := rem_nil_hyp; rem_nil_goal.
+
+Ltac list_assoc_r_single :=
+  list_assoc_r; tac_cons_singleton; rem_nil.
+
+Ltac app_bracket_middle_arg l :=
+  repeat match l with
+         | ?l1 ++ ?l2 ++ ?l3 ++ ?l4 => rewrite (app_assoc l2)
+         end.
+
+Ltac add_empty_hyp_L l H :=  rewrite <- (app_nil_l l) in H.
+Ltac add_empty_goal_L l :=  rewrite <- (app_nil_l l).
+Ltac add_empty_hyp_R l H :=  rewrite <- (app_nil_r l) in H.
+Ltac add_empty_goal_R l :=  rewrite <- (app_nil_r l).
+Ltac rem_empty_hyp_L l H :=  rewrite (app_nil_l l) in H.
+Ltac rem_empty_goal_L l :=  rewrite (app_nil_l l).
+Ltac rem_empty_hyp_R l H :=  rewrite (app_nil_r l) in H.
+Ltac rem_empty_goal_R l :=  rewrite (app_nil_r l).
+
+Ltac breakdown :=
+  repeat (
+      repeat (match goal with
+              | [ H : ?A ++ ?B = ?x ++ ?y |- _ ] => apply app_eq_app in H; sE; subst
+              end) ;
+      repeat (match goal with
+              | [H2 : [?a] = ?A ++ ?B |- _ ] => apply unit_eq_app in H2; sE; subst
+              end));
+  repeat try rewrite app_nil_r; repeat try rewrite app_nil_l;
+  repeat (match goal with
+          | [ H3 : context[ ?x ++ [] ] |- _ ] => rewrite (app_nil_r x) in H3
+          end);
+  repeat (match goal with
+          | [ H3 : context[ [] ++ ?x ] |- _ ] => rewrite (app_nil_l x) in H3
+          end).
+
+Ltac tac_cons_singleton_arg_hyp H a l :=
+    match l with
+    | nil => idtac
+    | _ => rewrite (cons_singleton l a) in H
+    end.
+
+Ltac tac_cons_singleton_hyp H :=
+  repeat
+  match goal with
+  | [ H : context [?a :: ?l] |- _] => progress (tac_cons_singleton_arg_hyp H a nil ||
+                                                tac_cons_singleton_arg_hyp H a l)
+  end.
+
+Ltac list_assoc_r_s_arg H :=
+  tac_cons_singleton_hyp H; repeat rewrite <- !app_assoc in H.
+
+
+Ltac list_assoc_r_arg H :=
+  repeat (rewrite <- !app_assoc in H || rewrite <- !app_comm_cons in H).
+Ltac list_assoc_l'_arg H := repeat (rewrite !app_assoc in H || rewrite !app_comm_cons in H).
+Ltac list_assoc_l'_arg_conc H := list_assoc_l; list_assoc_l'_arg H.
+Ltac list_assoc_r_arg_conc H := list_assoc_r; list_assoc_r_arg H.
+
+
+Ltac list_assoc_r_singleton_hyp H :=
+  list_assoc_r_arg H; tac_cons_singleton_hyp H.
+
+Ltac list_assoc_r_singleton_hyp2 H :=
+  list_assoc_r_s_arg H.
+
+Definition non_empty {A : Type} (l : list A) :=
+  match l with
+  | nil => False
+  | _ => True
+  end.
+
+Ltac check_app_head l1 l2 :=
+  match l1 with
+  | l2 ++ ?l3 => idtac
+  | _ => fail
+  end.
+
+Ltac check_app_tail l1 l2 :=
+  match l1 with
+  | ?l3 ++ l2 => idtac
+  | _ => fail
+  end.
 

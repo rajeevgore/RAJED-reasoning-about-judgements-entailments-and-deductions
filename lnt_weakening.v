@@ -227,22 +227,6 @@ eapply acm in weak ] ;
   unfold nslext ; unfold nslclext ; list_assoc_r' ; simpl ; reflexivity |
   reflexivity ].
 
-Lemma cons_singleton : forall {A : Type} (l : list A) a,
-    a :: l = [a] ++ l.
-Proof. induction l; intros b; firstorder. Qed.
-
-Ltac list_cons_singleton a := repeat rewrite (cons_singleton _ a).
-Ltac tac_cons_singleton_arg a l :=
-    match l with
-    | nil => idtac
-    | _ => rewrite (cons_singleton l a)
-    end.
-
-Ltac tac_cons_singleton :=
-  repeat
-  match goal with
-   | [ |- context [?a :: ?l]] => progress (tac_cons_singleton_arg a l)
-  end.
 
 Ltac acmi_snr_sw_weak acmi := eapply acmi ;
   [>  apply nslclext_def|] ;  [>swap_tac; reflexivity].
