@@ -500,3 +500,10 @@ Ltac nsprsameR princrules rs pr q qin inmps acm inps0 x0 :=
 match goal with | [ H : princrules _ (_, ?x) |- _ ] => assoc_mid x end ;
 nsprsame rs pr q qin inmps acm inps0 x0.
 
+Definition can_gen_init {V : Set}
+  (rules : rls (list (rel (list (PropF V)) * dir))) ns A :=
+  forall G seq (d : dir) Γ1 Γ2 Δ1 Δ2,
+  ns = G ++ [(seq, d)] -> seq = pair (Γ1 ++ [A] ++ Γ2) (Δ1 ++ [A] ++ Δ2) ->
+  derrec rules (fun _ => False) ns.
+
+
