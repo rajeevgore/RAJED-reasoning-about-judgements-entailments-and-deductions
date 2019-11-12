@@ -384,8 +384,22 @@ intros. right. subst.
 exists y. tauto.
 Qed.
 
+Lemma cons_eq_appT: forall (A : Type) (x y z : list A) (a : A),
+  a :: x = y ++ z -> sum ((y = []) * (z = a :: x)) 
+  (sigT (fun y' : list A => prod (y = a :: y') (x = y' ++ z))).
+Proof.
+intros.
+destruct y. simpl in H. subst. tauto.
+simpl in H.
+injection H.
+intros. right. subst.
+exists y. tauto.
+Qed.
+
 Definition app_eq_cons (A : Type) (x y z : list A) (a : A) p :=
   @cons_eq_app A x y z a (eq_sym p).
+Definition app_eq_consT (A : Type) (x y z : list A) (a : A) p :=
+  @cons_eq_appT A x y z a (eq_sym p).
 
 Lemma app_eq_app: forall (A : Type) (w x y z : list A),
   w ++ x = y ++ z -> exists (m : list A),
@@ -400,12 +414,23 @@ apply cons_eq_app in H.
 destruct H.  destruct H.  rewrite H. simpl.
 exists (a :: w).  rewrite H0. simpl. tauto.
 destruct H.  destruct H.
-apply IHw in H0.  destruct H0.  destruct H0. destruct H0.
-rewrite H.  rewrite H0.  rewrite H1.  simpl.
-exists x1. tauto.
-destruct H0.
-rewrite H.  rewrite H0.  rewrite H1.  simpl.
-exists x1. tauto.
+apply IHw in H0.  destruct H0.  
+destruct H0 ; destruct H0 ; subst ;  simpl ; exists x1 ; tauto.
+Qed.
+
+Lemma app_eq_appT: forall (A : Type) (w x y z : list A),
+  w ++ x = y ++ z -> sigT (fun m : list A =>
+    sum ((w = y ++ m) * (z = m ++ x)) ((y = w ++ m) * (x = m ++ z))).
+Proof.  intro. intro.  induction w.
+simpl. intros.
+exists y. rewrite H. tauto.
+intros. simpl in H.
+apply cons_eq_appT in H.
+destruct H.  destruct p.  subst. simpl.
+exists (a :: w). simpl.  tauto.
+destruct s.  destruct p.
+apply IHw in e0.  destruct e0. 
+destruct s ; destruct p ; subst ; simpl ; exists x1 ; tauto.
 Qed.
 
 Lemma list_eq_single: forall (A : Type) (x y : list A) (u v : A),

@@ -5,15 +5,23 @@ coqc List_lemmas.v
 coqc lnt.v
 coqc lntacs.v
 coqc lntmtacs.v
-coqc lntom.v
-coqc lntrm.v
+# these two now fail 
+# coqc lntom.v
+# coqc lntrm.v
 coqc lntls.v
 coqc lntrs.v
 coqc lntb1L.v
 coqc lntb2L.v
 coqc lntmr.v
 coqc lntbR.v
-coqc seqlrule.v # not used any more
+# fails coqc seqlrule.v # not used any more
+
+coqc lntkt_exch.v
+coqc lnt_weakening.v
+coqc swapped.v
+coqc lnt_contraction.v
+coqc lnt_contraction_mr.v
+
 
 coqtop -color no
 

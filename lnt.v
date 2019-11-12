@@ -353,9 +353,9 @@ Ltac acacD :=
 
 Ltac acacD' :=
   repeat match goal with
-    | [ H : _ ++ _ = _ ++ _ |- _ ] => apply app_eq_app in H ; sD
-    | [ H : _ :: _ = _ ++ _ |- _ ] => apply cons_eq_app in H ; sD
-    | [ H : _ ++ _ = _ :: _ |- _ ] => apply app_eq_cons in H ; sD
+    | [ H : _ ++ _ = _ ++ _ |- _ ] => apply app_eq_appT in H ; sD
+    | [ H : _ :: _ = _ ++ _ |- _ ] => apply cons_eq_appT in H ; sD
+    | [ H : _ ++ _ = _ :: _ |- _ ] => apply app_eq_consT in H ; sD
     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as ?H ?H 
     | [ H : (_, _) = (_, _) |- _ ] => injection H as ?H ?H 
     | [ H : _ :: _ = [] |- _ ] => discriminate H
