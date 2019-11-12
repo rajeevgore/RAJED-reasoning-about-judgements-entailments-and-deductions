@@ -69,6 +69,48 @@ Lemma swapped_simpleR: forall T X Y Z,
   Y = Z -> swapped (Y ++ X) (X ++ Z : list T).
 Proof.  intros. subst. apply swapped_simple'. Qed.
 
+Inductive swappedT (T : Type) : list T -> list T -> Type :=
+  | swappedT_I : forall X Y A B C D : list T,
+    X = A ++ B ++ C ++ D -> Y = A ++ C ++ B ++ D -> swappedT X Y.
+
+Lemma swappedT_I': forall T (A B C D : list T),
+  swappedT (A ++ B ++ C ++ D) (A ++ C ++ B ++ D).
+Proof.  intros.  eapply swappedT_I ; reflexivity. Qed.
+
+Lemma swappedT_same: forall T X, swappedT X (X : list T).
+Proof.  intros.  apply (swappedT_I [] [] [] X) ; simpl ; reflexivity. Qed.
+
+Lemma swappedT_L: forall T X Y Z,
+  swappedT X (Y : list T) -> swappedT (Z ++ X) (Z ++ Y).
+Proof.  intros. destruct X0. subst. 
+  rewrite !(app_assoc Z). apply swappedT_I'. Qed.
+
+Lemma swappedT_R: forall T X Y Z,
+  swappedT X (Y : list T) -> swappedT (X ++ Z) (Y ++ Z).
+Proof.  intros. destruct X0. subst. 
+  rewrite <- !app_assoc. apply swappedT_I'. Qed.
+
+Lemma swappedT_cons: forall T (x : T) Y Z,
+  swappedT Y Z -> swappedT (x :: Y) (x :: Z).
+Proof.  intros. destruct X. subst. list_assoc_l. rewrite <- !app_assoc.
+  apply swappedT_I'. Qed.
+
+Lemma swappedT_simple: forall T U V X Y,
+  U = X ++ Y -> V = Y ++ X -> swappedT U (V : list T).
+Proof.  intros. subst. 
+  apply (swappedT_I [] X Y []) ; simpl ; rewrite app_nil_r ; reflexivity. Qed.
+
+Lemma swappedT_simple': forall T X Y, swappedT (X ++ Y : list T) (Y ++ X).
+Proof.  intros. eapply swappedT_simple ; reflexivity. Qed. 
+
+Lemma swappedT_simpleL: forall T X Y Z,
+  Y = Z -> swappedT (X ++ Y) (Z ++ X : list T).
+Proof.  intros. subst. apply swappedT_simple'. Qed.
+
+Lemma swappedT_simpleR: forall T X Y Z,
+  Y = Z -> swappedT (Y ++ X) (X ++ Z : list T).
+Proof.  intros. subst. apply swappedT_simple'. Qed.
+
 Lemma if_eq_rev_eq: forall {T} (a b : list T),
   a = b -> (rev a = rev b).
 Proof. intros. subst. reflexivity. Qed.

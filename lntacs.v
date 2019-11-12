@@ -70,6 +70,18 @@ Ltac swap_tac :=
     repeat (apply swapped_L || apply swapped_cons) ;  
   list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
  
+Ltac show_swappedT_1 := 
+  list_assoc_r' ;
+  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swappedT_simpleL ; list_eq_assoc) ;
+  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swappedT_simpleR ; list_eq_assoc).
+
+Ltac swapT_tac :=
+  list_assoc_r ; try (apply swappedT_same) ; 
+    repeat (apply swappedT_L || apply swappedT_cons) ;  
+  list_assoc_l ; repeat (apply swappedT_R) ; show_swappedT_1.
+ 
 Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
 Proof. intros.  show_swapped_1.  Qed.
 
