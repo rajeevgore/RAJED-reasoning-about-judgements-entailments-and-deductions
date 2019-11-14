@@ -91,7 +91,7 @@ Ltac cE :=
     | [ H : False |- _ ] => contradiction H
     end.
 
-(* one step of cD *)
+(* one step of cDv *)
 Ltac cD' :=
   match goal with
     | [ H : _ /\ _ |- _ ] => destruct H as [?H ?H]
@@ -99,6 +99,9 @@ Ltac cD' :=
     | [ H : ex _ |- _ ] => destruct H as [?H ?H]
     | [ H : sig _ |- _ ] => destruct H as [?H ?H]
     | [ H : sigT _ |- _ ] => destruct H as [?H ?H]
+    | [ H : ex2 _ _ |- _ ] => destruct H as [?H ?H ?H]
+    | [ H : sig2 _ _ |- _ ] => destruct H as [?H ?H ?H]
+    | [ H : sigT2 _ _ |- _ ] => destruct H as [?H ?H ?H]
     | [ H : False |- _ ] => contradiction H
     end.
 
