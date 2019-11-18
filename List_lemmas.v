@@ -490,6 +490,25 @@ Definition nil_eq_list A x y u p := @list_eq_nil A x y u (eq_sym p).
 Definition nil_eq_app A u v p := @app_eq_nil A u v (eq_sym p).
 Definition unit_eq_app A x y a p := @app_eq_unit A x y a (eq_sym p).
 
+Lemma app_eq_nilT A (l l' : list A): l ++ l' = [] -> prod (l = []) (l' = []).
+Proof. destruct l ; simpl. tauto.  intros. discriminate H. Qed.
+
+Definition nil_eq_appT A u v p := @app_eq_nilT A u v (eq_sym p).
+
+Lemma list_eq_singleT: forall (A : Type) (x y : list A) (u v : A),
+  x ++ u :: y = [v] -> prod (x = []) (prod (y = []) (u = v)).
+Proof.  intros.  apply app_eq_consT in H.  sD.  injection H0 as.  subst.  tauto.
+  apply nil_eq_appT in H1. cD. discriminate H2. Qed.
+
+Definition single_eq_listT A x y u v p := @list_eq_singleT A x y u v (eq_sym p).
+
+Lemma app_eq_unitT A x y (a : A):
+  x ++ y = [a] -> eq x [] * eq y [a] + eq x [a] * eq y [].
+Proof. intros. apply app_eq_consT in H.  sD.  subst. tauto.
+eapply nil_eq_appT in H1. cD. subst. tauto. Qed.
+
+Definition unit_eq_appT A u v a p := @app_eq_unitT A u v a (eq_sym p).
+
 Lemma nnn_app_eq: forall {A : Type} (x : list A), [] ++ [] ++ [] ++ x = x.
 Proof.  intros.  simpl. reflexivity. Qed.
 
