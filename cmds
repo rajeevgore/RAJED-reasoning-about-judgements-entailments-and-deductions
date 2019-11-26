@@ -24,4 +24,3 @@ coqc lnt_contraction_mr.v
 
 
 coqtop -color no
-
