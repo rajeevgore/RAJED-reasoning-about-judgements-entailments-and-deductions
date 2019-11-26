@@ -31,17 +31,22 @@ Definition iffT A B : Type := (A -> B) * (B -> A).
 Lemma iffT_trans: forall A B C, iffT A B -> iffT B C -> iffT A C.
 Proof.  unfold iffT. intros. destruct X.  destruct X0. tauto. Qed.
 
-Lemma iffT_sym: forall A B, iffT A B -> iffT B A.
+Lemma iffT_sym': forall A B, iffT A B -> iffT B A.
 Proof.  unfold iffT. intros. destruct X. tauto. Qed.
 
 Lemma iffT_refl: forall A, iffT A A.
 Proof.  unfold iffT. intros. tauto. Qed.
 
-Lemma iffT_D1: forall A B, iffT A B -> A -> B.
+Lemma iffT_D1': forall A B, iffT A B -> A -> B.
 Proof.  unfold iffT. intros. tauto. Qed.
 
-Lemma iffT_D2: forall A B, iffT B A -> A -> B.
+Lemma iffT_D2': forall A B, iffT B A -> A -> B.
 Proof.  unfold iffT. intros. tauto. Qed.
+
+(* simpler proof objects *)
+Definition iffT_sym (A B : Type) (X : iffT A B) := let (f, g) := X in (g, f).
+Definition iffT_D1 (A B : Type) (X : iffT A B) a := let (f, _) := X in f a.
+Definition iffT_D2 (A B : Type) (X : iffT A B) b := let (_, g) := X in g b.
 
 Inductive AccT (A : Type) (R : A -> A -> Type) (x : A) : Type :=
     AccT_intro : (forall y : A, R y x -> AccT R y) -> AccT R x.
@@ -150,6 +155,37 @@ Inductive Forall2T (A B : Type) R : list A -> list B -> Type :=
                    R x y -> Forall2T R l l' -> Forall2T R (x :: l) (y :: l')
   .
 
+Theorem Forall2T_app_inv_l : forall A B (R : A -> B -> Type) l1 l2 l',
+  Forall2T R (l1 ++ l2) l' -> 
+  sigT2 (fun l1' => Forall2T R l1 l1') (fun l1' => sigT2 (fun l2' =>
+    Forall2T R l2 l2') (fun l2' => l' = l1' ++ l2')).
+Proof. intros until l1. induction l1. simpl.
+intros. exists []. apply Forall2T_nil.
+exists l'. assumption. simpl. reflexivity.
+simpl. intros. inversion_clear X.
+apply IHl1 in X1. destruct X1.
+exists (y :: x). apply Forall2T_cons ; assumption.
+destruct s. subst. simpl. eexists. eassumption. reflexivity. Qed.
+
+Theorem Forall2T_app_inv_r : forall A B (R : A -> B -> Type) l1' l2' l, 
+  Forall2T R l (l1' ++ l2') ->
+  sigT2 (fun l1 => Forall2T R l1 l1') (fun l1 => sigT2 (fun l2 => 
+    Forall2T R l2 l2') (fun l2 => l = l1 ++ l2)).
+Proof. intros until l1'. induction l1'. simpl.
+intros. exists []. apply Forall2T_nil. 
+exists l. assumption. simpl. reflexivity.
+simpl. intros. inversion_clear X.
+apply IHl1' in X1. destruct X1.
+exists (x :: x0). apply Forall2T_cons ; assumption.
+destruct s. subst. simpl. eexists. eassumption. reflexivity. Qed.
+
+Theorem Forall2T_app : forall A B (R : A -> B -> Type) l1 l2 l1' l2',
+  Forall2T R l1 l1' -> Forall2T R l2 l2' -> Forall2T R (l1 ++ l2) (l1' ++ l2').
+Proof. intros until l1. induction l1. simpl.
+intros. inversion_clear X. simpl. assumption.
+intros. inversion_clear X. simpl. apply Forall2T_cons. assumption.
+apply IHl1 ; assumption. Qed.
+
 (* this isn't usable, because destruct doesn't work for first clause 
 Inductive InT A (a : A) : list A -> Type :=
   | InT_eq : forall l, @InT A a (a :: l)
@@ -245,6 +281,27 @@ simpl in X.  inversion X. subst. exists a.
 split. reflexivity.  apply InT_eq.
 subst. apply IHl in X0. cD. exists X0. subst. split. reflexivity. 
 apply InT_cons. exact X2. Qed.
+
+Lemma InT_concat: forall (A : Type) a (xs : list A) pss,
+     InT a xs -> InT xs pss -> InT a (concat pss).
+Proof. intros. induction X0. subst. simpl. apply InT_appL. assumption.
+simpl. apply InT_appR. assumption. Qed.
+
+Lemma Forall2T_ex_l: forall A B (R : A -> B -> Type) xs ys x,
+  Forall2T R xs ys -> InT x xs -> sigT2 (fun y => InT y ys) (fun y => R x y).
+Proof. intros until 0. intro. induction X.
+intro. eapply InT_nilE in X. eassumption.
+intro. inversion X0 ; subst. eexists. apply InT_eq. assumption.
+apply IHX in X1. destruct X1. eexists. eapply InT_cons. eassumption.
+assumption. Qed.
+
+Lemma Forall2T_ex_r: forall A B (R : A -> B -> Type) xs ys x,
+  Forall2T R ys xs -> InT x xs -> sigT2 (fun y => InT y ys) (fun y => R y x).
+Proof. intros until 0. intro. induction X.
+intro. eapply InT_nilE in X. eassumption.
+intro. inversion X0 ; subst. eexists. apply InT_eq. assumption.
+apply IHX in X1. destruct X1. eexists. eapply InT_cons. eassumption.
+assumption. Qed.
 
 Lemma ForallT_forall: forall (A : Type) (P : A -> Type) (l : list A),
   iffT (ForallT P l) (forall x : A, InT x l -> P x).

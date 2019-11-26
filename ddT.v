@@ -217,6 +217,20 @@ Definition derrec_rect_mut_all X (rules : rlsT X) prems Q cl1 cl2 :=
 
 Check derrec_rect_mut_all.
 
+Lemma allPderD_in :
+  forall X rules prems Q ps (dpss : dersrec rules prems ps) p,
+    allPder Q dpss -> InT (p : X) ps ->
+      {d : derrec rules prems p & in_dersrec d dpss & Q p d}.
+Proof. induction ps.
+intros. inversion X1.
+intros dpss p adp inp. dependent destruction adp.
+inversion inp ; subst.
+exists d.  apply in_dersrec_hd.  assumption.
+pose (IHps ds p adp X0). destruct s. (* cD doesn't work here - why?? *)
+exists x. apply in_dersrec_tl. assumption.  assumption. Qed.
+
+Check allPderD_in.
+
 Inductive derl X (rules : list X -> X -> Type) : list X -> X -> Type := 
   | asmI : forall p, derl rules [p] p
   | dtderI : forall pss ps concl, rules ps concl ->
@@ -236,6 +250,18 @@ with dersl_rect_mut := Induction for dersl Sort Type.
 
 Check derl_ind_mut.
 Check dersl_ind_mut.
+
+(* combine the two inductive principles *)
+Definition derl_dersl_rect_mut X rules P P0 asm dtd dtn dtc :=
+  pair (@derl_rect_mut X rules P P0 asm dtd dtn dtc)
+    (@dersl_rect_mut X rules P P0 asm dtd dtn dtc).
+
+Lemma asmsI X rules ps: @dersl X rules ps ps .
+Proof. induction ps. apply dtNil. pose (asmI rules a).
+pose (dtCons d IHps). simpl in d0. exact d0. Qed.
+
+Lemma in_derl X rules ps c: rules ps c -> @derl X rules ps c.
+Proof. intro. eapply dtderI. eassumption. apply asmsI. Qed.
 
 Inductive dercl X (rules : list X -> X -> Type) :
   list X -> X -> Type := 
@@ -258,6 +284,141 @@ with dercsl_rect_mut := Induction for dercsl Sort Type.
 
 Check dercl_ind_mut.
 Check dercsl_ind_mut.
+
+(* combine the two inductive principles *)
+Definition dercl_dercsl_rect_mut X rules P P0 asm dtd dtn dtc :=
+  pair (@dercl_rect_mut X rules P P0 asm dtd dtn dtc)
+    (@dercsl_rect_mut X rules P P0 asm dtd dtn dtc).
+
+Inductive ccps X f (qs cs : list X) : Type :=
+  | ccpsI : forall pss, f pss cs -> qs = concat pss -> ccps f qs cs.
+
+Lemma ccpsD X f qs cs: ccps f qs cs ->
+  {pss : list (list X) & qs = concat pss & f pss cs}.
+Proof. intro cc. destruct cc. subst. exists pss ; tauto. Qed.
+
+Definition drl_allT X (rules Q : list X -> X -> Type) R :=
+  @derl_rect_mut X rules (fun ps => fun c => fun _ => Q ps c)
+  (fun pss => fun cs => fun _ => R pss cs).
+
+Definition drsl_allT X (rules Q : list X -> X -> Type) R :=
+  @dersl_rect_mut X rules (fun ps => fun c => fun _ => Q ps c)
+  (fun pss => fun cs => fun _ => R pss cs).
+
+(* these may be too strong, have a condition that has to hold
+  even if dersl and Forall2T Q hold for different partition of pss *)
+Definition drl_allT' X (rules Q : list X -> X -> Type) :=
+  @derl_rect_mut X rules (fun ps => fun c => fun _ => Q ps c)
+  (fun ps => fun cs => fun _ => ccps (Forall2T Q) ps cs).
+
+Definition drsl_allT' X (rules Q : list X -> X -> Type) :=
+  @dersl_rect_mut X rules (fun ps => fun c => fun _ => Q ps c)
+  (fun ps => fun cs => fun _ => ccps (Forall2T Q) ps cs).
+
+Definition dcl_allT X (rules Q : list X -> X -> Type) :=
+  @dercl_rect_mut X rules (fun ps => fun c => fun _ => Q ps c)
+  (fun pss => fun cs => fun _ => Forall2T Q pss cs).
+
+Definition dcsl_allT X (rules Q : list X -> X -> Type) :=
+  @dercsl_rect_mut X rules (fun ps => fun c => fun _ => Q ps c)
+  (fun pss => fun cs => fun _ => Forall2T Q pss cs).
+
+Lemma dercl_all_rect: forall X (rules Q : list X -> X -> Type),
+  (forall p : X, Q [p] p) ->
+  (forall pss qs ps concl, rules ps concl -> dercsl rules pss ps ->
+    Forall2T Q pss ps -> qs = concat pss -> Q qs concl) ->
+  forall ps c, dercl rules ps c -> Q ps c.
+Proof.  intros. eapply dcl_allT.  exact X0.
+{ intros. eapply X1.  eassumption.
+  eassumption.  eassumption. reflexivity. }
+apply Forall2T_nil.
+intros. apply Forall2T_cons ; assumption. assumption. Qed.
+
+Lemma derscl_all_dercl: forall X (rules : list X -> X -> Type),
+  forall pss cs, dercsl rules pss cs -> Forall2T (dercl rules) pss cs.
+Proof. intros X rules. apply dcsl_allT. apply casmI.
+intros. eapply dtcderI ; eassumption.
+apply Forall2T_nil.  intros.  apply Forall2T_cons ; assumption. Qed.
+
+Lemma all_dercl_derscl: forall X (rules : list X -> X -> Type),
+  forall pss cs, Forall2T (dercl rules) pss cs -> dercsl rules pss cs.
+Proof. induction pss.
+intros. inversion X0. apply dtcNil.
+intros. inversion X0. subst. apply dtcCons. assumption.
+apply IHpss. assumption.  Qed.
+
+Lemma all_derl_dersl: forall X (rules : list X -> X -> Type),
+  forall pss cs, Forall2T (derl rules) pss cs -> dersl rules (concat pss) cs.
+Proof. induction pss.
+intros. inversion X0. simpl. apply dtNil.
+intros. inversion X0. subst. simpl. apply dtCons. assumption.
+apply IHpss. assumption.  Qed.
+
+Lemma all_derl_dersl': forall X (rules : list X -> X -> Type),
+  forall qs cs, ccps (Forall2T (derl rules)) qs cs -> dersl rules qs cs.
+Proof. intros. destruct X0. subst. apply all_derl_dersl. exact f. Qed.
+
+Lemma dersl_all_derl: forall X (rules : list X -> X -> Type),
+  forall qs cs, dersl rules qs cs ->
+  {pss : list (list X) & qs = concat pss & Forall2T (derl rules) pss cs}.
+Proof. intros X rules. eapply drsl_allT. apply asmI.
+intros. destruct X0. subst. eapply dtderI. apply r. apply d.
+exists []. simpl. reflexivity.  apply Forall2T_nil.
+intros. destruct X1. subst. exists (ps :: x).  simpl. reflexivity.
+apply Forall2T_cons ; assumption. Qed.
+
+Lemma dersl_all_derl': forall X (rules : list X -> X -> Type),
+  forall qs cs, dersl rules qs cs -> ccps (Forall2T (derl rules)) qs cs.
+Proof. intros X rules. eapply drsl_allT'. apply asmI.
+intros. destruct X0. eapply dtderI ; eassumption.
+eapply ccpsI. apply Forall2T_nil.  simpl. reflexivity.
+intros. destruct X1. subst. eapply ccpsI.
+apply Forall2T_cons ; eassumption.  simpl. reflexivity.  Qed.
+
+Lemma dercl_derl': forall X (rules : list X -> X -> Type),
+  prod (forall ps c, dercl rules ps c -> derl rules ps c)
+    (forall pss cs, dercsl rules pss cs -> dersl rules (concat pss) cs).
+Proof. intros.
+eapply (dercl_dercsl_rect_mut (rules := rules)
+  (fun ps : list X => fun c => fun _ => derl rules ps c)
+  (fun pss cs => fun _ => dersl rules (concat pss) cs)).
+apply asmI.
+intros. eapply dtderI. eassumption.
+subst. assumption.
+simpl. apply dtNil.
+intros. simpl. apply dtCons ; assumption.  Qed.
+
+Definition dercl_derl X rules := fst (@dercl_derl' X rules).
+Definition dercsl_dersl X rules := snd (@dercl_derl' X rules).
+
+Lemma derl_dercl: forall X (rules : list X -> X -> Type),
+  forall ps c, derl rules ps c -> dercl rules ps c.
+Proof.  intros X rules.
+eapply (drl_allT (dercl rules) (ccps (dercsl rules))).
+apply casmI.
+{ intros. destruct X0. subst.
+eapply dtcderI. eassumption.  eassumption. }
+{ eapply ccpsI. apply dtcNil. simpl. reflexivity. }
+{ intros. destruct X1. subst.
+eapply ccpsI. eapply dtcCons ; eassumption.
+simpl. reflexivity. } Qed.
+
+Lemma derl_all_rect: forall X (rules Q : list X -> X -> Type),
+  (forall p : X, Q [p] p) ->
+  (forall pss qs ps concl, rules ps concl -> dersl rules qs ps ->
+    Forall2T Q pss ps -> qs = concat pss -> Q qs concl) ->
+  forall ps c, derl rules ps c -> Q ps c.
+Proof.  intros X rules Q asm dtd.
+eapply (drl_allT Q (ccps (Forall2T Q))).
+exact asm.
+{ intros. destruct X0. subst.
+eapply dtd. eassumption. eassumption. eassumption. reflexivity. }
+{ eapply ccpsI. apply Forall2T_nil. simpl. reflexivity. }
+{ intros. destruct X1. subst.
+eapply ccpsI. eapply Forall2T_cons ; eassumption.
+simpl. reflexivity. } Qed.
+
+Check derl_all_rect.  (* Check derl_dercl. *)  Check dercl_derl.
 
 (* no convenient way of expressing the corresponding result
   for dercsl except using sth like allrel *)
