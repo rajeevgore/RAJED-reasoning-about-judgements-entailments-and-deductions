@@ -59,7 +59,7 @@ swappedT.vo : List_lemmasT.vo existsT.vo swappedT.v
 lnt_contractionT.vo : lnt_weakeningT.vo lntkt_exchT.vo swappedT.vo lnt_contractionT.v
 
 clean : 
-	rm -rf  *.vo *.glob
+	rm -rf  *.vo *.glob *.v~
 
 clean_win : 
 	del /f *.vo *.glob
