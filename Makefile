@@ -9,7 +9,9 @@ List_lemmas.vo : dd.vo List_lemmas.v
 
 lnt.vo : List_lemmas.vo lnt.v
 
-lntacs.vo : lnt.vo lntacs.v
+swappedP.vo : swappedP.v
+
+lntacs.vo : swappedP.vo lnt.vo lntacs.v
 
 lntls.vo : lntacs.vo lntls.v
 
@@ -25,6 +27,11 @@ lntb2L.vo : lntb1L.vo lntb2L.v
 
 lntkt_exch.vo : lntb1L.vo lntb2L.vo lntbR.vo lntkt_exch.v
 
+lnt_weakening.vo : lntkt_exch.vo lnt_weakening.v
+
+lnt_contraction.vo : lnt_weakening.vo lntkt_exch.vo swappedP.vo lnt_contraction.v
+
+
 
 existsT.vo : existsT.v
 
@@ -36,7 +43,9 @@ List_lemmasT.vo : ddT.vo List_lemmasT.v
 
 lntT.vo : List_lemmasT.vo lntT.v
 
-lntacsT.vo : lntT.vo lntacsT.v
+swappedT.vo : existsT.vo swappedT.v
+
+lntacsT.vo : swappedT.vo lntT.vo lntacsT.v
 
 lntlsT.vo : lntacsT.vo lntlsT.v
 
@@ -53,8 +62,6 @@ lntb2LT.vo : lntb1LT.vo lntb2LT.v
 lntkt_exchT.vo : lntb1LT.vo lntb2LT.vo lntbRT.vo lntkt_exchT.v
 
 lnt_weakeningT.vo : lntkt_exchT.vo lnt_weakeningT.v
-
-swappedT.vo : List_lemmasT.vo existsT.vo swappedT.v
 
 lnt_contractionT.vo : lnt_weakeningT.vo lntkt_exchT.vo swappedT.vo lnt_contractionT.v
 

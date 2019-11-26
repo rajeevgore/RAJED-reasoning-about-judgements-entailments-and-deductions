@@ -7,6 +7,7 @@ Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.
 Require Import lntT.
+Require Import swappedT.
 
 Lemma midI: forall T (a b c d : list T) x,
   a = c -> b = d -> a ++ x :: b = c ++ x :: d.
@@ -658,4 +659,15 @@ Definition can_gen_init {V : Set}
    (exact nat || (intros; exact 0)).
 
 
+Ltac show_swappedT_1 := 
+  list_assoc_r' ;
+  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleL ; list_eq_assoc) ;
+  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleR ; list_eq_assoc).
+
+Ltac swapT_tac :=
+  list_assoc_r ; try (apply swapped_same) ; 
+    repeat (apply swapped_L || apply swapped_cons) ;  
+  list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
 

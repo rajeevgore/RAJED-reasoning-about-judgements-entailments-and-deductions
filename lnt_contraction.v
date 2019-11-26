@@ -7,7 +7,7 @@ Require Import lnt lntacs lntls lntbR lntmtacs.
 Require Import lntb1L lntb2L.
 Require Import lnt_weakening.
 Require Import lntkt_exch.
-Require Import swapped.
+Require Import swappedP.
 
 
 Inductive contracted {T} : list T -> list T -> Prop :=
@@ -208,29 +208,29 @@ Proof.  intros.  unfold iff.  split ; intros.
 Qed.
 
 (* --------------- *)
-(* SWAPPED TACTICS *)
+(* SWAPPEDP TACTICS *)
 (* --------------- *)
 
 (*
-Move to swapped.v once assoc_mid is moved to List_lemmas.v 
+Move to swappedP.v once assoc_mid is moved to List_lemmas.v 
 *)
 
-Ltac swapped_gen_tac_pre :=
+Ltac swappedP_gen_tac_pre :=
  match goal with
-  | [ |- swapped_gen ?l1 ?l2] =>
+  | [ |- swappedP_gen ?l1 ?l2] =>
     match l1 with
     | ?A ++ ?B =>
       match l2 with
-      | ?A ++ ?C => apply swapped_gen_app_L (* strip off front *)
+      | ?A ++ ?C => apply swappedP_gen_app_L (* strip off front *)
       | _ => let t := fresh "t" in remember l1 as t;
-                 assoc_mid A; subst t; apply swapped_gen_front_mid
+                 assoc_mid A; subst t; apply swappedP_gen_front_mid
       end
     end
  end.
 
 Ltac swap_gen_tac :=
   repeat ( try list_assoc_r_single;
-   swapped_gen_tac_pre; try apply swapped_gen_refl).
+   swappedP_gen_tac_pre; try apply swappedP_gen_refl).
 
 (* ------------------- *)
 (* CONTRACTION TACTICS *)
@@ -925,7 +925,7 @@ Lemma can_gen_swapL_derrec_spec : forall {V} n rules G d0 Γ Ψ Γ',
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapL rules ns) ->
-  swapped_spec n Γ Γ' ->
+  swappedP_spec n Γ Γ' ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
          (nslcext G d0 (Γ, Ψ)) ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -945,7 +945,7 @@ Lemma can_gen_swapR_derrec_spec : forall {V} n rules G d0 Γ Ψ Ψ',
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapR rules ns) ->
-  swapped_spec n Ψ Ψ' ->
+  swappedP_spec n Ψ Ψ' ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
          (nslcext G d0 (Γ, Ψ)) ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -965,7 +965,7 @@ Lemma can_gen_swapL_derrec_nslcext : forall {V} rules G d0 seq1 seq2 Γ Ψ Γ',
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapL rules ns) ->
-  swapped Γ Γ' ->
+  swappedP Γ Γ' ->
   seq1 = (Γ, Ψ) ->
   seq2 = (Γ', Ψ) ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -975,7 +975,7 @@ Lemma can_gen_swapL_derrec_nslcext : forall {V} rules G d0 seq1 seq2 Γ Ψ Γ',
 Proof.
   intros until 0. intros Hexch Hswap Hs1 Hs2 Hd.
   subst. eapply can_gen_swapL_derrec_spec; auto.
-  eapply swapped_spec_I. exact Hswap.
+  eapply swappedP_spec_I. exact Hswap.
   exact Hd.
 Qed.
 
@@ -983,7 +983,7 @@ Lemma can_gen_swapR_derrec_nslcext : forall {V} rules G d0 seq1 seq2 Γ Ψ Ψ',
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapR rules ns) ->
-  swapped Ψ Ψ' ->
+  swappedP Ψ Ψ' ->
   seq1 = (Γ, Ψ) ->
   seq2 = (Γ, Ψ') ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -993,7 +993,7 @@ Lemma can_gen_swapR_derrec_nslcext : forall {V} rules G d0 seq1 seq2 Γ Ψ Ψ',
 Proof.
   intros until 0. intros Hexch Hswap Hs1 Hs2 Hd.
   subst. eapply can_gen_swapR_derrec_spec; auto.
-  eapply swapped_spec_I. exact Hswap.
+  eapply swappedP_spec_I. exact Hswap.
   exact Hd.
 Qed.
 
@@ -1001,7 +1001,7 @@ Lemma can_gen_swapL_derrec_nslcext_spec : forall {V} n rules G d0 seq1 seq2 Γ �
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapL rules ns) ->
-  swapped_spec n Γ Γ' ->
+  swappedP_spec n Γ Γ' ->
   seq1 = (Γ, Ψ) ->
   seq2 = (Γ', Ψ) ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -1026,7 +1026,7 @@ Lemma can_gen_swapR_derrec_nslcext_spec : forall {V} n rules G d0 seq1 seq2 Ψ �
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapR rules ns) ->
-  swapped_spec n Ψ Ψ' ->
+  swappedP_spec n Ψ Ψ' ->
   seq1 = (Γ, Ψ) ->
   seq2 = (Γ, Ψ') ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -1051,7 +1051,7 @@ Lemma can_gen_swapL_derrec_nslcext_gen : forall {V} rules G d0 seq1 seq2 Γ Ψ �
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapL rules ns) ->
-  swapped_gen Γ Γ' ->
+  swappedP_gen Γ Γ' ->
   seq1 = (Γ, Ψ) ->
   seq2 = (Γ', Ψ) ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -1069,7 +1069,7 @@ Lemma can_gen_swapR_derrec_nslcext_gen : forall {V} rules G d0 seq1 seq2 Ψ Ψ' 
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapR rules ns) ->
-  swapped_gen Ψ Ψ' ->
+  swappedP_gen Ψ Ψ' ->
   seq1 = (Γ, Ψ) ->
   seq2 = (Γ, Ψ') ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -1087,15 +1087,15 @@ Lemma can_gen_swapL_derrec : forall {V} l rules G d0 Γ1 Γ2 Ψ Γ1' Γ2',
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapL rules ns) ->
-  swapped (Γ1 ++ Γ2) (Γ1' ++ Γ2') ->
+  swappedP (Γ1 ++ Γ2) (Γ1' ++ Γ2') ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
          (nslcext G d0 (Γ1 ++ l ++ Γ2, Ψ)) ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
          (nslcext G d0 (Γ1' ++ l ++ Γ2', Ψ)).
 Proof.
   intros until 0. intros Hcan Hswap Hder.
-  eapply swapped_spec_I in Hswap.
-  eapply swapped__n_mid in Hswap.
+  eapply swappedP_spec_I in Hswap.
+  eapply swappedP__n_mid in Hswap.
   destruct Hswap as [n HH]. 
   eapply can_gen_swapL_derrec_spec.
   apply Hcan. 2 : apply Hder.
@@ -1106,15 +1106,15 @@ Lemma can_gen_swapR_derrec : forall {V} l rules G d0 Ψ1 Ψ2 Γ Ψ1' Ψ2',
   (forall ns : list (rel (list (PropF V)) * dir),
          derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
          can_gen_swapR rules ns) ->
-  swapped (Ψ1 ++ Ψ2) (Ψ1' ++ Ψ2') ->
+  swappedP (Ψ1 ++ Ψ2) (Ψ1' ++ Ψ2') ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
          (nslcext G d0 (Γ, Ψ1 ++ l ++ Ψ2)) ->
   derrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
          (nslcext G d0 (Γ, Ψ1' ++ l ++ Ψ2')).
 Proof.
   intros until 0. intros Hcan Hswap Hder.
-  eapply swapped_spec_I in Hswap.
-  eapply swapped__n_mid in Hswap.
+  eapply swappedP_spec_I in Hswap.
+  eapply swappedP__n_mid in Hswap.
   destruct Hswap as [n HH]. 
   eapply can_gen_swapR_derrec_spec.
   apply Hcan. 2 : apply Hder.
@@ -1126,7 +1126,7 @@ Lemma can_gen_swapL_dersrec : forall {V} rules G d0 Γ1 Γ2 Ψ1 Ψ2 Γ1' Γ2' ps
         derrec rules
                (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
         can_gen_swapL rules ns) ->
-    swapped (Γ1 ++ Γ2) (Γ1' ++ Γ2') ->
+    swappedP (Γ1 ++ Γ2) (Γ1' ++ Γ2') ->
     dersrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
             (map (nslcext G d0) (map (seqext Γ1 Γ2 Ψ1 Ψ2) ps)) ->
     dersrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
@@ -1147,7 +1147,7 @@ Lemma can_gen_swapR_dersrec : forall {V} rules G d0 Γ1 Γ2 Ψ1 Ψ2 Ψ1' Ψ2' ps
         derrec rules
                (fun _ : list (rel (list (PropF V)) * dir) => False) ns ->
         can_gen_swapR rules ns) ->
-    swapped (Ψ1 ++ Ψ2) (Ψ1' ++ Ψ2') ->
+    swappedP (Ψ1 ++ Ψ2) (Ψ1' ++ Ψ2') ->
     dersrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)
             (map (nslcext G d0) (map (seqext Γ1 Γ2 Ψ1 Ψ2) ps)) ->
     dersrec rules (fun _ : list (rel (list (PropF V)) * dir) => False)

@@ -1,7 +1,54 @@
-Require Import List List_lemmasT.
+Require Import List.
 Require Import existsT.
 
-(* Contains lemmas for swapped plus definitions and lemmas for swapped_spec and swapped_gen, all used for contraction. *)
+Set Implicit Arguments.
+Import ListNotations.
+
+(* Contains definitions and lemmas for swapped swapped_spec and swapped_gen, all used for contraction. *)
+
+Inductive swapped T: list T -> list T -> Type :=
+| swapped_I : forall (X Y A B C D : list T),
+    X = (A ++ B ++ C ++ D) -> Y = (A ++ C ++ B ++ D) -> swapped X Y.
+
+Lemma swapped_I': forall T (A B C D : list T),
+  swapped (A ++ B ++ C ++ D) (A ++ C ++ B ++ D).
+Proof.  intros.  eapply swapped_I ; reflexivity. Qed.
+   
+Lemma swapped_same: forall T X, swapped X (X : list T).
+Proof.  intros.  apply (swapped_I [] [] [] X) ; simpl ; reflexivity. Qed.
+
+Lemma swapped_L: forall T X Y Z,
+  swapped X (Y : list T) -> swapped (Z ++ X) (Z ++ Y).
+Proof.  intros until 0; intros X0. inversion X0. subst. 
+  rewrite !(app_assoc Z). apply swapped_I'. Qed.
+
+Lemma swapped_R: forall T X Y Z,
+  swapped X (Y : list T) -> swapped (X ++ Z) (Y ++ Z).
+Proof.  intros until 0; intros X0. destruct X0. subst. rewrite <- !app_assoc. apply swapped_I'. Qed.
+
+Lemma swapped_cons: forall T (x : T) Y Z,
+  swapped Y Z -> swapped (x :: Y) (x :: Z).
+Proof.
+  intros until 0; intros H. destruct H.
+  subst. repeat rewrite app_comm_cons.
+  apply swapped_I'.
+Qed.
+
+Lemma swapped_simple: forall T U V X Y,
+  U = X ++ Y -> V = Y ++ X -> swapped U (V : list T).
+Proof.  intros. subst. 
+  apply (swapped_I [] X Y []) ; simpl ; rewrite app_nil_r ; reflexivity. Qed.
+
+Lemma swapped_simple': forall T X Y, swapped (X ++ Y : list T) (Y ++ X).
+Proof.  intros. eapply swapped_simple ; reflexivity. Qed. 
+
+Lemma swapped_simpleL: forall T X Y Z,
+  Y = Z -> swapped (X ++ Y) (Z ++ X : list T).
+Proof.  intros. subst. apply swapped_simple'. Qed.
+
+Lemma swapped_simpleR: forall T X Y Z,
+  Y = Z -> swapped (Y ++ X) (X ++ Z : list T).
+Proof.  intros. subst. apply swapped_simple'. Qed.
 
 Lemma swapped_comm : forall {T} (A B : list T),
     swapped A B ->
@@ -75,8 +122,8 @@ Proof.
   inversion H as [ | ? ? ? ? X X0]. subst.
   eapply swapped_comm in X0.
   eapply swapped_spec_I in X0.
-  apply IHn in X. 
-  apply (swapped_spec_trans_exact _ _ _ _ _  X0 X).
+  apply IHn in X.
+  apply (@swapped_spec_trans_exact T _ _ _ _ _ X0 X).
 Qed.
 
 Lemma swapped_spec_conv : forall {T} n m (A B : list T),
@@ -183,4 +230,4 @@ Lemma swapped_gen_refl : forall {T} (A : list T),
 Proof.
   intros T A. constructor.
   exists 0. apply swapped_spec_refl.
-Qed.  
+Qed.

@@ -7,6 +7,7 @@ Require Import gen.
 Require Import dd.
 Require Import List_lemmas.
 Require Import lnt.
+Require Import swappedP.
 
 Lemma midI: forall T (a b c d : list T) x,
   a = c -> b = d -> a ++ x :: b = c ++ x :: d.
@@ -58,35 +59,23 @@ Ltac apps_eq_tac := list_assoc_r' ; rewrite ?eq_app_canc1 ;
 
 (* tactics to identify swapped lists, where one of swap is single list *)
  
-Ltac show_swapped_1 := 
+Ltac show_swappedP_1 := 
   list_assoc_r' ;
   try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
-    apply swapped_simpleL ; list_eq_assoc) ;
+    apply swappedP_simpleL ; list_eq_assoc) ;
   try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
-    apply swapped_simpleR ; list_eq_assoc).
+    apply swappedP_simpleR ; list_eq_assoc).
 
 Ltac swap_tac :=
-  list_assoc_r ; try (apply swapped_same) ; 
-    repeat (apply swapped_L || apply swapped_cons) ;  
-  list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
- 
-Ltac show_swappedT_1 := 
-  list_assoc_r' ;
-  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
-    apply swappedT_simpleL ; list_eq_assoc) ;
-  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
-    apply swappedT_simpleR ; list_eq_assoc).
+  list_assoc_r ; try (apply swappedP_same) ; 
+    repeat (apply swappedP_L || apply swappedP_cons) ;  
+  list_assoc_l ; repeat (apply swappedP_R) ; show_swappedP_1.
+  
+Goal forall T A B C D, swappedP (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
+Proof. intros.  show_swappedP_1.  Qed.
 
-Ltac swapT_tac :=
-  list_assoc_r ; try (apply swappedT_same) ; 
-    repeat (apply swappedT_L || apply swappedT_cons) ;  
-  list_assoc_l ; repeat (apply swappedT_R) ; show_swappedT_1.
- 
-Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
-Proof. intros.  show_swapped_1.  Qed.
-
-Goal forall T A B C D, swapped (D ++ A ++ B ++ C) (A ++ B ++ C ++ D : list T).
-Proof. intros.  show_swapped_1.  Qed.
+Goal forall T A B C D, swappedP (D ++ A ++ B ++ C) (A ++ B ++ C ++ D : list T).
+Proof. intros.  show_swappedP_1.  Qed.
 
 Ltac sD_list_eq := repeat (cD' || list_eq_nc || sDx).
 
@@ -167,34 +156,34 @@ Definition can_gen_swapR {V : Set}
   derrec rules (fun _ => False) 
     (G ++ (pair Γ (Δ1 ++ Δ3 ++ Δ2 ++ Δ4), d) :: K).
 
-(* alternative definition of can_gen_swapL(R) in terms of swapped *)
+(* alternative definition of can_gen_swapL(R) in terms of swappedP *)
 
 Lemma can_gen_swapL_def': forall {V : Set} 
   (rules : rls (list (rel (list (PropF V)) * dir))) ns,
   can_gen_swapL rules ns <-> forall G K seq Γ Δ Γ' (d : dir), 
-  swapped Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+  swappedP Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
     derrec rules (fun _ => False) (G ++ (pair Γ' Δ, d) :: K).
 Proof.  intros.  unfold iff.  split ; intros. 
   destruct H0. subst. unfold can_gen_swapL in H.
   eapply H. reflexivity.  reflexivity.
   unfold can_gen_swapL. intros. eapply H.
-  2: exact H0.  2: exact H1. apply swapped_I'. Qed.
+  2: exact H0.  2: exact H1. apply swappedP_I'. Qed.
 
 Lemma can_gen_swapR_def': forall {V : Set} 
   (rules : rls (list (rel (list (PropF V)) * dir))) ns,
   can_gen_swapR rules ns <-> forall G K seq Γ Δ Δ' (d : dir), 
-  swapped Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+  swappedP Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
     derrec rules (fun _ => False) (G ++ (pair Γ Δ', d) :: K).
 Proof.  intros.  unfold iff.  split ; intros. 
   destruct H0. subst. unfold can_gen_swapR in H.
   eapply H. reflexivity.  reflexivity.
   unfold can_gen_swapR. intros. eapply H.
-  2: exact H0.  2: exact H1. apply swapped_I'. Qed.
+  2: exact H0.  2: exact H1. apply swappedP_I'. Qed.
 
 Lemma can_gen_swapL_imp: forall {V : Set} 
   (rules : rls (list (rel (list (PropF V)) * dir))) ns,
   can_gen_swapL rules ns -> forall G K seq Γ Δ Γ' (d : dir), 
-  swapped Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+  swappedP Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
     derrec rules (fun _ => False) (G ++ (pair Γ' Δ, d) :: K).
 Proof.  intros until 0. intro.
   rewrite -> can_gen_swapL_def' in H. exact H. Qed.
@@ -202,7 +191,7 @@ Proof.  intros until 0. intro.
 Lemma can_gen_swapR_imp: forall {V : Set} 
   (rules : rls (list (rel (list (PropF V)) * dir))) ns,
   can_gen_swapR rules ns -> forall G K seq Γ Δ Δ' (d : dir), 
-  swapped Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
+  swappedP Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
     derrec rules (fun _ => False) (G ++ (pair Γ Δ', d) :: K).
 Proof.  intros until 0. intro.
   rewrite -> can_gen_swapR_def' in H. exact H. Qed.
