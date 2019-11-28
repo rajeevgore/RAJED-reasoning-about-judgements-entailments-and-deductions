@@ -147,6 +147,11 @@ Lemma Sctxt_e: forall (W : Type) (pr : rls (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof. intros.  rewrite <- seqext_def. apply Sctxt. exact H. Qed.  
 
+Lemma Sctxt_eq: forall (W : Type) pr ps mps (ca cs U V Φ1 Φ2 Ψ1 Ψ2 : list W),
+  pr ps (U, V) -> ca = Φ1 ++ U ++ Φ2 -> cs = Ψ1 ++ V ++ Ψ2 ->
+  mps = map (seqext Φ1 Φ2 Ψ1 Ψ2) ps -> seqrule pr mps (ca, cs).
+Proof. intros.  subst. apply Sctxt_e. exact X. Qed.  
+
 Lemma Sctxt_e': forall (W : Type) (pr : rls (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
   pr ps (U, V) ->
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) ((Φ1 ++ U) ++ Φ2, Ψ1 ++ V ++ Ψ2).
@@ -168,12 +173,11 @@ Proof.  intros.  eapply Sctxt in H.  simpl in H. exact H.  Qed.
 Definition Sctxt_Id' V A Γ1 Γ2 Δ1 Δ2 :=
   @Sctxt_nil (PropF V) (@princrule V) ([A], [A]) Γ1 Γ2 Δ1 Δ2 (Id' A).
 
-(*
 Lemma Sctxt_Id :
   forall (V : Set) (A : PropF V) (Γ1 Γ2 Δ1 Δ2 : list (PropF V)),
-  seqrule (princrule (V:=V)) [] (Γ1 ++ A :: Γ2, Δ1 ++ A :: Δ2).
-to be completed.
-*)
+  seqrule (Idrule (V:=V)) [] (Γ1 ++ A :: Γ2, Δ1 ++ A :: Δ2).
+Proof. intros. eapply Sctxt_eq. apply Idrule_I. 
+all: simpl ; reflexivity. Qed.
 
 (* w : Set fails *)
 Definition nsext (W : Type) G H (d : dir) (seq : W) := G ++ (seq, d) :: H.

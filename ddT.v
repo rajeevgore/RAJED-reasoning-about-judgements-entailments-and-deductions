@@ -75,6 +75,11 @@ with dersrec_ind_mut := Induction for dersrec Sort Prop.
 Check derrec_ind_mut.
 Check dersrec_ind_mut.
 
+(* combine the two inductive principles *)
+Definition derrec_dersrec_rect_mut X rules prems P P0 dp der dln dlc :=
+  pair (@derrec_rect_mut X rules prems P P0 dp der dln dlc)
+    (@dersrec_rect_mut X rules prems P P0 dp der dln dlc).
+
 Ltac solve_dersrec := repeat (apply dlCons || apply dlNil || assumption).
 
 (* this should be a more useful induction principle for derrec *)
@@ -250,6 +255,10 @@ with dersl_rect_mut := Induction for dersl Sort Type.
 
 Check derl_ind_mut.
 Check dersl_ind_mut.
+
+Lemma dtCons_eq X rules ps c pss cs psa: derl rules ps (c : X) ->
+  dersl rules pss cs -> psa = ps ++ pss -> dersl rules psa (c :: cs). 
+Proof. intros. subst. apply dtCons ; assumption. Qed.
 
 (* combine the two inductive principles *)
 Definition derl_dersl_rect_mut X rules P P0 asm dtd dtn dtc :=
@@ -452,6 +461,11 @@ Qed.
 Definition dersrecD_all X rs ps cs := iffT_D1 (@dersrec_all X rs ps cs).
 Definition dersrecI_all X rs ps cs := iffT_D2 (@dersrec_all X rs ps cs).
 
+Lemma prems_dersrec X rules prems cs:
+  ForallT prems cs -> @dersrec X rules prems cs.
+Proof. induction cs ; intros. apply dlNil.
+inversion X0. subst. apply dlCons. apply dpI. assumption. tauto. Qed. 
+
 Lemma dersrec_forall: forall X rules prems (cs : list X),
   iffT (dersrec rules prems cs) (forall c, InT c cs -> derrec rules prems c).
 Proof. intros. rewrite dersrec_all. rewrite ForallT_forall. reflexivity. Qed.
@@ -536,6 +550,21 @@ intros. eapply derl_derrec_trans in r. eassumption.  assumption.
 apply dlNil.
 intros. apply dlCons ; assumption.
 assumption.  Qed.
+
+Definition derl_derrec X rules prems rps (concl : X) drrc prems_cond :=
+  @derl_derrec_trans X rules prems rps (concl : X) drrc 
+    (@prems_dersrec X rules prems rps prems_cond).
+
+Definition derl_derrec_nil X rules prems (concl : X) drrc :=
+  @derl_derrec_trans X rules prems [] (concl : X) drrc 
+    (@dlNil X rules prems).
+
+Lemma dersl_dersrec_nil X rules prems (cs : list X):
+  dersl rules [] cs -> dersrec rules prems cs.
+Proof. induction cs ; intros. apply dlNil.
+inversion X0. destruct ps. simpl in H0. subst. 
+apply dlCons. apply derl_derrec_nil. assumption. tauto.
+simpl in H0. discriminate H0.  Qed.
 
 Lemma dersl_cons: forall X rules qs p (ps : list X), 
   dersl rules qs (p :: ps) -> sigT (fun qsa => sigT (fun qsb =>
@@ -625,6 +654,21 @@ intros. eapply derl_trans. eassumption.  assumption.
 apply dtNil.
 intros.  apply dtCons.  assumption.  assumption.
 assumption.  Qed.
+
+Lemma derrec_nil_derl_s X rules: (forall concl, 
+  derrec rules (@emptyT X) concl -> derl rules [] concl) *
+  (forall cs, dersrec rules (@emptyT X) cs -> dersl rules [] cs).
+Proof. 
+apply (derrec_dersrec_rect_mut (rules := rules) (prems := (@emptyT X))
+  (fun x : X => fun _ => derl rules [] x)
+  (fun xs : list X => fun _ => dersl rules [] xs)) ; intros.
+- inversion p.
+- eapply dtderI ; eassumption. 
+- apply dtNil.
+- eapply dtCons_eq. eassumption. eassumption. tauto. Qed.
+
+Definition derrec_nil_derl X rules := fst (@derrec_nil_derl_s X rules).
+Definition dersrec_nil_dersl X rules := snd (@derrec_nil_derl_s X rules).
 
 Definition derI_rules_mono X rules rulesb prems ps concl rs fuv :=
   @derI X rulesb prems ps concl (@rsub_imp _ _ rules rulesb rs ps concl fuv).

@@ -154,6 +154,11 @@ Proof.
   apply Sctxt. exact H.
 Qed.
 
+Lemma Sctxt_eq: forall (W : Type) pr ps mps (ca cs U V Φ1 Φ2 Ψ1 Ψ2 : list W),
+  pr ps (U, V) -> ca = Φ1 ++ U ++ Φ2 -> cs = Ψ1 ++ V ++ Ψ2 ->
+  mps = map (seqext Φ1 Φ2 Ψ1 Ψ2) ps -> seqrule pr mps (ca, cs).
+Proof. intros.  subst. apply Sctxt_e. exact X. Qed.  
+
 Lemma Sctxt_e': forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
   pr ps (U, V) ->
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) ((Φ1 ++ U) ++ Φ2, Ψ1 ++ V ++ Ψ2).
