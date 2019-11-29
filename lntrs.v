@@ -6,8 +6,8 @@ Require Import ssreflect.
 
 Require Import gen.
 Require Import ddP.
-Require Import List_lemmas.
-Require Import lnt.
+Require Import List_lemmasP.
+Require Import lntP.
 Require Import lntacs.
 
 (* proof using version of step lemma which is generic for rules *)

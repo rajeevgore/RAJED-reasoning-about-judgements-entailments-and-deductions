@@ -494,7 +494,22 @@ Ltac list_eq_nc :=
      | [ H : _ :: _ = [] |- _ ] => discriminate H
      | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
      end.
-
+(*
+Ltac list_eq_ncT :=
+   match goal with
+     | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H
+     | [ H : [] = _ ++ _ :: _  |- _ ] => apply nil_eq_list in H
+     | [ H : _ ++ _ = [] |- _ ] => apply app_eq_nilT in H
+     | [ H : [] = _ ++ _ |- _ ] => apply nil_eq_appT in H
+     | [ H : _ ++ _ = [_] |- _ ] => apply app_eq_unitT in H
+     | [ H : [_] = _ ++ _ |- _ ] => apply unit_eq_appT in H
+     | [ H : _ ++ _ :: _ = [_] |- _ ] => apply list_eq_singleT in H
+     | [ H : [_] = _ ++ _ :: _ |- _ ] => apply single_eq_listT in H
+     | [ H : _ :: _ = [] |- _ ] => discriminate H
+     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
+   end.
+*)
+(* Type version of list_eq_nc *)
 Ltac list_eq_ncT :=
    match goal with
      | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H
@@ -508,6 +523,7 @@ Ltac list_eq_ncT :=
      | [ H : _ :: _ = [] |- _ ] => discriminate H
      | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
      end.
+
 
 Definition rules_L_oe {W : Set} (rules : rlsT (rel (list W))) := 
   forall ps x y Δ, rules ps (x ++ y, Δ) -> x = [] \/ y = [].

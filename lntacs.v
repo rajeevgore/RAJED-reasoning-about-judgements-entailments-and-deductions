@@ -5,8 +5,8 @@ Require Import ssreflect.
 
 Require Import gen.
 Require Import ddP.
-Require Import List_lemmas.
-Require Import lnt.
+Require Import List_lemmasP.
+Require Import lntP.
 Require Import swappedP.
 
 Lemma midI: forall T (a b c d : list T) x,

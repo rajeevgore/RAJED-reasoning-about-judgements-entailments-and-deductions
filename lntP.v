@@ -3,7 +3,7 @@ Require Export List.
 Export ListNotations.
 Require Import gen.
 Require Import ddP.
-Require Import List_lemmas.
+Require Import List_lemmasP.
 
 Set Implicit Arguments.
 
@@ -361,9 +361,9 @@ Ltac acacD :=
 
 Ltac acacD' :=
   repeat match goal with
-    | [ H : _ ++ _ = _ ++ _ |- _ ] => apply app_eq_appT in H ; sD
-    | [ H : _ :: _ = _ ++ _ |- _ ] => apply cons_eq_appT in H ; sD
-    | [ H : _ ++ _ = _ :: _ |- _ ] => apply app_eq_consT in H ; sD
+    | [ H : _ ++ _ = _ ++ _ |- _ ] => apply app_eq_app in H ; sD
+    | [ H : _ :: _ = _ ++ _ |- _ ] => apply cons_eq_app in H ; sD
+    | [ H : _ ++ _ = _ :: _ |- _ ] => apply app_eq_cons in H ; sD
     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as ?H ?H 
     | [ H : (_, _) = (_, _) |- _ ] => injection H as ?H ?H 
     | [ H : _ :: _ = [] |- _ ] => discriminate H
@@ -384,21 +384,6 @@ Ltac acacDe' :=
     end.
 
 Ltac acacDe := repeat (sD' || acacDe').
-
-(* Type version of list_eq_nc *)
-Ltac list_eq_ncT :=
-   match goal with
-     | [ H : _ ++ _ :: _ = [] |- _ ] => apply list_eq_nil in H
-     | [ H : [] = _ ++ _ :: _  |- _ ] => apply nil_eq_list in H
-     | [ H : _ ++ _ = [] |- _ ] => apply app_eq_nilT in H
-     | [ H : [] = _ ++ _ |- _ ] => apply nil_eq_appT in H
-     | [ H : _ ++ _ = [_] |- _ ] => apply app_eq_unitT in H
-     | [ H : [_] = _ ++ _ |- _ ] => apply unit_eq_appT in H
-     | [ H : _ ++ _ :: _ = [_] |- _ ] => apply list_eq_singleT in H
-     | [ H : [_] = _ ++ _ :: _ |- _ ] => apply single_eq_listT in H
-     | [ H : _ :: _ = [] |- _ ] => discriminate H
-     | [ H : _ :: _ = _ :: _ |- _ ] => injection H as
-     end.
 
 Ltac list_eq_nc :=
    match goal with

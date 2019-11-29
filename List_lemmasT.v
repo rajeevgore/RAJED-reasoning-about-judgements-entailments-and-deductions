@@ -370,6 +370,18 @@ intros. right. subst.
 exists y. tauto.
 Qed.
 
+Lemma cons_eq_appT: forall (A : Type) (x y z : list A) (a : A),
+  a :: x = y ++ z -> sum ((y = []) * (z = a :: x)) 
+  (sigT (fun y' : list A => prod (y = a :: y') (x = y' ++ z))).
+Proof.
+intros.
+destruct y. simpl in H. subst. tauto.
+simpl in H.
+injection H.
+intros. right. subst.
+exists y. tauto.
+Qed.
+
 Lemma cons_eq_appT2: forall (A : Type) (x y z : list A) (a : A),
     a :: x = y ++ z ->
     ((y = []) * (z = a :: x)) +
@@ -414,6 +426,21 @@ rewrite H.  rewrite H0.  rewrite H1.  simpl.
 exists x1. tauto.
 Qed.
 
+Lemma app_eq_appT: forall (A : Type) (w x y z : list A),
+  w ++ x = y ++ z -> sigT (fun m : list A =>
+    sum ((w = y ++ m) * (z = m ++ x)) ((y = w ++ m) * (x = m ++ z))).
+Proof.  intro. intro.  induction w.
+simpl. intros.
+exists y. rewrite H. tauto.
+intros. simpl in H.
+apply cons_eq_appT in H.
+destruct H.  destruct p.  subst. simpl.
+exists (a :: w). simpl.  tauto.
+destruct s.  destruct p.
+apply IHw in e0.  destruct e0. 
+destruct s ; destruct p ; subst ; simpl ; exists x1 ; tauto.
+Qed.
+
 Lemma app_eq_appT2: forall (A : Type) (w x y z : list A),
   w ++ x = y ++ z -> existsT2 (m : list A),
     ((w = y ++ m) * (z = m ++ x)) + ((y = w ++ m) * (x = m ++ z)).
@@ -427,18 +454,8 @@ Proof.
   exists l2. tauto.
 Qed.
 
-Lemma list_eq_single: forall (A : Type) (x y : list A) (u v : A),
-  x ++ u :: y = [v] -> x = [] /\ y = [] /\ u = v.
-Proof.  intros.  apply app_eq_cons in H.  sD.  injection H0 as.  subst.  tauto.
-  apply app_cons_not_nil in H1.  contradiction.  Qed.
-
-Lemma list_eq_singleT: forall (A : Type) (x y : list A) (u v : A),
-  x ++ u :: y = [v] -> (x = []) * (y = []) * (u = v).
-Proof.  intros.  apply app_eq_consT2 in H. sD.  injection H0 as.  subst.  tauto.
-  apply app_cons_not_nil in H1.  contradiction.  Qed.
-
-Definition single_eq_list A x y u v p := @list_eq_single A x y u v (eq_sym p).
-Definition single_eq_listT A x y u v p := @list_eq_singleT A x y u v (eq_sym p).
+Definition app_eq_consT (A : Type) (x y z : list A) (a : A) p :=
+  @cons_eq_appT A x y z a (eq_sym p).
 
 Lemma list_eq_nil: forall (A : Type) (x y : list A) (u : A),
   x ++ u :: y = [] -> False.
@@ -454,12 +471,31 @@ Proof.
   rewrite H2. apply app_eq_nilT in H2. destruct H2 as [H2a H2b].
   subst. auto.
 Qed.
-  
+
 Definition nil_eq_list A x y u p := @list_eq_nil A x y u (eq_sym p).
 Definition nil_eq_app A u v p := @app_eq_nil A u v (eq_sym p).
 Definition nil_eq_appT A u v p := @app_eq_nilT A u v (eq_sym p).
 Definition unit_eq_app A x y a p := @app_eq_unit A x y a (eq_sym p).
 Definition unit_eq_appT A x y a p := @app_eq_unitT A x y a (eq_sym p).
+
+Lemma list_eq_single: forall (A : Type) (x y : list A) (u v : A),
+  x ++ u :: y = [v] -> x = [] /\ y = [] /\ u = v.
+Proof.  intros.  apply app_eq_cons in H.  sD.  injection H0 as.  subst.  tauto.
+        apply app_cons_not_nil in H1.  contradiction.  Qed.
+
+Lemma list_eq_singleT: forall (A : Type) (x y : list A) (u v : A),
+  x ++ u :: y = [v] -> prod (x = []) (prod (y = []) (u = v)).
+Proof.  intros.  apply app_eq_consT in H.  sD.  injection H0 as.  subst.  tauto.
+  apply nil_eq_appT in H1. cD. discriminate H2. Qed.
+
+Lemma list_eq_singleT_nobrac: forall (A : Type) (x y : list A) (u v : A),
+  x ++ u :: y = [v] -> (x = []) * (y = []) * (u = v).
+Proof.  intros.  apply app_eq_consT2 in H. sD.  injection H0 as.  subst.  tauto.
+  apply app_cons_not_nil in H1.  contradiction.  Qed.
+
+Definition single_eq_list A x y u v p := @list_eq_single A x y u v (eq_sym p).
+Definition single_eq_listT A x y u v p := @list_eq_singleT A x y u v (eq_sym p).
+Definition single_eq_listT_nobrac A x y u v p := @list_eq_singleT_nobrac A x y u v (eq_sym p).
 
 Lemma nnn_app_eq: forall {A : Type} (x : list A), [] ++ [] ++ [] ++ x = x.
 Proof.  intros.  simpl. reflexivity. Qed.
@@ -579,4 +615,3 @@ Ltac check_app_tail l1 l2 :=
   | ?l3 ++ l2 => idtac
   | _ => fail
   end.
-
