@@ -2,18 +2,10 @@
 (* proving the form of exchange where two adjacent lists are interchanged 
   for system with princrule and seqrule *)
 
-(* 
-coqc gen.v
-coqc dd.v
-coqc List_lemmas.v
-coqc lnt.v
-coqc lntacs.v
-*)
-
 Require Import ssreflect.
 
 Require Import gen.
-Require Import dd.
+Require Import ddP.
 Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.

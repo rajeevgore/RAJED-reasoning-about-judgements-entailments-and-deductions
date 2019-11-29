@@ -1,10 +1,3 @@
-(*
-Require Export List.
-Set Implicit Arguments.
-Export ListNotations.
-Require Import genT.
-*)
-
 
 (* derrec, derl, etc, other useful stuff *)
 
@@ -14,14 +7,10 @@ Export ListNotations.
 
 Require Import Coq.Program.Equality. (* for dependent induction/destruction *)
 
-(* Require Import gen. *)
 Require Import genT gen.
+Require Import PeanoNat.
 
-(*
-Require Import Coq.Classes.CRelationClasses.
 
-Require Import Setoid.
-*)
 (* note, this doesn't work Type replaced by Prop,
   although the actual version used allows prems : X -> Prop 
 Reset derrec.
@@ -71,10 +60,10 @@ Scheme derrec_rec_mut := Induction for derrec Sort Set
 with dersrec_rec_mut := Induction for dersrec Sort Set.
 Scheme derrec_ind_mut := Induction for derrec Sort Prop
 with dersrec_ind_mut := Induction for dersrec Sort Prop.
-
+(*
 Check derrec_ind_mut.
 Check dersrec_ind_mut.
-
+*)
 (* combine the two inductive principles *)
 Definition derrec_dersrec_rect_mut X rules prems P P0 dp der dln dlc :=
   pair (@derrec_rect_mut X rules prems P P0 dp der dln dlc)
@@ -219,9 +208,9 @@ eapply IHps. eassumption. assumption. Qed.
 Definition derrec_rect_mut_all X (rules : rlsT X) prems Q cl1 cl2 :=
   derrec_rect_mut Q (@allPder X rules prems Q) cl1 cl2 
     (allPder_Nil Q) (@allPder_Cons X rules prems Q).
-
+(*
 Check derrec_rect_mut_all.
-
+*)
 Lemma allPderD_in :
   forall X rules prems Q ps (dpss : dersrec rules prems ps) p,
     allPder Q dpss -> InT (p : X) ps ->
@@ -233,9 +222,9 @@ inversion inp ; subst.
 exists d.  apply in_dersrec_hd.  assumption.
 pose (IHps ds p adp X0). destruct s. (* cD doesn't work here - why?? *)
 exists x. apply in_dersrec_tl. assumption.  assumption. Qed.
-
+(*
 Check allPderD_in.
-
+*)
 Inductive derl X (rules : list X -> X -> Type) : list X -> X -> Type := 
   | asmI : forall p, derl rules [p] p
   | dtderI : forall pss ps concl, rules ps concl ->
@@ -252,10 +241,10 @@ Scheme derl_rec_mut := Induction for derl Sort Set
 with dersl_rec_mut := Induction for dersl Sort Set.
 Scheme derl_rect_mut := Induction for derl Sort Type
 with dersl_rect_mut := Induction for dersl Sort Type.
-
+(*
 Check derl_ind_mut.
 Check dersl_ind_mut.
-
+*)
 Lemma dtCons_eq X rules ps c pss cs psa: derl rules ps (c : X) ->
   dersl rules pss cs -> psa = ps ++ pss -> dersl rules psa (c :: cs). 
 Proof. intros. subst. apply dtCons ; assumption. Qed.
@@ -290,10 +279,10 @@ Scheme dercl_rec_mut := Induction for dercl Sort Set
 with dercsl_rec_mut := Induction for dercsl Sort Set.
 Scheme dercl_rect_mut := Induction for dercl Sort Type
 with dercsl_rect_mut := Induction for dercsl Sort Type.
-
+(*
 Check dercl_ind_mut.
 Check dercsl_ind_mut.
-
+*)
 (* combine the two inductive principles *)
 Definition dercl_dercsl_rect_mut X rules P P0 asm dtd dtn dtc :=
   pair (@dercl_rect_mut X rules P P0 asm dtd dtn dtc)
@@ -426,9 +415,11 @@ eapply dtd. eassumption. eassumption. eassumption. reflexivity. }
 { intros. destruct X1. subst.
 eapply ccpsI. eapply Forall2T_cons ; eassumption.
 simpl. reflexivity. } Qed.
-
-Check derl_all_rect.  (* Check derl_dercl. *)  Check dercl_derl.
-
+(*
+Check derl_all_rect.  
+Check derl_dercl. 
+Check dercl_derl.
+*)
 (* no convenient way of expressing the corresponding result
   for dercsl except using sth like allrel *)
 
@@ -672,7 +663,7 @@ Definition dersrec_nil_dersl X rules := snd (@derrec_nil_derl_s X rules).
 
 Definition derI_rules_mono X rules rulesb prems ps concl rs fuv :=
   @derI X rulesb prems ps concl (@rsub_imp _ _ rules rulesb rs ps concl fuv).
-
+(*
 Check derrec_trans_imp.
 Check derl_derrec_trans.
 Check derrec_derl_deriv.
@@ -680,7 +671,7 @@ Check dersl_app_eq.
 Check derl_trans.
 Check dersl_trans.
 Check derl_deriv.
-
+*)
 Fixpoint derrec_height X rules prems concl 
   (der : @derrec X rules prems concl) :=
   match der with 
@@ -720,8 +711,6 @@ Fixpoint dersrec_concls X rules prems concls
     | dlNil _ _ => []
     | dlCons d ds => derrec_concl d :: dersrec_concls ds
   end.
-
-Require Import PeanoNat.
 
 Lemma dersrec_height_le: forall X rules prems n ps 
   (ds : dersrec rules prems ps),
@@ -797,16 +786,16 @@ intros. eapply X2. eassumption. eassumption. assumption. assumption.
 eapply ForallT_impl in X5. exact X5.
 intros. simpl. apply X9. eapply derI ; eassumption.
 assumption.  assumption.  assumption.  Qed.
-
+(*
 Check derrec_all_rect2.
-
+*)
 (* version with no premises *)
 Definition derrec_all_rect2_nops X Y rulesx rulesy Q := 
   @derrec_all_rect2 X Y rulesx rulesy (@emptyT X) (@emptyT Y) Q
   (@emptyT_any X _) (@emptyT_any Y _).
-
+(*
 Check derrec_all_rect2_nops.
-
+*)
 (* without specifying conclusion in the type, more like Isabelle trees *)
 Inductive derrec_fc X rules (prems : X -> Type) : Type := 
   | fcI : forall concl, derrec rules prems concl -> derrec_fc rules prems.

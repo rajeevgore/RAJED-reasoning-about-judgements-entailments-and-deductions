@@ -1,10 +1,11 @@
 
 Require Export List.
-Set Implicit Arguments.
 Export ListNotations.
 Require Import gen.
-Require Import dd.
+Require Import ddP.
 Require Import List_lemmas.
+
+Set Implicit Arguments.
 
 Parameter PropVars : Set.
 
@@ -147,10 +148,13 @@ Lemma Sctxt_e: forall (W : Type) (pr : rls (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof. intros.  rewrite <- seqext_def. apply Sctxt. exact H. Qed.  
 
-Lemma Sctxt_eq: forall (W : Type) pr ps mps (ca cs U V Φ1 Φ2 Ψ1 Ψ2 : list W),
+Lemma Sctxt_eq: forall (W : Type) (pr : rls (rel (list W))) ps mps (ca cs U V Φ1 Φ2 Ψ1 Ψ2 : list W),
   pr ps (U, V) -> ca = Φ1 ++ U ++ Φ2 -> cs = Ψ1 ++ V ++ Ψ2 ->
   mps = map (seqext Φ1 Φ2 Ψ1 Ψ2) ps -> seqrule pr mps (ca, cs).
-Proof. intros.  subst. apply Sctxt_e. exact X. Qed.  
+Proof.
+  intros until 0; intros H H0 H1 H2.
+  subst. apply Sctxt_e. exact H.
+Qed.  
 
 Lemma Sctxt_e': forall (W : Type) (pr : rls (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
   pr ps (U, V) ->

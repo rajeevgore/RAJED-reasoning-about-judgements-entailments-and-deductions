@@ -3,13 +3,13 @@
 
 gen.vo : gen.v
 
-dd.vo : gen.vo dd.v
+ddP.vo : gen.vo ddP.v
 
-List_lemmas.vo : dd.vo List_lemmas.v
+List_lemmas.vo : List_lemmas.v
 
 lnt.vo : List_lemmas.vo lnt.v
 
-swappedP.vo : swappedP.v
+swappedP.vo : ddP.vo swappedP.v
 
 lntacs.vo : swappedP.vo lnt.vo lntacs.v
 

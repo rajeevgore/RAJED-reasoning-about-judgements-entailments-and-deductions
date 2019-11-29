@@ -5,7 +5,7 @@ Require Import ssreflect.
 Require Import Omega.
 
 Require Import gen.
-Require Import dd.
+Require Import ddP.
 Require Import List_lemmas.
 Require Import lnt.
 Require Import lntacs.
