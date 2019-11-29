@@ -58,7 +58,7 @@ Ltac apps_eq_tac := list_assoc_r' ; rewrite ?eq_app_canc1 ;
   list_assoc_l' ; rewrite ?eq_app_canc2 ; reflexivity.
 
 (* tactics to identify swapped lists, where one of swap is single list *)
- 
+
 Ltac show_swapped_1 := 
   list_assoc_r' ;
   try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
@@ -69,8 +69,21 @@ Ltac show_swapped_1 :=
 Ltac swap_tac :=
   list_assoc_r ; try (apply swapped_same) ; 
     repeat (apply swapped_L || apply swapped_cons) ;  
+    list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
+(*
+Ltac show_swappedT_1 := 
+  list_assoc_r' ;
+  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleL ; list_eq_assoc) ;
+  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleR ; list_eq_assoc).
+
+Ltac swapT_tac :=
+  list_assoc_r ; try (apply swapped_same) ; 
+    repeat (apply swapped_L || apply swapped_cons) ;  
   list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
- 
+ *)
+
 Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
 Proof. intros.  show_swapped_1.  Qed.
 
@@ -657,17 +670,4 @@ Definition can_gen_init {V : Set}
 
  Ltac solve_unshelved :=
    (exact nat || (intros; exact 0)).
-
-
-Ltac show_swappedT_1 := 
-  list_assoc_r' ;
-  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
-    apply swapped_simpleL ; list_eq_assoc) ;
-  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
-    apply swapped_simpleR ; list_eq_assoc).
-
-Ltac swapT_tac :=
-  list_assoc_r ; try (apply swapped_same) ; 
-    repeat (apply swapped_L || apply swapped_cons) ;  
-  list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
 
