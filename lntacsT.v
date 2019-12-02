@@ -70,19 +70,6 @@ Ltac swap_tac :=
   list_assoc_r ; try (apply swapped_same) ; 
     repeat (apply swapped_L || apply swapped_cons) ;  
     list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
-(*
-Ltac show_swappedT_1 := 
-  list_assoc_r' ;
-  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
-    apply swapped_simpleL ; list_eq_assoc) ;
-  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
-    apply swapped_simpleR ; list_eq_assoc).
-
-Ltac swapT_tac :=
-  list_assoc_r ; try (apply swapped_same) ; 
-    repeat (apply swapped_L || apply swapped_cons) ;  
-  list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
- *)
 
 Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
 Proof. intros.  show_swapped_1.  Qed.
@@ -182,25 +169,6 @@ Proof.  intros.  unfold iffT.  split ; intros.
   unfold can_gen_swapL. intros. eapply X.
   2: exact H.  2: exact H0. apply swapped_I'. Qed.
 
-(* CD_comm
-Lemma can_gen_swapL_def': forall {V : Set} 
-  (rules : rlsT (list (rel (list (PropF V)) * dir))) ns,
- ( (can_gen_swapL rules ns) -> (forall G K seq Γ Δ Γ' (d : dir), 
-  swapped Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
-  derrec rules (fun _ => False) (G ++ (pair Γ' Δ, d) :: K))) *
-  ((forall G K seq Γ Δ Γ' (d : dir), 
-  swapped Γ Γ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
-  derrec rules (fun _ => False) (G ++ (pair Γ' Δ, d) :: K)) ->
-  (can_gen_swapL rules ns) ).
-Proof.
-  intros.  unfold iff.
-  split ; intros H; intros until 0; intros H0 H1 H2.
-  inversion H0. subst. unfold can_gen_swapL in H.
-  eapply H. reflexivity.  reflexivity.
-  unfold can_gen_swapL. intros until 0; intros H3 H4. eapply H.
-  2: exact H3. 2: exact H4. apply swapped_I'. Qed.
-*)
-
 Lemma can_gen_swapR_def': forall {V : Set} 
   (rules : rlsT (list (rel (list (PropF V)) * dir))) ns,
     iffT (can_gen_swapR rules ns)
@@ -213,23 +181,6 @@ Proof.  intros.  unfold iffT.  split ; intros.
   unfold can_gen_swapR. intros. eapply X.
   2: exact H.  2: exact H0. apply swapped_I'. Qed.
 
-(* CD_com
-Lemma can_gen_swapR_def': forall {V : Set} 
-  (rules : rlsT (list (rel (list (PropF V)) * dir))) ns,
-  (can_gen_swapR rules ns -> forall G K seq Γ Δ Δ' (d : dir), 
-  swapped Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
-  derrec rules (fun _ => False) (G ++ (pair Γ Δ', d) :: K)) *
-  ((forall G K seq Γ Δ Δ' (d : dir), 
-  swapped Δ Δ' -> ns = G ++ (seq, d) :: K -> seq = pair Γ Δ ->
-    derrec rules (fun _ => False) (G ++ (pair Γ Δ', d) :: K)) -> can_gen_swapR rules ns).
-Proof.
-  intros.  unfold iff.
-  split ; intros H; intros until 0; intros H0 H1 H2. 
-  destruct H0. subst. unfold can_gen_swapR in H.
-  eapply H. reflexivity.  reflexivity.
-  unfold can_gen_swapR. intros. eapply H.
-  2: exact H3.  2: exact H4. apply swapped_I'. Qed.
-*)
 Lemma can_gen_swapL_imp: forall {V : Set} 
   (rules : rlsT (list (rel (list (PropF V)) * dir))) ns,
   can_gen_swapL rules ns -> forall G K seq Γ Δ Γ' (d : dir), 
