@@ -502,29 +502,32 @@ Proof.
   apply dersrec_forall; intros. eapply ForallT_forall in X2; eassumption.
 Qed.
 
-Theorem derl_derrec_trans: forall X rules prems rps (concl : X),
-  derl rules rps concl -> dersrec rules prems rps -> derrec rules prems concl.
+Theorem derl_derrec_trans': forall X rules prems,
+  (forall rps (concl : X), derl rules rps concl ->
+    dersrec rules prems rps -> derrec rules prems concl) *
+  (forall rps cs, dersl rules rps cs ->
+    dersrec rules prems rps -> dersrec rules prems cs).
 Proof. 
 intros.
-
-eapply (derl_rect_mut (rules := rules) 
+eapply (derl_dersl_rect_mut (rules := rules) 
   (fun ps : list X => fun c => fun _ =>
     dersrec rules prems ps -> derrec rules prems c)
   (fun ps cs : list X => fun _ => 
     dersrec rules prems ps -> dersrec rules prems cs)).
+- intros.  inversion X0. assumption.
+- intros. eapply derI. eassumption. tauto.
+- tauto.
+- intros until 0. intros dc dsdc dscs dspc dspps.
+apply dersrecD_all in dspps.  apply dlCons.
++ apply dsdc.  apply ForallT_appendD1 in dspps.
+apply dersrecI_all. exact dspps.  
++ apply dspc.  apply ForallT_appendD2 in dspps.
+apply dersrecI_all. exact dspps. Qed.
 
-intros.  inversion X2. assumption.
-intros. eapply derI. eassumption. tauto.
-tauto.
-intros.
-apply dlCons. apply X2. apply dersrecD_all in X4.
-apply ForallT_appendD1 in X4.
-apply dersrecI_all. exact X4.
-apply X3. apply dersrecD_all in X4.
-apply ForallT_appendD2 in X4.
-apply dersrecI_all. exact X4.
-
-exact X0. exact X1. Qed.
+Definition derl_derrec_trans X rules prems := 
+  fst (@derl_derrec_trans' X rules prems).
+Definition dersl_dersrec_trans X rules prems := 
+  snd (@derl_derrec_trans' X rules prems).
 
 Theorem derrec_derl_deriv: forall X rules prems (concl : X),
   derrec (derl rules) prems concl -> derrec rules prems concl.

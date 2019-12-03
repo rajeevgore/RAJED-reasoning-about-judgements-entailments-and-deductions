@@ -94,7 +94,7 @@ Inductive princrule_pfc (V : Set) : rlsT (rel (list (PropF V))) :=
   | BotL_pfc : princrule_pfc [] (pair [Bot V] []).
 
 (* we may also want to refer to rules individually *)
-Inductive Idrule (V : Set) : rlsT (rel (list (PropF V))) :=
+Inductive Idrule (W : Type) : rlsT (rel (list W)) :=
   | Idrule_I : forall A, Idrule [] (pair [A] [A]).
 
 (* propositional version of axiom rule *)
@@ -114,10 +114,82 @@ Inductive ImpRrule (V : Set) : rlsT (rel (list (PropF V))) :=
 Definition seqext (W : Type) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
   match seq with | pair U V => pair (Γ1 ++ U ++ Γ2) (Δ1 ++ V ++ Δ2) end.
 
+Lemma seqext_seqext: forall V (Γ1 Γ2 Δ1 Δ2 Φ1 Φ2 Ψ1 Ψ2 : list V) seq,
+  seqext Γ1 Γ2 Δ1 Δ2 (seqext Φ1 Φ2 Ψ1 Ψ2 seq) =
+  seqext (Γ1 ++ Φ1) (Φ2 ++ Γ2) (Δ1 ++ Ψ1) (Ψ2 ++ Δ2) seq.
+Proof. intros. unfold seqext. destruct seq.
+rewrite !app_assoc. reflexivity. Qed.  
+
 Inductive seqrule (W : Type) (pr : rlsT (rel (list W))) : 
     rlsT (rel (list W)) := 
   | Sctxt : forall ps c Φ1 Φ2 Ψ1 Ψ2, pr ps c -> 
     seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
+
+Lemma seqext_def : forall (W : Type) Φ1 Φ2 Ψ1 Ψ2 U V,
+      @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
+Proof. reflexivity. Qed.
+
+Lemma Sctxt_e: forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
+  pr ps (U, V) ->
+  seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
+Proof.
+  intros until 0. intros H. rewrite <- seqext_def.
+  apply Sctxt. exact H.
+Qed.
+
+Lemma Sctxt_eq: forall (W : Type) pr ps mps (ca cs U V Φ1 Φ2 Ψ1 Ψ2 : list W),
+  pr ps (U, V) -> ca = Φ1 ++ U ++ Φ2 -> cs = Ψ1 ++ V ++ Ψ2 ->
+  mps = map (seqext Φ1 Φ2 Ψ1 Ψ2) ps -> seqrule pr mps (ca, cs).
+Proof. intros.  subst. apply Sctxt_e. exact X. Qed.  
+
+Lemma seqrule_id (W : Type) (pr : rlsT (rel (list W))) :
+  forall ps c, pr ps c -> seqrule pr ps c.
+Proof. intros. destruct c as [ca cs].
+apply (Sctxt_eq pr ps ca cs [] [] [] []). assumption.
+simpl. rewrite app_nil_r.  reflexivity.
+simpl. rewrite app_nil_r.  reflexivity.
+clear X. induction ps.  simpl.  reflexivity.
+simpl. rewrite <- IHps.
+destruct a. unfold seqext. simpl.  rewrite !app_nil_r.
+reflexivity. Qed.
+
+Lemma seqrule_seqrule (W : Type) (pr : rlsT (rel (list W))) :
+  forall ps c, seqrule (seqrule pr) ps c -> seqrule pr ps c.
+Proof. intros. inversion X. subst. clear X. 
+inversion X0.  subst. clear X0.
+rewrite seqext_seqext.
+destruct c as [ca cs].
+eapply Sctxt_eq. exact X. 
+reflexivity.  reflexivity.
+clear X. induction ps.  simpl.  reflexivity.
+simpl. rewrite IHps.  rewrite seqext_seqext. reflexivity. Qed.
+ 
+Lemma derl_seqrule'' (W : Type) (rules : rlsT (rel (list W))) :
+  forall Φ1 Φ2 Ψ1 Ψ2, (forall ps c, derl rules ps c -> 
+   derl (seqrule rules) (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c)) * 
+  (forall ps cs, dersl rules ps cs -> 
+    dersl (seqrule rules) (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) 
+    (map (seqext Φ1 Φ2 Ψ1 Ψ2)cs)).
+Proof. intros Φ1 Φ2 Ψ1 Ψ2.
+eapply (derl_dersl_rect_mut (rules := rules)
+  (fun ps c => fun _ => derl (seqrule rules)
+    (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c))
+  (fun ps cs : list _ => fun _ => dersl (seqrule rules)
+    (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (map (seqext Φ1 Φ2 Ψ1 Ψ2) cs))).
+- simpl. intros. apply asmI.
+- intros. eapply dtderI.  apply Sctxt. eassumption.  assumption. 
+- simpl. apply dtNil.
+- intros. rewrite map_app. simpl. apply dtCons ; assumption. Qed.
+ 
+Definition derl_seqrule' W rules Φ1 Φ2 Ψ1 Ψ2 := 
+  fst (@derl_seqrule'' W rules Φ1 Φ2 Ψ1 Ψ2).
+Definition dersl_seqrule' W rules Φ1 Φ2 Ψ1 Ψ2 := 
+  snd (@derl_seqrule'' W rules Φ1 Φ2 Ψ1 Ψ2).
+ 
+Lemma derl_seqrule (W : Type) (rules : rlsT (rel (list W))) :
+  rsub (seqrule (derl rules)) (derl (seqrule rules)).
+Proof.  unfold rsub.  intros.  destruct X.  
+apply derl_seqrule'. assumption. Qed.
 
 (* seqrule_s ps c qs d means that d is a sequent extension of c 
   and that each q in qs is a corresponding sequent extension of the
@@ -142,23 +214,6 @@ Proof.
   eapply Sctxt'. exact H. apply Sctxt_s.
 Qed.
 
-Lemma seqext_def : forall (W : Type) Φ1 Φ2 Ψ1 Ψ2 U V,
-      @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
-Proof. reflexivity. Qed.
-
-Lemma Sctxt_e: forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
-  pr ps (U, V) ->
-  seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
-Proof.
-  intros until 0. intros H. rewrite <- seqext_def.
-  apply Sctxt. exact H.
-Qed.
-
-Lemma Sctxt_eq: forall (W : Type) pr ps mps (ca cs U V Φ1 Φ2 Ψ1 Ψ2 : list W),
-  pr ps (U, V) -> ca = Φ1 ++ U ++ Φ2 -> cs = Ψ1 ++ V ++ Ψ2 ->
-  mps = map (seqext Φ1 Φ2 Ψ1 Ψ2) ps -> seqrule pr mps (ca, cs).
-Proof. intros.  subst. apply Sctxt_e. exact X. Qed.  
-
 Lemma Sctxt_e': forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
   pr ps (U, V) ->
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) ((Φ1 ++ U) ++ Φ2, Ψ1 ++ V ++ Ψ2).
@@ -176,6 +231,10 @@ Lemma seqrule_same: forall (W : Type) pr ps (c c' : rel (list W)),
   seqrule pr ps c -> c = c' -> seqrule pr ps c'.
 Proof. intros. subst. assumption. Qed.  
 
+Lemma seqrule_mono X (rulesa rulesb : rlsT (rel (list X))) :
+  rsub rulesa rulesb -> rsub (seqrule rulesa) (seqrule rulesb).
+Proof. unfold rsub. intros. destruct X1. apply Sctxt. firstorder. Qed.
+
 Lemma Sctxt_nil: forall (W : Type) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Type) ->
   @seqrule W pr [] (seqext Γ1 Γ2 Δ1 Δ2 c).
 Proof.
@@ -185,6 +244,13 @@ Qed.
 
 Definition Sctxt_Id' V A Γ1 Γ2 Δ1 Δ2 :=
   @Sctxt_nil (PropF V) (@princrule V) ([A], [A]) Γ1 Γ2 Δ1 Δ2 (Id' A).
+
+Lemma sr_Id_alt X (A : X) ant suc: InT A ant -> InT A suc ->
+  seqrule (@Idrule X) [] (ant, suc).
+Proof. intros. apply InT_split in X1.
+apply InT_split in X0. cD. subst. 
+eapply Sctxt_eq. apply (Idrule_I A).
+simpl. reflexivity.  simpl. reflexivity.  simpl. reflexivity. Qed.
 
 (*
 Lemma Sctxt_Id :
@@ -632,25 +698,25 @@ Proof.
   acacD'. tauto.  list_eq_nc. tauto.
 Qed.
 
-Lemma Idrule_L_oe': forall V, rules_L_oe (@Idrule V).
+Lemma Idrule_L_oe': forall (V : Set), rules_L_oe (@Idrule V).
 Proof.
   unfold rules_L_oe.  intros until 0. intros H.
   eapply Idrule_L_oe.  exact H.
 Qed.
 
-Lemma Idrule_R_oe': forall V, rules_R_oe (@Idrule V).
+Lemma Idrule_R_oe': forall (V : Set), rules_R_oe (@Idrule V).
 Proof.
   unfold rules_R_oe.  intros until 0. intros H.
   eapply Idrule_R_oe.  exact H.
 Qed.
 
-Lemma Idrule_p_L_oe': forall V, rules_L_oe (@Idrule_p V).
+Lemma Idrule_p_L_oe': forall (V : Set), rules_L_oe (@Idrule_p V).
 Proof.
   unfold rules_L_oe.  intros until 0. intros H.
   eapply Idrule_p_L_oe.  exact H.
 Qed.
 
-Lemma Idrule_p_R_oe': forall V, rules_R_oe (@Idrule_p V).
+Lemma Idrule_p_R_oe': forall (V : Set), rules_R_oe (@Idrule_p V).
 Proof.
   unfold rules_R_oe. intros until 0. intros H.
   eapply Idrule_p_R_oe.  exact H.
