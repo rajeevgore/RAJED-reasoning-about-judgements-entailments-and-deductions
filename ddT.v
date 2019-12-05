@@ -581,53 +581,32 @@ apply pair.  apply app_assoc.  apply pair.
 apply dtCons. assumption.  assumption.  assumption.
 Qed.
 
-Lemma derl_trans: forall X (rules : list X -> X -> Type) 
-          (pss : list X) (rps : list X) (concl : X),
-    derl rules rps concl -> dersl rules pss rps -> derl rules pss concl.
+Lemma derl_trans': forall X (rules : list X -> X -> Type),
+  (forall (rps : list X) (concl : X), derl rules rps concl ->
+  forall (pss : list X), dersl rules pss rps -> derl rules pss concl) *
+  (forall (rps : list X) (cs : list X), dersl rules rps cs ->
+  forall (pss : list X), dersl rules pss rps -> dersl rules pss cs).
 Proof.  intros.
-
-eapply (derl_rect_mut (rules := rules) 
-  (fun ps : list X => fun c => fun _ =>
-    forall pss, dersl rules pss ps -> derl rules pss c)
-  (fun ps cs : list X => fun _ => 
-    forall pss, dersl rules pss ps -> dersl rules pss cs)).
-
-intros. inversion_clear X2. inversion_clear X4.
+apply derl_dersl_rect_mut.
+- intros. inversion_clear X0. inversion_clear X2.
 rewrite app_nil_r.  assumption.
-intros. apply X2 in X3.
+- intros until 0. intros rps dsl dsds pss0 ds0. apply dsds in ds0.
 eapply dtderI. eassumption. assumption.
-intros. assumption.
-intros.  apply dersl_app_eq in X4. cD. subst. apply dtCons.
-apply X2. assumption. apply X3. assumption.
-eassumption. assumption.  Qed.
+- intros. assumption.
+- intros until 0. intros d dsd dsl dsds pss0 dspps.
+apply dersl_app_eq in dspps. cD. subst. apply dtCons.
+apply dsd. assumption. apply dsds. assumption. Qed.
 
-Lemma dersl_trans: forall X (rules : list X -> X -> Type)
-          (pss : list X) (rps : list X) (cs : list X),
-    dersl rules rps cs -> dersl rules pss rps -> dersl rules pss cs.
-Proof.  intros.
-
-(* can use same proof as for derl_trans *)
-eapply (dersl_rect_mut (rules := rules) 
-  (fun ps : list X => fun c => fun _ =>
-    forall pss, dersl rules pss ps -> derl rules pss c)
-  (fun ps cs : list X => fun _ => 
-    forall pss, dersl rules pss ps -> dersl rules pss cs)).
-
-intros. inversion_clear X2. inversion_clear X4.
-rewrite app_nil_r.  assumption.
-intros. apply X2 in X3.
-eapply dtderI. eassumption. assumption.
-intros. assumption.
-intros.  apply dersl_app_eq in X4. cD. subst. apply dtCons.
-apply X2. assumption. apply X3. assumption.
-eassumption. assumption.  Qed.
+Definition derl_trans X rules pss rps concl d := 
+  fst (@derl_trans' X rules) rps concl d pss.
+Definition dersl_trans X rules pss rps cs ds := 
+  snd (@derl_trans' X rules) rps cs ds pss.
 
 (* alternatively, just induction on the list of conclusions *)
 Lemma dersl_trans_alt: forall X (rules : list X -> X -> Type)
            (cs rps : list X), dersl rules rps cs ->
 	 forall (pss : list X), dersl rules pss rps -> dersl rules pss cs.
 Proof.  intro.  intro.  intro.  
-
 induction cs.
 intros. inversion X0. subst. assumption.
 intros.  apply dersl_cons in X0. cD. subst.
@@ -635,19 +614,45 @@ apply dersl_app_eq in X1. cD. subst.
 apply dtCons. eapply derl_trans. eassumption. assumption.
 firstorder.  Qed.
 
-Theorem derl_deriv: forall X rules prems (concl : X),
-  derl (derl rules) prems concl -> derl rules prems concl.
+Theorem derl_dersl_deriv': forall X rules,
+  (forall prems (concl : X),
+    derl (derl rules) prems concl -> derl rules prems concl) *
+  (forall prems cs,
+    dersl (derl rules) prems cs -> dersl rules prems cs).
 Proof. intros.
+apply derl_dersl_rect_mut.
+- intro. apply asmI.
+- intros. eapply derl_trans. eassumption.  assumption.
+- apply dtNil.
+- intros.  apply dtCons.  assumption.  assumption. Qed.
 
-apply (derl_rect_mut (rules := derl rules) 
-  (fun ps : list X => fun c : X => fun _ => derl rules ps c)
-  (fun ps cs : list X => fun _ => dersl rules ps cs)).
+Definition derl_deriv' X rules := fst (@derl_dersl_deriv' X rules).
+Definition dersl_deriv' X rules := snd (@derl_dersl_deriv' X rules).
+Definition derl_deriv X rules := rsubI (@derl_deriv' X rules).
+Definition dersl_deriv X rules := rsubI (@dersl_deriv' X rules).
 
-intro. apply asmI.
-intros. eapply derl_trans. eassumption.  assumption.
-apply dtNil.
-intros.  apply dtCons.  assumption.  assumption.
-assumption.  Qed.
+Theorem derl_dersl_mono': forall X rulesa rulesb, rsub rulesa rulesb -> 
+  (forall prems (concl : X),
+    derl rulesa prems concl -> derl rulesb prems concl) *
+  (forall prems cs,
+    dersl rulesa prems cs -> dersl rulesb prems cs).
+Proof. intros X rulesa rulesb rsab.
+apply derl_dersl_rect_mut.
+- apply asmI.
+- intros. eapply dtderI. unfold rsub in rsab.
+apply rsab.  eassumption.  assumption.
+- apply dtNil.
+- intros.  apply dtCons.  assumption.  assumption. Qed.
+
+Definition derl_mono' X rulesa rulesb rsab := 
+  fst (@derl_dersl_mono' X rulesa rulesb rsab).
+Definition dersl_mono' X rulesa rulesb rsab := 
+  snd (@derl_dersl_mono' X rulesa rulesb rsab).
+
+Definition derl_mono X rulesa rulesb rsab :=
+  rsubI (@derl_mono' X rulesa rulesb rsab).
+Definition dersl_mono X rulesa rulesb rsab :=
+  rsubI (@dersl_mono' X rulesa rulesb rsab).
 
 Lemma derrec_nil_derl_s X rules: (forall concl, 
   derrec rules (@emptyT X) concl -> derl rules [] concl) *

@@ -8,6 +8,10 @@ Lemma rsub_def: forall U V (f g : U -> V -> Type),
   @rsub U V f g = forall (u : U) (v : V), f u v -> g u v.
 Proof.  intros.  unfold rsub.  reflexivity. Qed.
 
+Lemma rsub_trans U V (f g h : U -> V -> Type) :
+  rsub f g -> rsub g h -> rsub f h.
+Proof. unfold rsub. firstorder. Qed. 
+
 Definition rls W := list W -> W -> Prop.
 
 (* lemmas which shouldn't be necessary at all! *)
@@ -62,6 +66,8 @@ intros. unfold iff. apply conj ; intro.  apply I. assumption.
 Qed.
 
 Definition rsub_imp U V (f g : U -> V -> Type) := iffD1 (@rsub_def U V f g).
+Definition rsubI U V f g := iffD1 (@rsub_def U V f g).
+Definition rsubD U V f g := iffD2 (@rsub_def U V f g).
 
 (* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
 

@@ -228,6 +228,9 @@ Lemma InT_appR: forall A a X Y, InT (a : A) Y -> InT a (X ++ Y).
 Proof.  intros.  induction X ; simpl. assumption.
 apply InT_cons. assumption. Qed.
 
+Ltac solve_InT := apply InT_eq || 
+  ((apply InT_cons || (apply InT_appL + apply InT_appR)) ; solve_InT).
+
 Lemma InT_appE': forall A a Z, InT (a : A) Z -> 
   forall X Y, Z = X ++ Y -> InT a X + InT a Y.
 Proof.  intros until 0.  intro.  induction X ; intros.

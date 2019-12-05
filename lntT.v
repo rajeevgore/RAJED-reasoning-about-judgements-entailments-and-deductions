@@ -154,15 +154,18 @@ destruct a. unfold seqext. simpl.  rewrite !app_nil_r.
 reflexivity. Qed.
 
 Lemma seqrule_seqrule (W : Type) (pr : rlsT (rel (list W))) :
-  forall ps c, seqrule (seqrule pr) ps c -> seqrule pr ps c.
-Proof. intros. inversion X. subst. clear X. 
+  rsub (seqrule (seqrule pr)) (seqrule pr).
+Proof. unfold rsub. intros. inversion X. subst. clear X. 
 inversion X0.  subst. clear X0.
 rewrite seqext_seqext.
-destruct c as [ca cs].
+destruct c0 as [ca cs].
 eapply Sctxt_eq. exact X. 
 reflexivity.  reflexivity.
-clear X. induction ps.  simpl.  reflexivity.
-simpl. rewrite IHps.  rewrite seqext_seqext. reflexivity. Qed.
+clear X. induction ps0.  simpl.  reflexivity.
+simpl. rewrite IHps0.  rewrite seqext_seqext. reflexivity. Qed.
+
+Definition seqrule_seqrule' (W : Type) pr :=
+  rsubD _ _ (@seqrule_seqrule W pr).
  
 Lemma derl_seqrule'' (W : Type) (rules : rlsT (rel (list W))) :
   forall Φ1 Φ2 Ψ1 Ψ2, (forall ps c, derl rules ps c -> 
@@ -190,6 +193,15 @@ Lemma derl_seqrule (W : Type) (rules : rlsT (rel (list W))) :
   rsub (seqrule (derl rules)) (derl (seqrule rules)).
 Proof.  unfold rsub.  intros.  destruct X.  
 apply derl_seqrule'. assumption. Qed.
+
+Lemma seqrule_derl_seqrule (W : Type) (rules : rlsT (rel (list W))) :
+  rsub (seqrule (derl (seqrule rules))) (derl (seqrule rules)).
+Proof.  eapply rsub_trans. apply derl_seqrule.
+ unfold rsub.  intros.  eapply derl_mono. 2: eassumption.
+ apply seqrule_seqrule. Qed.
+
+Definition seqrule_derl_seqrule' W rules :=
+  rsubD _ _ (@seqrule_derl_seqrule W rules).
 
 (* seqrule_s ps c qs d means that d is a sequent extension of c 
   and that each q in qs is a corresponding sequent extension of the
