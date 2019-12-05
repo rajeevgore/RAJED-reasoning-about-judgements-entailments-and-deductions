@@ -1,13 +1,13 @@
 Require Import ssreflect.
  
 Require Import gen.
-Require Import dd.
-Require Import List_lemmas.
-Require Import lnt lntacs lntls lntbR lntmtacs.
-Require Import lntb1L lntb2L.
-Require Import lnt_weakening.
-Require Import lntkt_exch.
-Require Import swapped.
+Require Import ddP.
+Require Import List_lemmasP.
+Require Import lntP lntacsP lntlsP lntbRP lntmtacsP.
+Require Import lntb1LP lntb2LP.
+Require Import lnt_weakeningP.
+Require Import lntkt_exchP.
+Require Import swappedP.
 
 
 Inductive PropF_basic (V : Set) (A : PropF V) : Type :=

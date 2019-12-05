@@ -8,13 +8,13 @@ Require Import gen.
 Require Import ddP.
 Require Import List_lemmasP.
 Require Import lntP.
-Require Import lntacs.
-Require Import lntmtacs.
-Require Import lntbR.
-Require Import lntb1L.
-Require Import lntb2L.
-Require Import lntls.
-Require Import lntrs.
+Require Import lntacsP.
+Require Import lntmtacsP.
+Require Import lntbRP.
+Require Import lntb1LP.
+Require Import lntb2LP.
+Require Import lntlsP.
+Require Import lntrsP.
 
 Set Implicit Arguments.
 

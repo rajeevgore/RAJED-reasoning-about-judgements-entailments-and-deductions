@@ -271,9 +271,12 @@ Inductive nsrule (W : Type) (sr : rlsT W) :
   | NSctxt : forall ps c G H d, sr ps c -> 
     nsrule sr (map (nsext G H d) ps) (nsext G H d c).
 
-Lemma NSctxt_nil: forall (W : Type) sr G H d c, (sr [] c : Prop) ->
+Lemma NSctxt_nil: forall (W : Type) sr G H d c, (sr [] c : Type) ->
   @nsrule W sr [] (nsext G H d c).
-Proof.  intros.  eapply NSctxt in H0.  simpl in H0. exact H0.  Qed.
+Proof.
+  intros until 0; intros H0.
+  eapply NSctxt in H0.  simpl in H0. exact H0.
+Qed.
 
 Lemma NSctxt': forall W (sr : rlsT W) ps c G H d, sr ps c ->
     nsrule sr (map (nsext G H d) ps) (G ++ (c, d) :: H).
@@ -300,9 +303,11 @@ Inductive nslcrule (W : Type) (sr : rlsT W) :
   | NSlcctxt : forall ps c G d, sr ps c -> 
     nslcrule sr (map (nslcext G d) ps) (nslcext G d c).
 
-Lemma NSlcctxt_nil: forall (W : Type) sr G d c, (sr [] c : Prop) ->
+Lemma NSlcctxt_nil: forall (W : Type) sr G d c, (sr [] c : Type) ->
   @nslcrule W sr [] (nslcext G d c).
-Proof.  intros.  eapply NSlcctxt in H.  simpl in H. exact H.  Qed.
+Proof.
+  intros until 0; intros H.
+  eapply NSlcctxt in H.  simpl in H. exact H.  Qed.
 
 Lemma NSlcctxt': forall W (sr : rlsT W) ps c G d, sr ps c ->
     nslcrule sr (map (nslcext G d) ps) (G ++ [(c, d)]).

@@ -8,8 +8,8 @@ Require Import gen.
 Require Import ddP.
 Require Import List_lemmasP.
 Require Import lntP.
-Require Import lntacs.
-Require Import lntmtacs.
+Require Import lntacsP.
+Require Import lntmtacsP.
 
 Set Implicit Arguments.
 

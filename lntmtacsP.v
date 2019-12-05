@@ -5,7 +5,7 @@ Require Import gen.
 Require Import ddP.
 Require Import List_lemmasP.
 Require Import lntP.
-Require Import lntacs.
+Require Import lntacsP.
 
 Ltac ms_cgs acm := 
 rewrite ?dersrec_map_2 ;
