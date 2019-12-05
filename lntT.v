@@ -165,7 +165,7 @@ clear X. induction ps0.  simpl.  reflexivity.
 simpl. rewrite IHps0.  rewrite seqext_seqext. reflexivity. Qed.
 
 Definition seqrule_seqrule' (W : Type) pr :=
-  rsubD _ _ (@seqrule_seqrule W pr).
+  rsubD (@seqrule_seqrule W pr).
  
 Lemma derl_seqrule'' (W : Type) (rules : rlsT (rel (list W))) :
   forall Φ1 Φ2 Ψ1 Ψ2, (forall ps c, derl rules ps c -> 
@@ -201,7 +201,7 @@ Proof.  eapply rsub_trans. apply derl_seqrule.
  apply seqrule_seqrule. Qed.
 
 Definition seqrule_derl_seqrule' W rules :=
-  rsubD _ _ (@seqrule_derl_seqrule W rules).
+  rsubD (@seqrule_derl_seqrule W rules).
 
 (* seqrule_s ps c qs d means that d is a sequent extension of c 
   and that each q in qs is a corresponding sequent extension of the

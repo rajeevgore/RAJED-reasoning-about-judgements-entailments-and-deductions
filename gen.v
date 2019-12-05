@@ -66,8 +66,8 @@ intros. unfold iff. apply conj ; intro.  apply I. assumption.
 Qed.
 
 Definition rsub_imp U V (f g : U -> V -> Type) := iffD1 (@rsub_def U V f g).
-Definition rsubI U V f g := iffD1 (@rsub_def U V f g).
-Definition rsubD U V f g := iffD2 (@rsub_def U V f g).
+Definition rsubI U V f g := iffD2 (@rsub_def U V f g).
+Definition rsubD U V f g := iffD1 (@rsub_def U V f g).
 
 (* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
 

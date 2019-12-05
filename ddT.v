@@ -628,8 +628,8 @@ apply derl_dersl_rect_mut.
 
 Definition derl_deriv' X rules := fst (@derl_dersl_deriv' X rules).
 Definition dersl_deriv' X rules := snd (@derl_dersl_deriv' X rules).
-Definition derl_deriv X rules := rsubI (@derl_deriv' X rules).
-Definition dersl_deriv X rules := rsubI (@dersl_deriv' X rules).
+Definition derl_deriv X rules := rsubI _ _ (@derl_deriv' X rules).
+Definition dersl_deriv X rules := rsubI _ _ (@dersl_deriv' X rules).
 
 Theorem derl_dersl_mono': forall X rulesa rulesb, rsub rulesa rulesb -> 
   (forall prems (concl : X),
@@ -650,9 +650,9 @@ Definition dersl_mono' X rulesa rulesb rsab :=
   snd (@derl_dersl_mono' X rulesa rulesb rsab).
 
 Definition derl_mono X rulesa rulesb rsab :=
-  rsubI (@derl_mono' X rulesa rulesb rsab).
+  rsubI _ _ (@derl_mono' X rulesa rulesb rsab).
 Definition dersl_mono X rulesa rulesb rsab :=
-  rsubI (@dersl_mono' X rulesa rulesb rsab).
+  rsubI _ _ (@dersl_mono' X rulesa rulesb rsab).
 
 Lemma derrec_nil_derl_s X rules: (forall concl, 
   derrec rules (@emptyT X) concl -> derl rules [] concl) *
