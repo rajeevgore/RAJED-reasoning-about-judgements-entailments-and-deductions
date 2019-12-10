@@ -507,13 +507,8 @@ Theorem derl_derrec_trans': forall X rules prems,
     dersrec rules prems rps -> derrec rules prems concl) *
   (forall rps cs, dersl rules rps cs ->
     dersrec rules prems rps -> dersrec rules prems cs).
-Proof. 
-intros.
-eapply (derl_dersl_rect_mut (rules := rules) 
-  (fun ps : list X => fun c => fun _ =>
-    dersrec rules prems ps -> derrec rules prems c)
-  (fun ps cs : list X => fun _ => 
-    dersrec rules prems ps -> dersrec rules prems cs)).
+Proof.  intros.
+apply derl_dersl_rect_mut.
 - intros.  inversion X0. assumption.
 - intros. eapply derI. eassumption. tauto.
 - tauto.
@@ -529,21 +524,21 @@ Definition derl_derrec_trans X rules prems :=
 Definition dersl_dersrec_trans X rules prems := 
   snd (@derl_derrec_trans' X rules prems).
 
-Theorem derrec_derl_deriv: forall X rules prems (concl : X),
-  derrec (derl rules) prems concl -> derrec rules prems concl.
+Theorem derrec_derl_deriv': forall X rules prems,
+  (forall (concl : X),
+    derrec (derl rules) prems concl -> derrec rules prems concl) *
+  (forall cs, dersrec (derl rules) prems cs -> dersrec rules prems cs).
+Proof.  intros.
+apply derrec_dersrec_rect_mut.
+- apply dpI.
+- intros. eapply derl_derrec_trans in r. eassumption.  assumption.
+- apply dlNil.
+- intros. apply dlCons ; assumption.  Qed.
 
-Proof.
-intros.
-
-apply (derrec_rect_mut (rules := derl rules) (prems := prems)
-  (fun x : X => fun _ => derrec rules prems x)
-  (fun xs : list X => fun _ => dersrec rules prems xs)).
-
-apply dpI.
-intros. eapply derl_derrec_trans in r. eassumption.  assumption.
-apply dlNil.
-intros. apply dlCons ; assumption.
-assumption.  Qed.
+Definition derrec_derl_deriv X rules prems :=
+  fst (@derrec_derl_deriv' X rules prems).
+Definition dersrec_derl_deriv X rules prems :=
+  snd (@derrec_derl_deriv' X rules prems).
 
 Definition derl_derrec X rules prems rps (concl : X) drrc prems_cond :=
   @derl_derrec_trans X rules prems rps (concl : X) drrc 
@@ -658,9 +653,7 @@ Lemma derrec_nil_derl_s X rules: (forall concl,
   derrec rules (@emptyT X) concl -> derl rules [] concl) *
   (forall cs, dersrec rules (@emptyT X) cs -> dersl rules [] cs).
 Proof. 
-apply (derrec_dersrec_rect_mut (rules := rules) (prems := (@emptyT X))
-  (fun x : X => fun _ => derl rules [] x)
-  (fun xs : list X => fun _ => dersl rules [] xs)) ; intros.
+apply derrec_dersrec_rect_mut ; intros.
 - inversion p.
 - eapply dtderI ; eassumption. 
 - apply dtNil.
