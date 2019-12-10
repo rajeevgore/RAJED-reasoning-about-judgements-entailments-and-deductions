@@ -467,6 +467,29 @@ Definition dersrecI_forall X rs ps cs := iffT_D2 (@dersrec_forall X rs ps cs).
 Lemma dersrec_nil: forall X rules prems, dersrec rules prems ([] : list X).
 Proof. apply dlNil. Qed.
 
+(* this is very difficult for such an obvious result *)
+Lemma dersrec_app: forall X rules prems cs ds,
+  iffT (dersrec rules prems (cs ++ ds : list X)) 
+    (prod (dersrec rules prems cs) (dersrec rules prems ds)).
+Proof. intros. eapply iffT_trans. apply dersrec_forall.
+unfold iffT. split ; intros. 
+split ; apply dersrecI_forall ; intros ; apply X0.
+apply InT_appL. assumption.  apply InT_appR. assumption. 
+apply InT_appE in X1. sD.
+eapply dersrecD_forall. 2 : eassumption. assumption. 
+eapply dersrecD_forall. 2 : eassumption. assumption. Qed.
+
+Definition dersrec_appD X rules prems cs ds := 
+  iffT_D1 (@dersrec_app X rules prems cs ds).
+Definition dersrec_appL X rules prems cs ds da := 
+  fst (@dersrec_appD X rules prems cs ds da).
+Definition dersrec_appR X rules prems cs ds da := 
+  snd (@dersrec_appD X rules prems cs ds da).
+Definition dersrec_appJ X rules prems cs ds := 
+  iffT_D2 (@dersrec_app X rules prems cs ds).
+Definition dersrec_appI X rules prems cs ds := 
+  prod_uncurry (@dersrec_appJ X rules prems cs ds).
+
 Lemma dersrec_single: forall X rules prems c,
   iffT (dersrec rules prems [c]) (derrec rules prems (c : X)).
 Proof. intros.  rewrite dersrec_all. rewrite ForallT_single. reflexivity. Qed.
@@ -491,16 +514,20 @@ eapply derrec_all_rect. tauto.
 intros.  eapply derI. exact X0.
 apply dersrecI_all. exact X2. Qed.
 
-Lemma derrec_rmono: forall W (rulesa rulesb : rlsT W) prems concl,
+Lemma derrec_rmono_s: forall W (rulesa rulesb : rlsT W) prems,
   rsub rulesa rulesb -> 
-  derrec rulesa prems concl ->
-  derrec rulesb prems concl.
-Proof.
-  intros.  revert X0.  eapply derrec_all_rect.
-  intros. apply dpI. assumption.
-  intros. eapply derI. unfold rsub in X. apply X. eassumption.
-  apply dersrec_forall; intros. eapply ForallT_forall in X2; eassumption.
-Qed.
+  (forall concl, derrec rulesa prems concl -> derrec rulesb prems concl) *
+  (forall cs, dersrec rulesa prems cs -> dersrec rulesb prems cs).
+Proof. intros. apply derrec_dersrec_rect_mut ; intros.
+- apply dpI. assumption.
+- eapply derI. unfold rsub in X. apply X. eassumption. assumption.
+- apply dlNil.
+- apply dlCons ; assumption. Qed.
+
+Definition derrec_rmono W rulesa rulesb prems concl rs := 
+  fst (@derrec_rmono_s W rulesa rulesb prems rs) concl.
+Definition dersrec_rmono W rulesa rulesb prems rs := 
+  snd (@derrec_rmono_s W rulesa rulesb prems rs).
 
 Theorem derl_derrec_trans': forall X rules prems,
   (forall rps (concl : X), derl rules rps concl ->
@@ -855,4 +882,56 @@ Proof. intros. injection H. (* gives existT equality *)
 Goal forall X rules prems Q cs (ds : @dersrec X rules prems cs),
   allPder Q ds -> Forall2T Q cs (dersrec_trees ds).
 *)
+
+(* admissibility *)
+
+Inductive adm X rules ps c : Type := 
+  | admI : (dersrec rules (@emptyT X) ps -> derrec rules (@emptyT X) c) ->
+    adm X rules ps c.
+
+Lemma derl_sub_adm X rules ps c : @derl X rules ps c -> adm rules ps c.
+Proof. intro. apply admI.  apply derl_derrec_trans. assumption. Qed.
+
+Definition in_adm X rules ps c r := derl_sub_adm (@in_derl X rules ps c r).
+
+Lemma derrec_adm' X rls:
+  (forall c, derrec (adm rls) (@emptyT X) c -> derrec rls (@emptyT X) c) * 
+  (forall cs, dersrec (adm rls) (@emptyT X) cs -> dersrec rls (@emptyT X) cs).
+Proof. apply derrec_dersrec_rect_mut ; intros.
+- inversion p.
+- inversion r. apply X1. apply X0.
+- apply dlNil.
+- apply dlCons ; assumption. Qed.
+
+Definition derrec_adm X rls := fst (@derrec_adm' X rls).
+Definition dersrec_adm X rls := snd (@derrec_adm' X rls).
+
+Lemma adm_adm X rules ps c : @adm X (adm rules) ps c -> adm rules ps c.
+Proof. intros aa. inversion aa. apply admI. intros dps.
+apply derrec_adm. apply X0. eapply dersrec_rmono.
+apply rsubI. apply in_adm. assumption.  Qed.
+
+Lemma derl_adm_s X rules : 
+  (forall ps (c : X), derl (adm rules) ps c -> adm rules ps c) * 
+  (forall ps cs, dersl (adm rules) ps cs -> ForallT (adm rules ps) cs). 
+Proof. apply derl_dersl_rect_mut ; intros.
+- apply admI. intro. inversion X0. assumption.  
+- apply admI. destruct r. intros dpss. apply d0.
+apply dersrecI_forall. intros c icp.
+eapply ForallTD_forall in X0.
+destruct X0. apply d1. apply dpss. apply icp.
+- apply ForallT_nil.
+- apply ForallT_cons. apply admI. inversion X0.
+intro. apply X2. apply dersrec_appL in X3. assumption.
+apply ForallTI_forall. intros x ixcs. 
+apply admI. intros dsa.
+eapply ForallTD_forall in X1.
+inversion X1. apply X2. apply dersrec_appR in dsa.
+exact dsa.  exact ixcs. Qed.
+
+Definition derl_adm X rules := fst (@derl_adm_s X rules).
+Definition dersl_adm X rules := snd (@derl_adm_s X rules).
+
+(* also adm (derl rules) = adm rules *)
+
 
