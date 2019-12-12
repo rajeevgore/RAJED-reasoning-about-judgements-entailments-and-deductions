@@ -69,7 +69,9 @@ Ltac show_swapped_1 :=
 Ltac swap_tac :=
   list_assoc_r ; try (apply swapped_same) ; 
     repeat (apply swapped_L || apply swapped_cons) ;  
-    list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
+    list_assoc_l ; 
+    repeat (apply swapped_R || apply swapped_Rc1 || apply swapped_Rc2) ;
+    (show_swapped_1 || apply swapped_ca2 || apply swapped_ca1).
 
 Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
 Proof. intros.  show_swapped_1.  Qed.

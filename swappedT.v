@@ -59,6 +59,22 @@ Proof.
   eapply swapped_I'.
 Qed.
 
+Lemma swapped_Rc2 T A H B C: 
+  swapped C (H ++ [A : T]) -> swapped (C ++ B) (H ++ A :: B).
+Proof. intros sw. eapply swapped_R in sw. revert sw.
+rewrite <- app_assoc. simpl.  intro. eassumption. Qed.
+
+Lemma swapped_Rc1 T A H B C: 
+  swapped (H ++ [A : T]) C -> swapped (H ++ A :: B) (C ++ B).
+Proof. intros sw. eapply swapped_R in sw. revert sw.
+rewrite <- app_assoc. simpl.  intro. eassumption. Qed.
+
+Lemma swapped_ca1 T A H: swapped (A :: H) (H ++ [A : T]).
+Proof. pose (swapped_simple' [A] H). simpl in s. exact s. Qed.
+
+Lemma swapped_ca2 T A H: swapped (H ++ [A : T]) (A :: H).
+Proof. pose (swapped_simple' H [A]). simpl in s. exact s. Qed.
+
 (* Sequences of swaps of length n+1. *)
 Inductive swapped_spec {T} : nat -> list T -> list T -> Type :=
   swapped_spec_I X Y : swapped X Y -> swapped_spec 0 X Y

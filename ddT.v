@@ -467,7 +467,8 @@ Definition dersrecI_forall X rs ps cs := iffT_D2 (@dersrec_forall X rs ps cs).
 Lemma dersrec_nil: forall X rules prems, dersrec rules prems ([] : list X).
 Proof. apply dlNil. Qed.
 
-(* this is very difficult for such an obvious result *)
+(* this is very difficult for such an obvious result,
+  better if we can rewrite based on iffT *)
 Lemma dersrec_app: forall X rules prems cs ds,
   iffT (dersrec rules prems (cs ++ ds : list X)) 
     (prod (dersrec rules prems cs) (dersrec rules prems ds)).
@@ -892,6 +893,8 @@ Inductive adm X rules ps c : Type :=
 Lemma derl_sub_adm X rules ps c : @derl X rules ps c -> adm rules ps c.
 Proof. intro. apply admI.  apply derl_derrec_trans. assumption. Qed.
 
+Definition rsub_derl_adm X rules := rsubI _ _ (@derl_sub_adm X rules).
+
 Definition in_adm X rules ps c r := derl_sub_adm (@in_derl X rules ps c r).
 
 Lemma derrec_adm' X rls:
@@ -933,5 +936,10 @@ Definition derl_adm X rules := fst (@derl_adm_s X rules).
 Definition dersl_adm X rules := snd (@derl_adm_s X rules).
 
 (* also adm (derl rules) = adm rules *)
+
+(* plug-in replacement for derl_derrec_trans *)
+Lemma adm_derrec_trans X rules  rps concl: @adm X rules rps concl -> 
+  dersrec rules (@emptyT X) rps -> derrec rules (@emptyT X) concl.
+Proof. intros a drs. destruct a. apply d. apply drs. Qed.
 
 

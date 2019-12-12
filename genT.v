@@ -48,6 +48,22 @@ Definition iffT_sym (A B : Type) (X : iffT A B) := let (f, g) := X in (g, f).
 Definition iffT_D1 (A B : Type) (X : iffT A B) a := let (f, _) := X in f a.
 Definition iffT_D2 (A B : Type) (X : iffT A B) b := let (_, g) := X in g b.
 
+Lemma prod_mono A A' B B' : (A -> A') -> (B -> B') -> (A * B -> A' * B').
+Proof. intros. destruct X1. tauto. Qed. 
+
+Lemma iffT_prod A A' B B' : iffT A A' -> iffT B B' -> iffT (A * B) ( A' * B').
+Proof. unfold iffT. intros. destruct X. destruct X0. 
+split ; apply prod_mono ; assumption. Qed.
+
+(* or defined versions of these
+Definition prod_mono_d A A' B B' aa bb (ab : A * B) :=
+  let (a, b) := ab in (aa a : A', bb b : B').
+
+Definition iffT_prod_d A A' B B' (iaa : iffT A A') (ibb : iffT B B') :=
+  let (af, ab) := iaa in 
+    let (bf, bb) := ibb in (prod_mono af bf, prod_mono ab bb).
+*)
+
 Inductive AccT (A : Type) (R : A -> A -> Type) (x : A) : Type :=
     AccT_intro : (forall y : A, R y x -> AccT R y) -> AccT R x.
 
