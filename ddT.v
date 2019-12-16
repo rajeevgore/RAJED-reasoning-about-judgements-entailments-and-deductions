@@ -273,6 +273,8 @@ pose (dtCons d IHps). simpl in d0. exact d0. Qed.
 Lemma in_derl X rules ps c: rules ps c -> @derl X rules ps c.
 Proof. intro. eapply dtderI. eassumption. apply asmsI. Qed.
 
+Definition rsub_derl X rules := rsubI _ _ (@in_derl X rules).
+
 Inductive dercl X (rules : list X -> X -> Type) :
   list X -> X -> Type := 
   | casmI : forall p, dercl rules [p] p
@@ -908,6 +910,7 @@ Proof. intro. apply admI.  apply derl_derrec_trans. assumption. Qed.
 Definition rsub_derl_adm X rules := rsubI _ _ (@derl_sub_adm X rules).
 
 Definition in_adm X rules ps c r := derl_sub_adm (@in_derl X rules ps c r).
+Definition rsub_adm X rules := rsubI _ _ (@in_adm X rules).
 
 Lemma derrec_adm' X rls:
   (forall c, derrec (adm rls) (@emptyT X) c -> derrec rls (@emptyT X) c) * 
