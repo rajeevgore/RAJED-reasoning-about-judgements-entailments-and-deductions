@@ -66,12 +66,19 @@ Ltac show_swapped_1 :=
   try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
     apply swapped_simpleR ; list_eq_assoc).
 
-Ltac swap_tac :=
+(* this should work wherever swap_tac does, but trying to use it in place of
+  swap_tac produces occasional failures - why?? - to investigate *)
+Ltac swap_tac_Rc :=
   list_assoc_r ; try (apply swapped_same) ; 
     repeat (apply swapped_L || apply swapped_cons) ;  
     list_assoc_l ; 
     repeat (apply swapped_R || apply swapped_Rc1 || apply swapped_Rc2) ;
     (show_swapped_1 || apply swapped_ca2 || apply swapped_ca1).
+
+Ltac swap_tac :=
+  list_assoc_r ; try (apply swapped_same) ; 
+    repeat (apply swapped_L || apply swapped_cons) ;  
+    list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
 
 Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
 Proof. intros.  show_swapped_1.  Qed.
