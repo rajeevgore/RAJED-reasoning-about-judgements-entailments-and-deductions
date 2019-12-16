@@ -136,6 +136,18 @@ apply ForallT_nil.
 intros.  apply ForallT_cons. assumption.  assumption.
 assumption.  Qed.
 
+Lemma derrec_derrec' X rules prems:
+  (forall c : X, derrec rules (derrec rules prems) c -> derrec rules prems c) *
+  (forall cs, dersrec rules (derrec rules prems) cs -> dersrec rules prems cs).
+Proof. apply derrec_dersrec_rect_mut.
+- intros. assumption.
+- intros. eapply derI ; eassumption.
+- apply dlNil.
+- intros. apply dlCons ; assumption. Qed.
+
+Definition derrec_derrec X rules prems := fst (@derrec_derrec' X rules prems).
+Definition dersrec_derrec X rules prems := snd (@derrec_derrec' X rules prems).
+
 (* tried to do a similar thing where property Q also involved the 
 proof tree (as well as the endsequent): this created a problem that
 the list of proof trees which are part of the dersrec object are not 
