@@ -874,6 +874,14 @@ Fixpoint dersrec_fc_concls X rules prems
     | fcsI ds => dersrec_concls ds
   end.
 
+(* this fails, d has type "derrec rules prems x", but x not in scope
+Fixpoint derrec_of_fc X rules prems 
+  (der : @derrec_fc X rules prems) :=
+  match der with 
+    | fcI d => d
+  end.
+  *)
+
 Lemma in_drs_trees: forall X rules prems cs ds c (d : derrec rules prems c),
   in_dersrec d ds -> InT (fcI d) (@dersrec_trees X rules prems cs ds).
 Proof. intros. induction X0 ; simpl. 
@@ -887,11 +895,10 @@ inversion X0.
 subst.  dependent destruction X0. apply in_dersrec_hd.
 apply in_dersrec_tl. apply IHcs. assumption. Qed.
 
-(*
-Goal forall X rules prems concl (d1 : @derrec X rules prems concl) d2,
+Lemma fcI_inj: forall X rules prems concl (d1 : @derrec X rules prems concl) d2,
   fcI d1 = fcI d2 -> d1 = d2.
-Proof. intros. injection H. (* gives existT equality *)
-*)
+Proof. intros.  (* injection H gives existT equality *)
+  dependent destruction H. reflexivity. Qed.
 
 (* this doesn't work - type of Q 
 Goal forall X rules prems Q cs (ds : @dersrec X rules prems cs),
