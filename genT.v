@@ -10,7 +10,7 @@ Require Export Coq.Classes.CRelationClasses.
 
 Require Import gen.
 
-Definition rlsT W := list W -> W -> Type.
+Polymorphic Definition rlsT W := list W -> W -> Type.
 
 (* how to express the empty set *)
 Inductive emptyT (X : Type) : X -> Type := .
@@ -20,7 +20,7 @@ Proof. intros. induction H. Qed.
 
 (* compare 
   https://coq.inria.fr/stdlib/Coq.Relations.Relation_Definitions.html *)
-Definition relationT (A : Type) := A -> A -> Type.
+Polymorphic Definition relationT (A : Type) := A -> A -> Type.
 
 Definition transitiveT W (R : relationT W) :=
   forall (x y z : W), R x y -> R y z -> R x z.
