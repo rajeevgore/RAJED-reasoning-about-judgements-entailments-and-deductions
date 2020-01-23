@@ -236,6 +236,8 @@ Inductive InT A (a : A) : list A -> Type :=
 Lemma InT_eq: forall A a l, @InT A a (a :: l).
 Proof.  intros. apply InT_eq'. reflexivity. Qed.
 
+Definition InT_2nd A (a b : A) l := InT_cons a (InT_eq b l).
+
 Lemma InT_appL: forall A a X Y, InT (a : A) X -> InT a (X ++ Y).
 Proof.  intros.  induction X0 ; simpl.  subst.
 apply InT_eq.  apply InT_cons. assumption. Qed.
