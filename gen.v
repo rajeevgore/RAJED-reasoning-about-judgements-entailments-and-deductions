@@ -12,6 +12,15 @@ Lemma rsub_trans U V (f g h : U -> V -> Type) :
   rsub f g -> rsub g h -> rsub f h.
 Proof. unfold rsub. firstorder. Qed. 
 
+Definition req U V f g := prod (@rsub U V f g) (rsub g f).
+
+Lemma req_sym U V f g : @req U V f g -> @req U V g f.
+Proof. unfold req. tauto. Qed.
+
+Lemma req_trans U V f g h : @req U V f g -> @req U V g h -> @req U V f h.
+Proof. unfold req. intros F B. destruct F. destruct B.
+split ; eapply rsub_trans ; eassumption.  Qed.
+
 Definition rls W := list W -> W -> Prop.
 
 (* lemmas which shouldn't be necessary at all! *)
@@ -68,6 +77,8 @@ Qed.
 Definition rsub_imp U V (f g : U -> V -> Type) := iffD1 (@rsub_def U V f g).
 Definition rsubI U V f g := iffD2 (@rsub_def U V f g).
 Definition rsubD U V f g := iffD1 (@rsub_def U V f g).
+
+(* and do req_def, reqI, reqD as for rsub *)
 
 (* see also eq_refl, eq_trans, eq_sym, eq_ind, eq_ind_r *)
 

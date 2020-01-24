@@ -247,6 +247,9 @@ Lemma seqrule_mono X (rulesa rulesb : rlsT (rel (list X))) :
   rsub rulesa rulesb -> rsub (seqrule rulesa) (seqrule rulesb).
 Proof. unfold rsub. intros. destruct X1. apply Sctxt. firstorder. Qed.
 
+Definition seqrule_mono' X rulesa rulesb rs :=
+  rsubD (@seqrule_mono X rulesa rulesb rs).
+
 Lemma Sctxt_nil: forall (W : Type) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Type) ->
   @seqrule W pr [] (seqext Γ1 Γ2 Δ1 Δ2 c).
 Proof.
