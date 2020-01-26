@@ -120,6 +120,12 @@ Lemma seqext_seqext: forall V (Γ1 Γ2 Δ1 Δ2 Φ1 Φ2 Ψ1 Ψ2 : list V) seq,
 Proof. intros. unfold seqext. destruct seq.
 rewrite !app_assoc. reflexivity. Qed.  
 
+Lemma map_seqext_seqext: forall V (Γ1 Γ2 Δ1 Δ2 Φ1 Φ2 Ψ1 Ψ2 : list V) seqs,
+  map (seqext Γ1 Γ2 Δ1 Δ2) (map (seqext Φ1 Φ2 Ψ1 Ψ2) seqs) =
+  map (seqext (Γ1 ++ Φ1) (Φ2 ++ Γ2) (Δ1 ++ Ψ1) (Ψ2 ++ Δ2)) seqs.
+Proof. induction seqs. tauto. 
+simpl. rewrite IHseqs. rewrite seqext_seqext. reflexivity. Qed.  
+
 Inductive seqrule (W : Type) (pr : rlsT (rel (list W))) : 
     rlsT (rel (list W)) := 
   | Sctxt : forall ps c Φ1 Φ2 Ψ1 Ψ2, pr ps c -> 
