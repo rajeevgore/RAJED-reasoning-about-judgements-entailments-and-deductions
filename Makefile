@@ -66,9 +66,9 @@ lntkt_exchT.vo : lntb1LT.vo lntb2LT.vo lntbRT.vo lntkt_exchT.v
 
 lnt_weakeningT.vo : lntkt_exchT.vo lnt_weakeningT.v
 
-contractedT.vo : List_lemmasT.vo contractedT.v
+contractedT.vo : lntacsT.vo List_lemmasT.vo contractedT.v
 
-structural_equivalence.vo : List_lemmasT.vo structural_equivalence.v
+structural_equivalence.vo : lntT.vo contractedT.vo List_lemmasT.vo structural_equivalence.v
 
 merge.vo : structural_equivalence.vo merge.v
 
