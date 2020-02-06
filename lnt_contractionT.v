@@ -8,57 +8,8 @@ Require Import lntb1LT lntb2LT.
 Require Import lnt_weakeningT.
 Require Import lntkt_exchT.
 Require Import swappedT existsT.
+Require Import contractedT.
 
-
-Inductive contracted {T} : list T -> list T -> Type :=
-  | contracted_I : forall a (X Y A B : list T), X = (A ++ [a;a] ++ B) -> 
-    Y = (A ++ [a] ++ B) -> contracted X Y.
-
-Lemma contracted_I': forall T a (A B : list T),
-   contracted (A ++ [a;a] ++ B) (A ++ [a] ++ B).
-Proof.  intros.  eapply contracted_I ; reflexivity. Qed.
-
-Inductive contracted_gen {T} : list T -> list T -> Type :=
-| contracted_genL_I : forall a (X Y A B C : list T),
-    X = (A ++ [a] ++ B ++ [a] ++ C) -> 
-    Y = (A ++ [a] ++ B ++ C) -> contracted_gen X Y
-| contracted_genR_I : forall a (X Y A B C : list T),
-    X = (A ++ [a] ++ B ++ [a] ++ C) -> 
-    Y = (A ++ B ++ [a] ++ C) -> contracted_gen X Y.
-
-Inductive contracted_gen_spec {T} (a : T) : list T -> list T -> Type :=
-| contracted_genL_spec_I : forall (X Y A B C : list T),
-    X = (A ++ [a] ++ B ++ [a] ++ C) -> 
-    Y = (A ++ [a] ++ B ++ C) -> contracted_gen_spec a X Y
-| contracted_genR_spec_I : forall (X Y A B C : list T),
-    X = (A ++ [a] ++ B ++ [a] ++ C) -> 
-    Y = (A ++ B ++ [a] ++ C) -> contracted_gen_spec a X Y.
-
-Lemma contracted_genL_I': forall T a (A B C : list T),
-   contracted_gen (A ++ [a] ++ B ++ [a] ++ C) (A ++ [a] ++ B ++ C).
-Proof.  intros.  eapply contracted_genL_I ; reflexivity. Qed.
-
-Lemma contracted_genR_I': forall T a (A B C : list T),
-   contracted_gen (A ++ [a] ++ B ++ [a] ++ C) (A ++ B ++ [a] ++ C).
-Proof.  intros.  eapply contracted_genR_I ; reflexivity. Qed.
-
-Lemma contracted_genR_spec_I': forall T a (A B C : list T),
-   contracted_gen_spec a (A ++ [a] ++ B ++ [a] ++ C) (A ++ B ++ [a] ++ C).
-Proof.  intros.  eapply contracted_genR_spec_I ; reflexivity. Qed.
-
-Lemma contracted_genL_spec_I': forall T a (A B C : list T),
-   contracted_gen_spec a (A ++ [a] ++ B ++ [a] ++ C) (A ++ [a] ++ B ++ C).
-Proof.  intros.  eapply contracted_genL_spec_I ; reflexivity. Qed.
-
-Lemma contracted_gen__spec : forall {T} (a : T) l1 l2,
-    contracted_gen_spec a l1 l2 -> contracted_gen l1 l2.
-Proof.
-  intros until 0; intros H. inversion H;
-  [eapply contracted_genL_I |
-   eapply contracted_genR_I].
-  1,3 : apply H0.
-  all : apply H1.
-Qed.
 
 (* ---------------------------- *)
 (* LEFT CONTRACTION DEFINITIONS *)
@@ -241,148 +192,6 @@ Ltac swap_gen_tac :=
    swapped_gen_tac_pre; try apply swapped_gen_refl).
 
 (* ------------------- *)
-(* CONTRACTION TACTICS *)
-(* ------------------- *)
-
-Lemma cont_L: forall T X Y Z,
-  contracted X (Y : list T) -> contracted (Z ++ X) (Z ++ Y).
-Proof.
-  intros until 0; intros H. destruct H. subst. 
-  rewrite !(app_assoc Z). apply contracted_I'.
-Qed.
-
-Lemma cont_R: forall T X Y Z,
-  contracted X (Y : list T) -> contracted (X ++ Z) (Y ++ Z).
-Proof.
-  intros until 0; intros H. destruct H. subst.
-  rewrite <- !app_assoc. apply contracted_I'. 
-Qed.
-
-Lemma cont_gen_L: forall T X Y Z,
-  contracted_gen X (Y : list T) -> contracted_gen (Z ++ X) (Z ++ Y).
-Proof.
-  intros until 0; intros H. destruct H; subst; rewrite !(app_assoc Z).
-  apply contracted_genL_I'.
-  apply contracted_genR_I'.
-Qed.
-
-Lemma cont_gen_R: forall T X Y Z,
-  contracted_gen X (Y : list T) -> contracted_gen (X ++ Z) (Y ++ Z).
-Proof.
-  intros until 0; intros H. destruct H; subst; rewrite <- !app_assoc.
-  apply contracted_genL_I'. 
-  apply contracted_genR_I'. 
-Qed.
-
-Lemma cont_gen_spec_basic : forall T (a : T),
-    contracted_gen_spec a ([a]++[a]) [a].
-Proof.
-  intros. change ([a] ++ [a]) with ([] ++ [a] ++ [] ++ [a] ++ []).
-  change ([a]) with ([] ++ [a] ++ [] ++ []) at 3.
-  apply contracted_genL_spec_I'.
-Qed.
-  
-Lemma cont_gen_spec_L: forall T a X Y Z,
-  contracted_gen_spec a X (Y : list T) -> contracted_gen_spec a (Z ++ X) (Z ++ Y).
-Proof.
-  intros until 0; intros H. destruct H; subst; rewrite !(app_assoc Z).
-  apply contracted_genL_spec_I'.
-  apply contracted_genR_spec_I'.
-Qed.
-
-Lemma cont_gen_spec_R: forall T a X Y Z,
-  contracted_gen_spec a X (Y : list T) -> contracted_gen_spec a (X ++ Z) (Y ++ Z).
-Proof.
-  intros until 0; intros H. destruct H; subst; rewrite <- !app_assoc.
-  apply contracted_genL_spec_I'. 
-  apply contracted_genR_spec_I'. 
-Qed.
-
-Lemma cont_gen_spec_rem_sml_L : forall T (a : T) Z,
-    contracted_gen_spec a ([a] ++ Z ++ [a]) ([a] ++ Z).
-Proof.
-  intros.
-  change ([a] ++ Z ++ [a]) with ([] ++ [a] ++ Z ++ [a] ++ []).
-  replace ([a] ++ Z) with ([] ++ [a] ++ Z ++ []).
-  apply contracted_genL_spec_I'. rewrite app_nil_r. reflexivity.
-Qed.
-
-Lemma cont_gen_spec_rem_sml_R : forall T (a : T) Z,
-    contracted_gen_spec a ([a] ++ Z ++ [a]) (Z ++ [a]).
-Proof.
-  intros.
-  change ([a] ++ Z ++ [a]) with ([] ++ [a] ++ Z ++ [a] ++ []).
-  change (Z ++ [a]) with ([] ++ Z ++ [a] ++ []).
-  apply contracted_genR_spec_I'.
-Qed.
-
-Lemma cont_cons: forall T (x : T) Y Z,
-  contracted Y Z -> contracted (x :: Y) (x :: Z).
-Proof.
-  intros until 0; intros H. inversion H.
-  subst. list_assoc_l.
-  rewrite <- !app_assoc. apply contracted_I'.
-Qed.
-
-Lemma contracted_gen_in1: forall {T} (a : T) A Γ1 C H5,
-    InT a C ->
- contracted_gen (A ++ [a] ++ Γ1 ++ C ++ H5) (A ++ Γ1 ++ C ++ H5).
-Proof.
-  intros until 0; intros H. apply InT_split in H.
-  destruct H as [l1 [l2 H]].
-  subst.   list_assoc_r'.
-  simpl.
-  do 2 change (a :: (?x ++ ?y)) with ([a] ++ (x ++ y)).
-  eapply contracted_genR_I.
-  do 2 apply applI.
-  rewrite app_assoc.  reflexivity.
-  list_assoc_r'. reflexivity.
-Qed.
-
-Lemma contracted_gen_in2: forall {T} (a : T) A Γ1 C,
-    InT a Γ1 ->
- contracted_gen (A ++ [a] ++ Γ1 ++ C) (A ++ Γ1 ++ C).
-Proof.
-  intros until 0; intros H. apply InT_split in H.
-  destruct H as [l1 [l2 H]].
-  subst.   list_assoc_r'.
-  simpl.
-  change (a :: ?x) with ([a] ++ x).
-  eapply contracted_genR_I.
-  do 3 apply applI.
-  2 : do 3 apply applI.
-  all : reflexivity.
-Qed.
-
-Lemma contracted_gen_in3: forall {T} (a : T) A Γ1 C,
-    InT a Γ1 ->
-contracted_gen (A ++ Γ1 ++ [a] ++ C) (A ++ Γ1 ++ C).
-Proof.
-  intros until 0; intros H. apply InT_split in H.
-  destruct H as [l1 [l2 H]].
-  subst.   list_assoc_r'.
-  simpl.
-  change (a :: ?x) with ([a] ++ x).
-  eapply contracted_genL_I.
-  rewrite app_assoc.
-  do 3 apply applI. reflexivity.
-  apps_eq_tac.
-Qed.
-
-Lemma contracted_gen_in4: forall {T} (a : T) A Γ1 H5 C,
-    InT a Γ1 ->
-    contracted_gen (A ++ Γ1 ++ H5 ++ [a] ++ C) (A ++ Γ1 ++ H5 ++ C).
-Proof.
-  intros until 0; intros H. apply InT_split in H.
-  destruct H as [l1 [l2 H]].
-  subst.
-  change (a :: ?x) with ([a] ++ x).
-  assoc_mid [a].
-  eapply contracted_genL_I.
-  do 2 apply applI.
-  assoc_mid [a]. reflexivity.
-  apps_eq_tac.
-Qed.
 
 Ltac nsgen_sw_cont_gen rs sppc c c' acm inps0 swap :=
 derIrs rs ; [>
@@ -405,49 +214,6 @@ assoc_single_mid' c' ;
 eapply inps0 ; [> exact swap |
   unfold nsext ; unfold nslext ;  unfold nslcext ; unfold nslclext ;
   list_eq_assoc | reflexivity ]].
-
-Ltac cont_rem_head :=
-  list_assoc_r'; rewrite ?app_comm_cons;
-  repeat match goal with
-  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
-    (tryif check_app_head l1 [a] then idtac else apply cont_gen_spec_L)
-  end.
-
-Ltac cont_rem_tail :=
-  list_assoc_l'; rewrite ?app_comm_cons;
-  repeat match goal with
-  | [ |- contracted_gen_spec ?a ?l1 ?l2 ] =>
-    (tryif check_app_tail l1 [a] then idtac else apply cont_gen_spec_R)
-         end.
-
-Ltac cont_rem_mid_simp :=
-  apply cont_gen_spec_basic || apply cont_gen_spec_rem_sml_L
-|| apply cont_gen_spec_rem_sml_R.
-
-Ltac cont_gen_spec_app_brac_mid_L :=
-  match goal with
-  | [ |- contracted_gen_spec _ ?l1 ?l2 ] => app_bracket_middle_arg l1
-  end.
-
-Ltac cont_gen_spec_app_brac_mid_R :=
-  match goal with
-  | [ |- contracted_gen_spec _ ?l1 ?l2 ] => app_bracket_middle_arg l2
-  end.
-
-Ltac cont_gen_spec_app_brac_mid :=
-  cont_gen_spec_app_brac_mid_L; cont_gen_spec_app_brac_mid_R.
-
-(* Use this one *)
-Ltac cont_solve :=
-  cont_rem_head; cont_rem_tail;
-  list_assoc_r_single; repeat cont_gen_spec_app_brac_mid;
-  cont_rem_mid_simp.
-
-Ltac cont_solve' :=
-  cont_rem_head; cont_rem_tail;
-  list_assoc_r_single; cont_gen_spec_app_brac_mid;
-  cont_rem_mid_simp.
-
 
 
 (* -------------------------------------------------- *)
@@ -585,10 +351,10 @@ Proof.
   discriminate. assumption.
 Qed.
 
+
 (* ------------------------------- *)
 (* LEFT CONTRACTION FOR PRINCRULES *)
 (* ------------------------------- *)
-
 
 Ltac solve_prop_cont_pr1 :=
   intros until 0; intros Hcarry Hne Hrsub pr HF;
@@ -767,7 +533,7 @@ Lemma prop_contL_step_BL: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext (A ++ [a] ++ B) (C ++ D) Ψ1 Ψ2) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -778,7 +544,7 @@ Lemma prop_contL_step_BR: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext (A ++ B) (C ++ [a] ++ D) Ψ1 Ψ2) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -789,7 +555,7 @@ Lemma prop_contL_step_LL: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext (A ++ [a] ++ B ++ C) Γ Ψ1 Ψ2) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -800,7 +566,7 @@ Lemma prop_contL_step_LR: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext (A ++ B ++ [a] ++ C) Γ Ψ1 Ψ2) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -811,7 +577,7 @@ Lemma prop_contL_step_RL: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext Γ (A ++ [a] ++ B ++ C) Ψ1 Ψ2) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -822,7 +588,7 @@ Lemma prop_contL_step_RR: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext Γ (A ++ B ++ [a] ++ C) Ψ1 Ψ2) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -833,7 +599,7 @@ Lemma prop_contR_step_BL: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext Ψ1 Ψ2 (A ++ [a] ++ B) (C ++ D)) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -844,7 +610,7 @@ Lemma prop_contR_step_BR: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext Ψ1 Ψ2 (A ++ B) (C ++ [a] ++ D)) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -855,7 +621,7 @@ Lemma prop_contR_step_LL: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext Ψ1 Ψ2 (A ++ [a] ++ B ++ C) Γ) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -866,7 +632,7 @@ Lemma prop_contR_step_LR: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext Ψ1 Ψ2 (A ++ B ++ [a] ++ C) Γ) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -877,7 +643,7 @@ Lemma prop_contR_step_RL: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext Ψ1 Ψ2 Γ (A ++ [a] ++ B ++ C)) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -888,7 +654,7 @@ Lemma prop_contR_step_RR: forall {V} (rules : rlsT (list (rel (list (PropF V)) *
         (map (nslcext G d0) (map (seqext Ψ1 Ψ2 Γ (A ++ B ++ [a] ++ C)) ps)).
 Proof.
   solve_prop_contT.
-  apply (contracted_gen__spec a).
+  apply (@contracted_gen__spec _ a).
   cont_solve.
 Qed.
 
@@ -1791,10 +1557,10 @@ Proof.
   eapply prop. exact H.
 Qed.
 
+
 (* ------------------------------ *)
 (* RIGHT WEAKENING FOR PRINCRULES *)
 (* ------------------------------ *)
-
 
 (* Makes progress on princrules ps (l1, l2) goals *)
 Ltac lt1R a acm Hexch :=

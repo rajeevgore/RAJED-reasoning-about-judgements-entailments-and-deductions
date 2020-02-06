@@ -1187,3 +1187,22 @@ unfold gen_weakL_step in g ; egx g ;
   apply b2r | apply b1r | apply b2l | apply b1l | apply nEW | apply prop ] ;
   assumption.
 Qed.
+
+(* ----------------------------- *)
+(* SOME GENERAL WEAKENING LEMMAS *)
+(* ----------------------------- *)
+
+Lemma external_weakeningR : forall {V : Set} ns1 ns2,
+    derrec (@LNSKt_rules V) (fun _ => False) ns1 ->
+    derrec (@LNSKt_rules V) (fun _ => False) (ns1 ++ ns2).
+Proof.
+  intros V ns1 ns2. revert ns1.
+  induction ns2; intros ns1 Hder.
+  rewrite app_nil_r. assumption.
+  rewrite app_cons_single. eapply IHns2.
+  eapply derI. eapply nEW. constructor.
+  destruct a. destruct r. constructor.
+  unfold nslclext. simpl. rewrite app_nil_r.
+  constructor. eapply Hder.
+  eapply dlNil.
+Qed.

@@ -7,8 +7,9 @@ Require Import lntT lntacsT lntlsT lntbRT lntmtacsT.
 Require Import lntb1LT lntb2LT.
 Require Import lnt_weakeningT.
 Require Import lntkt_exchT.
-Require Import swappedT.
+Require Import swappedT contractedT.
 Require Import lnt_contractionT.
+Require Import merge.
 
 (* ------- *)
 (* TACTICS *)
@@ -117,7 +118,7 @@ Ltac cont_solve2 :=
      match l with
      | context[?a :: ?l2] =>  
    list_assoc_r_single;
-   eapply (contracted_gen__spec a);
+   eapply (@contracted_gen__spec _ a);
    cont_solve
      end
    end.
@@ -600,7 +601,7 @@ acacD'T2 ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
    repeat (acacD'T2 ; subst ; simpl ; rem_nil) ;
    try discriminate; rem_nil; subst;
    check_nil_cons_contr;
-   use_acm1_cont_constrT acm rs WBox2Rs WBox. }
+   try use_acm1_cont_constrT acm rs WBox2Rs WBox. }
 +{ inversion_clear weak; subst;
    repeat (acacD'T2 ; subst ; simpl ; rem_nil) ;
    try discriminate; rem_nil; subst;
@@ -1068,5 +1069,131 @@ Proof.
   unfold gen_contL_gen_step in g; try egx g;
   clear g ; unfold rsub ; intros;
   [> apply b2r | apply b1r | apply b2l | apply b1l | apply nEW | apply prop ] ;
+  assumption.
+Qed.
+
+(* ------------------------------- *)
+(* SOME GENERAL CONTRACTION LEMMAS *)
+(* ------------------------------- *)
+
+
+Lemma derrec_contracted_multiL : forall {V : Set} Γ1 Γ2 Δ d X Y,
+  contracted_multi Γ1 Γ2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [(Γ1, Δ, d)] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [(Γ2, Δ, d)] ++ Y).
+Proof.
+  intros V Γ1 Γ2 Δ d X Y Hc Hd.
+  revert X Y Δ d Hd.
+  induction Hc; intros XX YY Δ d Hd.
+  assumption.
+  eapply IHHc.
+  inversion c; subst;
+  eapply LNSKt_contL_gen.
+  eapply Hd. reflexivity. reflexivity.
+  eapply Hd. reflexivity. reflexivity.
+Qed.
+
+Lemma derrec_contracted_multiR : forall {V : Set} Γ Δ1 Δ2 d X Y,
+  contracted_multi Δ1 Δ2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [(Γ, Δ1, d)] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [(Γ, Δ2, d)] ++ Y).
+Proof.
+  intros V Γ Δ1 Δ2 d X Y Hc Hd.
+  revert X Y Γ d Hd.
+  induction Hc; intros XX YY Γ d Hd.
+  assumption.
+  eapply IHHc.
+  inversion c; subst;
+  eapply LNSKt_contR_gen.
+  eapply Hd. reflexivity. reflexivity.
+  eapply Hd. reflexivity. reflexivity.
+Qed.
+
+Lemma derrec_contracted_seqL: forall {V : Set} s1 s2 X Y,
+  contracted_seqL s1 s2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s1] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s2] ++ Y).
+Proof.
+  intros V s1 s3 X Y Hc Hd.
+  inversion Hc. subst.
+  eapply derrec_contracted_multiL.
+  exact H. assumption.
+Qed.
+
+Lemma derrec_contracted_seqR: forall {V : Set} s1 s2 X Y,
+  contracted_seqR s1 s2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s1] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s2] ++ Y).
+Proof.
+  intros V s1 s3 X Y Hc Hd.
+  inversion Hc. subst.
+  eapply derrec_contracted_multiR.
+  exact H. assumption.
+Qed.
+  
+Lemma derrec_contracted_seq: forall {V : Set} s1 s2 X Y,
+  contracted_seq s1 s2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s1] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s2] ++ Y).
+Proof.
+  intros V s1 s2 X Y Hc. revert X Y. 
+  induction Hc as [s1 s2 Hc | s1 s2 Hc | s1 s2 s3 Hc Hc2 | s1 s2 s3 Hc Hc2 ];
+    intros X Y Hd; subst; try eapply IHHc2;
+      (eapply derrec_contracted_seqL; eassumption) ||
+      (eapply derrec_contracted_seqR; eassumption).
+Qed.
+
+Lemma derrec_contracted_nseq_gen : forall {V : Set} ns1 ns2 X Y,
+  contracted_nseq ns1 ns2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ ns1 ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ ns2 ++ Y).
+Proof.
+  intros V s1 s2 X Y Hc.
+  revert X Y. 
+  induction Hc as [ | ];
+    intros X Y Hd; subst.
+  +{ eapply Hd. }
+  +{ simpl in Hd. 
+     rewrite cons_singleton in Hd.
+     eapply derrec_contracted_seq in Hd.
+     2 : exact c.
+     simpl. rewrite app_cons_single. eapply IHHc.
+     rewrite <- app_cons_single. exact Hd. }
+Qed.
+  
+Lemma derrec_contracted_nseq : forall {V : Set} G H,
+  contracted_nseq H G ->
+  derrec (LNSKt_rules (V:=V)) (fun _ => False) H ->
+  derrec (LNSKt_rules (V:=V)) (fun _ => False) G.
+Proof.
+  intros until 0; intros Hc Hd.
+  assert (G =  ([] ++ G ++ [])) as Hass1.
+  rewrite app_nil_r. reflexivity.
+  rewrite Hass1. eapply derrec_contracted_nseq_gen.
+  eapply Hc.
+  rewrite app_nil_r. assumption.
+Qed.
+  
+Lemma derrec_merge_nseq_double : forall {V : Set} G H,
+  merge G G H ->
+  derrec (LNSKt_rules (V:=V)) (fun _ => False) H ->
+  derrec (LNSKt_rules (V:=V)) (fun _ => False) G.
+Proof.
+  intros until 0; intros Hm Hd.
+  eapply derrec_contracted_nseq.
+  eapply merge_contracted_nseq. eassumption.
+  assumption.
+Qed.
+
+Lemma derrec_mergeL : forall (V : Set) G1 G2 G3,
+    merge G1 G1 G3 ->
+    derrec (LNSKt_rules (V:=V)) (fun _ => False) (G3 ++ G2) ->
+    derrec (LNSKt_rules (V:=V)) (fun _ => False) (G1 ++ G2).
+Proof.
+  intros until 0; intros Hm Hd.
+  rewrite <- app_nil_l.
+  rewrite <- app_nil_l in Hd.
+  eapply derrec_contracted_nseq_gen.
+  eapply merge_contracted_nseq. eassumption.
   assumption.
 Qed.

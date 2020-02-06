@@ -615,3 +615,38 @@ Ltac check_app_tail l1 l2 :=
   | ?l3 ++ l2 => idtac
   | _ => fail
   end.
+
+Ltac clear_useless :=
+  repeat match goal with
+         | [H : ?a = ?a |- _] => clear H
+         | [H : [?a] = [?a] |- _] => clear H
+         | [H : ?a :: ?b = ?a :: ?b |- _] => clear H
+         | [H1 : ?a, H2 : ?a |- _] => clear H2
+         end.
+
+(*
+Lemma testing_clear_useless : forall (a b c : nat) (l1 l2 l3 : list nat),
+    a::l1 = b::l2 ->
+    [b] = [c] ->
+    c = a ->
+    l2 = l2 ->
+    [l2] = [l2] ->
+    True.
+Proof.  
+  clear_useless.
+Admitted.
+ *)
+
+Ltac inv_singleton :=
+    repeat ( match goal with
+       | [ H : ?a :: [] = ?c :: ?d |- _ ] => inversion H; subst
+       | [ H : ?a :: ?b = ?c :: [] |- _ ] => inversion H; subst
+       | [ H : ?a :: ?b = ?c :: ?d |- _ ] => inversion H; subst
+       | [ H : ((?a,?b) = ?c) |- _ ] => inversion H; subst
+       | [ H : ?c = (?a,?b) |- _ ] => inversion H; subst
+             end; clear_useless).
+
+Ltac inversion_cons :=
+  repeat match goal with
+         | [ H : ?a :: ?l1 = ?b :: ?l2 |- _] => inversion H; subst; clear_useless
+         end.
