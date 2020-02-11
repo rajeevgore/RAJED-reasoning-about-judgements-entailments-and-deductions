@@ -44,6 +44,10 @@ rewrite -> !rev_involutive in e.
 exact e.
 Qed.
 
+(* rewriting with this won't loop, useful following list_assoc_l *)
+Lemma cons_single A X (v : A) Y: X ++ v :: Y = X ++ [v] ++ Y.
+Proof. simpl. reflexivity. Qed.
+
 Lemma partition_2_2 : forall {A : Type} (l1 l2 l3 l4 : list A) a b,
 l1 ++ a :: l2 = l3 ++ b :: l4 ->
   (exists l5, l1 = l3 ++ b :: l5 /\ l4 = l5 ++ a :: l2) \/
