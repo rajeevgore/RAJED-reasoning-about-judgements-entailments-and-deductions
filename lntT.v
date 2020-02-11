@@ -14,20 +14,21 @@ Inductive dir : Type :=
 | fwd : dir
 | bac : dir.
 
-(* definition of Propositional Formulas, parameterised over prim prop set,
-  note, we can have unused connectives as long as we don't want to prove
-  that the Id rule, restricted to atoms, is sufficient *)
+(* definition of Propositional Formulas, parameterised over prim prop set.
+ Originally had unused connectives. 
+ Changed to include only the used connectives. 
+*)
 Inductive PropF (V : Set): Type :=
  | Var : V -> PropF V
  | Bot : PropF V
  | Imp : PropF V -> PropF V -> PropF V
- | Not : PropF V -> PropF V
+(* | Not : PropF V -> PropF V
  | And : PropF V -> PropF V -> PropF V
- | Or : PropF V -> PropF V -> PropF V
+ | Or : PropF V -> PropF V -> PropF V *)
  | WBox : PropF V -> PropF V
- | WDia : PropF V -> PropF V
+(* | WDia : PropF V -> PropF V *)
  | BBox : PropF V -> PropF V
- | BDia : PropF V -> PropF V
+(* | BDia : PropF V -> PropF V *)
 .
 
 Definition rel (W : Type) : Type := prod W W.
