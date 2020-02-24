@@ -18,11 +18,11 @@ Set Implicit Arguments.
 (* version in paper 23/4/19, Fig 2, \wbx_L^2, \bbx_L^2 *)
 Inductive b2lrules (V : Set) : rlsT (list (rel (list (PropF V)) * dir)) :=
   | WBox2Ls : forall A d H1l H1r H2l H2r K1 K2, b2lrules 
-      [[(pair (H1l ++ WBox A :: H1r) K1, d) ]]
+      [[(pair (H1l ++ A :: H1r) K1, d) ]]
       [(pair (H1l ++ H1r) K1, d); 
         (pair (H2l ++ WBox A :: H2r) K2, bac)]
   | BBox2Ls : forall A d H1l H1r H2l H2r K1 K2, b2lrules 
-      [[(pair (H1l ++ BBox A :: H1r) K1, d) ]]
+      [[(pair (H1l ++ A :: H1r) K1, d) ]]
       [(pair (H1l ++ H1r) K1, d); 
         (pair (H2l ++ BBox A :: H2r) K2, fwd)].
 

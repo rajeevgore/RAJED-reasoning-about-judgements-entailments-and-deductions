@@ -249,7 +249,51 @@ Ltac cont_setup_apply_constr7 constr:=
            | ?l5 ++ ?l4 => rewrite (app_assoc l5)
            end
          end.
+(*
+Ltac cont_setup_apply_constr4' constr :=
+  list_assoc_r_single;
+  repeat match goal with
+         | [ acm : context[ ?l1 ++ @constr ?V ?A :: ?l2 ++ ?l3 ] |-
+             derrec ?rules ?p (?G1 ++ [(?K1,?K2,?d)] ++ ?G2) ] =>
+           match K1 with
+           | ?l5 ++ l2 ++ ?l4 => idtac 
+           | ?l5 ++ ?l4 => rewrite (app_assoc l5)
+           end
+         end.
 
+Ltac cont_setup_apply_constr5 constr :=
+  list_assoc_r_single;
+  repeat match goal with
+         | [ acm : context[ ?l1 ++ @constr ?V ?A :: ?l3 ++ ?l2 ] |-
+             derrec ?rules ?p (?G1 ++ [(?K1,?K2,?d)] ++ ?G2) ] =>
+           match K1 with
+           | ?l5 ++ l2 ++ ?l4 => idtac 
+           | ?l5 ++ ?l4 => rewrite (app_assoc l5)
+           end
+         end.
+
+Ltac cont_setup_apply_constr6 constr :=
+  list_assoc_r_single;
+  repeat match goal with
+         | [ acm : context[ ?l1 ++ @constr ?V ?A :: ?l2 ] |-
+             derrec ?rules ?p (?G1 ++ [(?K1,?K2,?d)] ++ ?G2) ] =>
+           match K1 with
+           | ?l5 ++ l2 ++ ?l4 => idtac 
+           | ?l5 ++ ?l4 => rewrite (app_assoc l5)
+           end
+         end.
+
+Ltac cont_setup_apply_constr7 constr:=
+  list_assoc_r_single;
+  repeat match goal with
+         | [ acm : context[ ?l1 ++ @constr ?V ?A :: ?l2 ] |-
+             derrec ?rules ?p (?G1 ++ ?G2 ++ [(?K1,?K2,?d)]) ] =>
+           match K1 with
+           | ?l5 ++ [@constr V A] ++ ?l4 => idtac 
+           | ?l5 ++ ?l4 => rewrite (app_assoc l5)
+           end
+         end.
+*)
 Ltac no_use_acm_cont rs drs constr:=
   derIrs rs;
   [apply NSlclctxt'; apply constr |
@@ -760,6 +804,77 @@ Qed.
 (* CONTRACTION FOR B2LRULES *)
 (* ------------------------ *)
 
+Ltac cont_setup_apply_constr5' constr :=
+  list_assoc_r_single;
+  repeat match goal with
+         | [ |-
+             derrec ?rules ?p (?G1 ++ [(?K1,?K2,?d)] ++ ?G2) ] =>
+           match goal with
+           | [  |- context[ @constr ?V ?A ] ] =>
+             match goal with
+               [  acm : context[ ?l1 ++ A :: ?l3 ++ ?l2 ] |- _ ] =>
+           match K1 with
+           | ?l5 ++ l2 ++ ?l4 => idtac 
+           | ?l5 ++ ?l4 => rewrite (app_assoc l5)
+           end
+             end
+           end
+         end.
+
+Ltac cont_setup_apply_constr6' constr :=
+  list_assoc_r_single;
+  repeat match goal with
+         | [  |-
+              derrec ?rules ?p (?G1 ++ [(?K1,?K2,?d)] ++ ?G2) ] =>
+           match goal with
+           | [  |- context[ @constr ?V ?A ] ] =>
+             match goal with
+               [  acm : context[ ?l1 ++ A :: ?l2 ] |- _ ] =>
+           match K1 with
+           | ?l5 ++ l2 ++ ?l4 => idtac 
+           | ?l5 ++ ?l4 => rewrite (app_assoc l5)
+           end
+             end
+           end
+         end.
+
+Ltac cont_setup_apply_constr7' constr:=
+  list_assoc_r_single;
+  repeat match goal with
+         | [  |-
+             derrec ?rules ?p (?G1 ++ ?G2 ++ [(?K1,?K2,?d)]) ] =>
+           match goal with
+           | [  |- context[ @constr ?V ?A ] ] =>
+             match goal with
+               [  acm : context[ ?l1 ++ A :: ?l2 ] |- _ ] =>
+           match K1 with
+           | ?l5 ++ [@constr V A] ++ ?l4 => idtac 
+           | ?l5 ++ ?l4 => rewrite (app_assoc l5)
+           end
+             end
+           end
+         end.
+
+Ltac cont_setup_apply_constr4' constr :=
+  list_assoc_r_single;
+  repeat match goal with
+         | [  |-
+             derrec ?rules ?p (?G1 ++ [(?K1,?K2,?d)] ++ ?G2) ] =>
+           match goal with
+           | [  |- context[ @constr ?V ?A ] ] =>
+             match goal with
+               [  acm : context[ ?l1 ++ A :: ?l2 ++ ?l3 ] |- _ ] =>
+           match K1 with
+           | ?l5 ++ l2 ++ ?l4 => idtac 
+           | ?l5 ++ ?l4 => rewrite (app_assoc l5)
+           end
+             end
+           end
+         end.
+
+
+
+         
 Lemma gen_contL_gen_step_b2L_lc: forall V ps concl last_rule rules,
   last_rule = nslclrule (@b2lrules V) ->
   gen_contL_gen_step last_rule rules ps concl.
@@ -778,23 +893,26 @@ acacD'T2 ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 -{ inversion sppc ; subst ; clear sppc. (* 2 subgoals *)
 +{ inversion_clear weak; subst;
    acacD'T2 ; subst ; simpl ; rewrite ?app_nil_r; (* 4 subgoals *)
-       acacDeT2; subst; rem_nil;
-      try (cont_setup_apply_constr4 WBox;
-           use_acm2s_cont'T acm rs WBox2Ls WBox);
-      try (cont_setup_apply_constr5 WBox;
-           use_acm2s_cont'T acm rs WBox2Ls WBox);
-      try (cont_setup_apply_constr6 WBox;
-           use_acm2s_cont'T acm rs WBox2Ls WBox);
-      use_acm2s_cont'T acm rs WBox2Ls WBox.
+       acacDeT2; subst; rem_nil; (* c4, 5*admit, c4, c4, c4, 4*admit, c4 *)
+
+       try (cont_setup_apply_constr4 WBox;
+            use_acm2s_cont'T acm rs WBox2Ls WBox);
+   try (cont_setup_apply_constr5' WBox;
+   use_acm2s_cont'T acm rs WBox2Ls WBox);
+   try (cont_setup_apply_constr6' WBox;
+   use_acm2s_cont'T acm rs WBox2Ls WBox);
+       try (cont_setup_apply_constr4' WBox;
+            use_acm2s_cont'T acm rs WBox2Ls WBox).
+
  }
 +{ inversion_clear weak; subst;
    acacD'T2 ; subst ; simpl ; rewrite ?app_nil_r; (* 4 subgoals *)
    acacDeT2; subst; rem_nil;
-      try (cont_setup_apply_constr4 BBox;
+      try (cont_setup_apply_constr4' BBox;
            use_acm2s_cont'T acm rs BBox2Ls BBox);
-      try (cont_setup_apply_constr5 BBox;
+      try (cont_setup_apply_constr5' BBox;
            use_acm2s_cont'T acm rs BBox2Ls BBox);
-      try (cont_setup_apply_constr6 BBox;
+      try (cont_setup_apply_constr6' BBox;
            use_acm2s_cont'T acm rs BBox2Ls BBox);
       use_acm2s_cont'T acm rs BBox2Ls WBox.
 }
@@ -810,11 +928,11 @@ acacD'T2 ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 +{ inversion_clear weak; subst;
    acacD'T2; subst ; simpl ; rewrite ?app_nil_r; (* 4 subgoals *)
        acacDeT2; subst; rem_nil;
-      try (cont_setup_apply_constr4 WBox;
+      try (cont_setup_apply_constr4' WBox;
            use_acm2s_cont'T acm rs WBox2Ls WBox);
-      try (cont_setup_apply_constr5 WBox;
+      try (cont_setup_apply_constr5' WBox;
            use_acm2s_cont'T acm rs WBox2Ls WBox);
-      try (cont_setup_apply_constr6 WBox;
+      try (cont_setup_apply_constr6' WBox;
            use_acm2s_cont'T acm rs WBox2Ls WBox);
       use_acm2s_cont'T acm rs WBox2Ls WBox.
  }
@@ -823,7 +941,7 @@ acacD'T2 ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
    acacD'T2 ; subst ; simpl ; rewrite ?app_nil_r; (* 4 subgoals *)
    acacDeT2; subst; rem_nil;
    try  (list_assoc_r_single; no_use_acm_cont rs drs WBox2Ls);
-   try (   list_assoc_r_single; cont_setup_apply_constr7 WBox;
+   try (   list_assoc_r_single; cont_setup_apply_constr7' WBox;
            no_use_acm_cont rs drs WBox2Ls).
  }
     }
@@ -833,11 +951,11 @@ acacD'T2 ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
 +{ inversion_clear weak; subst;
    acacD'T2 ; subst ; simpl ; rewrite ?app_nil_r; (* 4 subgoals *)
        acacDeT2; subst; rem_nil;
-      try (cont_setup_apply_constr4 BBox;
+      try (cont_setup_apply_constr4' BBox;
            use_acm2s_cont'T acm rs BBox2Ls BBox);
-      try (cont_setup_apply_constr5 BBox;
+      try (cont_setup_apply_constr5' BBox;
            use_acm2s_cont'T acm rs BBox2Ls BBox);
-      try (cont_setup_apply_constr6 BBox;
+      try (cont_setup_apply_constr6' BBox;
            use_acm2s_cont'T acm rs BBox2Ls BBox);
       use_acm2s_cont'T acm rs BBox2Ls BBox.
  }
@@ -846,7 +964,7 @@ acacD'T2 ; subst ; rewrite -> ?app_nil_r in *. (* 3 subgoals, the various locs
    acacD'T2 ; subst ; simpl ; rewrite ?app_nil_r; (* 4 subgoals *)
    acacDeT2; subst; rem_nil;
    try  (list_assoc_r_single; no_use_acm_cont rs drs BBox2Ls);
-   try (   list_assoc_r_single; cont_setup_apply_constr7 BBox;
+   try (   list_assoc_r_single; cont_setup_apply_constr7' BBox;
            no_use_acm_cont rs drs BBox2Ls).
  }
     }
