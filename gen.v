@@ -12,6 +12,9 @@ Lemma rsub_trans U V (f g h : U -> V -> Type) :
   rsub f g -> rsub g h -> rsub f h.
 Proof. unfold rsub. firstorder. Qed. 
 
+Lemma rsub_id U V (f : U -> V -> Type) : rsub f f.
+Proof. unfold rsub. firstorder. Qed. 
+
 Definition req U V f g := prod (@rsub U V f g) (rsub g f).
 
 Lemma req_sym U V f g : @req U V f g -> @req U V g f.
