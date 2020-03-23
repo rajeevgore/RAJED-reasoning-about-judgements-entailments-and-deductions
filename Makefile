@@ -46,7 +46,7 @@ List_lemmasT.vo : ddT.vo List_lemmasT.v
 
 lntT.vo : List_lemmasT.vo lntT.v
 
-swappedT.vo : existsT.vo swappedT.v
+swappedT.vo : existsT.vo lntT.vo swappedT.v
 
 lntacsT.vo : swappedT.vo lntT.vo lntacsT.v
 

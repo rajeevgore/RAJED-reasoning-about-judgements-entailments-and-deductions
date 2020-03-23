@@ -1,5 +1,7 @@
 Require Import List.
 Require Import existsT.
+Require Import lntT.
+Require Import gen.
 
 Set Implicit Arguments.
 Import ListNotations.
@@ -33,6 +35,28 @@ Proof.
   subst. repeat rewrite app_comm_cons.
   apply swapped_I'.
 Qed.
+
+Definition swapped_single T (x : T) := swapped_cons x (swapped_same []).
+
+Lemma swapped_nilLE T Y: @swapped T [] Y -> Y = [].
+Proof. intro sw. inversion sw. subst.
+repeat (list_eq_ncT ; cD ; subst) ;
+simpl ; rewrite ?app_nil_r ; try reflexivity. Qed.
+
+Lemma swapped_nilRE T Y: @swapped T Y [] -> Y = [].
+Proof. intro sw. inversion sw. subst.
+repeat (list_eq_ncT ; cD ; subst) ;
+simpl ; rewrite ?app_nil_r ; try reflexivity. Qed.
+
+Lemma swapped_singleLE T (x : T) Y: swapped [x] Y -> Y = [x].
+Proof. intro sw. inversion sw. subst.
+acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst) ;
+simpl ; rewrite ?app_nil_r ; try reflexivity. Qed.
+
+Lemma swapped_singleRE T (x : T) Y: swapped Y [x] -> Y = [x].
+Proof. intro sw. inversion sw. subst.
+acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst) ;
+simpl ; rewrite ?app_nil_r ; try reflexivity. Qed.
 
 Lemma swapped_simple: forall T U V X Y,
   U = X ++ Y -> V = Y ++ X -> swapped U (V : list T).
@@ -74,6 +98,17 @@ Proof. pose (swapped_simple' [A] H). simpl in s. exact s. Qed.
 
 Lemma swapped_ca2 T A H: swapped (H ++ [A : T]) (A :: H).
 Proof. pose (swapped_simple' H [A]). simpl in s. exact s. Qed.
+
+Lemma swapped_map_ex T U (f : T -> U) xs ys:
+  swapped (map f xs) ys -> sigT2 (swapped xs) (fun zs => ys = map f zs).
+Proof. intro sw. inversion sw. subst. clear sw.
+repeat (match goal with | [ H : _ |- _ ] => eapply map_app_ex in H ; cD end).
+subst. eexists. apply swapped_I'. rewrite !map_app. reflexivity. Qed.
+
+Lemma swapped_map T U (f : T -> U) xs ys:
+  swapped xs ys -> swapped (map f xs) (map f ys).
+Proof. intro sw. inversion sw. subst. clear sw.
+rewrite !map_app. apply swapped_I'. Qed.
 
 (* Sequences of swaps of length n+1. *)
 Inductive swapped_spec {T} : nat -> list T -> list T -> Type :=
@@ -247,3 +282,4 @@ Proof.
   intros T A. constructor.
   exists 0. apply swapped_spec_refl.
 Qed.
+

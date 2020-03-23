@@ -268,3 +268,21 @@ Proof.  intros. rewrite Forall_forall. unfold iff. split.
   intros. rewrite -> in_map_iff in H0. cD. simpl in H3.
   sD ; subst ; assumption.  Qed.
 
+Lemma map_cons_ex T U (f : T -> U) ys x : forall ws,
+  map f ws = x :: ys -> {u : T & x = f u &
+    {vs : list _ & ys = map f vs & ws = u :: vs}}.
+Proof. intro. destruct ws ; simpl ; intro.  discriminate.
+injection H as . subst. exists t. reflexivity.
+exists ws ; reflexivity. Qed.
+
+Lemma map_app_ex T U (f : T -> U) ys xs : forall ws,
+  map f ws = xs ++ ys -> {us : _ & map f us = xs &
+    {vs : _ & map f vs = ys & ws = us ++ vs}}.
+Proof. induction xs ; simpl ; intros.
+exists []. simpl. reflexivity.
+simpl. exists ws. subst. reflexivity.  reflexivity.
+apply map_cons_ex in H. destruct H. destruct s. subst.
+apply eq_sym in e0. apply IHxs in e0. destruct e0.  destruct s. subst.
+exists (x :: x1). simpl. reflexivity. exists x2. reflexivity.
+simpl. reflexivity. Qed.
+
