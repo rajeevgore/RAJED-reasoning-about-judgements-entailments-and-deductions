@@ -275,6 +275,12 @@ Proof. intro. destruct ws ; simpl ; intro.  discriminate.
 injection H as . subst. exists t. reflexivity.
 exists ws ; reflexivity. Qed.
 
+Lemma map_cons_ex' T U (f : T -> U) ys x : forall ws,
+  map f ws = x :: ys -> {u : T & x = f u &
+    {vs : list _ & map f vs = ys & ws = u :: vs}}.
+Proof. intros ws meq. apply map_cons_ex in meq. cD.
+exists meq. assumption.  exists meq1. subst. reflexivity. assumption. Qed.
+
 Lemma map_app_ex T U (f : T -> U) ys xs : forall ws,
   map f ws = xs ++ ys -> {us : _ & map f us = xs &
     {vs : _ & map f vs = ys & ws = us ++ vs}}.
@@ -285,4 +291,8 @@ apply map_cons_ex in H. destruct H. destruct s. subst.
 apply eq_sym in e0. apply IHxs in e0. destruct e0.  destruct s. subst.
 exists (x :: x1). simpl. reflexivity. exists x2. reflexivity.
 simpl. reflexivity. Qed.
+
+Lemma map_eq_nil T U (f : T -> U) xs : map f xs = [] -> xs = [].
+Proof. intro mx. destruct xs. reflexivity.  simpl in mx. discriminate mx. Qed.
+
 

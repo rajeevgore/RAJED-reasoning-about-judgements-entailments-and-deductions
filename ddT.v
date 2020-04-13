@@ -192,6 +192,32 @@ Inductive in_dersrec X (rules : rlsT X) prems concl
     in_dersrec d (@dlCons X rules prems concl' concls d' ds)
   .
 
+Inductive is_nextup X (rules : rlsT X) prems (concl : X) (concls : list X)  
+  (ds : dersrec rules prems concls) : derrec rules prems concl -> Type :=
+  | is_nextupI : forall rps, is_nextup ds (derI concl rps ds) 
+  (* can't make this next line work
+  | is_nextup_nil : is_nextup (dlNil rules prems) (dpI _ _ _ _) 
+  *)
+  .
+
+Inductive in_nextup X (rules : rlsT X) prems (concl concln : X) 
+  (d : derrec rules prems concl) (dn : derrec rules prems concln) : Type :=
+  | in_nextupI : forall concls (ds : dersrec rules prems concls),
+      is_nextup ds d -> in_dersrec dn ds -> in_nextup d dn
+  .
+
+Lemma in_drs_concl_in W rules ps (cn : W) (drs : dersrec rules emptyT ps)
+  (dtn : derrec rules emptyT cn) : in_dersrec dtn drs -> InT cn ps.
+Proof. intro ind. induction ind. apply InT_eq.
+apply InT_cons. assumption. Qed.
+
+Lemma in_nextup_concl_in W rules ps (concl cn : W) rpc
+  (drs : dersrec rules emptyT ps) (dtn : derrec rules emptyT cn) :
+  in_nextup (derI concl rpc drs) dtn -> InT cn ps.
+Proof. intro ind. inversion ind. inversion X. subst.
+dependent destruction H2. clear H1 rps0 ind X.
+exact (in_drs_concl_in X0). Qed.
+
 Lemma all_in_d_allP: forall X rules prems Q ps (dpss : dersrec rules prems ps),
   (forall (p : X) (d : derrec rules prems p), in_dersrec d dpss -> Q p d) -> 
   allPder Q dpss.
@@ -755,6 +781,16 @@ Fixpoint dersrec_concls X rules prems concls
     | dlCons d ds => derrec_concl d :: dersrec_concls ds
   end.
 
+(* can't do this, gives The term "ds" has type "dersrec rules prems l"
+  while it is expected to have type "dersrec rules prems []".  
+Fixpoint derrec_nextup X rules prems concl
+  (der : @derrec X rules prems concl) :=
+  match der with 
+    | dpI _ _ _ _ => dlNil rules prems 
+    | derI _ _ ds => ds
+  end.
+*)
+
 Lemma dersrec_height_le: forall X rules prems n ps 
   (ds : dersrec rules prems ps),
   (forall (p : X) (d : derrec rules prems p),
@@ -835,7 +871,7 @@ Check derrec_all_rect2.
 (* version with no premises *)
 Definition derrec_all_rect2_nops X Y rulesx rulesy Q := 
   @derrec_all_rect2 X Y rulesx rulesy (@emptyT X) (@emptyT Y) Q
-  (@emptyT_any X _) (@emptyT_any Y _).
+  (@emptyT_any' X _) (@emptyT_any' Y _).
 (*
 Check derrec_all_rect2_nops.
 *)
@@ -881,6 +917,41 @@ Fixpoint derrec_of_fc X rules prems
     | fcI d => d
   end.
   *)
+
+(* while we can't get something of type derrec rules prems _
+  from something of type derrec_fc ..., we can get it and then
+  apply any function to it whose result type doesn't involve the conclusion *)
+Fixpoint derrec_fc_size X rules prems 
+  (der : @derrec_fc X rules prems) :=
+  match der with 
+    | fcI d => derrec_size d
+  end.
+
+Fixpoint dersrec_fc_size X rules prems 
+  (ders : @dersrec_fcs X rules prems) :=
+  match ders with 
+    | fcsI ds => dersrec_size ds
+  end.
+
+Fixpoint derrec_fc_height X rules prems 
+  (der : @derrec_fc X rules prems) :=
+  match der with 
+    | fcI d => derrec_height d
+  end.
+
+Fixpoint dersrec_fc_height X rules prems 
+  (ders : @dersrec_fcs X rules prems) :=
+  match ders with 
+    | fcsI ds => dersrec_height ds
+  end.
+
+Lemma der_der_fc X rules prems (der : @derrec_fc X rules prems) :
+  derrec rules prems (derrec_fc_concl der).
+Proof. destruct der. simpl. rewrite der_concl_eq. exact d. Qed. 
+
+Lemma ders_ders_fcs X rules prems (ders : @dersrec_fcs X rules prems) :
+  dersrec rules prems (dersrec_fc_concls ders).
+Proof. destruct ders. simpl. rewrite ders_concls_eq. exact d. Qed. 
 
 Lemma in_drs_trees: forall X rules prems cs ds c (d : derrec rules prems c),
   in_dersrec d ds -> InT (fcI d) (@dersrec_trees X rules prems cs ds).

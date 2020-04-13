@@ -13,9 +13,12 @@ Require Import gen.
 Polymorphic Definition rlsT W := list W -> W -> Type.
 
 (* how to express the empty set *)
-Inductive emptyT (X : Type) : X -> Type := .
+Inductive emptyT {X : Type} : X -> Type := .
 
-Lemma emptyT_any: forall (sty : Type) Q (prem : sty), emptyT prem -> Q prem.
+Lemma emptyT_any': forall (sty : Type) Q (prem : sty), emptyT prem -> Q prem.
+Proof. intros. induction H. Qed.
+
+Lemma emptyT_any: forall (sty : Type) Q (prem : sty), emptyT prem -> Q.
 Proof. intros. induction H. Qed.
 
 (* compare 
