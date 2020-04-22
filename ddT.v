@@ -200,10 +200,10 @@ Inductive is_nextup X (rules : rlsT X) prems (concl : X) (concls : list X)
   *)
   .
 
-Inductive in_nextup X (rules : rlsT X) prems (concl concln : X) 
-  (d : derrec rules prems concl) (dn : derrec rules prems concln) : Type :=
+Inductive in_nextup X (rules : rlsT X) prems (concln concl : X) 
+  (dn : derrec rules prems concln) (d : derrec rules prems concl) : Type :=
   | in_nextupI : forall concls (ds : dersrec rules prems concls),
-      is_nextup ds d -> in_dersrec dn ds -> in_nextup d dn
+      is_nextup ds d -> in_dersrec dn ds -> in_nextup dn d
   .
 
 Lemma in_drs_concl_in W rules ps (cn : W) (drs : dersrec rules emptyT ps)
@@ -213,7 +213,7 @@ apply InT_cons. assumption. Qed.
 
 Lemma in_nextup_concl_in W rules ps (concl cn : W) rpc
   (drs : dersrec rules emptyT ps) (dtn : derrec rules emptyT cn) :
-  in_nextup (derI concl rpc drs) dtn -> InT cn ps.
+  in_nextup dtn (derI concl rpc drs) -> InT cn ps.
 Proof. intro ind. inversion ind. inversion X. subst.
 dependent destruction H2. clear H1 rps0 ind X.
 exact (in_drs_concl_in X0). Qed.
@@ -547,6 +547,13 @@ Lemma dersrec_map_2: forall X Y (f : X -> Y) rules prems c d,
     (derrec rules prems (f c) * derrec rules prems (f d)).
 Proof. intros. rewrite dersrec_all. rewrite ForallT_map_2. reflexivity. Qed.
 
+(*
+Lemma in_dersrec_single X rs ps c (ds : @dersrec X rs ps [c]) :
+  in_dersrec (dersrec_singleD' ds) ds.
+Proof. dependent destruction ds.  (* dependent induction ds. also seems OK *)
+HOW TO CONTINUE PROOF ??
+*)
+
 (* try using the induction principle derrec_all_rect *)
 Theorem derrec_trans_imp: forall X rules prems (concl : X),
   derrec rules (derrec rules prems) concl -> derrec rules prems concl.
@@ -781,6 +788,18 @@ Fixpoint dersrec_concls X rules prems concls
     | dlCons d ds => derrec_concl d :: dersrec_concls ds
   end.
 
+Fixpoint dersrec_hd X rules prems c cs
+  (ders : @dersrec X rules prems (c :: cs)) :=
+  match ders with 
+    | dlCons d ds => d
+  end.
+
+Fixpoint dersrec_tl X rules prems c cs
+  (ders : @dersrec X rules prems (c :: cs)) :=
+  match ders with 
+    | dlCons d ds => ds
+  end.
+
 (* can't do this, gives The term "ds" has type "dersrec rules prems l"
   while it is expected to have type "dersrec rules prems []".  
 Fixpoint derrec_nextup X rules prems concl
@@ -789,6 +808,23 @@ Fixpoint derrec_nextup X rules prems concl
     | dpI _ _ _ _ => dlNil rules prems 
     | derI _ _ ds => ds
   end.
+*)
+
+(*
+WHY DOESN'T simpl WORK in next two?
+Lemma dersrec_hd_eq X rs ps c cs
+  (d : @derrec X rs ps c) (ds : @dersrec X rs ps cs) :
+  dersrec_hd (dlCons d ds) = d.
+
+Lemma dersrec_tl_eq X rs ps c cs
+  (d : @derrec X rs ps c) (ds : @dersrec X rs ps cs) :
+  dersrec_tl (dlCons d ds) = ds.
+
+Lemma in_dersrec_hd X rs ps c cs (ds : @dersrec X rs ps (c :: cs)) :
+  in_dersrec (dersrec_hd ds) ds.
+Proof. dependent destruction ds.  (* dependent induction ds. also seems OK *)
+simpl. DOES NOTHING
+HOW TO CONTINUE PROOF ??
 *)
 
 Lemma dersrec_height_le: forall X rules prems n ps 
@@ -875,20 +911,6 @@ Definition derrec_all_rect2_nops X Y rulesx rulesy Q :=
 (*
 Check derrec_all_rect2_nops.
 *)
-(* without specifying conclusion in the type, more like Isabelle trees *)
-Inductive derrec_fc X rules (prems : X -> Type) : Type := 
-  | fcI : forall concl, derrec rules prems concl -> derrec_fc rules prems.
-
-Inductive dersrec_fcs X rules (prems : X -> Type) : Type := 
-  | fcsI : forall concls, dersrec rules prems concls -> dersrec_fcs rules prems.
-
-Fixpoint dersrec_trees X rules prems concls
-  (ders : @dersrec X rules prems concls) :=
-  match ders with 
-    | dlNil _ _ => []
-    | dlCons d ds => fcI d :: dersrec_trees ds
-  end.
-
 Lemma der_concl_eq: forall X (rules : rlsT X) prems concl 
   (d : derrec rules prems concl), derrec_concl d = concl.
 Proof. dependent inversion d ; simpl ; reflexivity. Qed.
@@ -897,84 +919,6 @@ Lemma ders_concls_eq: forall X (rules : rlsT X) prems concls
   (ds : dersrec rules prems concls), dersrec_concls ds = concls.
 Proof. induction ds ; simpl.  reflexivity.
 rewrite -> (der_concl_eq d). rewrite IHds. reflexivity. Qed.
-
-Fixpoint derrec_fc_concl X rules prems 
-  (der : @derrec_fc X rules prems) :=
-  match der with 
-    | fcI d => derrec_concl d
-  end.
-
-Fixpoint dersrec_fc_concls X rules prems 
-  (ders : @dersrec_fcs X rules prems) :=
-  match ders with 
-    | fcsI ds => dersrec_concls ds
-  end.
-
-(* this fails, d has type "derrec rules prems x", but x not in scope
-Fixpoint derrec_of_fc X rules prems 
-  (der : @derrec_fc X rules prems) :=
-  match der with 
-    | fcI d => d
-  end.
-  *)
-
-(* while we can't get something of type derrec rules prems _
-  from something of type derrec_fc ..., we can get it and then
-  apply any function to it whose result type doesn't involve the conclusion *)
-Fixpoint derrec_fc_size X rules prems 
-  (der : @derrec_fc X rules prems) :=
-  match der with 
-    | fcI d => derrec_size d
-  end.
-
-Fixpoint dersrec_fc_size X rules prems 
-  (ders : @dersrec_fcs X rules prems) :=
-  match ders with 
-    | fcsI ds => dersrec_size ds
-  end.
-
-Fixpoint derrec_fc_height X rules prems 
-  (der : @derrec_fc X rules prems) :=
-  match der with 
-    | fcI d => derrec_height d
-  end.
-
-Fixpoint dersrec_fc_height X rules prems 
-  (ders : @dersrec_fcs X rules prems) :=
-  match ders with 
-    | fcsI ds => dersrec_height ds
-  end.
-
-Lemma der_der_fc X rules prems (der : @derrec_fc X rules prems) :
-  derrec rules prems (derrec_fc_concl der).
-Proof. destruct der. simpl. rewrite der_concl_eq. exact d. Qed. 
-
-Lemma ders_ders_fcs X rules prems (ders : @dersrec_fcs X rules prems) :
-  dersrec rules prems (dersrec_fc_concls ders).
-Proof. destruct ders. simpl. rewrite ders_concls_eq. exact d. Qed. 
-
-Lemma in_drs_trees: forall X rules prems cs ds c (d : derrec rules prems c),
-  in_dersrec d ds -> InT (fcI d) (@dersrec_trees X rules prems cs ds).
-Proof. intros. induction X0 ; simpl. 
-apply InT_eq.  apply InT_cons. assumption. Qed. 
-
-Lemma in_trees_drs: forall X rules prems cs ds c (d : derrec rules prems c),
-  InT (fcI d) (@dersrec_trees X rules prems cs ds) -> in_dersrec d ds.
-Proof. induction cs ; intro ; dependent inversion ds ; simpl ; intros.
-inversion X0.
-(* inversion X0. injection H2. gives existT equality *)
-subst.  dependent destruction X0. apply in_dersrec_hd.
-apply in_dersrec_tl. apply IHcs. assumption. Qed.
-
-Lemma fcI_inj: forall X rules prems concl (d1 : @derrec X rules prems concl) d2,
-  fcI d1 = fcI d2 -> d1 = d2.
-Proof. intros.  (* injection H gives existT equality *)
-  dependent destruction H. reflexivity. Qed.
-
-(* this doesn't work - type of Q 
-Goal forall X rules prems Q cs (ds : @dersrec X rules prems cs),
-  allPder Q ds -> Forall2T Q cs (dersrec_trees ds).
-*)
 
 (* admissibility *)
 

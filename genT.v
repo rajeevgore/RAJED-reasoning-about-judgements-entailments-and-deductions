@@ -287,16 +287,6 @@ Proof. intros. induction X.
 subst. simpl. apply InT_eq.
 simpl. apply InT_cons. assumption. Qed.
 
-Lemma InT_map_iffT: forall (A B : Type) (f : A -> B) (l : list A) (y : B),
-       iffT (InT y (map f l)) (sigT (fun x => prod (f x = y) (InT x l))).
-Proof. intros. unfold iffT. split. intro.
-induction l. eapply InT_nilE in X. apply X.
-simpl in X.  inversion X. subst. exists a.
-split. reflexivity.  apply InT_eq.
-subst. apply IHl in X0. cD. exists X0. subst. split. reflexivity. 
-apply InT_cons. exact X2. 
-intro. cD. subst. apply InT_map. exact X1. Qed.
-
 Lemma InT_mapE: forall (A B : Type) (f : A -> B) (l : list A) (y : B),
        (InT y (map f l)) -> (sigT (fun x => prod (f x = y) (InT x l))).
 Proof. intros. 
@@ -305,6 +295,13 @@ simpl in X.  inversion X. subst. exists a.
 split. reflexivity.  apply InT_eq.
 subst. apply IHl in X0. cD. exists X0. subst. split. reflexivity. 
 apply InT_cons. exact X2. Qed.
+
+Lemma InT_map_iffT: forall (A B : Type) (f : A -> B) (l : list A) (y : B),
+       iffT (InT y (map f l)) (sigT (fun x => prod (f x = y) (InT x l))).
+Proof. intros. apply pair. apply InT_mapE.
+intro. cD. subst. apply InT_map. exact X1. Qed.
+
+Definition InT_mapI A B f l y := iffT_D2 (@InT_map_iffT A B f l y).
 
 Lemma InT_concat: forall (A : Type) a (xs : list A) pss,
      InT a xs -> InT xs pss -> InT a (concat pss).
