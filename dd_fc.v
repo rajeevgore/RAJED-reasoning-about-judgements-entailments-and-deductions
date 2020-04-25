@@ -168,13 +168,13 @@ Fixpoint dersrec_concls X rules prems concls
   end.
 
 Fixpoint dersrec_hd X rules prems c cs
-  (ders : @dersrec X rules prems (c :: cs)) :=
+  (ders : @dersrec X rules prems (c :: cs)) {struct ders} :=
   match ders with 
     | dlCons d ds => d
   end.
 
 Fixpoint dersrec_tl X rules prems c cs
-  (ders : @dersrec X rules prems (c :: cs)) :=
+  (ders : @dersrec X rules prems (c :: cs)) {struct ders} :=
   match ders with 
     | dlCons d ds => ds
   end.
@@ -211,35 +211,20 @@ Fixpoint derrec_nextup X rules prems concl
   end.
 *)
 
-(* WHY DOESN'T simpl WORK (in the first usage) in next two?? *)
 Lemma dersrec_hd_eq X rs ps c cs
   (d : @derrec X rs ps c) (ds : @dersrec X rs ps cs) :
   dersrec_hd (dlCons d ds) = d.
-Proof. simpl. (* does nothing, but the following works - both branches !! *)
-destruct cs ; simpl ; reflexivity. Qed.
+Proof. simpl. reflexivity.  Qed.
 
 Lemma dersrec_tl_eq X rs ps c cs
   (d : @derrec X rs ps c) (ds : @dersrec X rs ps cs) :
   dersrec_tl (dlCons d ds) = ds.
-Proof. simpl. (* fails, as for dersrec_hd_eq *)
-destruct cs ; simpl ; reflexivity. Qed.
+Proof. simpl. reflexivity.  Qed.
 
 Lemma in_drs_drs_hd X rs ps c cs (ds : @dersrec X rs ps (c :: cs)) :
   in_dersrec (dersrec_hd ds) ds.
 Proof. dependent destruction ds.  (* dependent induction ds. also seems OK *)
-simpl. (* DOES NOTHING - WHY ?? *)
-rewrite dersrec_hd_eq.  apply in_dersrec_hd. Qed.
-
-Lemma dersrec_hd_single_eq X rs ps c 
-  (d : @derrec X rs ps c) (ds : @dersrec X rs ps []) :
-  dersrec_hd (dlCons d ds) = d.
-Proof. simpl. reflexivity. Qed.
-
-Lemma in_drs_drs_hd_single X rs ps c (ds : @dersrec X rs ps [c]) :
-  in_dersrec (dersrec_hd ds) ds.
-Proof. dependent destruction ds.  (* dependent induction ds. also seems OK *)
-simpl. (* here it works, unlike for in_dersrec_hd !! *)
-apply in_dersrec_hd. Qed.
+simpl. apply in_dersrec_hd.  Qed.
 
 Lemma dersrec_height_le: forall X rules prems n ps 
   (ds : dersrec rules prems ps),
