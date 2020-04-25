@@ -148,121 +148,6 @@ Proof. apply derrec_dersrec_rect_mut.
 Definition derrec_derrec X rules prems := fst (@derrec_derrec' X rules prems).
 Definition dersrec_derrec X rules prems := snd (@derrec_derrec' X rules prems).
 
-(* tried to do a similar thing where property Q also involved the 
-proof tree (as well as the endsequent): this created a problem that
-the list of proof trees which are part of the dersrec object are not 
-all of the same type - so one cannot go from 
-ds : dersrec rules prems concls to ForallT (dersrec rules prems ??) ds'
-instead need to define allPder and do the following *)
-
-Inductive allPder X (rules : rlsT X) (prems : X -> Type) P : 
-  forall concls : list X, dersrec rules prems concls -> Type :=
-  | allPder_Nil : @allPder X rules prems P [] (dlNil rules prems)
-  | allPder_Cons : forall seq seqs d, P seq d -> forall ds, 
-    @allPder X rules prems P seqs ds -> 
-    @allPder X rules prems P (seq :: seqs) (dlCons d ds)
-  .
-
-Lemma allPderD : forall X rules prems Q ps (dpss : dersrec rules prems ps) p,
-  allPder Q dpss -> InT (p : X) ps -> {d : derrec rules prems p & Q p d}.
-Proof. induction ps.
-intros. inversion X1.
-intros dpss p adp inp. inversion adp. subst. 
-inversion inp ; subst.
-exists d. assumption.
-clear X0 inp adp. exact (IHps ds p X1 X2).  Qed.
-
-(* destruct for allPder dlCons *)
-Lemma allPder_dlConsD: forall X rules prems Q seq seqs d ds,
-  @allPder X rules prems Q (seq :: seqs) (dlCons d ds) ->
-    Q seq d * allPder Q ds.
-Proof.
-intros. (* inversion X0 produces existT equalities *)
-(* induction X0 produces trivial subgoal 2, unsolvable subgoal 1 *)
-(* dependent induction X0. OK, but irrelevant IHX0, trivial subgoal *)
-dependent destruction X0. 
-split ; assumption. Qed.
-
-Inductive in_dersrec X (rules : rlsT X) prems concl 
-  (d : derrec rules prems concl) : 
-  forall concls, dersrec rules prems concls -> Type :=
-  | in_dersrec_hd : forall concls ds, in_dersrec d 
-    (@dlCons X rules prems concl concls d ds)
-  | in_dersrec_tl : forall concl' d' concls ds, in_dersrec d ds -> 
-    in_dersrec d (@dlCons X rules prems concl' concls d' ds)
-  .
-
-Inductive is_nextup X (rules : rlsT X) prems (concl : X) (concls : list X)  
-  (ds : dersrec rules prems concls) : derrec rules prems concl -> Type :=
-  | is_nextupI : forall rps, is_nextup ds (derI concl rps ds) 
-  (* can't make this next line work
-  | is_nextup_nil : is_nextup (dlNil rules prems) (dpI _ _ _ _) 
-  *)
-  .
-
-Inductive in_nextup X (rules : rlsT X) prems (concln concl : X) 
-  (dn : derrec rules prems concln) (d : derrec rules prems concl) : Type :=
-  | in_nextupI : forall concls (ds : dersrec rules prems concls),
-      is_nextup ds d -> in_dersrec dn ds -> in_nextup dn d
-  .
-
-Lemma in_drs_concl_in W rules ps (cn : W) (drs : dersrec rules emptyT ps)
-  (dtn : derrec rules emptyT cn) : in_dersrec dtn drs -> InT cn ps.
-Proof. intro ind. induction ind. apply InT_eq.
-apply InT_cons. assumption. Qed.
-
-Lemma in_nextup_concl_in W rules ps (concl cn : W) rpc
-  (drs : dersrec rules emptyT ps) (dtn : derrec rules emptyT cn) :
-  in_nextup dtn (derI concl rpc drs) -> InT cn ps.
-Proof. intro ind. inversion ind. inversion X. subst.
-dependent destruction H2. clear H1 rps0 ind X.
-exact (in_drs_concl_in X0). Qed.
-
-Lemma all_in_d_allP: forall X rules prems Q ps (dpss : dersrec rules prems ps),
-  (forall (p : X) (d : derrec rules prems p), in_dersrec d dpss -> Q p d) -> 
-  allPder Q dpss.
-Proof.  induction dpss. intros. apply allPder_Nil.
-intros.  apply allPder_Cons.  apply X0. apply in_dersrec_hd.
-apply IHdpss.  intros. apply X0. apply in_dersrec_tl. assumption. Qed.
-(* alternative proof, longer, shows need to use dependent inversion 
-Proof. induction ps. intros. dependent inversion dpss. apply allPder_Nil.
-intro. dependent inversion dpss. subst. 
-intros.  apply allPder_Cons. apply X0. apply in_dersrec_hd.
-apply IHps. intros. apply X0. apply in_dersrec_tl. assumption. Qed.
-*)
-
-Lemma allP_all_in_d: forall X rules prems Q ps (dpss : dersrec rules prems ps),
-  allPder Q dpss -> 
-  forall (p : X) (d : derrec rules prems p), in_dersrec d dpss -> Q p d.  
-Proof. induction ps. intro. dependent inversion dpss.
-intros. inversion X1.
-intro. dependent inversion dpss. subst.
-intro. (* inversion X0 gives existT equalities *)
-dependent destruction X0.
-intros. (* inversion X1 gives existT equalities *) 
-dependent destruction X1. assumption.
-eapply IHps. eassumption. assumption. Qed.
-
-Definition derrec_rect_mut_all X (rules : rlsT X) prems Q cl1 cl2 :=
-  derrec_rect_mut Q (@allPder X rules prems Q) cl1 cl2 
-    (allPder_Nil Q) (@allPder_Cons X rules prems Q).
-(*
-Check derrec_rect_mut_all.
-*)
-Lemma allPderD_in :
-  forall X rules prems Q ps (dpss : dersrec rules prems ps) p,
-    allPder Q dpss -> InT (p : X) ps ->
-      {d : derrec rules prems p & in_dersrec d dpss & Q p d}.
-Proof. induction ps.
-intros. inversion X1.
-intros dpss p adp inp. dependent destruction adp.
-inversion inp ; subst.
-exists d.  apply in_dersrec_hd.  assumption.
-pose (IHps ds p adp X0). destruct s. (* cD doesn't work here - why?? *)
-exists x. apply in_dersrec_tl. assumption.  assumption. Qed.
-(*
-Check allPderD_in.
-*)
 Inductive derl X (rules : list X -> X -> Type) : list X -> X -> Type := 
   | asmI : forall p, derl rules [p] p
   | dtderI : forall pss ps concl, rules ps concl ->
@@ -547,13 +432,6 @@ Lemma dersrec_map_2: forall X Y (f : X -> Y) rules prems c d,
     (derrec rules prems (f c) * derrec rules prems (f d)).
 Proof. intros. rewrite dersrec_all. rewrite ForallT_map_2. reflexivity. Qed.
 
-(*
-Lemma in_dersrec_single X rs ps c (ds : @dersrec X rs ps [c]) :
-  in_dersrec (dersrec_singleD' ds) ds.
-Proof. dependent destruction ds.  (* dependent induction ds. also seems OK *)
-HOW TO CONTINUE PROOF ??
-*)
-
 (* try using the induction principle derrec_all_rect *)
 Theorem derrec_trans_imp: forall X rules prems (concl : X),
   derrec rules (derrec rules prems) concl -> derrec rules prems concl.
@@ -748,136 +626,8 @@ Check derl_trans.
 Check dersl_trans.
 Check derl_deriv.
 *)
-Fixpoint derrec_height X rules prems concl 
-  (der : @derrec X rules prems concl) :=
-  match der with 
-    | dpI _ _ _ _ => 0
-    | derI _ _ ds => S (dersrec_height ds)
-  end
-with dersrec_height X rules prems concls
-  (ders : @dersrec X rules prems concls) :=
-  match ders with 
-    | dlNil _ _ => 0
-    | dlCons d ds => max (derrec_height d) (dersrec_height ds)
-  end.
 
-Fixpoint derrec_size X rules prems concl 
-  (der : @derrec X rules prems concl) :=
-  match der with 
-    | dpI _ _ _ _ => 0
-    | derI _ _ ds => S (dersrec_size ds)
-  end
-with dersrec_size X rules prems concls
-  (ders : @dersrec X rules prems concls) :=
-  match ders with 
-    | dlNil _ _ => 0
-    | dlCons d ds => (derrec_size d) + (dersrec_size ds)
-  end.
-
-Fixpoint derrec_concl X rules prems concl 
-  (der : @derrec X rules prems concl) :=
-  match der with 
-    | dpI _ _ c _ => c
-    | derI c _ _ => c
-  end.
-
-Fixpoint dersrec_concls X rules prems concls
-  (ders : @dersrec X rules prems concls) :=
-  match ders with 
-    | dlNil _ _ => []
-    | dlCons d ds => derrec_concl d :: dersrec_concls ds
-  end.
-
-Fixpoint dersrec_hd X rules prems c cs
-  (ders : @dersrec X rules prems (c :: cs)) :=
-  match ders with 
-    | dlCons d ds => d
-  end.
-
-Fixpoint dersrec_tl X rules prems c cs
-  (ders : @dersrec X rules prems (c :: cs)) :=
-  match ders with 
-    | dlCons d ds => ds
-  end.
-
-(* can't do this, gives The term "ds" has type "dersrec rules prems l"
-  while it is expected to have type "dersrec rules prems []".  
-Fixpoint derrec_nextup X rules prems concl
-  (der : @derrec X rules prems concl) :=
-  match der with 
-    | dpI _ _ _ _ => dlNil rules prems 
-    | derI _ _ ds => ds
-  end.
-*)
-
-(*
-WHY DOESN'T simpl WORK in next two?
-Lemma dersrec_hd_eq X rs ps c cs
-  (d : @derrec X rs ps c) (ds : @dersrec X rs ps cs) :
-  dersrec_hd (dlCons d ds) = d.
-
-Lemma dersrec_tl_eq X rs ps c cs
-  (d : @derrec X rs ps c) (ds : @dersrec X rs ps cs) :
-  dersrec_tl (dlCons d ds) = ds.
-
-Lemma in_dersrec_hd X rs ps c cs (ds : @dersrec X rs ps (c :: cs)) :
-  in_dersrec (dersrec_hd ds) ds.
-Proof. dependent destruction ds.  (* dependent induction ds. also seems OK *)
-simpl. DOES NOTHING
-HOW TO CONTINUE PROOF ??
-*)
-
-Lemma dersrec_height_le: forall X rules prems n ps 
-  (ds : dersrec rules prems ps),
-  (forall (p : X) (d : derrec rules prems p),
-  in_dersrec d ds -> derrec_height d <= n) -> dersrec_height ds <= n.
-Proof. (* induction ps. 
-intros. inversion ds.  this step seems to do nothing *)
-induction ds. 
-intros.  simpl. apply le_0_n. 
-intros.  simpl.  apply Nat.max_lub.
-apply H. apply in_dersrec_hd.
-apply IHds.  intros. apply H.  apply in_dersrec_tl. assumption. Qed.
-
-Lemma le_dersrec_height: forall X rules prems n ps 
-  (ds : dersrec rules prems ps),
-  forall (p : X) (d : derrec rules prems p),
-  in_dersrec d ds -> n <= derrec_height d -> n <= dersrec_height ds.
-Proof. (* induction ps. 
-intros. inversion ds.  this step seems to do nothing *)
-(* this doesn't work - why ??
-induction ds ; intros ; inversion X0 ; subst ; simpl ; rewrite Nat.max_le_iff.
-left. assumption.
-right.  eapply IHds. 2: eassumption.
-WHAT NOW ???
-*)
-intros. induction X0 ; simpl ; rewrite Nat.max_le_iff ; tauto. Qed.
-
-(*
-Fixpoint aderrec_height X 
-  (rules : list X -> X -> Prop) (prems : X -> Prop) concl 
-  (der : @aderrec X rules prems concl) :=
-  match der with 
-    | adpI _ _ _ _ => 0
-    | aderI _ _ _ => 0
-  end.
-  *)
-
-Fixpoint derl_height X 
-  (rules : list X -> X -> Prop) (prems : list X) (concl : X) 
-  (der : @derl X rules prems concl) :=
-  match der with 
-    | asmI _ _ => 0
-    | dtderI _ _ ds => S (dersl_height ds)
-  end
-with dersl_height X (rules : list X -> X -> Prop) (prems concls : list X) 
-  (ders : @dersl X rules prems concls) :=
-  match ders with
-    | dtNil _ => 0
-    | dtCons d ds => max (derl_height d) (dersl_height ds)
-  end.
-
-(* induction for two proof trees *)
+(** induction for two proof trees **)
 
 Lemma derrec_all_rect2:
   forall X Y (rulesx : list X -> X -> Type) (rulesy : list Y -> Y -> Type) 
@@ -906,21 +656,12 @@ Check derrec_all_rect2.
 *)
 (* version with no premises *)
 Definition derrec_all_rect2_nops X Y rulesx rulesy Q := 
-  @derrec_all_rect2 X Y rulesx rulesy (@emptyT X) (@emptyT Y) Q
+  @derrec_all_rect2 X Y rulesx rulesy emptyT emptyT Q
   (@emptyT_any' X _) (@emptyT_any' Y _).
 (*
 Check derrec_all_rect2_nops.
 *)
-Lemma der_concl_eq: forall X (rules : rlsT X) prems concl 
-  (d : derrec rules prems concl), derrec_concl d = concl.
-Proof. dependent inversion d ; simpl ; reflexivity. Qed.
-
-Lemma ders_concls_eq: forall X (rules : rlsT X) prems concls 
-  (ds : dersrec rules prems concls), dersrec_concls ds = concls.
-Proof. induction ds ; simpl.  reflexivity.
-rewrite -> (der_concl_eq d). rewrite IHds. reflexivity. Qed.
-
-(* admissibility *)
+(** admissibility **)
 
 Inductive adm X rules ps c : Type := 
   | admI : (dersrec rules (@emptyT X) ps -> derrec rules (@emptyT X) c) ->
