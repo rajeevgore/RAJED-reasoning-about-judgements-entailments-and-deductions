@@ -167,6 +167,7 @@ Fixpoint dersrec_concls X rules prems concls
     | dlCons d ds => derrec_concl d :: dersrec_concls ds
   end.
 
+(* see coq-club emails 25/4/20 *)
 Fixpoint dersrec_hd X rules prems c cs
   (ders : @dersrec X rules prems (c :: cs)) {struct ders} :=
   match ders with 

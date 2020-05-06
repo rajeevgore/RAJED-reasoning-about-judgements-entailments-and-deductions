@@ -42,9 +42,11 @@ genT.vo : gen.vo existsT.vo genT.v
 
 ddT.vo : genT.vo ddT.v
 
+dd_fc.vo : ddT.vo dd_fc.v
+
 List_lemmasT.vo : ddT.vo List_lemmasT.v
 
-lntT.vo : List_lemmasT.vo lntT.v
+lntT.vo : ddT.vo List_lemmasT.vo lntT.v
 
 swappedT.vo : existsT.vo lntT.vo swappedT.v
 
