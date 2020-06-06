@@ -443,3 +443,22 @@ Lemma inhabited_anon: forall A, inhabited A <-> anon A.
 Proof. unfold iff.  unfold anon.  intros.  split ; intros.
  destruct H. exists ; tauto.
  destruct H. apply inhabits. assumption. Qed.
+
+Inductive leT (n : nat) : nat -> Type :=
+  | leT_n : leT n n | leT_S : forall m : nat, leT n m -> leT n (S m).
+
+Theorem leT_n_S : forall n m, leT n m -> leT (S n) (S m).
+Proof. intros. induction H. apply leT_n. apply (leT_S IHleT). Qed.
+
+Lemma leT_S_n' : forall sn sm, leT sn sm -> 
+  forall n m, sn = S n -> sm = S m -> leT n m.
+Proof. intros * ss. induction ss.
+- intros. subst. inversion H0. apply leT_n.
+- destruct m.
++ inversion ss. intros. inversion H0.
++ intros. subst.  specialize (IHss _ _ eq_refl eq_refl).
+inversion H0.  exact (leT_S IHss). Qed.
+
+(* forall n m, leT (S n) (S m) -> leT n m *)
+Definition leT_S_n n m l := @leT_S_n' _ _ l n m eq_refl eq_refl.
+
