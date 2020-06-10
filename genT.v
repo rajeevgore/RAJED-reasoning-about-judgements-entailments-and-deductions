@@ -462,3 +462,8 @@ inversion H0.  exact (leT_S IHss). Qed.
 (* forall n m, leT (S n) (S m) -> leT n m *)
 Definition leT_S_n n m l := @leT_S_n' _ _ l n m eq_refl eq_refl.
 
+Lemma leT_trans' l m n: leT m n -> leT l m -> leT l n.
+Proof. intro. induction H ; intro. apply H. exact (leT_S (IHleT H0)). Qed.
+
+Definition leT_trans l m n llm lmn := @leT_trans' l m n lmn llm.
+
