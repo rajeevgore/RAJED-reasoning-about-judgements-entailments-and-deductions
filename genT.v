@@ -467,3 +467,13 @@ Proof. intro. induction H ; intro. apply H. exact (leT_S (IHleT H0)). Qed.
 
 Definition leT_trans l m n llm lmn := @leT_trans' l m n lmn llm.
 
+Lemma leT_0_n n: leT 0 n. 
+Proof. induction n. apply leT_n. apply (leT_S IHn). Qed.
+
+Lemma leT_plus_r n m : leT m (n + m).
+Proof. induction n ; simpl. apply leT_n. apply (leT_S IHn). Qed.
+
+Lemma leT_plus_l n m : leT n (n + m).
+Proof. induction n ; simpl. apply leT_0_n. apply (leT_n_S IHn). Qed.
+
+
