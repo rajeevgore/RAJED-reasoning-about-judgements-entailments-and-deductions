@@ -24,6 +24,10 @@ Proof. intros. induction H. Qed.
 (* compare 
   https://coq.inria.fr/stdlib/Coq.Relations.Relation_Definitions.html *)
 Polymorphic Definition relationT (A : Type) := A -> A -> Type.
+Inductive empty_relT {A B : Type} : A -> B -> Type := .
+
+Lemma rsub_emptyT {A B} r : @rsub A B empty_relT r.
+Proof. intros u v e. destruct e. Qed.
 
 Definition transitiveT W (R : relationT W) :=
   forall (x y z : W), R x y -> R y z -> R x z.
@@ -475,5 +479,19 @@ Proof. induction n ; simpl. apply leT_n. apply (leT_S IHn). Qed.
 
 Lemma leT_plus_l n m : leT n (n + m).
 Proof. induction n ; simpl. apply leT_0_n. apply (leT_n_S IHn). Qed.
+
+Theorem eq_S_F n : S n = n -> False.
+Proof. intro. induction n ; inversion H. tauto. Qed.
+
+Theorem leT_S_F n : leT (S n) n -> False.
+Proof. induction n ; intro. inversion H. apply leT_S_n in H. tauto. Qed.
+
+Lemma leT_S_or_eq n m : leT n m -> leT (S n) m + (n = m).
+Proof. intro. induction H.  tauto.  left. exact (leT_n_S H). Qed.
+
+Lemma leT_or_gt n m : leT n m + leT (S m) n.
+Proof. induction n. left. apply leT_0_n.
+destruct IHn. apply leT_S_or_eq in l. destruct l. exact (inl l).
+subst. exact (inr (leT_n _)).  exact (inr (leT_S l)). Qed.
 
 

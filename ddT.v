@@ -667,6 +667,10 @@ Inductive adm X rules ps c : Type :=
   | admI : (dersrec rules (@emptyT X) ps -> derrec rules (@emptyT X) c) ->
     adm X rules ps c.
 
+Definition admD X rules ps c (a : @adm X rules ps c) :=
+  match a with | admI d => d end.
+Definition admDs X rules p c a d := @admD X rules [p] c a (dersrec_singleI d).
+
 Lemma derl_sub_adm X rules ps c : @derl X rules ps c -> adm rules ps c.
 Proof. intro. apply admI.  apply derl_derrec_trans. assumption. Qed.
 

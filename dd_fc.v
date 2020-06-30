@@ -167,6 +167,13 @@ Fixpoint dersrec_concls X rules prems concls
     | dlCons d ds => derrec_concl d :: dersrec_concls ds
   end.
 
+Fixpoint der_botr_ps X rules prems concl 
+  (der : @derrec X rules prems concl) :=
+  match der with 
+    | dpI _ _ _ _ => []
+    | @derI _ _ _ ps _ _ _ => ps
+  end.
+
 (* see coq-club emails 25/4/20 *)
 Fixpoint dersrec_hd X rules prems c cs
   (ders : @dersrec X rules prems (c :: cs)) {struct ders} :=
@@ -348,6 +355,7 @@ Fixpoint derrec_of_fc X rules prems
   end.
   *)
 
+
 (* while we can't get something of type derrec rules prems _
   from something of type derrec_fc ..., we can get it and then
   apply any function to it whose result type doesn't involve the conclusion *)
@@ -383,6 +391,10 @@ Lemma dersrec_trees_concls_eq X rules prems ps (ds : dersrec rules prems ps) :
   map (@derrec_fc_concl X rules prems) (dersrec_trees ds) = ps.
 Proof. induction ds.  simpl. reflexivity.
 simpl. rewrite (der_concl_eq d). rewrite IHds. reflexivity. Qed.
+
+Lemma der_botr_ps_eq X rules prems c (dt : derrec rules prems c) :
+  map (@derrec_fc_concl X rules prems) (nextup (fcI dt)) = der_botr_ps dt.
+Proof. destruct dt ; simpl.  reflexivity. apply dersrec_trees_concls_eq. Qed.
 
 Lemma der_der_fc X rules prems (der : @derrec_fc X rules prems) :
   derrec rules prems (derrec_fc_concl der).
@@ -434,6 +446,14 @@ Lemma botRule_fc_ps W rules prems ps (c : W) (dt : derrec_fc rules prems) :
   botRule_fc dt ps c -> map (@derrec_fc_concl W rules prems) (nextup dt) = ps.
 Proof. intro br. destruct br. destruct dt. reflexivity. Qed.
 
+Lemma get_botrule W rules prems (c : W) (dt : derrec rules prems c) :
+  botRule_fc (fcI dt) (der_botr_ps dt) c.
+Proof. rewrite <- der_botr_ps_eq.
+  eapply eq_rect. apply botRule_fcI.  apply der_fc_concl_eq. Qed.
+
+Definition bot_is_rule W rules (c : W) (dt : derrec rules emptyT c) :=
+  botRule_fc_rules (get_botrule dt).
+
 Lemma in_nextup_eqv W rules prems (concln concl : W) 
   (dtn : derrec rules prems concln) (dt : derrec rules prems concl) :
   iffT (in_nextup dtn dt) (InT (fcI dtn) (nextup (fcI dt))).
@@ -475,5 +495,16 @@ Proof. intros.  (* injection H gives existT equality *)
 (* this doesn't work - type of Q 
 Goal forall X rules prems Q cs (ds : @dersrec X rules prems cs),
   allPder Q ds -> Forall2T Q cs (dersrec_trees ds).
+*)
+
+(*
+Print botRule_fc.
+Check der_concl_eq.
+Check der_fc_concl_eq.
+Check der_botRule.
+Check botRule_fc_concl.
+Check botRule_fc_rules.
+Check botRule_fc_drs.
+Check botRule_fc_ps.
 *)
 
