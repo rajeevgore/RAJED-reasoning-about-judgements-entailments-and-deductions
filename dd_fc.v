@@ -203,6 +203,10 @@ Proof. dependent destruction ds.  (* dependent induction ds. also seems OK *)
 HOW TO CONTINUE PROOF ?? NB works better for dersrec_singleD'
 *)
 
+Lemma botr_ps_der W rules prems c (d : derrec rules prems c) :
+  @dersrec W rules prems (der_botr_ps d).
+Proof. destruct d ; simpl. apply dlNil. apply d. Qed.
+
 Lemma in_dersrec_single' X rs ps c (ds : @dersrec X rs ps [c]) :
   in_dersrec (dersrec_singleD' ds) ds.
 Proof. dependent destruction ds.  (* dependent induction ds. also seems OK,
@@ -454,6 +458,11 @@ Proof. rewrite <- der_botr_ps_eq.
 Definition bot_is_rule W rules (c : W) (dt : derrec rules emptyT c) :=
   botRule_fc_rules (get_botrule dt).
 
+Lemma botRule_fc_prems W rules prems (c : W) (dt : derrec rules prems c) ps c' :
+  botRule_fc (fcI dt) ps c' -> (c = c') * (der_botr_ps dt = ps).
+Proof. intro br. rewrite <- der_botr_ps_eq.  rewrite (botRule_fc_ps br).
+split.  destruct br.  rewrite der_fc_concl_eq. reflexivity. reflexivity. Qed.
+
 Lemma in_nextup_eqv W rules prems (concln concl : W) 
   (dtn : derrec rules prems concln) (dt : derrec rules prems concl) :
   iffT (in_nextup dtn dt) (InT (fcI dtn) (nextup (fcI dt))).
@@ -487,6 +496,17 @@ Lemma is_nextup_ndt W rules prems concls (concl : W)
   is_nextup dts dt -> nextup (fcI dt) = dersrec_trees dts.
 Proof. unfold nextup. intros.  destruct X. reflexivity. Qed.
 
+Lemma drs_trees_height W rules prems ps (ds : @dersrec W rules prems ps) dn: 
+  InT dn (dersrec_trees ds) -> derrec_fc_height dn <= dersrec_height ds.
+Proof. induction ds ; simpl ; intro inn ; inversion inn.
+subst. simpl. apply PeanoNat.Nat.le_max_l.
+apply (Le.le_trans _ _ _ (IHds X)).  apply PeanoNat.Nat.le_max_r. Qed.
+
+Lemma nextup_height W rules prems dt dn: InT dn (nextup dt) ->
+  (@derrec_fc_height W rules prems dn) < derrec_fc_height dt.
+Proof. intro inn.  destruct dt. destruct d ; simpl in inn. inversion inn.
+simpl.  exact (Lt.le_lt_n_Sm _ _ (drs_trees_height _ inn)). Qed.
+
 Lemma fcI_inj: forall X rules prems concl (d1 : @derrec X rules prems concl) d2,
   fcI d1 = fcI d2 -> d1 = d2.
 Proof. intros.  (* injection H gives existT equality *)
@@ -499,12 +519,13 @@ Goal forall X rules prems Q cs (ds : @dersrec X rules prems cs),
 
 (*
 Print botRule_fc.
-Check der_concl_eq.
-Check der_fc_concl_eq.
-Check der_botRule.
-Check botRule_fc_concl.
-Check botRule_fc_rules.
-Check botRule_fc_drs.
-Check botRule_fc_ps.
+Print Implicit der_concl_eq.
+Print Implicit der_fc_concl_eq.
+Print Implicit der_botRule.
+Print Implicit botRule_fc_concl.
+Print Implicit botRule_fc_rules.
+Print Implicit botRule_fc_drs.
+Print Implicit botRule_fc_ps.
+Print Implicit botRule_fc_prems.
 *)
 

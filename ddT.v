@@ -172,6 +172,12 @@ Lemma dtCons_eq X rules ps c pss cs psa: derl rules ps (c : X) ->
   dersl rules pss cs -> psa = ps ++ pss -> dersl rules psa (c :: cs). 
 Proof. intros. subst. apply dtCons ; assumption. Qed.
 
+Lemma derl_dersl_single X rules ps (c : X) :
+  iffT (dersl rules ps [c]) (derl rules ps c).
+Proof. split. 
+intro. inversion X0. inversion X2. subst.  rewrite app_nil_r. assumption.
+intro. eapply (dtCons_eq X0 (dtNil _)).  rewrite app_nil_r. reflexivity. Qed.
+
 (* combine the two inductive principles *)
 Definition derl_dersl_rect_mut X rules P P0 asm dtd dtn dtc :=
   pair (@derl_rect_mut X rules P P0 asm dtd dtn dtc)
@@ -720,8 +726,12 @@ Definition dersl_adm X rules := snd (@derl_adm_s X rules).
 (* also adm (derl rules) = adm rules *)
 
 (* plug-in replacement for derl_derrec_trans *)
-Lemma adm_derrec_trans X rules  rps concl: @adm X rules rps concl -> 
+Lemma adm_derrec_trans X rules rps concl: @adm X rules rps concl -> 
   dersrec rules (@emptyT X) rps -> derrec rules (@emptyT X) concl.
 Proof. intros a drs. destruct a. apply d. apply drs. Qed.
 
+Lemma adm_single_trans X rules prems p c:
+  adm rules prems p -> @adm X rules [p] c -> adm rules prems c.
+Proof. split. destruct X0. inversion X1. 
+intro dps. apply X0. right. apply (d dps). left. Qed.
 

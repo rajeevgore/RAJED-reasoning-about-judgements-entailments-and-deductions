@@ -83,6 +83,17 @@ Proof.
   eapply swapped_I'.
 Qed.
 
+Definition single X (a : X) := [a].
+
+Lemma cons_app_single X (a : X) xs : a :: xs = single a ++ xs.
+Proof. unfold single. simpl. reflexivity. Qed.
+
+Lemma single_eq X a : [a : X] = single a.
+Proof. unfold single. reflexivity. Qed.
+
+(* note some of the complexity of swap_tac involving cons
+  may be avoided by rewriting with cons_app_single and single_eq *)
+
 Lemma swapped_Rc2 T A H B C: 
   swapped C (H ++ [A : T]) -> swapped (C ++ B) (H ++ A :: B).
 Proof. intros sw. eapply swapped_R in sw. revert sw.
