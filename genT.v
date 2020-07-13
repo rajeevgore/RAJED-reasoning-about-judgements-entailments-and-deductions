@@ -494,4 +494,8 @@ Proof. induction n. left. apply leT_0_n.
 destruct IHn. apply leT_S_or_eq in l. destruct l. exact (inl l).
 subst. exact (inr (leT_n _)).  exact (inr (leT_S l)). Qed.
 
+Lemma leT_ex_plus k n : leT k n -> { m : nat & Nat.add m k = n }.
+Proof. intro lkn. induction lkn. exists 0. simpl. reflexivity.
+cD. subst. exists (S IHlkn). simpl. reflexivity. Qed.
+
 
