@@ -17,6 +17,9 @@ Proof. unfold rsub. firstorder. Qed.
 
 Definition req U V f g := prod (@rsub U V f g) (rsub g f).
 
+Lemma req_refl U V f : @req U V f f.
+Proof. unfold req. split ; apply rsub_id. Qed.
+
 Lemma req_sym U V f g : @req U V f g -> @req U V g f.
 Proof. unfold req. tauto. Qed.
 
