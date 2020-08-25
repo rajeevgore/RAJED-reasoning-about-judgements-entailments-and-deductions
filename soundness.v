@@ -80,6 +80,8 @@ Fixpoint tau_ns V ns :=
 
 Definition valid_ns {V : Set} ns :=
   forall W R (val : W -> V -> Prop), mforces R val (tau_ns (rev ns)).
+Definition valid_nsP {V : Set} ns := forall W (R : W -> W -> Prop)
+  (val : W -> V -> Prop), mforces R val (tau_ns (rev ns)).
 
 Print lntbRT.b1rrules.
 Print lntbRT.b2rrules.
@@ -92,6 +94,10 @@ Axiom wf_conj_app_consI : forall V W R val w A H2l H2r,
 
 Axiom wf_conj_app_consD1 : forall V W R val w A H2l H2r,
   wforces R val w (conjall (H2l ++ A :: H2r)) -> @wforces V W R val w A.
+
+Axiom wf_disj_app_consI1 : forall V W R val w A H2l H2r,
+  @wforces V W R val w A ->
+  wforces R val w (disjall (H2l ++ A :: H2r)).
 
 (* validity preserved by rules, also
   wvalid : a rule preserves forcing at a given world, or
@@ -106,6 +112,16 @@ apply ForallTI_forall. intros.
 eapply ForallTD_forall in H.
 apply H.  exact H0. Qed.
 
+Lemma mvalid_validP V rules : (forall W (R : W -> W -> Prop) val,
+    gvalid_rule (fun ns => @mforces V W R val (tau_ns (rev ns))) rules) ->
+  gvalid_rule (fun ns => @valid_nsP V ns) rules.
+Proof. intros g ps c X H W R val.
+unfold gvalid_rule in g.
+eapply g.  exact X. clear g.  unfold valid_nsP in H.
+apply ForallTI_forall. intros.
+eapply ForallTD_forall in H.
+apply H.  exact H0. Qed.
+
 Lemma mvalid_valid V rules : (forall W R val,
     gvalid_rule (fun ns => @mforces V W R val (tau_ns (rev ns))) rules) ->
   gvalid_rule (fun ns => @valid_ns V ns) rules.
@@ -116,7 +132,12 @@ apply ForallTI_forall. intros.
 eapply ForallTD_forall in H.
 apply H.  exact H0. Qed.
 
-Lemma wvalid_b2l V W R val w :
+Lemma matchdeqv U V d (f : U -> V) g h :
+  (match d with | fwd => f g | bac => f h end) = 
+  f (match d with | fwd => g | bac => h end).
+Proof. destruct d ; simpl ; reflexivity. Qed.
+
+Lemma wvalid_b1l V W R val w :
   gvalid_rule (fun ns => @wforces V W R val w (tau_ns (rev ns)))
     (nslclrule (@lntb1LT.b1lrules V)).
 Proof. repeat intro.  destruct X. 
@@ -128,27 +149,84 @@ pose (classic (wforces R val w A)) ;  destruct o.
 + intro. apply H2. intro wfia. apply H0. clear H2.
 intro wfc. apply wfia. apply wf_conj_app_consI.
 exact H. exact wfc.
-+ intros x v rvw. clear x H2. 
-destruct d ; simpl ; intros wwc ; apply not_imply_elim in wwc ;
-apply wf_conj_app_consD1 in wwc ; simpl in wwc ; destruct (H (wwc _ rvw)).
++ intros x v rvw. clear x H2.  rewrite matchdeqv.
+simpl. intros wwc. apply not_imply_elim in wwc.
+apply wf_conj_app_consD1 in wwc. simpl in wwc. destruct (H (wwc _ rvw)).
 
 (* following is identical to above *)
 + intro. apply H2. intro wfia. apply H0. clear H2.
 intro wfc. apply wfia. apply wf_conj_app_consI.
 exact H. exact wfc.
-+ intros x v rvw. clear x H2. 
-destruct d ; simpl ; intros wwc ; apply not_imply_elim in wwc ;
-apply wf_conj_app_consD1 in wwc ; simpl in wwc ; destruct (H (wwc _ rvw)).
++ intros x v rvw. clear x H2.  rewrite matchdeqv.
+simpl. intros wwc. apply not_imply_elim in wwc.
+apply wf_conj_app_consD1 in wwc. simpl in wwc. destruct (H (wwc _ rvw)).
 
 Qed.
 
-Lemma mvalid_b2l V W R val :
+Lemma mvalid_b1l V W R val :
   gvalid_rule (fun ns => @mforces V W R val (tau_ns (rev ns)))
     (nslclrule (@lntb1LT.b1lrules V)).
-Proof. apply wvalid_mvalid. apply wvalid_b2l.  Qed.
+Proof. apply wvalid_mvalid. apply wvalid_b1l.  Qed.
+
+Lemma valid_b1l V :
+  gvalid_rule (fun ns => @valid_ns V ns) (nslclrule (@lntb1LT.b1lrules V)).
+Proof. apply mvalid_valid. apply mvalid_b1l.  Qed.
+
+Lemma mvalid_b2l V W R val :
+  gvalid_rule (fun ns => @mforces V W R val (tau_ns (rev ns)))
+    (nslclrule (@lntb2LT.b2lrules V)).
+Proof. repeat intro.  destruct X. 
+destruct b ; simpl in H ;  unfold nslclext ;  unfold nslclext in H ;
+inversion H ; subst ; clear H H3 ;
+rewrite rev_app_distr in H2 ;  rewrite rev_app_distr ;
+simpl ; simpl in H2 ; unfold mforces in H2 ;
+intro wfw ; apply not_imply_elim in wfw ;
+apply wf_conj_app_consD1 in wfw ; simpl in wfw ;
+intros v rwv ; specialize (wfw v rwv) ; specialize (H2 v) ;
+rewrite matchdeqv ; simpl ; rewrite matchdeqv in H2 ; simpl in H2 ;
+intro wwf ; apply H2 ; clear H2 ; intro wfaw ; apply wwf ;
+intro wfc ; apply wfaw ; clear wwf wfaw ;
+apply wf_conj_app_consI ; assumption.
+Qed.
 
 Lemma valid_b2l V :
-  gvalid_rule (fun ns => @valid_ns V ns) (nslclrule (@lntb1LT.b1lrules V)).
+  gvalid_rule (fun ns => @valid_ns V ns) (nslclrule (@lntb2LT.b2lrules V)).
 Proof. apply mvalid_valid. apply mvalid_b2l.  Qed.
+
+(* this requires (R : W -> W -> Prop) for the use of not_imply_elim below *)
+Lemma mvalid_b2r V W (R : W -> W -> Prop) val :
+  gvalid_rule (fun ns => @mforces V W R val (tau_ns (rev ns)))
+    (nslclrule (@lntbRT.b2rrules V)).
+Proof. repeat intro.  destruct X. 
+destruct b ; simpl in H ;  unfold nslclext ;  unfold nslclext in H ;
+inversion H ; subst ; clear H H4 ;
+rewrite rev_app_distr in H3 ;  rewrite rev_app_distr ;
+simpl ; simpl in H3 ; unfold mforces in H3 ; simpl in H3.
+
+- pose (classic (wforces R val w (WBox A))).  destruct o.
++ intro wwff.  apply False_rect. apply wwff.  intro.
+apply wf_disj_app_consI1. exact H.
++ simpl in H.  apply not_all_ex_not in H. cD.
+pose H0.  apply not_imply_elim in n.
+apply not_imply_elim2 in H0.
+eapply H3. 2: exact n. clear H3. tauto.
+
+(* similar to above *)
+- pose (classic (wforces R val w (BBox A))).  destruct o.
++ intro wwff.  apply False_rect. apply wwff.  intro.
+apply wf_disj_app_consI1. exact H.
++ simpl in H.  apply not_all_ex_not in H. cD.
+pose H0.  apply not_imply_elim in n.
+apply not_imply_elim2 in H0.
+eapply H3. 2: exact n. clear H3. tauto.
+Qed.
+
+(* fails for @valid_ns because wants (R : W -> W -> Type) *)
+Lemma valid_b2r V :
+  gvalid_rule (fun ns => @valid_nsP V ns) (nslclrule (@lntbRT.b2rrules V)).
+Proof. apply mvalid_validP. apply mvalid_b2r.  Qed.
+
+Check valid_b1l.  Check valid_b2r.  Check valid_b2l.
+
 
 
