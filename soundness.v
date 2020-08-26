@@ -228,5 +228,18 @@ Proof. apply mvalid_validP. apply mvalid_b2r.  Qed.
 
 Check valid_b1l.  Check valid_b2r.  Check valid_b2l.
 
+(* validity of derived rule (general result) *)
+Theorem derl_dersl_valid' U vf (rls : rlsT U) : gvalid_rule vf rls -> 
+  (forall (ps : list U) (c : U), derl rls ps c -> ForallT vf ps -> vf c) *
+  (forall (ps cs : list U), dersl rls ps cs -> ForallT vf ps -> ForallT vf cs).
+Proof. intro vr.  apply derl_dersl_rect_mut.
+- intros. inversion X. subst. assumption.
+- intros * rpc dsl fvpp fvp.  exact (vr ps concl rpc (fvpp fvp)).
+- tauto.
+- intros.  apply ForallT_appendD in X1. cD. apply ForallT_cons ; tauto.
+Qed.
 
+Theorem derl_valid U vf (rls : rlsT U) :
+  gvalid_rule vf rls -> gvalid_rule vf (derl rls).
+Proof. intro vr. unfold gvalid_rule.  exact (fst (derl_dersl_valid' vr)). Qed.
 
