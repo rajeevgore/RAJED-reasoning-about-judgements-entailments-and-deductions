@@ -462,3 +462,18 @@ Check derl_trans.
 Check dersl_trans.
 Check derl_deriv.
 
+(* this doesn't work, fixed by changing derrec to return Type,
+  see file ddT.v 
+Fixpoint derrec_height X rules prems concl 
+  (der : @derrec X rules prems concl) :=
+  match der with 
+    | dpI _ _ _ _ => 0
+    | derI _ _ ds => S (dersrec_height ds)
+  end
+with dersrec_height X rules prems concls
+  (ders : @dersrec X rules prems concls) :=
+  match ders with 
+    | dlNil _ _ => 0
+    | dlCons d ds => max (derrec_height d) (dersrec_height ds)
+  end.
+*)
