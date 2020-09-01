@@ -476,4 +476,26 @@ with dersrec_height X rules prems concls
     | dlNil _ _ => 0
     | dlCons d ds => max (derrec_height d) (dersrec_height ds)
   end.
-*)
+ *)
+
+(* Caitlin:
+Yes, Fixpoint definitions won't work. 
+But Inductive definitions should, e.g. the following:
+
+Inductive derrec_height (X : Type) (rules : list X -> X -> Prop) (prems : X -> Prop)
+          : forall (concl : X) (der : @derrec X rules prems concl), nat -> Prop :=
+| dpI_ht concl d H :
+    d = (dpI rules prems concl H) ->  derrec_height d 1
+| derI_ht concl seqs d ds n H :
+    d = derI concl H ds ->
+    @dersrec_height X rules prems seqs ds n -> derrec_height d (S n)
+with dersrec_height (X : Type) (rules : list X -> X -> Prop) (prems : X -> Prop)
+          : forall (seqs : list X) (ds : @dersrec X rules prems seqs), nat -> Prop :=
+| dlNil_ht ds : ds = dlNil rules prems -> dersrec_height ds 0
+| dlCons_ht concl seqs d ds ds2 n m nm :
+    ds2 = dlCons d ds ->
+    @derrec_height X rules prems concl d n ->
+    @dersrec_height X rules prems seqs ds m ->
+    nm = max n m ->
+    dersrec_height ds2 nm.
+*)                                                         
