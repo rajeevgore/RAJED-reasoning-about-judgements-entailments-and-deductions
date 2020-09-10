@@ -50,16 +50,21 @@ Lemma fun_cong: forall T U f g, f = g ->
   forall x, (f (x : U) : T) = g x.
 Proof. intros. subst. reflexivity. Qed.
 
+(* similar to Coq.Init.Logic.f_equal *)
 Lemma arg_cong: forall T U f x y, x = y -> (f (x : U) : T) = f y.
 Proof. intros. subst. reflexivity. Qed.
 
 Lemma arg_cong_imp: forall U f x y, x = y -> f (x : U) -> f y.
 Proof. intros. subst. assumption. Qed.
 
+(* similar to Coq.Init.Logic.eq_rect *)
 Lemma arg_cong_imp': forall U f x y, f (x : U) -> x = y -> f y.
 Proof. intros. subst. assumption. Qed.
 
 Lemma arg1_cong_imp: forall U V f x y z, x = y -> f (x : U) (z : V) -> f y z.
+Proof. intros. subst. assumption. Qed.
+
+Lemma arg1_cong_imp': forall U V f x y z, f (x : U) (z : V) -> x = y -> f y z.
 Proof. intros. subst. assumption. Qed.
 
 (* iffD1, iffD2 for Type *)

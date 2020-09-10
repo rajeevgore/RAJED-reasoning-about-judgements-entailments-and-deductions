@@ -654,3 +654,23 @@ Ltac inversion_cons :=
   repeat match goal with
          | [ H : ?a :: ?l1 = ?b :: ?l2 |- _] => inversion H; subst; clear_useless
          end.
+
+(* for manipulating lists got by appending shorter lists *)
+Inductive app_split_at X (T : list X) : list X -> list X -> list X -> Type :=
+  | asa_single : app_split_at T T [] []
+  | asa_appL : forall A B C D, 
+    app_split_at T A B C -> app_split_at T (A ++ D) B (C ++ D)
+  | asa_appR : forall A B C D, 
+    app_split_at T A B C -> app_split_at T (D ++ A) (D ++ B) C
+  .
+
+(* to show/solve app_split_at T A ?BC *)
+Ltac solve_asa := apply asa_single || 
+  (apply asa_appL ; solve_asa) || 
+  (apply asa_appR ; solve_asa) .
+
+Lemma asa_eq X (T A B C : list X) : app_split_at T A B C -> A = B ++ T ++ C.
+Proof. intro asa. induction asa ; subst.
+rewrite app_nil_r. reflexivity. list_eq_assoc. list_eq_assoc. Qed.
+
+
