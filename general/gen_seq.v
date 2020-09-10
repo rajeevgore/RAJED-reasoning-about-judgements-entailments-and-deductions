@@ -7,9 +7,9 @@ From Coq Require Import ssreflect.
 
 Add LoadPath "../modal".
 Add LoadPath "../tense-lns".
-Require Import gen genT ddT.
+Require Import gen genT ddT gen_tacs.
 Require Import gstep.
-Require Import List_lemmasT gen_tacs lntT lntacsT swappedT.
+Require Import List_lemmasT gen_tacs swappedT.
 Require Import Coq.Program.Basics.
 
 Inductive rlsmap U W (f : U -> W) (rls : rlsT U) : rlsT W :=
@@ -25,6 +25,160 @@ Inductive relmap U W (f : U -> W) (rel : relationT U) : relationT W :=
 Lemma rlI_eq U W (f : U -> W) (rel : relationT U) p c mp mc :
   rel p c -> mp = f p -> mc = f c -> relmap f rel mp mc.
 Proof. intros. subst. apply rlI ; assumption. Qed.
+
+(** seqext, seqrule, extending sequent and rule with left- and right-contexts
+  in antecedent and consequent **)
+Definition seqext (W : Type) Γ1 Γ2 Δ1 Δ2 (seq : rel (list W)) :=
+  match seq with | pair U V => pair (Γ1 ++ U ++ Γ2) (Δ1 ++ V ++ Δ2) end.
+
+Lemma seqext_seqext: forall V (Γ1 Γ2 Δ1 Δ2 Φ1 Φ2 Ψ1 Ψ2 : list V) seq,
+  seqext Γ1 Γ2 Δ1 Δ2 (seqext Φ1 Φ2 Ψ1 Ψ2 seq) =
+  seqext (Γ1 ++ Φ1) (Φ2 ++ Γ2) (Δ1 ++ Ψ1) (Ψ2 ++ Δ2) seq.
+Proof. intros. unfold seqext. destruct seq.
+rewrite !app_assoc. reflexivity. Qed.  
+
+Lemma map_seqext_seqext: forall V (Γ1 Γ2 Δ1 Δ2 Φ1 Φ2 Ψ1 Ψ2 : list V) seqs,
+  map (seqext Γ1 Γ2 Δ1 Δ2) (map (seqext Φ1 Φ2 Ψ1 Ψ2) seqs) =
+  map (seqext (Γ1 ++ Φ1) (Φ2 ++ Γ2) (Δ1 ++ Ψ1) (Ψ2 ++ Δ2)) seqs.
+Proof. induction seqs. tauto. 
+simpl. rewrite IHseqs. rewrite seqext_seqext. reflexivity. Qed.  
+
+Inductive seqrule (W : Type) (pr : rlsT (rel (list W))) : 
+    rlsT (rel (list W)) := 
+  | Sctxt : forall ps c Φ1 Φ2 Ψ1 Ψ2, pr ps c -> 
+    seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
+
+Lemma seqext_def : forall (W : Type) Φ1 Φ2 Ψ1 Ψ2 U V,
+      @seqext W Φ1 Φ2 Ψ1 Ψ2 (U,V) = (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
+Proof. reflexivity. Qed.
+
+Lemma Sctxt_e: forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
+  pr ps (U, V) ->
+  seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
+Proof.
+  intros until 0. intros H. rewrite <- seqext_def.
+  apply Sctxt. exact H.
+Qed.
+
+Lemma Sctxt_eq: forall (W : Type) pr ps mps (ca cs U V Φ1 Φ2 Ψ1 Ψ2 : list W),
+  pr ps (U, V) -> ca = Φ1 ++ U ++ Φ2 -> cs = Ψ1 ++ V ++ Ψ2 ->
+  mps = map (seqext Φ1 Φ2 Ψ1 Ψ2) ps -> seqrule pr mps (ca, cs).
+Proof. intros.  subst. apply Sctxt_e. exact X. Qed.  
+
+Lemma seqrule_id (W : Type) (pr : rlsT (rel (list W))) :
+  forall ps c, pr ps c -> seqrule pr ps c.
+Proof. intros. destruct c as [ca cs].
+apply (Sctxt_eq pr ps ca cs [] [] [] []). assumption.
+simpl. rewrite app_nil_r.  reflexivity.
+simpl. rewrite app_nil_r.  reflexivity.
+clear X. induction ps.  simpl.  reflexivity.
+simpl. rewrite <- IHps.
+destruct a. unfold seqext. simpl.  rewrite !app_nil_r.
+reflexivity. Qed.
+
+Lemma seqrule_seqrule (W : Type) (pr : rlsT (rel (list W))) :
+  rsub (seqrule (seqrule pr)) (seqrule pr).
+Proof. unfold rsub. intros. inversion X. subst. clear X. 
+inversion X0.  subst. clear X0.
+rewrite seqext_seqext.
+destruct c0 as [ca cs].
+eapply Sctxt_eq. exact X. 
+reflexivity.  reflexivity.
+clear X. induction ps0.  simpl.  reflexivity.
+simpl. rewrite IHps0.  rewrite seqext_seqext. reflexivity. Qed.
+
+Definition seqrule_seqrule' (W : Type) pr :=
+  rsubD (@seqrule_seqrule W pr).
+ 
+Lemma derl_seqrule'' (W : Type) (rules : rlsT (rel (list W))) :
+  forall Φ1 Φ2 Ψ1 Ψ2, (forall ps c, derl rules ps c -> 
+   derl (seqrule rules) (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c)) * 
+  (forall ps cs, dersl rules ps cs -> 
+    dersl (seqrule rules) (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) 
+    (map (seqext Φ1 Φ2 Ψ1 Ψ2)cs)).
+Proof. intros Φ1 Φ2 Ψ1 Ψ2.
+eapply (derl_dersl_rect_mut (rules := rules)
+  (fun ps c => fun _ => derl (seqrule rules)
+    (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c))
+  (fun ps cs : list _ => fun _ => dersl (seqrule rules)
+    (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (map (seqext Φ1 Φ2 Ψ1 Ψ2) cs))).
+- simpl. intros. apply asmI.
+- intros. eapply dtderI.  apply Sctxt. eassumption.  assumption. 
+- simpl. apply dtNil.
+- intros. rewrite map_app. simpl. apply dtCons ; assumption. Qed.
+ 
+Definition derl_seqrule' W rules Φ1 Φ2 Ψ1 Ψ2 := 
+  fst (@derl_seqrule'' W rules Φ1 Φ2 Ψ1 Ψ2).
+Definition dersl_seqrule' W rules Φ1 Φ2 Ψ1 Ψ2 := 
+  snd (@derl_seqrule'' W rules Φ1 Φ2 Ψ1 Ψ2).
+ 
+Lemma derl_seqrule (W : Type) (rules : rlsT (rel (list W))) :
+  rsub (seqrule (derl rules)) (derl (seqrule rules)).
+Proof.  unfold rsub.  intros.  destruct X.  
+apply derl_seqrule'. assumption. Qed.
+
+Lemma seqrule_derl_seqrule (W : Type) (rules : rlsT (rel (list W))) :
+  rsub (seqrule (derl (seqrule rules))) (derl (seqrule rules)).
+Proof.  eapply rsub_trans. apply derl_seqrule.
+ unfold rsub.  intros.  eapply derl_mono. 2: eassumption.
+ apply seqrule_seqrule. Qed.
+
+Definition seqrule_derl_seqrule' W rules :=
+  rsubD (@seqrule_derl_seqrule W rules).
+
+(* seqrule_s ps c qs d means that d is a sequent extension of c 
+  and that each q in qs is a corresponding sequent extension of the
+  corresponding p in ps *)
+Inductive seqrule_s (W : Type) (ps : list (rel (list W))) (c : rel (list W)) : 
+    rlsT (rel (list W)) := 
+  | Sctxt_s : forall Φ1 Φ2 Ψ1 Ψ2, 
+    seqrule_s ps c (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
+
+Inductive seqrule' (W : Type) (pr : rlsT (rel (list W))) : 
+    rlsT (rel (list W)) := 
+  | Sctxt' : forall ps c pse ce,
+    pr ps c -> seqrule_s ps c pse ce -> seqrule' pr pse ce.
+
+Check (Sctxt' _ _ (Sctxt_s _ _ _ _ _ _)). 
+
+(* Check, get same as Sctxt but for seqrule' *)
+Lemma Sctxt_alt : forall (W : Type) (pr : rlsT (rel (list W))) ps c Φ1 Φ2 Ψ1 Ψ2,
+    pr ps c -> seqrule' pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
+Proof.
+  intros until 0. intros H.
+  eapply Sctxt'. exact H. apply Sctxt_s.
+Qed.
+
+Lemma Sctxt_e': forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 Ψ2,
+  pr ps (U, V) ->
+  seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) ((Φ1 ++ U) ++ Φ2, Ψ1 ++ V ++ Ψ2).
+Proof.
+  intros until 0. intros H.
+  rewrite <- app_assoc. apply Sctxt_e. exact H.
+Qed.  
+
+Lemma seqext_defp : forall (W : Type) Φ1 Φ2 Ψ1 Ψ2 seq,
+      @seqext W Φ1 Φ2 Ψ1 Ψ2 seq =
+        let (U, V) := seq in (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
+Proof. reflexivity. Qed.
+
+Lemma seqrule_same: forall (W : Type) pr ps (c c' : rel (list W)),
+  seqrule pr ps c -> c = c' -> seqrule pr ps c'.
+Proof. intros. subst. assumption. Qed.  
+
+Lemma seqrule_mono X (rulesa rulesb : rlsT (rel (list X))) :
+  rsub rulesa rulesb -> rsub (seqrule rulesa) (seqrule rulesb).
+Proof. unfold rsub. intros. destruct X1. apply Sctxt. firstorder. Qed.
+
+Definition seqrule_mono' X rulesa rulesb rs :=
+  rsubD (@seqrule_mono X rulesa rulesb rs).
+
+Lemma Sctxt_nil: forall (W : Type) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Type) ->
+  @seqrule W pr [] (seqext Γ1 Γ2 Δ1 Δ2 c).
+Proof.
+  intros until 0.  intros H. eapply Sctxt in H.
+  simpl in H. exact H.
+Qed.
 
 (* fmlsext copied from ../ll/fmlsext.v *)
 Definition fmlsext (W : Type) Γ1 Γ2 (fmls : (list W)) := (Γ1 ++ fmls ++ Γ2).
@@ -46,6 +200,8 @@ Proof. reflexivity. Qed.
 Definition apfst U V W (f : U -> V) (p : U * W) := let (x, y) := p in (f x, y).
 Definition apsnd U V W (f : U -> V) (p : W * U) := let (x, y) := p in (x, f y).
 
+(** fst_ext_rls - adding left- and right-context 
+  to the antecedent of a sequent rule *)
 Inductive fst_ext_rls U W rls : rlsT (list U * W) :=
   | fextI : forall Γ1 Γ2 ps c, 
     rlsmap (apfst (fmlsext Γ1 Γ2)) rls ps c -> fst_ext_rls rls ps c.

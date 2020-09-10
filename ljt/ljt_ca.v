@@ -12,7 +12,7 @@ Add LoadPath "../general".
 Add LoadPath "../tense-lns".
 Require Import gen genT ddT.
 Require Import List_lemmasT.
-Require Import gen_tacs lntacsT.
+Require Import gen_tacs swappedT lntacsT.
 Require Import gen_seq gstep rtcT.
 Require Import ljt ljt_inv ljt_ctr.
 Require Import Coq.Program.Basics.

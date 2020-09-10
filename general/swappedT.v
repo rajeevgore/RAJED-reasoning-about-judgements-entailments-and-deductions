@@ -5,6 +5,7 @@ Require Import List.
 Require Import existsT.
 Require Import gen_tacs.
 Require Import gen.
+Require Import List_lemmasT.
 
 Set Implicit Arguments.
 Import ListNotations.
@@ -296,4 +297,45 @@ Proof.
   intros T A. constructor.
   exists 0. apply swapped_spec_refl.
 Qed.
+
+(* tactics to identify swapped lists, where one of swap is single list *)
+
+Ltac show_swapped_1 := 
+  list_assoc_r' ;
+  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleL ; list_eq_assoc) ;
+  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleR ; list_eq_assoc).
+
+Ltac show_swapped_1_ns := 
+  list_assoc_r ; (* not the ssreflext version *)
+  try (eapply arg_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleL ; list_eq_assoc) ;
+  try (eapply arg1_cong_imp ; [> list_assoc_l' ; reflexivity | ] ; 
+    apply swapped_simpleR ; list_eq_assoc).
+
+(* this should work wherever swap_tac does, but trying to use it in place of
+  swap_tac produces occasional failures - why?? - to investigate *)
+Ltac swap_tac_Rc :=
+  list_assoc_r ; try (apply swapped_same) ; 
+    repeat (apply swapped_L || apply swapped_cons) ;  
+    list_assoc_l ; 
+    repeat (apply swapped_R || apply swapped_Rc1 || apply swapped_Rc2) ;
+    (show_swapped_1 || apply swapped_ca2 || apply swapped_ca1).
+
+Ltac swap_tac :=
+  list_assoc_r ; try (apply swapped_same) ; 
+    repeat (apply swapped_L || apply swapped_cons) ;  
+    list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1.
+
+Ltac swap_tac_ns :=
+  list_assoc_r ; try (apply swapped_same) ; 
+    repeat (apply swapped_L || apply swapped_cons) ;  
+    list_assoc_l ; repeat (apply swapped_R) ; show_swapped_1_ns.
+
+Goal forall T A B C D, swapped (A ++ B ++ C ++ D : list T) (D ++ A ++ B ++ C).
+Proof. intros.  show_swapped_1.  Qed.
+
+Goal forall T A B C D, swapped (D ++ A ++ B ++ C) (A ++ B ++ C ++ D : list T).
+Proof. intros.  show_swapped_1.  Qed.
 

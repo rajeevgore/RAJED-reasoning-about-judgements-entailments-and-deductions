@@ -15,7 +15,7 @@ Add LoadPath "../general".
 Add LoadPath "../tense-lns".
 Require Import gen genT ddT dd_fc.
 Require Import List_lemmasT.
-Require Import gen_tacs.
+Require Import gen_tacs gen_seq.
 Require Import swappedT.
 Require Import lntacsT.
 Require Import gstep.

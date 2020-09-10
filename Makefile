@@ -44,7 +44,7 @@ ll/ll_exch.vo ll/ll_exch.glob ll/ll_exch.v.beautified: ll/ll_exch.v general/ddT.
 ll/ll_lems.vo ll/ll_lems.glob ll/ll_lems.v.beautified: ll/ll_lems.v general/dd_fc.vo general/swappedT.vo tense-lns/lntacsT.vo general/gentree.vo
 ll/ll.vo ll/ll.glob ll/ll.v.beautified: ll/ll.v general/ddT.vo general/swappedT.vo tense-lns/lntacsT.vo
 ll/fmlsext.vo ll/fmlsext.glob ll/fmlsext.v.beautified: ll/fmlsext.v general/ddT.vo general/List_lemmasT.vo tense-lns/lntT.vo
-modal/k4_ca.vo modal/k4_ca.glob modal/k4_ca.v.beautified: modal/k4_ca.v general/dd_fc.vo general/List_lemmasT.vo tense-lns/lntT.vo general/swappedT.vo tense-lns/lntacsT.vo general/gstep.vo general/gentree.vo modal/gen_ext.vo general/rtcT.vo modal/k4.vo modal/k4_exch.vo modal/k4_inv.vo modal/k4_ctr.vo
+modal/k4_ca.vo modal/k4_ca.glob modal/k4_ca.v.beautified: modal/k4_ca.v general/dd_fc.vo general/List_lemmasT.vo tense-lns/lntT.vo general/swappedT.vo tense-lns/lntacsT.vo general/gstep.vo general/gen_tacs.vo general/gen_seq.vo general/gentree.vo modal/gen_ext.vo general/rtcT.vo modal/k4.vo modal/k4_exch.vo modal/k4_inv.vo modal/k4_ctr.vo
 modal/k4_ctr.vo modal/k4_ctr.glob modal/k4_ctr.v.beautified: modal/k4_ctr.v general/ddT.vo general/List_lemmasT.vo tense-lns/lntT.vo general/swappedT.vo tense-lns/lntacsT.vo general/gstep.vo modal/gen_ext.vo general/rtcT.vo modal/k4.vo modal/k4_exch.vo modal/k4_inv.vo
 modal/k4_exch.vo modal/k4_exch.glob modal/k4_exch.v.beautified: modal/k4_exch.v general/ddT.vo general/gstep.vo modal/gen_ext.vo general/rtcT.vo general/List_lemmasT.vo tense-lns/lntT.vo tense-lns/lntacsT.vo general/swappedT.vo modal/k4.vo
 modal/k4_inv.vo modal/k4_inv.glob modal/k4_inv.v.beautified: modal/k4_inv.v general/ddT.vo general/List_lemmasT.vo tense-lns/lntT.vo general/swappedT.vo tense-lns/lntacsT.vo general/gstep.vo modal/gen_ext.vo general/rtcT.vo modal/k4.vo modal/k4_exch.vo
@@ -60,10 +60,10 @@ general/genT.vo general/genT.glob general/genT.v.beautified: general/genT.v gene
 general/ddT.vo general/ddT.glob general/ddT.v.beautified: general/ddT.v general/genT.vo general/gen.vo
 general/dd_fc.vo general/dd_fc.glob general/dd_fc.v.beautified: general/dd_fc.v general/ddT.vo
 general/List_lemmasT.vo general/List_lemmasT.glob general/List_lemmasT.v.beautified: general/List_lemmasT.v general/existsT.vo general/genT.vo general/gen.vo
-tense-lns/lntT.vo tense-lns/lntT.glob tense-lns/lntT.v.beautified: tense-lns/lntT.v general/ddT.vo general/gen_tacs.vo general/existsT.vo
-general/swappedT.vo general/swappedT.glob general/swappedT.v.beautified: general/swappedT.v general/existsT.vo tense-lns/lntT.vo general/gen.vo
-tense-lns/lntacsT.vo tense-lns/lntacsT.glob tense-lns/lntacsT.v.beautified: tense-lns/lntacsT.v general/ddT.vo general/List_lemmasT.vo tense-lns/lntT.vo general/swappedT.vo
-general/gen_seq.vo: general/gen_seq.v tense-lns/lntacsT.vo general/gstep.vo
+general/swappedT.vo general/swappedT.glob general/swappedT.v.beautified: general/swappedT.v general/existsT.vo general/gen.vo general/List_lemmasT.vo
+general/gen_seq.vo: general/gen_seq.v general/gen_tacs.vo general/gstep.vo
+tense-lns/lntT.vo tense-lns/lntT.glob tense-lns/lntT.v.beautified: tense-lns/lntT.v general/ddT.vo general/gen_tacs.vo general/gen_seq.vo general/existsT.vo
+tense-lns/lntacsT.vo tense-lns/lntacsT.glob tense-lns/lntacsT.v.beautified: tense-lns/lntacsT.v general/ddT.vo general/gen_tacs.vo general/gen_seq.vo general/List_lemmasT.vo tense-lns/lntT.vo general/swappedT.vo
 
 %.vo : %.v
 	#echo doing $*.v >>log
