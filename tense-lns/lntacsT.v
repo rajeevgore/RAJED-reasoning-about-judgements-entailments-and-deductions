@@ -3,6 +3,8 @@
 
 Require Import ssreflect.
 
+Add LoadPath "../general".
+
 Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.

@@ -2,6 +2,9 @@
 Require Export List.
 Set Implicit Arguments.
 Export ListNotations.
+
+Add LoadPath "../general".
+
 Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.

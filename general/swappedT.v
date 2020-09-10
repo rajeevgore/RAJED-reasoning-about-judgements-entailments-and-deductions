@@ -1,3 +1,6 @@
+
+Add LoadPath "../tense-lns".
+
 Require Import List.
 Require Import existsT.
 Require Import lntT.

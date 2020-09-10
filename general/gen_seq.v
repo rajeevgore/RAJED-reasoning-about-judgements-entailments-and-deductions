@@ -5,7 +5,6 @@ Set Implicit Arguments.
 
 From Coq Require Import ssreflect.
 
-Add LoadPath "../gen".
 Add LoadPath "../modal".
 Add LoadPath "../tense-lns".
 Require Import gen genT ddT.
