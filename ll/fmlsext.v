@@ -10,7 +10,7 @@ Add LoadPath "../tense-lns".
 Require Import gen.
 Require Import genT.
 Require Import ddT.
-Require Import List_lemmasT lntT.
+Require Import List_lemmasT gen_tacs.
 
 Definition fmlsext (W : Type) Γ1 Γ2 (fmls : (list W)) := (Γ1 ++ fmls ++ Γ2).
 

@@ -9,7 +9,7 @@ Add LoadPath "../general".
 Add LoadPath "../tense-lns".
 Require Import gen. 
 Require Import genT.
-Require Import lntT.
+Require Import gen_tacs.
 Require Import gen_seq.
 
 (* generalised extension *)

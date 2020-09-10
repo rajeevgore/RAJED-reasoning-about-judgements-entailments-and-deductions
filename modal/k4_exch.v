@@ -20,9 +20,10 @@ Require Import ddT.
 Require Import gstep.
 Require Import gen_ext.
 Require Import gen_seq.
+Require Import lntT. 
 Require Import rtcT.
 Require Import List_lemmasT.
-Require Import lntT.
+Require Import gen_tacs.
 Require Import lntacsT.
 Require Import swappedT.
 Require Import k4.

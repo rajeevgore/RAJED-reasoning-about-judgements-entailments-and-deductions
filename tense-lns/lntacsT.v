@@ -8,7 +8,7 @@ Add LoadPath "../general".
 Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.
-Require Import lntT.
+Require Import gen_tacs lntT.
 Require Import swappedT.
 
 Lemma midI: forall T (a b c d : list T) x,

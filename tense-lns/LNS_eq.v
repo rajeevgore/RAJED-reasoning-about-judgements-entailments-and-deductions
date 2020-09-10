@@ -1,7 +1,7 @@
 Require Import List.
 Export ListNotations.
 
-Require Import lntT.
+Require Import gen_tacs lntT.
 
 
 (* Equality that ignores the first, irrelevant direction. *)

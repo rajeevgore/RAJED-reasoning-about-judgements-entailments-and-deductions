@@ -25,37 +25,29 @@ Require Import ddT.
 Require Import gstep.
 Require Import gen_ext.
 Require Import gen_seq.
-Require Import List_lemmasT.
 Require Import lntT.
+Require Import List_lemmasT.
+Require Import gen_tacs.
 Require Import lntacsT.
 
 (** * Definitions
 
 definition of Propositional Formulas*)
 
-(* already in ~/coq/lnt/tense-logic-in-Coq/lntT.v 
 
-Inductive PropF (V : Type): Type :=
+(* already in ../tense-lns/lntT.v 
+Inductive PropF (V : Set): Type :=
  | Var : V -> PropF V
  | Bot : PropF V
  | Imp : PropF V -> PropF V -> PropF V
-(*
- | Not : PropF V -> PropF V
+(* | Not : PropF V -> PropF V
  | And : PropF V -> PropF V -> PropF V
- | Or : PropF V -> PropF V -> PropF V
- | BBox : PropF V -> PropF V
- | BDia : PropF V -> PropF V
-*)
+ | Or : PropF V -> PropF V -> PropF V *)
  | WBox : PropF V -> PropF V
- | WDia : PropF V -> PropF V
+(* | WDia : PropF V -> PropF V *)
+ | BBox : PropF V -> PropF V
+(* | BDia : PropF V -> PropF V *)
 .
-*)
-
-(* already in ~/coq/lnt/tense-logic-in-Coq/lntT.v
-
-Definition rel W := prod W W.
-
-Definition trf W := W -> W.
 *)
 
 Inductive isubf V : PropF V -> PropF V -> Type :=
@@ -74,7 +66,7 @@ Definition Seql W := rel (list W).
 (* two-sided sequent of lists of formulae *)
 Definition Seqlf V := Seql (PropF V).
 
-(* already in ~/coq/lnt/tense-logic-in-Coq/lntT.v
+(* already in ../tense-lns/lntT.v 
 (* we may also want to refer to rules individually *)
 Inductive Idrule V : rlsT (Seqlf V) :=
   | Idrule_I : forall A, Idrule [] (pair [A] [A]).

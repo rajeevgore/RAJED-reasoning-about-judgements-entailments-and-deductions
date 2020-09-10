@@ -18,7 +18,7 @@ Add LoadPath "../general".
 Add LoadPath "../modal".
 Add LoadPath "../tense-lns".
 Require Import gen genT ddT dd_fc.
-Require Import lntT swappedT lntacsT.
+Require Import gen_tacs swappedT lntacsT.
 Require Import List_lemmasT.
 Require Import fmlsext.
 Require Import lldefs ll_lems ll_exch ll_cam.

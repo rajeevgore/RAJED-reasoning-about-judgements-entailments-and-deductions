@@ -2,7 +2,7 @@ Require Import List.
 Require Import existsT.
 Require Import List_lemmasT.
 Require Import gen genT lntacsT.
-Require Import lntT.
+Require Import gen_tacs lntT.
 
 Set Implicit Arguments.
 Import ListNotations.

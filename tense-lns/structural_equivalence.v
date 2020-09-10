@@ -1,7 +1,7 @@
 Require Import List.
 Export ListNotations.
 
-Require Import lntT List_lemmasT.
+Require Import gen_tacs lntT List_lemmasT.
 Require Import existsT.
 Require Import contractedT.
 Require Import Coq.Classes.CRelationClasses.

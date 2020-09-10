@@ -9,7 +9,7 @@ Add LoadPath "../modal".
 Add LoadPath "../tense-lns".
 Require Import gen genT ddT.
 Require Import gstep.
-Require Import List_lemmasT lntT lntacsT swappedT.
+Require Import List_lemmasT gen_tacs lntT lntacsT swappedT.
 Require Import Coq.Program.Basics.
 
 Inductive rlsmap U W (f : U -> W) (rls : rlsT U) : rlsT W :=

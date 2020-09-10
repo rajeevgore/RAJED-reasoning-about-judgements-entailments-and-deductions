@@ -8,7 +8,7 @@ Export ListNotations.
 Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.
-Require Import lntT lntkt_exchT.
+Require Import gen_tacs lntT lntkt_exchT.
 (* why doesn't this work?
 Require Import existsT.
 *)

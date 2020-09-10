@@ -7,7 +7,7 @@ Require Import Omega.
 Require Import genT.
 Require Import ddT.
 Require Import List_lemmasT.
-Require Import lntT.
+Require Import gen_tacs lntT.
 Require Import lntacsT.
 Require Import lntmtacsT.
 

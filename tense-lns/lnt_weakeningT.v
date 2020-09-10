@@ -3,7 +3,7 @@ Require Import ssreflect.
 Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.
-Require Import lntT lntacsT lntlsT lntbRT lntmtacsT.
+Require Import gen_tacs lntT lntacsT lntlsT lntbRT lntmtacsT.
 Require Import lntb1LT lntb2LT.
 Require Import lntkt_exchT.
 

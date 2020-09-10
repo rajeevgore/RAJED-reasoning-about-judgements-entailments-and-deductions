@@ -4,7 +4,7 @@ Require Import genT.
 Require Import ddT.
 Require Import dd_fc.
 Require Import List_lemmasT.
-Require Import lntT lntacsT lntlsT lntbRT lntmtacsT.
+Require Import gen_tacs lntT lntacsT lntlsT lntbRT lntmtacsT.
 Require Import lntb1LT lntb2LT.
 Require Import lntkt_exchT.
 Require Import lnt_weakeningT.

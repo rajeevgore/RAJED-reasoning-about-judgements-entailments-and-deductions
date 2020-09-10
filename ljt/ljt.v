@@ -14,7 +14,7 @@ Add LoadPath "../modal".
 Add LoadPath "../tense-lns".
 Require Import gen genT ddT.
 Require Import gstep.
-Require Import List_lemmasT lntT lntacsT swappedT.
+Require Import List_lemmasT gen_tacs lntacsT swappedT.
 Require Import gen_seq.
 Require Import Coq.Program.Basics.
 Require Import Coq.Logic.FunctionalExtensionality.

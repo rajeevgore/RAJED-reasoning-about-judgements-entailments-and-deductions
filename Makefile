@@ -21,6 +21,7 @@ general/gentree.vo \
 general/gstep.vo \
 general/rtcT.vo \
 general/gen_seq.vo \
+general/gen_tacs.vo \
 general/gen.vo \
 general/existsT.vo \
 general/genT.vo \
@@ -53,12 +54,13 @@ general/gentree.vo general/gentree.glob general/gentree.v.beautified: general/ge
 general/gstep.vo general/gstep.glob general/gstep.v.beautified: general/gstep.v general/dd_fc.vo general/rtcT.vo
 general/rtcT.vo general/rtcT.glob general/rtcT.v.beautified: general/rtcT.v general/gen.vo general/genT.vo
 general/gen.vo general/gen.glob general/gen.v.beautified: general/gen.v
+general/gen_tacs.vo general/gen_tacs.glob general/gen_tacs.v.beautified: general/gen_tacs.v general/List_lemmasT.vo
 general/existsT.vo general/existsT.glob general/existsT.v.beautified: general/existsT.v
 general/genT.vo general/genT.glob general/genT.v.beautified: general/genT.v general/existsT.vo general/gen.vo
 general/ddT.vo general/ddT.glob general/ddT.v.beautified: general/ddT.v general/genT.vo general/gen.vo
 general/dd_fc.vo general/dd_fc.glob general/dd_fc.v.beautified: general/dd_fc.v general/ddT.vo
 general/List_lemmasT.vo general/List_lemmasT.glob general/List_lemmasT.v.beautified: general/List_lemmasT.v general/existsT.vo general/genT.vo general/gen.vo
-tense-lns/lntT.vo tense-lns/lntT.glob tense-lns/lntT.v.beautified: tense-lns/lntT.v general/ddT.vo general/List_lemmasT.vo general/existsT.vo
+tense-lns/lntT.vo tense-lns/lntT.glob tense-lns/lntT.v.beautified: tense-lns/lntT.v general/ddT.vo general/gen_tacs.vo general/existsT.vo
 general/swappedT.vo general/swappedT.glob general/swappedT.v.beautified: general/swappedT.v general/existsT.vo tense-lns/lntT.vo general/gen.vo
 tense-lns/lntacsT.vo tense-lns/lntacsT.glob tense-lns/lntacsT.v.beautified: tense-lns/lntacsT.v general/ddT.vo general/List_lemmasT.vo tense-lns/lntT.vo general/swappedT.vo
 general/gen_seq.vo: general/gen_seq.v tense-lns/lntacsT.vo general/gstep.vo

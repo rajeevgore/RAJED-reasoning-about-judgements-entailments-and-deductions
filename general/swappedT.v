@@ -3,7 +3,7 @@ Add LoadPath "../tense-lns".
 
 Require Import List.
 Require Import existsT.
-Require Import lntT.
+Require Import gen_tacs.
 Require Import gen.
 
 Set Implicit Arguments.
