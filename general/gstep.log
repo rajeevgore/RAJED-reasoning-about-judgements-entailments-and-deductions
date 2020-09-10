@@ -1,0 +1,291 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=latex 2019.10.11)  16 DEC 2019 23:51
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**gstep
+(./gstep.tex
+LaTeX2e <2018-04-01> patch level 5
+(./llncs.cls
+Document Class: llncs 2010/07/12 v2.17 
+ LaTeX document class for Lecture Notes in Computer Science
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2014/09/29 v1.4h Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo
+File: size12.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texlive/texmf-dist/tex/latex/tools/multicol.sty
+Package: multicol 2018/04/20 v1.8s multicolumn formatting (FMi)
+\c@tracingmulticols=\count88
+\mult@box=\box26
+\multicol@leftmargin=\dimen103
+\c@unbalance=\count89
+\c@collectmore=\count90
+\doublecol@number=\count91
+\multicoltolerance=\count92
+\multicolpretolerance=\count93
+\full@width=\dimen104
+\page@free=\dimen105
+\premulticols=\dimen106
+\postmulticols=\dimen107
+\multicolsep=\skip43
+\multicolbaselineskip=\skip44
+\partial@page=\box27
+\last@line=\box28
+\maxbalancingoverflow=\dimen108
+\mult@rightbox=\box29
+\mult@grightbox=\box30
+\mult@gfirstbox=\box31
+\mult@firstbox=\box32
+\@tempa=\box33
+\@tempa=\box34
+\@tempa=\box35
+\@tempa=\box36
+\@tempa=\box37
+\@tempa=\box38
+\@tempa=\box39
+\@tempa=\box40
+\@tempa=\box41
+\@tempa=\box42
+\@tempa=\box43
+\@tempa=\box44
+\@tempa=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\c@columnbadness=\count94
+\c@finalcolumnbadness=\count95
+\last@try=\dimen109
+\multicolovershoot=\dimen110
+\multicolundershoot=\dimen111
+\mult@nat@firstbox=\box50
+\colbreak@box=\box51
+\mc@col@check@num=\count96
+)
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/aliascnt.sty
+Package: aliascnt 2016/05/16 v1.4 Alias counters (HO)
+
+(/usr/share/texlive/texmf-dist/tex/latex/carlisle/remreset.sty
+
+Package remreset Warning: The remreset package is obsolete:
+(remreset)                \@removefomresset is defined.
+
+))
+\c@chapter=\count97
+LaTeX Font Info:    Redeclaring math symbol \Gamma on input line 362.
+LaTeX Font Info:    Redeclaring math symbol \Delta on input line 363.
+LaTeX Font Info:    Redeclaring math symbol \Theta on input line 364.
+LaTeX Font Info:    Redeclaring math symbol \Lambda on input line 365.
+LaTeX Font Info:    Redeclaring math symbol \Xi on input line 366.
+LaTeX Font Info:    Redeclaring math symbol \Pi on input line 367.
+LaTeX Font Info:    Redeclaring math symbol \Sigma on input line 368.
+LaTeX Font Info:    Redeclaring math symbol \Upsilon on input line 369.
+LaTeX Font Info:    Redeclaring math symbol \Phi on input line 370.
+LaTeX Font Info:    Redeclaring math symbol \Psi on input line 371.
+LaTeX Font Info:    Redeclaring math symbol \Omega on input line 372.
+\tocchpnum=\dimen112
+\tocsecnum=\dimen113
+\tocsectotal=\dimen114
+\tocsubsecnum=\dimen115
+\tocsubsectotal=\dimen116
+\tocsubsubsecnum=\dimen117
+\tocsubsubsectotal=\dimen118
+\tocparanum=\dimen119
+\tocparatotal=\dimen120
+\tocsubparanum=\dimen121
+\@tempcntc=\count98
+\fnindent=\dimen122
+\c@@inst=\count99
+\c@@auth=\count100
+\c@auco=\count101
+\instindent=\dimen123
+\authrun=\box52
+\authorrunning=\toks14
+\tocauthor=\toks15
+\titrun=\box53
+\titlerunning=\toks16
+\toctitle=\toks17
+\c@theorem=\count102
+\c@case=\count103
+\c@conjecture=\count104
+\c@corollary=\count105
+\c@definition=\count106
+\c@example=\count107
+\c@exercise=\count108
+\c@lemma=\count109
+\c@note=\count110
+\c@problem=\count111
+\c@property=\count112
+\c@proposition=\count113
+\c@question=\count114
+\c@solution=\count115
+\c@remark=\count116
+\headlineindent=\dimen124
+) (/usr/share/texlive/texmf-dist/tex/latex/base/latexsym.sty
+Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
+\symlasy=\mathgroup4
+LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
+(Font)                  U/lasy/m/n --> U/lasy/b/n on input line 52.
+) (./gstep.aux)
+\openout1 = `gstep.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
+LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 17.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 17.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 17.
+LaTeX Font Info:    Try loading font information for U+lasy on input line 17.
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/ulasy.fd
+File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
+)
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <9> on input line 25.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 25.
+LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <14.4> not available
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 45.
+ [1
+
+]
+Overfull \hbox (30.97514pt too wide) in paragraph at lines 112--112
+ []             \OT1/cmtt/m/n/9 dersrec rules prems seqs -> dersrec rules prems
+ (seq :: seqs)[] 
+ []
+
+
+Overfull \hbox (12.07536pt too wide) in paragraph at lines 112--112
+ []\OT1/cmtt/m/n/9 derl (X : Type) (rules : list X -> X -> Type) : list X -> X 
+-> Type :=[] 
+ []
+
+
+Overfull \hbox (26.2502pt too wide) in paragraph at lines 112--112
+ []             \OT1/cmtt/m/n/9 rules ps concl -> dersl rules pss ps -> derl ru
+les pss concl[] 
+ []
+
+
+Overfull \hbox (2.62547pt too wide) in paragraph at lines 112--112
+ []             \OT1/cmtt/m/n/9 dersl rules pss cs -> dersl rules (ps ++ pss) (
+c :: cs)[] 
+ []
+
+[2]
+Overfull \hbox (40.42503pt too wide) in paragraph at lines 148--148
+ []\OT1/cmtt/m/n/9 adm (X : Type) (rules : list X -> X -> Type) (ps : list X) (
+c : X) : Type :=[] 
+ []
+
+
+Overfull \hbox (21.52525pt too wide) in paragraph at lines 167--167
+ []  \OT1/cmtt/m/n/9 forall (X : Type) (rules : list X -> X -> Type) (ps : list
+ X) (c : X),[] 
+ []
+
+
+Overfull \hbox (21.52525pt too wide) in paragraph at lines 167--167
+ []  \OT1/cmtt/m/n/9 forall (X : Type) (rules : list X -> X -> Type) (ps : list
+ X) (c : X),[] 
+ []
+
+
+Overfull \hbox (21.52525pt too wide) in paragraph at lines 167--167
+ []  \OT1/cmtt/m/n/9 forall (X : Type) (rules : list X -> X -> Type) (ps : list
+ X) (c : X),[] 
+ []
+
+
+Overfull \hbox (2.62547pt too wide) in paragraph at lines 167--167
+ []  \OT1/cmtt/m/n/9 derrec (adm rls) (emptyT (X:=X)) c -> derrec rls (emptyT (
+X:=X)) c[] 
+ []
+
+[3]
+LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <9> not available
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 250.
+
+Overfull \hbox (35.70009pt too wide) in paragraph at lines 279--279
+ []\OT1/cmtt/m/n/9 fun (sty : Type) (R : sty -> sty -> Type) (rules : list sty 
+-> sty -> Type)[] 
+ []
+
+
+Overfull \hbox (35.70009pt too wide) in paragraph at lines 279--279
+ []\OT1/cmtt/m/n/9 rules ps' c' * ForallT (fun p' : sty => {p : sty & InT p ps 
+* R p p'}) ps'}[] 
+ []
+
+[4]
+LaTeX Font Info:    Font shape `U/lasy/b/n' in size <8> not available
+(Font)              Font shape `U/lasy/m/n' tried instead on input line 300.
+LaTeX Font Info:    Font shape `U/lasy/b/n' in size <6> not available
+(Font)              Font shape `U/lasy/m/n' tried instead on input line 300.
+
+Overfull \hbox (35.70009pt too wide) in paragraph at lines 337--337
+ []\OT1/cmtt/m/n/9 fun (sty : Type) (R : sty -> sty -> Type) (rules : list sty 
+-> sty -> Type)[] 
+ []
+
+
+Overfull \hbox (16.80031pt too wide) in paragraph at lines 337--337
+ []\OT1/cmtt/m/n/9 ForallT (fun p' : sty => {p : sty & InT p ps * clos_reflT R 
+p p'}) ps'}[] 
+ []
+
+[5]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 355.
+
+ (/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 355.
+
+Overfull \hbox (35.70009pt too wide) in paragraph at lines 383--383
+ []\OT1/cmtt/m/n/9 fun (sty : Type) (R : sty -> sty -> Type) (rules : list sty 
+-> sty -> Type)[] 
+ []
+
+
+Overfull \hbox (35.70009pt too wide) in paragraph at lines 383--383
+ []\OT1/cmtt/m/n/9 ForallT (fun p' : sty => {p : sty & InT p ps * clos_refl_tra
+nsT_n1 R p p'})[] 
+ []
+
+[6] [7] [8] (./gstep.aux) ) 
+Here is how much of TeX's memory you used:
+ 748 strings out of 494588
+ 8989 string characters out of 6177784
+ 75241 words of memory out of 5000000
+ 4415 multiletter control sequences out of 15000+600000
+ 12893 words of font info for 49 fonts, out of 8000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 28i,5n,22p,199b,227s stack positions out of 5000i,500n,10000p,200000b,80000s
+
+Output written on gstep.dvi (8 pages, 22408 bytes).

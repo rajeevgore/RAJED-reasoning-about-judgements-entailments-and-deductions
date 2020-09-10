@@ -1,0 +1,72 @@
+
+Require Export List.
+Export ListNotations.
+Set Implicit Arguments.
+
+From Coq Require Import ssreflect.
+
+Add LoadPath "../gen".
+Add LoadPath "../modal".
+Add LoadPath "../lnt/tense-logic-in-Coq".
+Require Import gen genT ddT.
+Require Import fmlsext.
+Require Import lldefs.
+Require Import gstep.
+
+Lemma princ_paramL W (A : W) rules dual any prs x xs ys psa psb ca cb :
+  fmlsrule (x :: xs) ys prs psa ca -> 
+  rsub (fmlsruleg prs) rules -> 
+  gen_step2 (ossca dual rules) A any (derrec rules emptyT)
+         (derrec rules emptyT) psa ca psb cb.
+Proof. intros fpa rsr. unfold gen_step2.
+intros sub fpl fpr dl dr. clear sub fpr.
+apply osscaI. intros. subst.
+inversion fpa. subst. clear fpa.
+eapply derI. apply (rsubD rsr). rewrite - !app_assoc.
+eapply OSgctxt_eq. apply X. reflexivity. reflexivity.
+apply dersrecI_forall. intros c0 inmf.
+apply InT_mapE in inmf. cD.
+eapply ForallTD_forall in fpl.
+2: apply (InT_map _ inmf1).
+destruct fpl. destruct o. subst.
+unfold fmlsext.  unfold fmlsext in d0. simpl in d0.
+specialize (d0 _ _ eq_refl eq_refl).
+rewrite - !app_assoc in d0. exact d0. Qed.
+
+Lemma princ_paramR W (A : W) rules dual any prs x xs ys psa psb ca cb :
+  fmlsrule (x :: xs) ys prs psb cb -> 
+  rsub (fmlsruleg prs) rules -> 
+  gen_step2 (ossca dual rules) A any (derrec rules emptyT)
+         (derrec rules emptyT) psa ca psb cb.
+Proof. intros fpb rsr. unfold gen_step2.
+intros sub fpl fpr dl dr. clear sub fpl.
+apply osscaI. intros. subst.
+inversion fpb. subst. clear fpb.
+eapply derI. apply (rsubD rsr). rewrite app_assoc.
+eapply OSgctxt_eq. apply X. reflexivity. reflexivity.
+apply dersrecI_forall. intros c0 inmf.
+apply InT_mapE in inmf. cD.
+eapply ForallTD_forall in fpr.
+2: apply (InT_map _ inmf1).
+destruct fpr. destruct o. subst.
+unfold fmlsext.  unfold fmlsext in d0. simpl in d0.
+specialize (d0 _ _ eq_refl eq_refl).
+rewrite - !app_assoc. exact d0. Qed.
+
+(* REDO this more generally using merge_ctxt
+Lemma tens_paramL V (A : LLfml V) rules dual any x xs ys psa psb ca cb :
+  Tensrule (x :: xs) ys psa ca -> rsub Tensruleg rules -> 
+  gen_step2 (ossca dual rules) A any (derrec rules emptyT)
+         (derrec rules emptyT) psa ca psb cb.
+Proof. intros tr rstr. unfold gen_step2.
+intros sub fpl fpr dl dr. clear sub fpr.
+apply osscaI. intros. subst.
+inversion tr. clear tr. inversion H2 ; subst ; clear H2. 
+eapply derI. apply (rsubD rstr). rewrite - app_assoc. simpl.
+eapply Tensruleg_I.  apply Tensrule_I. eassumption.
+from here, will need a result merge_app, 
+depends on whether the cut formula is in left or right premise of tens 
+
+*)
+
+

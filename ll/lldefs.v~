@@ -1,0 +1,113 @@
+
+Require Export List.
+Export ListNotations.
+Set Implicit Arguments.
+
+From Coq Require Import ssreflect.
+
+Add LoadPath "../gen".
+Add LoadPath "../modal".
+Add LoadPath "../lnt/tense-logic-in-Coq".
+Require Import gen genT ddT.
+Require Import fmlsext.
+
+Inductive LLfml (V : Set): Type :=
+ | Var : V -> LLfml V
+ | DVar : V -> LLfml V
+ | Bot : LLfml V
+ | Top : LLfml V
+ | One : LLfml V
+ | Zero : LLfml V
+ | tens : LLfml V -> LLfml V -> LLfml V
+ | wth : LLfml V -> LLfml V -> LLfml V
+ | par : LLfml V -> LLfml V -> LLfml V
+ | plus : LLfml V -> LLfml V -> LLfml V
+ | Bang : LLfml V -> LLfml V
+ | Query : LLfml V -> LLfml V
+.
+
+Inductive isubfml {V} : LLfml V -> LLfml V -> Type :=
+  | isub_tensL : forall C D, isubfml C (tens C D)
+  | isub_tensR : forall C D, isubfml D (tens C D)
+  | isub_wthL : forall C D, isubfml C (wth C D)
+  | isub_wthR : forall C D, isubfml D (wth C D)
+  | isub_parL : forall C D, isubfml C (par C D)
+  | isub_parR : forall C D, isubfml D (par C D)
+  | isub_plusL : forall C D, isubfml C (plus C D)
+  | isub_plusR : forall C D, isubfml D (plus C D)
+  | isub_Bang : forall A, isubfml A (Bang A)
+  | isub_Query : forall A, isubfml A (Query A).
+
+Fixpoint dual {V} f := match f with
+  | Var v => DVar v
+  | DVar v => Var v
+  | Bot _ => One V
+  | One _ => Bot V
+  | Top _ => Zero V
+  | Zero _ => Top V
+  | tens A B => par (dual A) (dual B)
+  | par A B => tens (dual A) (dual B)
+  | plus A B => wth (dual A) (dual B)
+  | wth A B => plus (dual A) (dual B)
+  | Bang f => Query (dual f)
+  | Query f => Bang (dual f)
+  end.
+
+Lemma dual_dual {V} A : dual (@dual V A) = A.
+Proof. induction A ; simpl ; try reflexivity ; try (rewrite IHA) ;
+try (rewrite IHA1) ; try (rewrite IHA2) ; try reflexivity. Qed.
+
+Inductive Idrule V : rlsT (list (LLfml V)) :=
+  | Idrule_I : forall A, Idrule [] [A ; dual A].
+
+(* propositional versions of axiom rule *)
+Inductive Idrule_p V : rlsT (list (LLfml V)) :=
+  | Idrule_p_I : forall p, Idrule_p [] [Var p ; DVar p].
+Inductive Idrule_pr V : rlsT (list (LLfml V)) :=
+  | Idrule_pr_I : forall p, Idrule_pr [] [DVar p ; Var p].
+
+Inductive Onerule V : rlsT (list (LLfml V)) :=
+  | Onerule_I : Onerule [] [One V].
+
+Inductive Toprule V : rlsT (list (LLfml V)) :=
+  | Toprule_I : Toprule [] [Top V].
+
+Inductive Botrule V : rlsT (list (LLfml V)) :=
+  | Botrule_I : Botrule [[]] [Bot V].
+
+Inductive PlusRrule V : rlsT (list (LLfml V)) :=
+  | PlusRrule_I : forall A B, PlusRrule [[B]] [plus A B].
+
+Inductive PlusLrule V : rlsT (list (LLfml V)) :=
+  | PlusLrule_I : forall A B, PlusLrule [[A]] [plus A B].
+
+Inductive Wthrule V : rlsT (list (LLfml V)) :=
+  | Wthrule_I : forall A B, Wthrule [[A] ; [B]] [wth A B].
+
+Inductive Parrule V : rlsT (list (LLfml V)) :=
+  | Parrule_I : forall A B, Parrule [[A ; B]] [par A B].
+
+Inductive llprinc {V} : rlsT (list (LLfml V)) :=
+  | Par_p : forall ps c, Parrule ps c -> llprinc ps c
+  | Wth_p : forall ps c, Wthrule ps c -> llprinc ps c
+  | PlusL_p : forall ps c, PlusLrule ps c -> llprinc ps c
+  | PlusR_p : forall ps c, PlusRrule ps c -> llprinc ps c
+  | Top_p : forall ps c, Toprule ps c -> llprinc ps c
+  | Bot_p : forall ps c, Botrule ps c -> llprinc ps c
+  .
+
+(* this one specifies the context in the conclusion *)
+(* suggest (1) a general merge, and (2) Tensrule *)
+Inductive Tensrule V : rlsT (list (LLfml V)) :=
+  | Tensrule_I : forall A B, Tensrule [ [A] ; [B] ] [tens A B].
+  
+(* for rule with 2 prems and merge contexts *)
+Inductive merge_ctxt V cl cr prs : rlsT (list (LLfml V)) :=
+  merge_ctxtI : forall al bl ar br pl pr c, 
+    prs [pl ; pr] c -> merge al bl cl -> merge ar br cr -> 
+    merge_ctxt cl cr prs [ al ++ pl ++ ar ; bl ++ pr ++ br] (cl ++ c ++ cr).
+
+Inductive ossca X dual rules (A : X) cl cr : Type :=
+    osscaI : (forall ls rs : list X, cl = A :: ls -> cr = dual A :: rs ->
+             derrec rules emptyT (ls ++ rs)) -> ossca dual rules A cl cr.
+

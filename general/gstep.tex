@@ -1,0 +1,719 @@
+
+\documentclass[a4paper,12pt]{llncs}
+\usepackage{latexsym}
+
+\newcommand\comment[1]{}
+\renewcommand\comment[1]{#1} % to print enclosed text
+\renewcommand\comment[1]{} % to not print enclosed text
+
+\begin{document}
+
+\title{Formalised Induction Patterns for Admissibility Proofs in Coq}
+
+\author{Jeremy E.\ Dawson\\
+etc}
+
+% \date{}
+\maketitle
+
+\abstract{
+This document describes general reasoning patterns for inductive proofs
+of properties such as invertibility of rules, contraction admissibility,
+and describes spedifically their implementation in Coq.
+}
+
+\section{Introduction}
+
+Proofs of properties such as admissibility 
+weakening and exchange admissibility,
+invertibility of certain rules,
+contraction admissibility, and cut admissibility
+are generally proved by induction, though there are variations
+on the exact forms of induction proofs available.
+
+For example, induction on the height (or size) of a proof,
+which can sometimes require that a previously proved property such as
+weakening admissibility be proved as height-preserving weakening admissibility.
+
+Alternatively, induction on the ``proof'' itself, ie assuming that
+a formula or sequent which is earlier in the proof satisfies the required
+property.
+
+It is useful to have general reasoning patterns for inductive proofs,
+formalising the variety of manners of induction available.
+
+\section{\texttt{derrec}, \texttt{derl}, \texttt{adm}}\label{s-dda}
+We use the framework previously implemented in Isabelle,
+described in \cite[Appendix A.1]{dawson-gore-gls},
+which we recapitulate briefly here, with reference to its implementation in
+Coq.
+
+An inference rule is represented as a list of premises and a conclusion,
+where the premises and conclusion are of some unspecified type.
+(For all our illustrations of this work, they will be sequents whose
+antecedents and succedents are lists of modal formulae).
+
+This suggests using
+\texttt{rules : list X -> X -> Prop}
+(as we did initially), but we found that in Coq,
+we could define the height or size of a proof object only if we
+generally used \texttt{Type}, instead of \texttt{Prop}.
+
+The predicates \texttt{derrec} and \texttt{derl} have the following meanings:
+
+\texttt{derrec rules prems concl} means that conclusion
+\texttt{concl}
+is derivable from premises (or assumptions)
+\texttt{prems}
+using 
+rules
+\texttt{rules}
+
+\texttt{derl rules ps c} means that there is a derived rule
+(proof tree)
+with premises (leaves)
+\texttt{ps}
+and conclusion (root)
+\texttt{c}
+constructed using rules
+\texttt{rules}
+
+Their inductive definitions also require defining
+\texttt{dersrec} and \texttt{dersl}
+which involve a list of conclusions.
+
+The inductive definitions follow:
+\begin{verbatim}
+Inductive
+derrec (X : Type) (rules : list X -> X -> Type) (prems : X -> Type)
+  : X -> Type :=
+    dpI : forall concl : X, prems concl -> derrec rules prems concl
+  | derI : forall (ps : list X) (concl : X),
+           rules ps concl ->
+           dersrec rules prems ps -> derrec rules prems concl
+  with dersrec (X : Type) (rules : list X -> X -> Type) 
+       (prems : X -> Type) : list X -> Type :=
+    dlNil : dersrec rules prems []
+  | dlCons : forall (seq : X) (seqs : list X),
+             derrec rules prems seq ->
+             dersrec rules prems seqs -> dersrec rules prems (seq :: seqs)
+
+Inductive
+derl (X : Type) (rules : list X -> X -> Type) : list X -> X -> Type :=
+    asmI : forall p : X, derl rules [p] p
+  | dtderI : forall (pss ps : list X) (concl : X),
+             rules ps concl -> dersl rules pss ps -> derl rules pss concl
+  with dersl (X : Type) (rules : list X -> X -> Type)
+         : list X -> list X -> Type :=
+    dtNil : dersl rules [] []
+  | dtCons : forall (ps : list X) (c : X) (pss cs : list X),
+             derl rules ps c ->
+             dersl rules pss cs -> dersl rules (ps ++ pss) (c :: cs)
+\end{verbatim}
+
+We get useful results like the following:
+\begin{verbatim}
+derl_derrec_trans
+     : forall (X : Type) (rules : list X -> X -> Type) 
+         (prems : X -> Type) (rps : list X) (concl : X),
+       derl rules rps concl ->
+       dersrec rules prems rps -> derrec rules prems concl
+
+derrec_derl_deriv
+     : forall (X : Type) (rules : list X -> X -> Type) 
+         (prems : X -> Type) (concl : X),
+       derrec (derl rules) prems concl -> derrec rules prems concl
+
+derl_deriv':
+  forall (X : Type) (rules : list X -> X -> Type) 
+    (prems : list X) (concl : X),
+  derl (derl rules) prems concl -> derl rules prems concl
+
+derrec_derrec
+     : forall (X : Type) (rules : list X -> X -> Type) 
+         (prems : X -> Type) (c : X),
+       derrec rules (derrec rules prems) c -> derrec rules prems c
+\end{verbatim}
+
+We also define \emph{admissible} rules:
+a rule is \emph{admissible} if, assuming its premises
+are derivable (from no assumptions) its conclusion is
+likewise derivable.
+
+\begin{verbatim}
+Inductive
+adm (X : Type) (rules : list X -> X -> Type) (ps : list X) (c : X) : Type :=
+    admI : (dersrec rules (emptyT (X:=X)) ps ->
+            derrec rules (emptyT (X:=X)) c) -> adm rules ps c
+\end{verbatim}
+
+Note that \texttt{adm}, unlike \texttt{derl}, is not monotonic in the
+rules used.
+From this we get the results 
+\begin{verbatim}
+adm_adm:
+  forall (X : Type) (rules : list X -> X -> Type) (ps : list X) (c : X),
+  adm (adm rules) ps c -> adm rules ps c
+derl_sub_adm:
+  forall (X : Type) (rules : list X -> X -> Type) (ps : list X) (c : X),
+  derl rules ps c -> adm rules ps c
+derl_adm:
+  forall (X : Type) (rules : list X -> X -> Type) (ps : list X) (c : X),
+  derl (adm rules) ps c -> adm rules ps c
+derrec_adm:
+  forall (X : Type) (rls : list X -> X -> Type) (c : X),
+  derrec (adm rls) (emptyT (X:=X)) c -> derrec rls (emptyT (X:=X)) c
+TODO - adm (derl rules) vs adm rules
+\end{verbatim}
+
+\section{Our induction patterns}
+In previous work we defined a general lemma which enables proof of a property
+of a pair of proved sequents, notably cut-admissibility.
+That general lemma, simplified, applies also to proving similar properties of a
+single proved sequent, such as contraction admissibility, or invertibility of
+a particular rule.
+
+A particular problem with admissibility proofs is that, when, for example,
+one logic is obtained from another by adding additional rules,
+and the steps in proving an admissibility result
+are similar for the rules common to both logics, it requires extra effort
+to formalise the proofs in a way which enables similar parts of the proofs to
+be reused.
+
+Our focus here is to set out induction patterns and relevant lemmas
+useful for inductive proofs of admissibility properties which permit relevant
+portions of the proof to be re-used for other calculi containing some of the
+same rules.
+
+\comment{
+NB - it seems I did something pretty similar in Isabelle,
+I think not written up, unless it's in the stuff we did with Jesse,
+in ~jeremy/isabelle/2005/seqms/ctr.thy
+see the definition of \verb|inv_stepm| as follows 
+
+\begin{verbatim}
+primrec
+  (* step in invertibility ; means that, if premises (ps) derivable,
+    and can apply (invs_of irls) to premises,
+    then can apply (invs_of irls) to conclusion (concl) *)
+  "inv_step derivs irls (ps, concl) = (set ps <= derivs -->
+    (ALL p : set ps. invs_of irls p <= derivs) -->
+    invs_of irls concl <= derivs)"
+
+primrec
+  (* variation on inv_step which will often be true and monotonic,
+    whereby the inversions of the conclusion are derivable from the
+    inversions of the premises *)
+  "inv_stepm drls irls (ps, concl) = (invs_of irls concl <=
+    derrec drls (set ps Un UNION (set ps) (invs_of irls)))"
+\end{verbatim}
+
+(here, \verb|invs_of irls| means the result of changing a sequent
+by inverting some rule in irls)
+}
+
+The simplest example of this is probably the following:
+
+substitution admissibility: for example, to show that if
+$A \land B \vdash A$ is derivable, then $C \land D \vdash C$ is derivable.
+The proof of this is obvious: you just go through the proof, changing
+every $A$ to $C$ and every $B$ to $D$.
+
+Even this example raises two points about the formal calculus used:
+
+each individual rule must permit these substitutions
+
+in particular the ``axiom'' rule must be $A \vdash A$ (for any formula $A$),
+rather than $p \vdash p$ (for any primitive proposition $p$).
+
+Note that in describing the implementation, the word ``rule'' implies
+specific premises and conclusion, for example, one of the substitution
+instances of a ``rule'' as in Table~\ref{k4-rules}.
+
+So we formalise this argument:
+
+we define a relation $R$ between sequents:
+for example, $R s_1 s_2$ could mean that $s_2$ is obtained from 
+$s_1$ by changing all occurrences of $A$ to $C$, and all $B$ to $D$
+(or, applying any substitution uniformly).
+
+Then the relevant requirement on the set of rules is that 
+
+for any rule $\displaystyle \frac{P_1 \ldots P_n} {Q}$,
+and for any $Q'$ such that $R~Q~Q'$,
+there exist modified premises ${P'_1 \ldots P'_n}$
+and a rule $\displaystyle \frac {P'_1 \ldots P'_n} {Q'}$.
+
+This obviously permits changing $A$ to $C$ and $B$ to $D$ 
+throughout the entire proof.
+
+So we define \texttt{can\_trf\_rules} to express this property 
+of a set of rules,
+and the theorem \texttt{der\_trf} expresses the use of that property.
+
+\begin{definition}[\texttt{can-trf-rules}]\label{def-can-trf-rules}
+text of defn
+\end{definition}
+
+\begin{theorem}[\texttt{der-trf}] \label{t-der-trf}
+text of thm
+\end{theorem}
+
+\begin{verbatim}
+can_trf_rules = 
+fun (sty : Type) (R : sty -> sty -> Type) (rules : list sty -> sty -> Type)
+  (ps : list sty) (c : sty) =>
+forall c' : sty,
+R c c' ->
+{ps' : list sty &
+rules ps' c' * ForallT (fun p' : sty => {p : sty & InT p ps * R p p'}) ps'}
+     : forall sty : Type,
+       (sty -> sty -> Type) ->
+       (list sty -> sty -> Type) -> list sty -> sty -> Type
+
+der_trf
+     : forall (sty : Type) (R : sty -> sty -> Type)
+         (rules : list sty -> sty -> Type),
+       (forall (ps : list sty) (c : sty),
+        rules ps c -> can_trf_rules R rules ps c) ->
+       forall concl : sty,
+       derrec rules (emptyT (X:=sty)) concl ->
+       forall concl' : sty,
+       R concl concl' -> derrec rules (emptyT (X:=sty)) concl'
+\end{verbatim}
+
+\subsection{Extensions and generalizations}
+We use as a running example a sequent calculus for the modal logic K4, 
+with a minimal set of logical connectives ($\to$ and $\bot$)
+and modal operator $\Box$.
+A sequent is represented as a list for formulae on either side of the
+turnstile $\vdash$.
+There is no explicit weakening rule (except that the $(\Box)$ rule 
+incorporates weakening (in arbitrary positions) in its conclusion,
+and no explicit exchange rule.
+
+\begin{figure}\label{k4-rules}
+GIVE RULES 
+\caption{Rules of our sequent calculus for K4}
+\end{figure}
+
+TO DO describe the weakening theorems,
+including the gen\_ext predicate,
+and the exchange theorems
+
+In various places we found we needed extensions to the theorem.
+
+\subsubsection{Reflexive closure of $R$}\label{s-refl-clos}
+For example the K4 ($\Box$) rule allows weakening (at arbitrary points)
+in the antecedent of the conclusion.  
+Consider the inductive proof of exchange (which we define as
+the interchanging of two sublists which are not necessarily adjacent):
+in the case where we are exchanging two sublists both of which consist entirely
+of formula which were ``weakened in'' in the use of the ($\Box$) rule.
+Then in this case there are two rule occurrences whose conclusions are related
+by the exchange relation, but which have the same premise, rather than related
+premises.
+
+So we extend the definition and theorem above to the case where the 
+premises are related by the reflexive closure of the relation $R$, thus:
+
+\begin{theorem}[\texttt{der-trf-rc}]\label{t-der-trf-rc}
+\end{theorem}
+\begin{verbatim}
+can_trf_rules_rc = 
+fun (sty : Type) (R : sty -> sty -> Type) (rules : list sty -> sty -> Type)
+  (ps : list sty) (c : sty) =>
+forall c' : sty,
+R c c' ->
+{ps' : list sty &
+rules ps' c' *
+ForallT (fun p' : sty => {p : sty & InT p ps * clos_reflT R p p'}) ps'}
+     : forall sty : Type,
+       (sty -> sty -> Type) ->
+       (list sty -> sty -> Type) -> list sty -> sty -> Type
+
+der_trf_rc
+     : forall (sty : Type) (R : sty -> sty -> Type)
+         (rules : list sty -> sty -> Type),
+       (forall (ps : list sty) (c : sty),
+        rules ps c -> can_trf_rules_rc R rules ps c) ->
+       forall concl : sty,
+       derrec rules (emptyT (X:=sty)) concl ->
+       forall concl' : sty,
+       R concl concl' -> derrec rules (emptyT (X:=sty)) concl'
+\end{verbatim}
+
+Note that it would be trivial to infer 
+\texttt{can-trf-rules sty (clos-reflT R) rules ps c}
+from \texttt{can-trf-rules sty R rules ps c}
+if we had defined \texttt{can-trf-rules} to require that ps and c were
+premises and conclusion of a rule, and in this case this definition and theorem
+would not be necessary.  But some of our other results would then be more
+complicated.
+
+\subsubsection{Transitive closure of $R$}\label{s-refl-trans-clos}
+The ($\Box$) rule (omitting the weakening incorporated into it) is
+$\displaystyle \frac{\Gamma \Box\Gamma \vdash A}{\Box\Gamma \vdash \Box A}$.
+To show the admissibility of exchange, we consider an exchange in $\Gamma$,
+to give $\Gamma'$.  The corresponding rule has premise
+$\Gamma' \Box\Gamma' \vdash A$ --- that is, $\Gamma \Box\Gamma \vdash A$ 
+subjected to \emph{two} exchanges.
+We therefore needed (and were able to) extend the 
+results of \S\ref{s-refl-clos} to reflexive transitive closure, as follows
+
+\begin{theorem}[\texttt{der-trf-rtc}]\label{t-der-trf-rtc}
+\end{theorem}
+\begin{verbatim}
+can_trf_rules_rtc = 
+fun (sty : Type) (R : sty -> sty -> Type) (rules : list sty -> sty -> Type)
+  (ps : list sty) (c : sty) =>
+forall c' : sty,
+R c c' ->
+{ps' : list sty &
+rules ps' c' *
+ForallT (fun p' : sty => {p : sty & InT p ps * clos_refl_transT_n1 R p p'})
+  ps'}
+     : forall sty : Type,
+       (sty -> sty -> Type) ->
+       (list sty -> sty -> Type) -> list sty -> sty -> Type
+
+der_trf_rtc
+     : forall (sty : Type) (R : sty -> sty -> Type)
+         (rules : list sty -> sty -> Type),
+       (forall (ps : list sty) (c : sty),
+        rules ps c -> can_trf_rules_rtc R rules ps c) ->
+       forall concl : sty,
+       derrec rules (emptyT (X:=sty)) concl ->
+       forall concl' : sty,
+       clos_refl_transT_n1 R concl concl' ->
+       derrec rules (emptyT (X:=sty)) concl'
+\end{verbatim}
+
+\subsubsection{Related rule is a derived rule}\label{s-der}
+In proving invertibility of a rule there are some special cases.
+Supposing that we are proving that if $\Gamma \vdash A \to B$ then
+$\Gamma, A \vdash B$ (ie, proving that the ($\vdash\to$) rule is invertible.
+Supposing then that the last rule of the proof is exactly
+$\displaystyle \frac {\Gamma, A \vdash B} {\Gamma \vdash A \to B}$.
+That is, given a rule $p/c$ and $c'$, we want to find $p'$ such that 
+$p'/c'$ is a rule and $R\ p\ p'$, but here $c'$ is exactly $p$ (and our $p'$
+will be the same also).
+So here the relation between $p$ and $p'$ is the reflexive closure of $R$,
+and the relationship between $p'$ and $c'$ is like a reflexive closure of
+inference rule application.
+
+Now we have defined \texttt{derl}, which is like a reflexive transitive closure
+of rule application, and it is in fact easy to extend the mian result to 
+derl, thus (this differs from \texttt{der-trf-derl} 
+only by the insertion of the single word \texttt{derl}):
+
+\begin{theorem}[\texttt{der-trf-derl}]\label{t-der-trf-derl}
+\end{theorem}
+\begin{verbatim}
+der_trf_derl
+     : forall (sty : Type) (R : sty -> sty -> Type)
+         (rules : list sty -> sty -> Type),
+       (forall (ps : list sty) (c : sty),
+        rules ps c -> can_trf_rules R (derl rules) ps c) ->
+       forall concl : sty,
+       derrec rules (emptyT (X:=sty)) concl ->
+       forall concl' : sty,
+       R concl concl' -> derrec rules (emptyT (X:=sty)) concl'
+\end{verbatim}
+
+But we also need a result allowing for the fact that $p = p'$, and we can do
+this:
+
+\begin{theorem}[\texttt{der-trf-rc-derl}]\label{t-der-trf-rc-derl}
+\end{theorem}
+\begin{verbatim}
+der_trf_rc_derl
+     : forall (sty : Type) (R : sty -> sty -> Type)
+         (rules : list sty -> sty -> Type),
+       (forall (ps : list sty) (c : sty),
+        rules ps c -> can_trf_rules_rc R (derl rules) ps c) ->
+       forall concl : sty,
+       derrec rules (emptyT (X:=sty)) concl ->
+       forall concl' : sty,
+       R concl concl' -> derrec rules (emptyT (X:=sty)) concl'
+\end{verbatim}
+
+Notice that at this point we have extended Theorem~\ref{t-der-trf}
+on the one hand, to \texttt{derl} and to reflexive closure of $R$
+(in Theorem~\ref{t-der-trf-rc-derl}),
+and on the other hand, to reflexive transitive closure 
+(in Theorem~\ref{t-der-trf-rtc}).
+Can we make both extensions together?  We have tried (to some extent), and
+so far have been unable.
+
+\subsubsection{Related rule is only an admissible rule}\label{s-rc-adm}
+Again we consider proving the invertibility of the ($\vdash\to$) rule,
+but here, in the form, for example, where the last rule of the proof is 
+$\displaystyle \frac p c = \frac {\Gamma, A \vdash B} {\Gamma \vdash A \to B}$, 
+as before, but our choice of inversion which we want to prove is
+$c' = {A, \Gamma \vdash B}$.
+So here we need to set $p' = {\Gamma, A \vdash B}$, and the 
+relationship between $p'$ and $c'$ is that $p'/c'$ is an admissible rule,
+not even a derivable rule.
+
+\begin{theorem}[\texttt{der-trf-rc-adm}]\label{t-der-trf-rc-adm}
+\end{theorem}
+\begin{verbatim}
+der_trf_rc_adm
+     : forall (sty : Type) (R : sty -> sty -> Type)
+         (rules : list sty -> sty -> Type),
+       (forall (ps : list sty) (c : sty),
+        rules ps c -> can_trf_rules_rc R (adm rules) ps c) ->
+       forall concl : sty,
+       derrec rules (emptyT (X:=sty)) concl ->
+       forall concl' : sty,
+       R concl concl' -> derrec rules (emptyT (X:=sty)) concl'
+\end{verbatim}
+
+\subsection{Height-preserving admissibility}
+
+In our implementation in Isabelle of the framework described in 
+\S\ref{s-dda}, we defined \texttt{derl} and \texttt{derrec} as inductively
+defined sets.  
+We also defined a datatype representing a derivation tree, as follows
+\begin{verbatim}
+datatype 'a dertree = Der 'a ('a dertree list) | Unf 'a 
+\end{verbatim}
+
+(where \texttt{Unf} represents an unproved leaf).
+We then defined a predicate testing whether a tree is valid according to
+a set of rules (which requires no unproved leaf,
+and that every \texttt{Der}-node is one of the given rules).
+
+We then had to prove that a sequent is derivable if and only if it is the
+root of a valid derivation tree.
+With a derivation tree ``object'', we can define its height, size (number of
+rules), etc, and prove theorems about these.
+
+Alternatively, we could have dealt with such concepts as height, size, etc,
+by defining new inductive sets (eg, sequents derivable in at most $n$ steps),
+but this requires a new inductive definition for each such property which may
+become of interest.
+
+In Coq the inductive definition provides a "proof object", whose height (etc)
+can be defined. This does require that the types of   
+\texttt{derl}, \texttt{derrec}, etc, use \texttt{Type},
+whereas our first implementation of these used \texttt{Prop}.
+
+\begin{verbatim}
+derrec : forall X : Type,
+  (list X -> X -> Type) -> (X -> Type) -> X -> Type
+derl : forall X : Type,
+  (list X -> X -> Type) -> list X -> X -> Type 
+\end{verbatim}
+
+It also requires that relevant proved theorems 
+(such as those proving some instance of \texttt{derrec \ldots \ldots \ldots})
+finish with Defined rather than Qed.
+
+We proved a theorem corresponding to Theorem~\ref{t-der-trf},
+but with the additional property that the derivation tree for the 
+related conclusion is no higher than that of the original conclusion.
+\begin{verbatim}
+der_trf_ht
+     : forall (sty : Type) (R : sty -> sty -> Type)
+         (rules : list sty -> sty -> Type),
+       (forall (ps : list sty) (c : sty),
+        rules ps c -> can_trf_rules R rules ps c) ->
+       forall (concl : sty) (D : derrec rules (emptyT (X:=sty)) concl)
+         (concl' : sty),
+       R concl concl' ->
+       {D' : derrec rules (emptyT (X:=sty)) concl' &
+       derrec_height D' <= derrec_height D}
+\end{verbatim}
+
+There was also another problem: for the derivation tree in Isabelle, if you
+take off the last rule, you get a list of subtrees each of which derives one
+premise of the last rule.
+In Coq, these subtrees all prove different things, so they have different
+types, so they can't be made into a list.
+
+So what we did instead was define \texttt{in\_dersrec}, 
+which expresses that a derivation 
+(of type \texttt{derrec \ldots \ldots \ldots})
+is one of the derivations in an object of type 
+\texttt{dersrec \ldots \ldots \ldots}).
+Likewise we defined \texttt{allPder}
+which represents that all the derivations represented 
+in in an object of type \texttt{dersrec \ldots \ldots \ldots}).
+satisfy some property.
+\begin{verbatim}
+in_dersrec
+     : forall (X : Type) (rules : rlsT X) (prems : X -> Type) (concl : X),
+       derrec rules prems concl ->
+       forall concls : list X, dersrec rules prems concls -> Type
+
+allPder
+     : forall (X : Type) (rules : rlsT X) (prems : X -> Type),
+       (forall x : X, derrec rules prems x -> Type) ->
+       forall concls : list X, dersrec rules prems concls -> Type
+\end{verbatim}
+
+However manipulating these functions proved difficult, 
+and we suspect that at some point it may become necessary to
+implement a derivation tree object as we have described doing in Isabelle.
+In particular there were problems which I don't understand,
+ which were solved by using dependent destruction 
+(which relies on some axiom, which may or may not be valid).
+
+\section{Coq proofs about K4}
+We now describe the proofs about the calculus for K4 presented in 
+Figure~\ref{k4-rules}.
+
+\subsection{Formalisation of the rules}
+
+DISCUSS
+eg \texttt{seqrule}, applies contexts (left and right, antecedent and
+succedent) to premises and conclusion
+\texttt{cgerule}, applies weakening (inserting formulae anywhere in the
+antecedent and succedent lists) to conclusion 
+\texttt{princrule}, 
+\texttt{K4prrule}, ($\Box$) rule without the weakening 
+\texttt{sing\_empty}, 
+
+We then probed a weakening admissibility result, not using the framework
+described here.
+
+We next describe the proofs of further admissibility rules,
+showing how we used the functions described earlier, and how the intermediate
+results would be equally useful in similar proofs about a different logic,
+such as S4.
+
+\subsection{Exchange}
+
+This lemma is meant for the classical rules, but formulated to apply to
+any set of rules constructed from base rules in which antecedent satisfies
+\texttt{sing\_empty} by extending premises and conclusion uniformly with
+contexts.
+
+\begin{verbatim}
+exchL_std_rule: forall W (rules : rlsT (Seql W)),
+  (forall ps U S, rules ps (U, S) -> sing_empty U) ->
+  forall ps c, seqrule rules ps c ->
+    can_trf_rules (fst_rel (swapped (T:=W))) (seqrule rules) ps c
+\end{verbatim}
+
+The relation between lists of which sublists have been swapped is
+\texttt{swapped}, and so \texttt{fst\_rel (@swapped W)} is the relation between 
+sequents whose antecedent lists are swapped.
+Here, \texttt{sing\_empty U} means that the list $U$ is either singleton or
+empty.
+
+As an easy corollary of this, we get exchange for classical propositional
+logic.
+
+\begin{verbatim}
+exchL_cpl: forall V concl,
+  derrec (seqrule (@princrule V)) (@emptyT _) concl ->
+     forall concl', fst_rel (@swapped _) concl concl' ->
+     derrec (seqrule (@princrule V)) (@emptyT _) concl'.
+\end{verbatim}
+
+Then, adding the ($\Box$) rule we get
+
+\begin{verbatim}
+exchL_K4: forall V ps c, cgerule (@K4prrule V) ps c ->
+    can_trf_rules_rtc (fst_rel (@swapped _)) (cgerule (@K4prrule V)) ps c.
+\end{verbatim}
+
+Then we put these results together, using these further lemmas: 
+\begin{lemma}[\texttt{can\_trf\_rules\_rtc}]\label{l-can-trf-rules-rtc}
+\texttt{can\_trf\_rules\_rtc} is monotonic in the rule set
+\end{lemma}
+\begin{lemma}[\texttt{can\_trf\_rules\_imp\_rtc}]\label{l-can-trf-rules-imp-rtc}
+\texttt{can\_trf\_rules} R rules ps c ->
+  \texttt{can\_trf\_rules\_rtc} R rules ps c
+\end{lemma}
+
+Then we use Theorem~\ref{t-der-trf-rtc} to get the result
+
+\begin{theorem}[\texttt{exchL\_rtc, exchL}]\label{t-exchL}
+If concl is derivable, then concl', got from concl by exchange[s] in the
+antecedent, is derivable.
+\end{theorem}
+
+\subsection{Invertibility of the classical propositional rules}
+
+From here on it is pretty incomplete.
+
+First we proved the invertibility of the ($\vdash\to$) rule.
+
+This uses Lemma~\ref{t-der-trf-rc-adm} and the following Lemma.
+
+\begin{lemma}[\texttt{can\_trf\_ImpRinv}]\label{t-can-trf-ImpRinv}
+\end{lemma}
+
+\begin{verbatim}
+Lemma can_trf_ImpRinv V ps c: @K4rules V ps c ->
+  can_trf_rules_rc (seqrel (@ImpRinv V)) (adm (@K4rules V)) ps c.
+\end{verbatim}
+
+The proof of this lemma involves 5 cases, one for each rule,
+each one being a separate lemma.
+\footnote{as things stand right now, I need to massage these somewhat
+to make them equally easily usable for other logics like S4}
+
+For the ($\Box$) rule, the formula to be inverted can only be a formula added
+in the weakening aspect of the rule, so no real difficulty there.
+
+For the axiom rule, the only problem case is where the formula to be inverted
+is the formula appearing on both sides (eg $C \to D \vdash C \to D$,
+so the inversion gives $C, C \to D \vdash D$).
+Here we need the related rule to be a derivable (or admissible) rule, 
+rather than simply a rule of the calculus.
+
+The ($\bot\vdash$) is easy because inversion of $C \to D$ won't change the fact 
+that there is a $\bot$ in the antecedent.
+
+The remaining two rules produce a lot of cases.
+Firstly, where the last rule is also ($\vdash\to$), involving the same formula,
+then the issue described in \S\ref{s-rc-adm} arises. 
+Then there are a multitude of cases, according to where the principal
+formulae of the last rule and the formula to be inverted appear in the contexts
+of both the last rule and the inversion relation. 
+So they need some effort in programming Coq Ltac tactics to handle all the
+cases.
+
+Finally, using Lemma~\ref{t-der-trf-rc-adm} we get
+\begin{theorem}[\texttt{K4\_ImpRinv}]\label{t-K4-ImpRinv}
+\end{theorem}
+\begin{verbatim}
+Theorem K4_ImpRinv V concl:
+  derrec (@K4rules V) (@emptyT _) concl ->
+  forall concl', seqrel (@ImpRinv V) concl concl' ->
+  derrec (@K4rules V) (@emptyT _) concl'.
+\end{verbatim}
+
+Trying to generalise the above: first, I adapted the proof for
+the last rule being ($\vdash\to$) and the rule being inverted
+($\to\vdash$), to a case where the last rule is (in its conclusion) any
+singleton on the right, and the rule being inverted is (in its conclusion) any
+singleton on the left.
+
+So I did this successfully for any such rules that are singletons (bearing in
+mind that a ``rule'' like ($\vdash\to$) is actually lots of rules).
+But then I have difficulty manipulating this to get the previous results.
+Hopefully this won't be too hard.
+Have to think about it. (the problem is that I can't simply say
+rule = union of rule instances, and subsitute as the argument of
+can\_trf\_rules\_rc because the ``='' really means that if there is a proof object
+of one then there is a proof object of the other (I think!!)).
+
+\begin{thebibliography}{10}
+
+\bibitem{dawson-gore-gls}
+J~E Dawson and R Gor{\'e}.
+\newblock Generic Methods for Formalising Sequent Calculi
+       Applied to Provability Logic.
+\newblock In Proc.\ Logic for Programming, Artificial Intelligence and
+Reasoning (LPAR 2010), LNCS 6397, 263-277.
+
+\end{thebibliography}
+
+\end{document}
+

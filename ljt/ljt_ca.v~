@@ -1,0 +1,172 @@
+
+(* LJ logic, using lists of formulae *)
+(* lots copied from ../modal/k4_ca.v, often with same names *)
+
+Require Export List.
+Export ListNotations.  
+Set Implicit Arguments.
+
+From Coq Require Import ssreflect.
+
+Add LoadPath "../gen".
+Add LoadPath "../lnt/tense-logic-in-Coq".
+Require Import gen genT ddT.
+Require Import List_lemmasT.
+Require Import lntT lntacsT.
+Require Import gen_seq gstep rtcT.
+Require Import ljt ljt_inv ljt_ctr.
+Require Import Coq.Program.Basics.
+
+(* derivability of conclusion of a cut, not conditional on premises
+  being derivable *) 
+
+(* but note we are going to need to allow A to be anywhere, not just at the
+front, because rule my cause that to happen in the premises *)
+
+(* note that a pair of end-sequents not of the form
+  (_, A) (_ ++ A :: _, _) satisfies cut_adm *)
+(* all possible results of cut on A derivable 
+  (only an issue because lists distinguish different occurrences of A) *)
+(* cut puts antecedent of left premise into antecedent of right premise
+  at the location of the cut-formula *)
+Inductive cedc X rules (C : X) cl cr : Type :=  
+  | cedcI : (forall la ra ra' D, 
+    cl = (la, C) -> cr = (ra ++ C :: ra', D : X) ->
+      derrec rules emptyT (ra ++ la ++ ra', D)) ->
+      @cedc X rules C cl cr.
+
+Inductive cut_adm X rules (C : X) : Type :=  
+  | cadmI : (forall cl cr la ra ra' D, 
+    cl = (la, C) -> cr = (ra ++ C :: ra', D : X) ->
+    derrec rules emptyT cl -> derrec rules emptyT cr ->
+      derrec rules emptyT (ra ++ la ++ ra', D)) -> @cut_adm X rules C.
+
+Definition cedcD X rules A cl cr (c : @cedc X rules A cl cr) := 
+  match c with | cedcI d => d end.
+
+Definition cadmD X rules A (c : @cut_adm X rules A) :=
+  match c with | cadmI d => d end.
+
+(* left rule on left premise *)
+Lemma gs2_lrlsL V fml any drsa drsb G psl psr cl cr :
+  fst_ext_rls (rlsmap (flip pair G) (@LJslrules V)) psl cl -> 
+  gen_step2 (cedc LJrules) fml any drsa drsb psl cl psr cr.
+Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
+clear sub fpr. destruct fmrr. destruct r. destruct r. 
+simpl in cle.  unfold fmlsext in cle.  simpl in cle.
+inversion cle. clear cle. subst.
+unfold LJrules.
+eapply derI.  eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
+exact (lrls_nc' D l).
+simpl.  unfold fmlsext.  simpl. list_eq_assoc.
+eapply usefmm. exact fpl.
+intro. simpl. intro dc. destruct dc.
+unfold fmlsext in c0. 
+unfold fmlsext. simpl. destruct c0.
+specialize (d0 _ _ _ _ eq_refl eq_refl).
+apply (eq_rect _ _ d0). list_eq_assoc.  Qed.
+
+(* right rule on right premise *)
+Lemma gs2_rrlsR V fml any drsa drsb psl psr cl cr :
+  fst_ext_rls (rlsmap (pair []) (@LJsrrules V)) psr cr -> 
+  gen_step2 (cedc LJrules) fml any drsa drsb psl cl psr cr.
+Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
+clear sub fpl. destruct fmrr. destruct r. destruct r. 
+simpl in cre.  unfold fmlsext in cre.  simpl in cre.
+inversion cre. clear cre. subst.
+unfold LJrules.
+eapply derI.  eapply fextI_eqc'.  exact (rrls_nc' l).
+simpl.  unfold fmlsext.  simpl. reflexivity.
+eapply usefmm. exact fpr.
+intro. simpl. intro dc. destruct dc.
+unfold fmlsext in c. simpl in c. rewrite H0 in c.
+unfold fmlsext. simpl. destruct c.
+exact (d0 _ _ _ _ eq_refl eq_refl).  Qed.
+
+Lemma fer_lj_der V cl cr ra ra' : derrec LJrules emptyT (cl, cr) ->
+  derrec (@LJrules V) emptyT (ra ++ cl ++ ra', cr).
+Proof. intro d.
+apply derl_derrec_nil.
+apply fst_ext_rls_derl_fst_ext_rls'.
+eapply fextI.
+apply derrec_nil_derl in d.
+eapply rmI_eq. exact d. reflexivity. reflexivity. Qed.
+
+(* Id rule on left premise 
+Lemma gs2_idL V A fml any drsb psl psr cl cr : 
+  fst_ext_rls (@Idrule V A) psl cl ->
+  gen_step2 (cedc LJrules) fml any (derrec LJrules emptyT) drsb psl cl psr cr.
+Proof. intros fidr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
+clear sub fpl fpr dr. destruct fidr. destruct r. destruct i.
+*)
+
+(* Id rule on right premise
+Lemma gs2_idR V A fml any drsb psl psr cl cr : 
+  fst_ext_rls (@Idrule V A) psr cr ->
+  gen_step2 (cedc LJrules) fml any (derrec LJrules emptyT) drsb psl cl psr cr.
+Proof. intros fidr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
+clear sub fpl fpr dr. destruct fidr. destruct r. destruct i.
+
+this one could be parametric or principal
+NB 
+
+*)
+
+(* 
+Lemma lj_gs2 V fml psl psr cl cr:
+  @LJrules V psl cl -> @LJrules V psr cr ->
+  gen_step2 (cedc LJrules) fml isubfml (derrec LJrules emptyT)
+        (derrec LJrules emptyT) psl cl psr cr.
+Proof. unfold LJrules. intros ljl ljr.  destruct ljl.  destruct ljr.
+destruct r0.
+destruct l.
+- destruct r. destruct l.
++ admit.
++ admit.
++ admit.
++ eapply gs2_lrlsL. apply fextI'. exact r.
++ admit.
+- admit.
+- admit.
+- admit.
+- apply gs2_rrlsR. apply fextI'. exact r0.
+
+
+model proofs on the following
+Lemma k4sw_gs2 V fml psl psr cl cr:
+  @K4rules_sw V psl cl -> @K4rules_sw V psr cr ->
+  gen_step2 (cedc K4rules_sw) fml isubfml (derrec K4rules_sw emptyT)
+        (derrec K4rules_sw emptyT) psl cl psr cr.
+Proof. intros k4l k4r.  destruct k4l.
+- destruct k4r.
++ apply gs2_k4sw_k4_Box_Box ; assumption.
++ destruct fml.
+* apply k4sw_gs2_spr_idoL.  apply (ido_VarL v). apply s.
+* apply k4sw_gs2_Bot.  exact (K4_sw_I k). exact (cplsw_I s).
+* apply k4sw_gs2_Imp. exact (K4_sw_I k). exact (cplsw_I s).
+* apply k4sw_gs2_spr_idoL. apply ido_WBoxL. exact s.
+* apply k4sw_gs2_spr_idoL. apply ido_BBoxL. exact s.
++ apply gs2_wkR. apply rsK4_wk. exact c1.
+- destruct fml.
++ apply k4sw_gs2_spr_idoR.  apply (ido_VarR v). apply s.
++ apply k4sw_gs2_Bot.  exact (cplsw_I s). exact k4r.  
++ apply k4sw_gs2_Imp.  exact (cplsw_I s). exact k4r.  
++ apply k4sw_gs2_spr_idoR. apply ido_WBoxR. exact s.
++ apply k4sw_gs2_spr_idoR. apply ido_BBoxR. exact s.
+- apply gs2_wkL. apply rsK4_wk. exact c0.
+Qed.
+
+Lemma AccT_isubfml V fml: AccT (@isubfml V) fml.
+induction fml ; apply AccT_intro ; intros ; inversion H ; assumption. Qed.
+
+Theorem k4sw_cut_adm V fml cl cr: derrec (@K4rules_sw V) emptyT cl ->  
+  derrec K4rules_sw emptyT cr -> cedc K4rules_sw fml cl cr.
+Proof. intros dl dr.
+eapply (@gen_step2_lemT _ _ _ (cedc (@K4rules_sw V)) fml isubfml).
+apply AccT_isubfml.
+intros *. intros ra rb.  apply (k4sw_gs2 ra rb).
+exact dl. exact dr.
+Qed.
+
+*)
+

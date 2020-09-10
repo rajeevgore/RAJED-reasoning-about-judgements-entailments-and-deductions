@@ -1,0 +1,253 @@
+
+Require Export List.
+Export ListNotations.
+Set Implicit Arguments.
+
+From Coq Require Import ssreflect.
+
+Add LoadPath "../gen".
+Add LoadPath "../lnt/tense-logic-in-Coq".
+Require Import gen.
+Require Import genT.
+Require Import ddT.
+
+Definition fmlsext (W : Type) Γ1 Γ2 (fmls : (list W)) := (Γ1 ++ fmls ++ Γ2).
+
+Lemma fmlsext_fmlsext: forall V (Γ1 Γ2 Φ1 Φ2 : list V) seq,
+  fmlsext Γ1 Γ2 (fmlsext Φ1 Φ2 seq) = fmlsext (Γ1 ++ Φ1) (Φ2 ++ Γ2) seq.
+Proof. intros. unfold fmlsext.  rewrite !app_assoc. reflexivity. Qed.  
+
+Lemma map_fmlsext_fmlsext: forall V (Γ1 Γ2 Φ1 Φ2 : list V) seqs,
+  map (fmlsext Γ1 Γ2) (map (fmlsext Φ1 Φ2) seqs) =
+  map (fmlsext (Γ1 ++ Φ1) (Φ2 ++ Γ2)) seqs.
+Proof. induction seqs. tauto. 
+simpl. rewrite IHseqs. rewrite fmlsext_fmlsext. reflexivity. Qed.  
+
+Lemma fmlsext_def : forall (W : Type) Φ1 Φ2 U,
+      @fmlsext W Φ1 Φ2 U = (Φ1 ++ U ++ Φ2).
+Proof. reflexivity. Qed.
+
+Inductive fmlsrule (W : Type) Φ1 Φ2 (pr : rlsT (list W)) : rlsT (list W) := 
+  | OSctxt : forall ps c, pr ps c -> 
+    fmlsrule Φ1 Φ2 pr (map (fmlsext Φ1 Φ2) ps) (fmlsext Φ1 Φ2 c).
+
+Lemma OSctxt_e: forall (W : Type) (pr : rlsT (list W)) ps U Φ1 Φ2,
+  pr ps U -> fmlsrule Φ1 Φ2 pr (map (fmlsext Φ1 Φ2) ps) (Φ1 ++ U ++ Φ2).
+Proof.
+  intros *. intros H. rewrite <- fmlsext_def.
+  apply OSctxt. exact H.
+Qed.
+
+Lemma OSctxt_eq: forall (W : Type) pr ps mps (ca U Φ1 Φ2 : list W),
+  pr ps U -> ca = Φ1 ++ U ++ Φ2 -> 
+  mps = map (fmlsext Φ1 Φ2) ps -> fmlsrule Φ1 Φ2 pr mps ca.
+Proof. intros.  subst. apply OSctxt_e. exact X. Qed.  
+
+Lemma fmlsrule_id (W : Type) (pr : rlsT (list W)) :
+  forall ps c, pr ps c -> fmlsrule [] [] pr ps c.
+Proof. intros.
+apply (OSctxt_eq pr ps c [] []). assumption.
+simpl. rewrite app_nil_r.  reflexivity.
+clear X. induction ps.  simpl.  reflexivity.
+simpl. rewrite <- IHps.
+unfold fmlsext. simpl.  rewrite !app_nil_r.
+reflexivity. Qed.
+
+Lemma fmlsrule_fmlsrule (W : Type) Γ1 Γ2 Φ1 Φ2 (pr : rlsT (list W)) :
+  rsub (fmlsrule Γ1 Γ2 (fmlsrule Φ1 Φ2 pr)) (fmlsrule (Γ1 ++ Φ1) (Φ2 ++ Γ2) pr).
+Proof. unfold rsub. intros. inversion X. subst. clear X. 
+inversion X0.  subst. clear X0.
+rewrite fmlsext_fmlsext.
+eapply OSctxt_eq. exact X. 
+reflexivity.
+clear X. induction ps0.  simpl.  reflexivity.
+simpl. rewrite IHps0.  rewrite fmlsext_fmlsext. reflexivity. Qed.
+
+Definition fmlsrule_fmlsrule' (W : Type) Γ1 Γ2 Φ1 Φ2 pr :=
+  rsubD (@fmlsrule_fmlsrule W Γ1 Γ2 Φ1 Φ2 pr).
+ 
+Lemma derl_fmlsrule'' (W : Type) Φ1 Φ2 (rules : rlsT (list W)) :
+  (forall ps c, derl rules ps c -> 
+   derl (fmlsrule Φ1 Φ2 rules) (map (fmlsext Φ1 Φ2) ps) (fmlsext Φ1 Φ2 c)) * 
+  (forall ps cs, dersl rules ps cs -> 
+    dersl (fmlsrule Φ1 Φ2 rules) (map (fmlsext Φ1 Φ2) ps) 
+    (map (fmlsext Φ1 Φ2) cs)).
+Proof.  eapply (derl_dersl_rect_mut (rules := rules)
+  (fun ps c => fun _ => derl (fmlsrule Φ1 Φ2 rules)
+    (map (fmlsext Φ1 Φ2) ps) (fmlsext Φ1 Φ2 c))
+  (fun ps cs : list _ => fun _ => dersl (fmlsrule Φ1 Φ2 rules)
+    (map (fmlsext Φ1 Φ2) ps) (map (fmlsext Φ1 Φ2) cs))).
+- simpl. intros. apply asmI.
+- intros. eapply dtderI.  apply OSctxt. eassumption.  assumption. 
+- simpl. apply dtNil.
+- intros. rewrite map_app. simpl. apply dtCons ; assumption. Qed.
+ 
+Definition derl_fmlsrule' W Φ1 Φ2 rules := 
+  fst (@derl_fmlsrule'' W Φ1 Φ2 rules).
+Definition dersl_fmlsrule' W Φ1 Φ2 rules := 
+  snd (@derl_fmlsrule'' W Φ1 Φ2 rules).
+ 
+Lemma derl_fmlsrule (W : Type) Φ1 Φ2 (rules : rlsT (list W)) :
+  rsub (fmlsrule Φ1 Φ2 (derl rules)) (derl (fmlsrule Φ1 Φ2 rules)).
+Proof.  unfold rsub.  intros.  destruct X.  
+apply derl_fmlsrule'. assumption. Qed.
+
+(* need to use general version, fmlsruleg, for this 
+Lemma fmlsrule_derl_fmlsrule (W : Type) Φ1 Φ2 (rules : rlsT (list W)) :
+  rsub (fmlsrule Φ1 Φ2 (derl (fmlsrule Φ1 Φ2 rules))) 
+    (derl (fmlsrule Φ1 Φ2 rules)).
+Proof.  eapply rsub_trans. apply derl_fmlsrule.
+ unfold rsub.  intros.  eapply derl_mono. 2: eassumption.
+ apply fmlsrule_fmlsrule. Qed.
+
+Definition fmlsrule_derl_fmlsrule' W rules :=
+  rsubD (@fmlsrule_derl_fmlsrule W rules).
+ *)
+
+Lemma OSctxt_e': forall (W : Type) (pr : rlsT (list W)) ps U Φ1 Φ2,
+  pr ps U -> fmlsrule Φ1 Φ2 pr (map (fmlsext Φ1 Φ2) ps) ((Φ1 ++ U) ++ Φ2).
+Proof.
+  intros *. intros H.
+  rewrite <- app_assoc. apply OSctxt_e. exact H.
+Qed.  
+
+Lemma fmlsext_defp : forall (W : Type) Φ1 Φ2 U,
+      @fmlsext W Φ1 Φ2 U = (Φ1 ++ U ++ Φ2).
+Proof. reflexivity. Qed.
+
+Lemma fmlsrule_same: forall (W : Type) Φ1 Φ2 pr ps (c c' : (list W)),
+  fmlsrule Φ1 Φ2 pr ps c -> c = c' -> fmlsrule Φ1 Φ2 pr ps c'.
+Proof. intros. subst. assumption. Qed.  
+
+Lemma fmlsrule_mono X (rulesa rulesb : rlsT (list X)) Φ1 Φ2 :
+  rsub rulesa rulesb -> rsub (fmlsrule Φ1 Φ2 rulesa) (fmlsrule Φ1 Φ2 rulesb).
+Proof. unfold rsub. intros. destruct X1. apply OSctxt. firstorder. Qed.
+
+Definition fmlsrule_mono' X Φ1 Φ2 rulesa rulesb rs :=
+  rsubD (@fmlsrule_mono X Φ1 Φ2 rulesa rulesb rs).
+
+Lemma OSctxt_nil: forall (W : Type) pr c Γ1 Γ2, (pr [] c : Type) ->
+  @fmlsrule W Γ1 Γ2 pr [] (fmlsext Γ1 Γ2 c).
+Proof.
+  intros *.  intros H. eapply OSctxt in H.
+  simpl in H. exact H.
+Qed.
+
+(** general version of fmlsrule, not specifying contexts **)
+
+Inductive fmlsruleg (W : Type) (pr : rlsT ((list W))) : rlsT ((list W)) := 
+  | OSgctxt : forall ps c Φ1 Φ2, pr ps c -> 
+    fmlsruleg pr (map (fmlsext Φ1 Φ2) ps) (fmlsext Φ1 Φ2 c).
+
+Lemma fmlsrule_g (W : Type) Φ1 Φ2 (pr : rlsT ((list W))) :
+  rsub (fmlsrule Φ1 Φ2 pr) (fmlsruleg pr).
+Proof. unfold rsub. intros. destruct X. apply OSgctxt. exact p. Qed.
+
+Lemma OSgctxt_e: forall (W : Type) (pr : rlsT ((list W))) ps U Φ1 Φ2,
+  pr ps U -> fmlsruleg pr (map (fmlsext Φ1 Φ2) ps) (Φ1 ++ U ++ Φ2).
+Proof.
+  intros *. intros H. rewrite <- fmlsext_def.
+  apply OSgctxt. exact H.
+Qed.
+
+Lemma OSgctxt_eq: forall (W : Type) pr ps mps (ca U Φ1 Φ2 : list W),
+  pr ps U -> ca = Φ1 ++ U ++ Φ2 -> 
+  mps = map (fmlsext Φ1 Φ2) ps -> fmlsruleg pr mps ca.
+Proof. intros.  subst. apply OSgctxt_e. exact X. Qed.  
+
+Lemma fmlsruleg_id (W : Type) (pr : rlsT ((list W))) :
+  forall ps c, pr ps c -> fmlsruleg pr ps c.
+Proof. intros.
+apply (OSgctxt_eq pr ps c [] []). assumption.
+simpl. rewrite app_nil_r.  reflexivity.
+clear X. induction ps.  simpl.  reflexivity.
+simpl. rewrite <- IHps.
+unfold fmlsext. simpl.  rewrite !app_nil_r.
+reflexivity. Qed.
+
+Lemma fmlsruleg_fmlsruleg (W : Type) (pr : rlsT ((list W))) :
+  rsub (fmlsruleg (fmlsruleg pr)) (fmlsruleg pr).
+Proof. unfold rsub. intros. inversion X. subst. clear X. 
+inversion X0.  subst. clear X0.
+rewrite fmlsext_fmlsext.
+eapply OSgctxt_eq. exact X. 
+reflexivity.
+clear X. induction ps0.  simpl.  reflexivity.
+simpl. rewrite IHps0.  rewrite fmlsext_fmlsext. reflexivity. Qed.
+
+Definition fmlsruleg_fmlsruleg' (W : Type) pr :=
+  rsubD (@fmlsruleg_fmlsruleg W pr).
+ 
+Lemma derl_fmlsruleg'' (W : Type) (rules : rlsT ((list W))) :
+  forall Φ1 Φ2, (forall ps c, derl rules ps c -> 
+   derl (fmlsruleg rules) (map (fmlsext Φ1 Φ2) ps) (fmlsext Φ1 Φ2 c)) * 
+  (forall ps cs, dersl rules ps cs -> 
+    dersl (fmlsruleg rules) (map (fmlsext Φ1 Φ2) ps) 
+    (map (fmlsext Φ1 Φ2) cs)).
+Proof. intros Φ1 Φ2.
+eapply (derl_dersl_rect_mut (rules := rules)
+  (fun ps c => fun _ => derl (fmlsruleg rules)
+    (map (fmlsext Φ1 Φ2) ps) (fmlsext Φ1 Φ2 c))
+  (fun ps cs : list _ => fun _ => dersl (fmlsruleg rules)
+    (map (fmlsext Φ1 Φ2) ps) (map (fmlsext Φ1 Φ2) cs))).
+- simpl. intros. apply asmI.
+- intros. eapply dtderI.  apply OSgctxt. eassumption.  assumption. 
+- simpl. apply dtNil.
+- intros. rewrite map_app. simpl. apply dtCons ; assumption. Qed.
+ 
+Definition derl_fmlsruleg' W rules Φ1 Φ2 := 
+  fst (@derl_fmlsruleg'' W rules Φ1 Φ2).
+Definition dersl_fmlsruleg' W rules Φ1 Φ2 := 
+  snd (@derl_fmlsruleg'' W rules Φ1 Φ2).
+ 
+Lemma derl_fmlsruleg (W : Type) (rules : rlsT ((list W))) :
+  rsub (fmlsruleg (derl rules)) (derl (fmlsruleg rules)).
+Proof.  unfold rsub.  intros.  destruct X.  
+apply derl_fmlsruleg'. assumption. Qed.
+
+Lemma fmlsruleg_derl_fmlsruleg (W : Type) (rules : rlsT ((list W))) :
+  rsub (fmlsruleg (derl (fmlsruleg rules))) (derl (fmlsruleg rules)).
+Proof.  eapply rsub_trans. apply derl_fmlsruleg.
+ unfold rsub.  intros.  eapply derl_mono. 2: eassumption.
+ apply fmlsruleg_fmlsruleg. Qed.
+
+Definition fmlsruleg_derl_fmlsruleg' W rules :=
+  rsubD (@fmlsruleg_derl_fmlsruleg W rules).
+
+Lemma OSgctxt_e': forall (W : Type) (pr : rlsT ((list W))) ps U Φ1 Φ2,
+  pr ps U -> fmlsruleg pr (map (fmlsext Φ1 Φ2) ps) ((Φ1 ++ U) ++ Φ2).
+Proof.
+  intros *. intros H.
+  rewrite <- app_assoc. apply OSgctxt_e. exact H.
+Qed.  
+
+Lemma fmlsruleg_same: forall (W : Type) pr ps (c c' : (list W)),
+  fmlsruleg pr ps c -> c = c' -> fmlsruleg pr ps c'.
+Proof. intros. subst. assumption. Qed.  
+
+Lemma fmlsruleg_mono X (rulesa rulesb : rlsT ((list X))) :
+  rsub rulesa rulesb -> rsub (fmlsruleg rulesa) (fmlsruleg rulesb).
+Proof. unfold rsub. intros. destruct X1. apply OSgctxt. firstorder. Qed.
+
+Definition fmlsruleg_mono' X rulesa rulesb rs :=
+  rsubD (@fmlsruleg_mono X rulesa rulesb rs).
+
+Lemma OSgctxt_nil: forall (W : Type) pr c Γ1 Γ2, (pr [] c : Type) ->
+  @fmlsruleg W pr [] (fmlsext Γ1 Γ2 c).
+Proof.
+  intros *.  intros H. eapply OSgctxt in H.
+  simpl in H. exact H.
+Qed.
+
+(* order-preserving merge *)
+Inductive merge {W : Type} : list W -> list W -> list W -> Type :=
+  | mergeLI : forall xs ys zs x, merge xs ys zs -> merge (x :: xs) ys (x :: zs)
+  | mergeRI : forall xs ys zs y, merge xs ys zs -> merge xs (y :: ys) (y :: zs)
+  | merge_nil : merge [] [] [].
+
+Lemma merge_Lnil {W} xs : @merge W [] xs xs.
+Proof. induction xs. apply merge_nil. exact (mergeRI _ IHxs). Qed.
+
+Lemma merge_Rnil {W} xs : @merge W xs [] xs.
+Proof. induction xs. apply merge_nil. exact (mergeLI _ IHxs). Qed.
+
