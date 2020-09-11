@@ -60,7 +60,7 @@ general/genT.vo general/genT.glob general/genT.v.beautified: general/genT.v gene
 general/ddT.vo general/ddT.glob general/ddT.v.beautified: general/ddT.v general/genT.vo general/gen.vo
 general/dd_fc.vo general/dd_fc.glob general/dd_fc.v.beautified: general/dd_fc.v general/ddT.vo
 general/List_lemmasT.vo general/List_lemmasT.glob general/List_lemmasT.v.beautified: general/List_lemmasT.v general/existsT.vo general/genT.vo general/gen.vo
-general/swappedT.vo general/swappedT.glob general/swappedT.v.beautified: general/swappedT.v general/existsT.vo general/gen.vo general/List_lemmasT.vo
+general/swappedT.vo general/swappedT.glob general/swappedT.v.beautified: general/swappedT.v general/existsT.vo general/gen_tacs.vo general/List_lemmasT.vo
 general/gen_seq.vo: general/gen_seq.v general/gen_tacs.vo general/gstep.vo
 tense-lns/lntT.vo tense-lns/lntT.glob tense-lns/lntT.v.beautified: tense-lns/lntT.v general/ddT.vo general/gen_tacs.vo general/gen_seq.vo general/existsT.vo
 tense-lns/lntacsT.vo tense-lns/lntacsT.glob tense-lns/lntacsT.v.beautified: tense-lns/lntacsT.v general/ddT.vo general/gen_tacs.vo general/gen_seq.vo general/List_lemmasT.vo tense-lns/lntT.vo general/swappedT.vo
