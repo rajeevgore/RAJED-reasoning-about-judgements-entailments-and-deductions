@@ -1,9 +1,10 @@
 %.vo : %.v
 	coqc $*.v
 
-gen.vo : gen.v
+# NOTE now some of these also depend on Coq files in ../general
+# ensure all those built before running this Makefile
 
-ddP.vo : gen.vo ddP.v
+ddP.vo : ddP.v
 
 List_lemmasP.vo : List_lemmasP.v
 
@@ -36,21 +37,9 @@ lnt_contraction_mrP.vo : lnt_contractionP.vo lnt_contraction_mrP.v
 lnt_gen_initP.vo : lntkt_exchP.vo lnt_weakeningP.vo lnt_gen_initP.v
 
 
-existsT.vo : existsT.v
+lntT.vo : lntT.v
 
-genT.vo : gen.vo existsT.vo genT.v
-
-ddT.vo : genT.vo ddT.v
-
-dd_fc.vo : ddT.vo dd_fc.v
-
-List_lemmasT.vo : ddT.vo List_lemmasT.v
-
-lntT.vo : ddT.vo List_lemmasT.vo lntT.v
-
-swappedT.vo : existsT.vo lntT.vo swappedT.v
-
-lntacsT.vo : swappedT.vo lntT.vo lntacsT.v
+lntacsT.vo : lntT.vo lntacsT.v
 
 lntlsT.vo : lntacsT.vo lntlsT.v
 
@@ -66,19 +55,51 @@ lntb2LT.vo : lntb1LT.vo lntb2LT.v
 
 lntkt_exchT.vo : lntb1LT.vo lntb2LT.vo lntbRT.vo lntkt_exchT.v
 
-lnt_weakeningT.vo : lntkt_exchT.vo lnt_weakeningT.v
+merge.vo : structural_equivalence.vo weakenedT.vo merge.v
+
+weakenedT.vo : lntacsT.vo List_lemmasT.vo weakenedT.v
+
+lnt_weakeningT.vo : lntkt_exchT.vo merge.vo weakenedT.vo lnt_weakeningT.v
 
 contractedT.vo : lntacsT.vo List_lemmasT.vo contractedT.v
 
 structural_equivalence.vo : lntT.vo contractedT.vo List_lemmasT.vo structural_equivalence.v
 
-merge.vo : structural_equivalence.vo merge.v
-
-lnt_contractionT.vo : contractedT.vo lnt_weakeningT.vo lntkt_exchT.vo swappedT.vo lnt_contractionT.v
+lnt_contractionT.vo : contractedT.vo lnt_weakeningT.vo lntkt_exchT.vo lnt_contractionT.v
 
 lnt_contraction_mrT.vo : merge.vo lnt_contractionT.vo lnt_contraction_mrT.v
 
 lnt_gen_initT.vo : lntkt_exchT.vo lnt_weakeningT.vo lnt_gen_initT.v
+
+ind_lex.vo : ind_lex.v
+
+size.vo : lntT.vo lntacsT.vo size.v
+
+principal.vo : lnt_contraction_mrT.vo size.vo structural_equivalence.vo principal.v
+
+cut_setup.vo : principal.vo ind_lex.vo lnt_gen_initT.vo lnt_contraction_mrT.vo cut_setup.v
+
+Lemma_Sixteen_setup.vo : cut_setup.vo Lemma_Sixteen_setup.v
+
+Lemma_Sixteen_SR_wb_fwd.vo : Lemma_Sixteen_setup.vo Lemma_Sixteen_SR_wb_fwd.v
+
+Lemma_Sixteen_SR_wb_bac.vo : Lemma_Sixteen_SR_wb_fwd.vo Lemma_Sixteen_SR_wb_bac.v
+
+Lemma_Sixteen_SR_wb.vo : Lemma_Sixteen_SR_wb_bac.vo Lemma_Sixteen_SR_wb.v
+
+Lemma_Sixteen_SR_bb_fwd.vo : Lemma_Sixteen_setup.vo Lemma_Sixteen_SR_wb_fwd.vo Lemma_Sixteen_SR_wb_bac.vo Lemma_Sixteen_SR_wb.vo
+
+Lemma_Sixteen_SR_bb_bac.vo : Lemma_Sixteen_SR_bb_fwd.vo Lemma_Sixteen_SR_bb_bac.v
+
+Lemma_Sixteen_SR_bb.vo : Lemma_Sixteen_SR_bb_bac.vo Lemma_Sixteen_SR_bb.v
+
+Lemma_Sixteen_SR_p.vo : Lemma_Sixteen_SR_bb.vo Lemma_Sixteen_SR_p.v
+
+Lemma_Sixteen_SL.vo : Lemma_Sixteen_SR_p.vo Lemma_Sixteen_SL.v
+
+Lemma_Sixteen.vo : Lemma_Sixteen_SL.vo Lemma_Sixteen.v
+
+cut.vo : size.vo lnt_contraction_mrT.vo ind_lex.vo lnt_gen_initT.vo principal.vo cut_setup.vo Lemma_Sixteen.vo cut.v
 
 
 
