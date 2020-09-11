@@ -6,19 +6,6 @@ Require Import existsT.
 Require Import contractedT.
 Require Import Coq.Classes.CRelationClasses.
 
-Ltac clear_useless :=
-  repeat match goal with
-         | [H : ?a = ?a |- _] => clear H
-         | [H : [?a] = [?a] |- _] => clear H
-         | [H : ?a :: ?b = ?a :: ?b |- _] => clear H
-         | [H1 : ?a, H2 : ?a |- _] => clear H2
-         end.
-
-Ltac inversion_cons :=
-  repeat match goal with
-         | [ H : ?a :: ?l1 = ?b :: ?l2 |- _] => inversion H; subst; clear_useless
-         end.
-
 (* Use this one to help with full structural equivalence definition. *)
 Inductive struct_equiv_str {V : Set} : (list (rel (list (PropF V)) * dir)) -> (list (rel (list (PropF V)) * dir)) -> Type :=
 | se_nil2 : struct_equiv_str [] []
@@ -180,6 +167,19 @@ Proof.
   reflexivity. assumption.
 Qed.
 
+Lemma struct_equiv_str_comm : forall {V} A B,
+    struct_equiv_str A B ->
+    @struct_equiv_str V B A.
+Proof.
+  induction A; intros B Hs.
+  inversion Hs; try discriminate. econstructor.
+  inversion Hs; try discriminate.
+  subst. inversion_cons.
+  econstructor; try reflexivity.
+  eapply IHA.  eassumption.
+Qed.
+
+
 Lemma struct_equiv_weak_refl : forall {V : Set} G,
     @struct_equiv_weak V G G.
 Proof.
@@ -187,3 +187,44 @@ Proof.
   erewrite app_nil_r. reflexivity.
   apply struct_equiv_str_refl.
 Qed.
+
+
+Lemma struct_equiv_str_app_revR : forall {V : Set} A1 A2 B1 B2,
+    length A1 = length B1 ->
+    struct_equiv_str (A1 ++ A2) (B1 ++ B2) ->
+    (struct_equiv_str A1 B1) * (@struct_equiv_str V A2 B2).
+Proof.
+  induction A1; intros until 0; intros Hl Hs;
+    destruct B1; try discriminate.
+  simpl in *. split. econstructor. assumption.
+  simpl in *. inversion Hl.
+  inversion Hs. subst.
+  inv_singleton_str.
+  edestruct IHA1; try eassumption. 
+  split.
+  econstructor; try reflexivity.
+  all : assumption.
+Qed.
+
+
+
+Lemma struct_equiv_str_app_single : forall {V : Set} H1 H2 A1 A2 B1 B2 d,
+    struct_equiv_str H1 H2 ->
+    @struct_equiv_str V (H1 ++ [(A1,A2,d)]) (H2 ++ [(B1,B2,d)]).
+Proof.
+  induction H1; intros until 0; intros Hstr.
+  inversion Hstr; try discriminate.
+  simpl. econstructor; try reflexivity.
+  econstructor.
+  inversion Hstr; try discriminate.
+  inversion H. subst.
+  simpl. econstructor; try reflexivity.
+  eapply IHlist. eassumption.
+Qed.
+
+Ltac struct_equiv_str_solve_primitive :=
+    repeat (eassumption || match goal with
+    | [ H : struct_equiv_str ?H1 ?H2 |- struct_equiv_str (?H1 ++ [(_,_,?d)]) (?H2 ++ [(_,_,?d)]) ] => eapply struct_equiv_str_app_single; eapply H
+    | [ |- struct_equiv_str (?H1 ++ [(_,_,?d)]) _ ] => eapply struct_equiv_str_app_single; try eassumption
+    | [ |- struct_equiv_str _ (?H2 ++ [(_,_,?d)]) ] => eapply struct_equiv_str_app_single; try eassumption
+    end).

@@ -448,6 +448,48 @@ Proof. unfold iff.  unfold anon.  intros.  split ; intros.
  destruct H. exists ; tauto.
  destruct H. apply inhabits. assumption. Qed.
 
+Lemma want_left_prod_under_universal : forall (T : Type) (P : T -> Type) (Q1 : T -> Type) (S : Type),
+    (forall y : T, P y -> ((Q1 y) * S)) ->
+    forall y : T, P y -> Q1 y.
+Proof. firstorder. Qed.
+
+Lemma want_right_prod_under_universal : forall (T : Type) (P : T -> Type) (Q1 : T -> Type) (S : Type),
+    (forall y : T, P y -> (S * (Q1 y))) ->
+    forall y : T, P y -> Q1 y.
+Proof. firstorder. Qed.
+
+Lemma want_right_prod_under_universal' : forall (T : Type) (P : T -> Type) (Q1 S : T -> Type),
+    (forall y : T, P y -> ((S y) * (Q1 y))) ->
+    forall y : T, P y -> Q1 y.
+Proof. firstorder. Qed.
+
+Lemma want_prod_under_universal4 : forall (T : Type) (P : T -> Type) (Q1 Q2 Q3 Q4 : T -> Type),
+    (forall y : T, P y -> ((Q1 y) * (Q2 y) * (Q3 y) * (Q4 y))) ->
+    (forall y : T, P y -> Q1 y) *
+    (forall y : T, P y -> Q2 y) *
+    (forall y : T, P y -> Q3 y) *
+    (forall y : T, P y -> Q4 y).
+Proof. firstorder. Qed.
+
+Lemma prod_nat_split : forall (P : (nat * nat) -> Type),
+    (forall y : nat * nat, P y) ->
+    (forall n m : nat, P (n,m)).
+Proof. firstorder. Qed.
+
+
+Inductive empty : Type := .
+
+Lemma empty_explosion : forall (A : Type), empty -> A.
+Proof. intros A H. inversion H. Qed.
+
+Notation "T~ A" := (A -> empty) (at level 60).
+
+Lemma False_empty : False -> empty.
+Proof. intros H. inversion H. Qed.
+
+Lemma empty_False : empty -> False.
+Proof. intros H. inversion H. Qed.
+
 Inductive leT (n : nat) : nat -> Type :=
   | leT_n : leT n n | leT_S : forall m : nat, leT n m -> leT n (S m).
 
@@ -497,5 +539,3 @@ subst. exact (inr (leT_n _)).  exact (inr (leT_S l)). Qed.
 Lemma leT_ex_plus k n : leT k n -> { m : nat & Nat.add m k = n }.
 Proof. intro lkn. induction lkn. exists 0. simpl. reflexivity.
 cD. subst. exists (S IHlkn). simpl. reflexivity. Qed.
-
-

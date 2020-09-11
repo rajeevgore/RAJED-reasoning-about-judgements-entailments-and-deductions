@@ -95,7 +95,7 @@ try eapply can_gen_contL_gen_def' in acm ;
   assoc_single_mid' c' ;
   unfold nsext ; unfold nslext ;  unfold nslcext ; unfold nslclext ; exact acm |
    exact swap | list_eq_assoc | reflexivity].
-
+(*
 Ltac rem_nil_hyp :=
   repeat match goal with
   | [ H : context[ [] ++ ?A ] |- _ ] => rem_nil_hyp_arg H
@@ -104,7 +104,7 @@ Ltac rem_nil_hyp :=
   end.
 
 Ltac rem_nil := rem_nil_hyp; rem_nil_goal.
-
+*)
 Ltac check_nil_cons_contr :=
   match goal with
   | [H : [] = ?l1 ++ ?a :: ?l2 |- _] => contradiction (nil_eq_list l1 l2 a H)

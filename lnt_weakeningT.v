@@ -6,15 +6,9 @@ Require Import List_lemmasT.
 Require Import lntT lntacsT lntlsT lntbRT lntmtacsT.
 Require Import lntb1LT lntb2LT.
 Require Import lntkt_exchT.
+Require Import weakenedT merge.
+Require Import structural_equivalence.
 
-
-Inductive weakened {T} : list T -> list T -> Type :=
-  | weakened_I : forall (X Y A B C : list T), X = (A ++ C) -> 
-    Y = (A ++ B ++ C) -> weakened X Y.
-
-Lemma weakened_I': forall T (A B C D : list T),
-   weakened (A ++ C) (A ++ B ++ C).
-Proof.  intros.  eapply weakened_I ; reflexivity. Qed.
 
 (* -------------------------- *)
 (* LEFT WEAKENING DEFINITIONS *)
@@ -98,47 +92,6 @@ eapply inps0 ; [> exact swap |
   unfold nsext ; unfold nslext ;  unfold nslcext ; unfold nslclext ;
   list_eq_assoc | reflexivity ]].
 
-Lemma weak_same: forall T X, weakened X (X : list T).
-Proof.
-  intros. apply (weakened_I _ _ [] [] X); reflexivity.
-Qed.
-
-Lemma weak_L: forall T X Y Z,
-  weakened X (Y : list T) -> weakened (Z ++ X) (Z ++ Y).
-Proof.  intros. destruct X0. subst. 
-  rewrite !(app_assoc Z). apply weakened_I'. auto. Qed.
-
-Lemma weak_R: forall T X Y Z,
-  weakened X (Y : list T) -> weakened (X ++ Z) (Y ++ Z).
-Proof.
-  intros. destruct X0. subst. rewrite <- !app_assoc.
-  apply weakened_I'. auto.
-Qed.
-
-Lemma weak_cons: forall T (x : T) Y Z,
-  weakened Y Z -> weakened (x :: Y) (x :: Z).
-Proof.  intros. destruct X. subst. list_assoc_l. rewrite <- !app_assoc.
-  apply weakened_I'. auto. Qed.
-
-Lemma weak_simpleRX : forall T (A B : list T),
-    weakened A (A ++ B).
-Proof.
-  intros. apply (weakened_I _ _ A B []);
-            list_app_nil; reflexivity.
-Qed.
-
-Lemma weak_simpleLX : forall T (A B : list T),
-    weakened A (B ++ A).
-Proof.
-  intros. apply (weakened_I _ _ [] B A);
-            list_app_nil; reflexivity.
-Qed.
-
-Ltac weak_tacX :=
- list_assoc_r ; try (apply weak_same) ; 
-    repeat (apply weak_L || apply weak_cons) ;  
-    list_assoc_l ; repeat (apply weak_R); try apply weak_simpleRX;
-    try apply weak_simpleLX.
 
 Ltac nsprsame_weak rs pr q qin inmps acm inps0 x0 := 
 derIrs rs ; [> apply NSctxt' || apply NSlcctxt' ;
@@ -1205,4 +1158,188 @@ Proof.
   unfold nslclext. simpl. rewrite app_nil_r.
   constructor. eapply Hder.
   eapply dlNil.
+Qed.
+
+Lemma derrec_weakened_multiL : forall {V : Set} Γ1 Γ2 Δ d X Y,
+  weakened_multi Γ1 Γ2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [(Γ1, Δ, d)] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [(Γ2, Δ, d)] ++ Y).
+Proof.
+  intros V Γ1 Γ2 Δ d X Y Hc Hd.
+  revert X Y Δ d Hd.
+  induction Hc; intros XX YY Δ d Hd.
+  assumption.
+  eapply IHHc.
+  inversion w; subst;
+  eapply LNSKt_weakL.
+  eapply Hd. reflexivity. reflexivity.
+Qed.
+
+Lemma derrec_weakened_multiR : forall {V : Set} Γ Δ1 Δ2 d X Y,
+  weakened_multi Δ1 Δ2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [(Γ, Δ1, d)] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [(Γ, Δ2, d)] ++ Y).
+Proof.
+  intros V Γ Δ1 Δ2 d X Y Hc Hd.
+  revert X Y Γ d Hd.
+  induction Hc; intros XX YY Γ d Hd.
+  assumption.
+  eapply IHHc.
+  inversion w; subst;
+  eapply LNSKt_weakR.
+  eapply Hd. reflexivity. reflexivity.
+Qed.
+
+Lemma derrec_weakened_seqL: forall {V : Set} s1 s2 X Y,
+  weakened_seqL s1 s2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s1] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s2] ++ Y).
+Proof.
+  intros V s1 s3 X Y Hc Hd.
+  inversion Hc. subst.
+  eapply derrec_weakened_multiL.
+  exact H. assumption.
+Qed.
+
+Lemma derrec_weakened_seqR: forall {V : Set} s1 s2 X Y,
+  weakened_seqR s1 s2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s1] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s2] ++ Y).
+Proof.
+  intros V s1 s3 X Y Hc Hd.
+  inversion Hc. subst.
+  eapply derrec_weakened_multiR.
+  exact H. assumption.
+Qed.
+
+Lemma derrec_weakened_seq: forall {V : Set} s1 s2 X Y,
+  weakened_seq s1 s2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s1] ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ [s2] ++ Y).
+Proof.
+  intros V s1 s2 X Y Hc Hd.
+  inversion Hc; subst.
+  eapply derrec_weakened_seqL; eassumption.
+  eapply derrec_weakened_seqR; eassumption.
+  eapply derrec_weakened_seqR. eassumption.
+  eapply derrec_weakened_seqL; eassumption.
+Qed.
+
+Lemma derrec_weakened_nseq_gen : forall {V : Set} ns1 ns2 X Y,
+  weakened_nseq ns1 ns2 ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ ns1 ++ Y) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (X ++ ns2 ++ Y).
+Proof.
+  intros V s1 s2 X Y Hc.
+  revert X Y. 
+  induction Hc as [ | ];
+    intros X Y Hd; subst.
+  +{ eapply Hd. }
+  +{ simpl in Hd. 
+     rewrite cons_singleton in Hd.
+     eapply derrec_weakened_seq in Hd.
+     2 : exact w.
+     simpl. rewrite app_cons_single. eapply IHHc.
+     rewrite <- app_cons_single. exact Hd. }
+Qed.
+  
+Lemma derrec_weakened_nseq : forall {V : Set} G H,
+  weakened_nseq H G ->
+  derrec (LNSKt_rules (V:=V)) (fun _ => False) H ->
+  derrec (LNSKt_rules (V:=V)) (fun _ => False) G.
+Proof.
+  intros until 0; intros Hc Hd.
+  assert (G =  ([] ++ G ++ [])) as Hass1.
+  rewrite app_nil_r. reflexivity.
+  rewrite Hass1. eapply derrec_weakened_nseq_gen.
+  eapply Hc.
+  rewrite app_nil_r. assumption.
+Qed.
+  (*
+Lemma derrec_merge_nseq_double : forall {V : Set} G H,
+  merge G G H ->
+  derrec (LNSKt_rules (V:=V)) (fun _ => False) H ->
+  derrec (LNSKt_rules (V:=V)) (fun _ => False) G.
+Proof.
+  intros until 0; intros Hm Hd.
+  eapply derrec_weakened_nseq.
+  eapply merge_weakened_nseq. eassumption.
+  assumption.
+Qed.
+   *)
+
+
+Ltac inversion_input input :=
+  match goal with
+  | [ H : input |- _ ] => inversion H
+  | [ H : input _ |- _ ] => inversion H
+  | [ H : input _ _ |- _ ] => inversion H
+  | [ H : input _ _ _ |- _ ] => inversion H                                 
+  | [ H : input _ _ _ _ |- _ ] => inversion H
+  | [ H : input _ _ _ _ _ |- _ ] => inversion H
+  end.
+
+Lemma derrec_nil_not: forall {V : Set},
+    derrec (@LNSKt_rules V) (fun _ => False) [] -> False.
+Proof.
+  intros V H.
+  inversion H. contradiction.
+  subst.
+  inversion_input (@LNSKt_rules V);
+    try inversion_input nslclrule;
+    try inversion_input nslcrule;
+    try inversion_input b2rrules;
+    try inversion_input b1rrules;
+    try inversion_input b1lrules;
+    try inversion_input b2lrules;
+    try inversion_input EW_rule;
+    try inversion_input seqrule;
+    try inversion_input princrule_pfc;
+    subst;
+      unfold nslclext in *;
+      unfold nslcext in *;
+      try match goal with
+      | [ H : ?L ++ ?L2 = [] |- _ ] => destruct L; discriminate
+      end.
+Qed.
+
+Lemma derrec_struct_equiv_mergeL : forall (V : Set) G H GH,
+    struct_equiv_str G H ->
+    merge G H GH ->
+    derrec (LNSKt_rules (V:=V)) (fun _ => False) G ->
+    derrec (LNSKt_rules (V:=V)) (fun _ => False) GH.
+Proof.
+  intros until 0; intros Hs Hm Hd.
+  eapply derrec_weakened_nseq.
+  eapply merge_weakened_nseqL.
+  eassumption. eassumption.
+  eassumption.
+Qed.
+
+Lemma derrec_struct_equiv_mergeR : forall (V : Set) G H GH,
+    struct_equiv_str G H ->
+    merge G H GH ->
+    derrec (LNSKt_rules (V:=V)) (fun _ => False) H ->
+    derrec (LNSKt_rules (V:=V)) (fun _ => False) GH.
+Proof.
+  intros until 0; intros Hs Hm Hd.
+  eapply derrec_weakened_nseq.
+  eapply merge_weakened_nseqR.
+  eassumption. eassumption.
+  eassumption.
+Qed.
+
+Lemma derrec_weakened_nseq_nslclext : forall {V : Set} X Y ns,
+  weakened_nseq X Y ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (nslclext X ns) ->
+derrec (LNSKt_rules (V:=V)) (fun _ => False) (nslclext Y ns).
+Proof.
+  intros until 0; intros Hw Hd.
+  unfold nslclext in *.
+  rewrite <- (app_nil_l X) in Hd.
+  rewrite <- (app_nil_l Y).
+  list_assoc_r.
+  list_assoc_r_arg Hd.
+  eapply derrec_weakened_nseq_gen;
+  eassumption.
 Qed.

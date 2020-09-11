@@ -303,4 +303,5 @@ simpl. reflexivity. Qed.
 Lemma map_eq_nil T U (f : T -> U) xs : map f xs = [] -> xs = [].
 Proof. intro mx. destruct xs. reflexivity.  simpl in mx. discriminate mx. Qed.
 
+Ltac name_goal name := refine ?[name].
 

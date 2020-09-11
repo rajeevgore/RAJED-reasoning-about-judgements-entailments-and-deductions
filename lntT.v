@@ -31,6 +31,14 @@ Inductive PropF (V : Set): Type :=
 (* | BDia : PropF V -> PropF V *)
 .
 
+Ltac inversion_Kt_fml :=
+  match goal with
+  | [ H : WBox ?A = WBox ?B |- _ ] => inversion H; try clear H
+  | [ H : BBox ?A = BBox ?B |- _ ] => inversion H; try clear H
+  | [ H : Imp ?A ?B = Imp ?C ?D |- _ ] => inversion H; try clear H
+  | [ H : Var ?A = Var ?B |- _ ] => inversion H; try clear H
+  end.
+
 Definition rel (W : Type) : Type := prod W W.
 (* statement of exchL fails if using Type here 
 Definition rel (W : Set) : Set := prod W W.
@@ -734,4 +742,5 @@ Proof.
   unfold rules_R_oe. intros until 0. intros H.
   eapply Idrule_p_R_oe.  exact H.
 Qed.
+
 
