@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* try to adapt lntmr.v, which deals with diamond rules, to box rules *)
 

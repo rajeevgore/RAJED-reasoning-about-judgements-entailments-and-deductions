@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* proving the form of exchange where two adjacent lists are interchanged 
   for system with princrule and seqrule *)

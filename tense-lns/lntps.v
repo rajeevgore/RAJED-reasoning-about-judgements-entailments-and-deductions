@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* try non-adjacent exchange, for system with princrule and seqrule *)
 

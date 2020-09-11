@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Export List.
 Require Import Omega.
 

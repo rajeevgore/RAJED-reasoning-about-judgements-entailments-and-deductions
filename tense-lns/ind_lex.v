@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import Lexicographic_Product.
 Require Import Relation_Operators.
 Require Import Wf_nat.

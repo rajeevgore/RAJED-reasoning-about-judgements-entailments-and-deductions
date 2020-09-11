@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import PeanoNat Lt.
 Require Import Lia.
 

@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* all rules for LNSKt* *)
 

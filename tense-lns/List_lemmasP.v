@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import List Omega.
 Import ListNotations.
 Set Implicit Arguments.

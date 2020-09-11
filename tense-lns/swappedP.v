@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import List.
 
 Import ListNotations.

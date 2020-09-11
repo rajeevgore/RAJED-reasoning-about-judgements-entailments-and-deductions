@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* try non-adjacent move of a single formula,
   for system with princrule and seqrule *)

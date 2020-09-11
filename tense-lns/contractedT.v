@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import List.
 Require Import existsT.
 Require Import List_lemmasT.

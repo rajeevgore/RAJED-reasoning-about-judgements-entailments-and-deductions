@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import Arith Init.Wf.
 Definition strong_induction_wf := well_founded_induction lt_wf.
 

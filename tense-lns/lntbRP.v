@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* box_R rules, as on paper 23/4/19, Fig 2 *)
 

@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* stuff to do with seqlrule, and ths modal diamond rules defined using it,
   now not used *)

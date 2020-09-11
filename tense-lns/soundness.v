@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* sample proof of soundness of some rules using a definition of tau
   which works from the RH end of a LNS *)

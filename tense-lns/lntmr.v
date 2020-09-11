@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* modal rules *)
 

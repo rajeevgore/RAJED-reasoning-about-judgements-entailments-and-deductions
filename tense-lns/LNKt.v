@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import Kt_semantics.
 Require Import Omega.
 Require Import List_lemmas Strong_induction.

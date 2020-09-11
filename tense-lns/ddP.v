@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* derrec, derl, etc, other useful stuff *)
 

@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 
 (* tactics etc for lntom *)
 

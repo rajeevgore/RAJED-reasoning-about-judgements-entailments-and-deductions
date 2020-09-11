@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import ssreflect.
 
 Require Import gen.

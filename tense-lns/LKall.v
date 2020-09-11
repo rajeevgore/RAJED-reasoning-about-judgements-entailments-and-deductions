@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Export List.
 Set Implicit Arguments.
 Export ListNotations.
