@@ -398,10 +398,200 @@ Proof.
   eapply cont_multi_refl.
 Qed.
 
+Lemma contracted_multi_seq : forall {T} G1 G2 H1 H2 d,
+    contracted_multi G1 G2 ->
+    contracted_multi H1 H2 ->
+    @contracted_seq T (G1, H1, d) (G2, H2, d).
+  Proof.
+    intros.
+    eapply cont_seq_stepL.
+    econstructor. eassumption.
+    eapply cont_seq_baseR.
+    econstructor. eassumption.
+  Qed.
+
+
 Lemma contracted_nseq_refl : forall {T : Type} ns,
     @contracted_nseq T ns ns.
 Proof.
   induction ns. constructor.
   constructor. apply contracted_seq_refl.
   assumption.
+Qed.
+
+
+Lemma contracted_nseq_app : forall {T : Type} l1 l2 l3 l4,
+  @contracted_nseq T l1 l3 ->
+  contracted_nseq l2 l4 ->
+  contracted_nseq (l1 ++ l2) (l3 ++ l4).
+Proof.
+  induction l1; intros l2 l3 l4 H1 H2.
+  inversion H1. assumption.
+  inversion H1. subst. simpl.
+  econstructor. assumption.
+  apply IHl1; assumption.
+Qed.
+
+Lemma contracted_seqL_consL : forall {T : Type} l1 l2 l3 l4 a d1 d2,
+    @contracted_seqL T (l1, l2, d1) (l3, l4, d2) ->
+    contracted_seqL (a :: l1, l2, d1) (a :: l3, l4, d2).
+Proof.
+  intros until 0; intros H.
+  inversion H. subst.
+  econstructor.
+  eapply contracted_multi_cons.
+  assumption.
+Qed.
+
+Lemma contracted_seqR_consL : forall {T : Type} l1 l2 l3 l4 a d1 d2,
+    @contracted_seqR T (l1, l2, d1) (l3, l4, d2) ->
+    contracted_seqR (a :: l1, l2, d1) (a :: l3, l4, d2).
+Proof.
+  intros until 0; intros H.
+  inversion H. subst.
+  econstructor.
+  assumption.
+Qed.
+
+Lemma contracted_seqL_consR : forall {T : Type} l1 l2 l3 l4 a d1 d2,
+    @contracted_seqL T (l1, l2, d1) (l3, l4, d2) ->
+    contracted_seqL (l1, a :: l2, d1) (l3, a :: l4, d2).
+Proof.
+  intros until 0; intros H.
+  inversion H. subst.
+  econstructor.
+  assumption.
+Qed.
+
+Lemma contracted_seqR_consR : forall {T : Type} l1 l2 l3 l4 a d1 d2,
+    @contracted_seqR T (l1, l2, d1) (l3, l4, d2) ->
+    contracted_seqR (l1, a :: l2, d1) (l3, a :: l4, d2).
+Proof.
+  intros until 0; intros H.
+  inversion H. subst.
+  econstructor.
+  eapply contracted_multi_cons.
+  assumption.
+Qed.
+
+Lemma contracted_seqL_dir : forall {T : Type} (l1 l2 l3 l4 : list T) d1 d2,
+    contracted_seqL (l1, l2, d1) (l3, l4, d2) -> d1 = d2.
+Proof.
+  intros until 0; intros Hc.
+  inversion Hc. subst. reflexivity.
+Qed.
+
+Lemma contracted_seqR_dir : forall {T : Type} (l1 l2 l3 l4 : list T) d1 d2,
+    contracted_seqR (l1, l2, d1) (l3, l4, d2) -> d1 = d2.
+Proof.
+  intros until 0; intros Hc.
+  inversion Hc. subst. reflexivity.
+Qed.
+  
+Lemma contracted_seq_consL : forall {T : Type} l1 l2 l3 l4 a d1 d2,
+    @contracted_seq T (l1, l2, d1) (l3, l4, d2) ->
+    contracted_seq (a :: l1, l2, d1) (a :: l3, l4, d2).
+Proof.
+  intros until 0; intros H.
+  remember (l1,l2,d1) as s1.
+  remember (l3,l4,d2) as s2.
+  revert l1 l2 l3 l4 Heqs1 Heqs2. 
+  induction H as [ [[? ?] ?] [[? ?] ?] X | ? ? X | ? ? ? X X2| ? ? ? X X2];
+    intros ll1 ll2 ll3 ll4 Heqs1 Heqs2;
+    inversion Heqs1; inversion Heqs2; subst.
+
+  eapply contracted_seqL_consL in X.
+  econstructor. eassumption.
+
+  eapply contracted_seqR_consL in X.
+  econstructor 2. eassumption.
+
+  destruct s2 as [[? ?] ?].
+  econstructor 3.
+  eapply contracted_seqL_consL.
+  eassumption.
+  eapply contracted_seqL_dir in X.  subst.
+  eapply IHX2; reflexivity.
+
+  destruct s2 as [[? ?] ?].
+  econstructor 4.
+  eapply contracted_seqR_consL.
+  eassumption.
+  eapply contracted_seqR_dir in X.  subst.
+  eapply IHX2; reflexivity.
+Qed.
+
+Lemma contracted_seq_consR : forall {T : Type} l1 l2 l3 l4 a d1 d2,
+    @contracted_seq T (l1, l2, d1) (l3, l4, d2) ->
+    contracted_seq (l1, a :: l2, d1) (l3, a :: l4, d2).
+Proof.
+  intros until 0; intros H.
+  remember (l1,l2,d1) as s1.
+  remember (l3,l4,d2) as s2.
+  revert l1 l2 l3 l4 Heqs1 Heqs2. 
+  induction H as [ [[? ?] ?] [[? ?] ?] X | ? ? X | ? ? ? X X2| ? ? ? X X2];
+    intros ll1 ll2 ll3 ll4 Heqs1 Heqs2;
+    inversion Heqs1; inversion Heqs2; subst.
+
+  eapply contracted_seqL_consR in X.
+  econstructor. eassumption.
+
+  eapply contracted_seqR_consR in X.
+  econstructor 2. eassumption.
+
+  destruct s2 as [[? ?] ?].
+  econstructor 3.
+  eapply contracted_seqL_consR.
+  eassumption.
+  eapply contracted_seqL_dir in X.  subst.
+  eapply IHX2; reflexivity.
+
+  destruct s2 as [[? ?] ?].
+  econstructor 4.
+  eapply contracted_seqR_consR.
+  eassumption.
+  eapply contracted_seqR_dir in X.  subst.
+  eapply IHX2; reflexivity.
+Qed.
+
+Lemma contracted_seq_app_sameL : forall {T : Type} l1 l2 d,
+    @contracted_seq T (l1 ++ l1, l2, d) (l1, l2, d).
+Proof.
+  intros.
+  econstructor.
+  econstructor.
+  eapply contracted_multi_double.
+Qed.
+
+Lemma contracted_seq_app_sameR : forall {T : Type} l1 l2 d,
+    @contracted_seq T (l1, l2 ++ l2, d) (l1, l2, d).
+Proof.
+  intros.
+  econstructor 2.
+  econstructor.
+  eapply contracted_multi_double.
+Qed.
+  
+Lemma contracted_nseq_singleL : forall {T : Type} l1 l2 d,
+    @contracted_nseq T [(l1 ++ l1, l2, d)] [(l1, l2, d)].
+Proof.
+  intros. econstructor.
+  eapply contracted_seq_app_sameL.
+  econstructor.
+Qed.
+
+Lemma contracted_nseq_singleR : forall {T : Type} l1 l2 d,
+    @contracted_nseq T [(l1, l2 ++ l2, d)] [(l1, l2, d)].
+Proof.
+  intros. econstructor.
+  eapply contracted_seq_app_sameR.
+  econstructor.
+Qed.
+
+Lemma contracted_nseq_single : forall {T : Type} l1 l2 d,
+    @contracted_nseq T [(l1 ++ l1, l2 ++ l2, d)] [(l1, l2, d)].
+Proof.
+  intros. econstructor.
+  apply contracted_seq_double.
+  econstructor.
 Qed.

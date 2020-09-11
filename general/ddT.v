@@ -7,7 +7,7 @@ Export ListNotations.
 
 Require Import Coq.Program.Equality. (* for dependent induction/destruction *)
 
-Require Import genT gen.
+Require Import genT gen existsT.
 Require Import PeanoNat.
 
 
@@ -735,3 +735,25 @@ Lemma adm_single_trans X rules prems p c:
 Proof. split. destruct X0. inversion X1. 
 intro dps. apply X0. right. apply (d dps). left. Qed.
 
+Lemma derrec_eq_swap : forall (T : Type) rules prems G H
+    (pf : (G : T) = H),
+    derrec rules prems G ->
+    derrec rules prems H.
+Proof.  intros. subst. assumption. Qed.
+
+
+
+Lemma dersrec_double: forall X rules prems c1 c2,
+  iffT (dersrec rules prems [c1;c2]) ((derrec rules prems (c1 : X)) * (derrec rules prems (c2 : X))).
+Proof.
+  intros. split; intros H.
+  split; (eapply dersrecD_forall; [apply H |]).
+  constructor 1. reflexivity.
+  constructor 2. constructor 1. reflexivity.
+  eapply dersrecI_forall. intros c Hc.
+  inversion Hc as [ | ? ? H2]; subst. apply H.
+  inversion H2 as [ | ? ? H3]; subst. apply H.
+  inversion H3.
+Qed.
+
+Definition dersrec_doubleD X rs ps c1 c2 := iffT_D1 (@dersrec_double X rs ps c1 c2).

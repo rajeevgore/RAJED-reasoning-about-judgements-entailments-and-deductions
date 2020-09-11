@@ -9,8 +9,9 @@ Export ListNotations.
 
 Require Import Coq.Program.Equality. (* for dependent induction/destruction *)
 
-Require Import genT gen ddT.
+Require Import genT gen ddT existsT.
 Require Import PeanoNat.
+Require Import Lia.
 
 (* tried to do an inductive property where property Q also involved the 
 proof tree (as well as the endsequent): this created a problem that
@@ -515,7 +516,193 @@ Proof. intros.  (* injection H gives existT equality *)
 (* this doesn't work - type of Q 
 Goal forall X rules prems Q cs (ds : @dersrec X rules prems cs),
   allPder Q ds -> Forall2T Q cs (dersrec_trees ds).
+ *)
+
+Open Scope type_scope.
+
+Lemma dersrecD_forall_in_dersrec : forall (X : Type) (rs : list X -> X -> Type) (ps : X -> Type) (cs : list X) (ds : dersrec rs ps cs) (c : X),
+    InT c cs -> (existsT2 d : derrec rs ps c, in_dersrec d ds).
+Proof.
+  induction ds; intros c Hin.
+  inversion Hin.
+  inversion Hin.
+  + subst. exists d. constructor.
+  + subst. eapply IHds in X0. destruct X0 as [d2 Hin2].
+    exists d2. constructor 2. eapply Hin2.
+Qed.
+
+Lemma dersrec_double_verb: forall X rules prems c1 c2 (d : (dersrec rules prems [c1;c2])),
+    existsT2 (d1 : (derrec rules prems (c1 : X))) (d2 : (derrec rules prems (c2 : X))),
+      (in_dersrec d1 d) * (in_dersrec d2 d).
+Proof.
+  intros.
+  assert (InT c1 [c1;c2]) as Hin1. constructor. reflexivity.
+  assert (InT c2 [c1;c2]) as Hin2. constructor 2. constructor. reflexivity.
+  eapply dersrecD_forall_in_dersrec in Hin1.
+  destruct Hin1 as [d1 Hin1]. exists d1.
+  eapply dersrecD_forall_in_dersrec in Hin2.
+  destruct Hin2 as [d2 Hin2]. exists d2.
+  split. apply Hin1. apply Hin2.
+Qed.
+
+Definition dp {X : Type} {rules : list X -> X -> Type} {prems : X -> Type}
+  {concl : X} (der : derrec rules prems concl) := @derrec_height X rules prems concl der.
+Lemma dersrec_derrec_height : forall n {X : Type} {rules prems G}
+                                     (D2 : dersrec rules prems [G]),
+    dersrec_height D2 = n ->
+    existsT2 (D1 : derrec rules prems G),
+      @derrec_height X _ _ _ D1 = n.
+Proof.
+  intros until 0.
+  intros Ht.
+  remember D2 as D2'.
+  remember [G] as GG.
+  destruct D2. discriminate.
+  subst. simpl.
+  inversion HeqGG. subst.
+  exists d.
+  remember [] as l.
+  destruct D2. simpl.
+  rewrite PeanoNat.Nat.max_0_r. reflexivity.
+  discriminate.
+Qed.
+
+Lemma dersrec_derrec2_height : forall n {X : Type} {rules prems G1 G2}
+                                     (D2 : dersrec rules prems [G1;G2]),
+    dersrec_height D2 = n ->
+    existsT2 (D1a : derrec rules prems G1) (D1b : derrec rules prems G2),
+     n = max (@derrec_height X _ _ _ D1a) (@derrec_height X _ _ _ D1b).
+Proof.
+  intros until 0.
+  intros Ht.
+  remember D2 as D2'.
+  remember [G1;G2] as GG.
+  destruct D2. discriminate.
+  destruct seqs. discriminate.
+  destruct seqs. 2 : discriminate.
+  edestruct (@dersrec_derrec_height (@dersrec_height _ _ _ _ D2)_ _ _ _ D2).
+  reflexivity.  
+  subst. simpl.
+  inversion HeqGG. subst.
+  exists d. exists x0.
+  rewrite e. reflexivity.
+Qed.
+
+Lemma dersrec_derrec_dp : forall n {X : Type} {rules prems G}
+                                     (D2 : dersrec rules prems [G]),
+    dersrec_height D2 = n ->
+    existsT2 (D1 : derrec rules prems G),
+      @dp X _ _ _ D1 = n.
+Proof. eapply dersrec_derrec_height. Qed.
+
+Lemma dersrec_derrec2_dp : forall n {X : Type} {rules prems G1 G2}
+                                     (D2 : dersrec rules prems [G1;G2]),
+    dersrec_height D2 = n ->
+    existsT2 (D1a : derrec rules prems G1) (D1b : derrec rules prems G2),
+      n = max (@dp X _ _ _ D1a) (@dp X _ _ _ D1b).
+Proof. eapply dersrec_derrec2_height. Qed.
+
+Lemma dersrec_derrec_height_le : forall {T : Type} rules prems ps p 
+    (ds : dersrec rules prems ps)
+    (d  : derrec  rules prems p),
+    in_dersrec d ds ->
+    derrec_height d <= @dersrec_height T _ _ _ ds.
+Proof.
+  intros T rules prems ps p ds d Hin.
+  eapply le_dersrec_height.
+  2 : eapply le_n.
+  assumption.
+Qed.
+
+Lemma dp_same : forall {T : Type} {rules prems} (l1 l2 : list T)
+     (D1 : derrec rules prems l1)
+    (Heq : l1 = l2),
+    dp (eq_rect _ (fun l => derrec rules prems l) D1 l2 Heq) = dp D1.
+Proof. induction D1; intros Heq; subst; reflexivity. Qed.
+
+
+Lemma dp_same_fun : forall {T T2 : Type} {rules prems} (l1 l2 : list T) (f : list T -> T2)
+     (D1 : derrec rules prems (f l1))
+    (Heq : l1 = l2),
+    dp (eq_rect _ (fun l => derrec rules prems (f l)) D1 l2 Heq) = dp D1.
+Proof.  intros; inversion D1; subst; reflexivity. Qed.
+
+
+Lemma derrec_dp_same :
+  forall {X : Type} rules (prems : X -> Type) G H (D1 : derrec rules prems G),
+    G = H ->
+    existsT2 (D2 : derrec rules prems H), dp D1 = dp D2.
+Proof. intros. subst. exists D1. reflexivity. Qed.
+
+Lemma derrec_dp_same2 :
+  forall {X : Type} rules (prems : X -> Type) G (D1 : derrec rules prems G) H,
+    G = H ->
+    existsT2 (D2 : derrec rules prems H), dp D1 = dp D2.
+Proof. intros. subst. exists D1. reflexivity. Qed.
+
+Definition get_D {X} rules prems G H D pf :=
+(let (D', HD') := (fun (X : Type) (rules : list X -> X -> Type) (prems : X -> Type) 
+  (G H : X) (D1 : derrec rules prems G) (H0 : G = H) =>
+eq_rect_r
+  (fun G0 : X =>
+   forall D2 : derrec rules prems G0,
+   existsT2 D3 : derrec rules prems H, dp D2 = dp D3)
+  (fun D2 : derrec rules prems H =>
+     existT (fun D3 : derrec rules prems H => dp D2 = dp D3) D2 eq_refl) H0 D1)
+              X rules prems
+G H D pf in D').
+Check get_D.
+Print get_D.
+(*
+Parameter (X : Type) (rules : list X -> X -> Type) (prems : X -> Type) 
+  (G H : X) (D : derrec rules prems G) (pf : G = H).
+Compute (get_D rules prems G H D pf).
 *)
+Lemma dp_get_D : forall (X : Type) (rules : list X -> X -> Type) (prems : X -> Type) 
+                      (G H : X) (D : derrec rules prems G) (pf : G = H),
+    dp D = dp (get_D D pf).
+Proof. intros. subst. reflexivity. Qed.
+
+Definition get_dpD {X : Type} (rules : list X -> X -> Type) (prems : X -> Type) (G H : X) 
+  (D : derrec rules prems G) (pf : G = H) :=
+ EqdepFacts.internal_eq_rew_r_dep
+   (fun (G0 : X) (pf0 : G0 = H) =>
+    forall D0 : derrec rules prems G0, dp D0 = dp (get_D D0 pf0))
+   (fun D0 : derrec rules prems H => eq_refl) pf D.
+
+Check get_dpD.
+
+Ltac tfm_dersrec_derrec_dp D2s D2 Hdp HdpD2 Hdp'' Hdp' :=  
+  destruct (dersrec_derrec_dp D2s eq_refl) as [D2 HdpD2];
+  match goal with
+  | [ H : dp ?D1 + S (dersrec_height D2s) <= ?m |- _ ] =>
+    assert (dp D1 + (S (dp D2)) <= m) as Hdp'';
+    [rewrite HdpD2; assumption | ];
+    assert (dp D1 + dp D2 <= m - 1) as Hdp';
+    [lia | ]; clear HdpD2 D2s Hdp
+  end.
+
+Ltac tfm_dersrec_derrec2_dp D2s D2 Hdp HdpD2 Hdpa'' Hdpb'' Hdpa' Hdpb' HeqD2s Hmax1 Hmax2 :=  
+  assert (dersrec_height D2s = dersrec_height D2s) as HeqD2s;
+  [reflexivity |];
+  destruct (dersrec_derrec2_dp D2s HeqD2s) as [D2a [D2b HdpD2]];
+  clear HeqD2s;
+  epose proof (Max.le_max_r _ _) as Hmax1;
+  epose proof (Max.le_max_l _ _) as Hmax2;
+  rewrite <- HdpD2 in Hmax1;
+  rewrite <- HdpD2 in Hmax2;
+  match goal with
+  | [ H : dp ?D1 + S (dersrec_height D2s) <= ?m |- _ ] =>
+  assert (dp D1 + (S (dp D2a)) <= m) as Hdpa'';
+  [lia | ];
+  assert (dp D1 + (S (dp D2b)) <= m) as Hdpb'';
+  [lia | ];
+  assert (dp D1 + (dp D2a) <= m - 1) as Hdpa';
+  [lia | ];
+  assert (dp D1 + (dp D2b) <= m - 1) as Hdpb';
+  [lia | ];
+  clear HdpD2 D2s Hdp Hmax1 Hmax2
+  end.
 
 (*
 Print botRule_fc.
@@ -528,4 +715,3 @@ Print Implicit botRule_fc_drs.
 Print Implicit botRule_fc_ps.
 Print Implicit botRule_fc_prems.
 *)
-

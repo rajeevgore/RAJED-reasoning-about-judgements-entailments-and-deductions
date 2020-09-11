@@ -5,6 +5,7 @@ Require Import ssreflect.
 
 Add LoadPath "../general".
 
+Require Import existsT.
 Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.
@@ -526,4 +527,88 @@ Definition can_gen_init {V : Set}
 
  Ltac solve_unshelved :=
    (exact nat || (intros; exact 0)).
+
+ 
+
+Lemma InT_seqextL : forall {W : Type} Γ Δ A,
+    InT A Γ ->
+    existsT2 Φ1 Φ2, @seqext W Φ1 Φ2 Δ [] ([A], []) = (Γ, Δ).
+Proof.
+  induction Γ; intros Δ A Hin.
+  inversion Hin.
+  inversion Hin. subst.
+  repeat eexists. unfold seqext.
+  do 2 rewrite app_nil_r. erewrite app_nil_l.
+     reflexivity.
+  subst. destruct (IHΓ  Δ _ X) as [H1 [H2 H3]].
+  unfold seqext in *.
+  inversion H3.
+  repeat rewrite app_nil_r.
+  repeat eexists. rewrite app_comm_cons. reflexivity.
+Qed.
+
+Lemma InT_seqextR : forall {W : Type} Γ Δ B,
+    InT B Δ ->
+    existsT2 Ψ1 Ψ2, @seqext W Γ [] Ψ1 Ψ2 ([], [B]) = (Γ, Δ).
+Proof.
+  induction Δ; intros A Hin.
+  inversion Hin.
+  inversion Hin. subst.
+  repeat eexists. unfold seqext.
+  do 2 rewrite app_nil_r. erewrite app_nil_l.
+     reflexivity.
+  subst. destruct (IHΔ _ X) as [H1 [H2 H3]].
+  unfold seqext in *.
+  inversion H3.
+  repeat rewrite app_nil_r.
+  repeat eexists. rewrite app_comm_cons. reflexivity.
+Qed.
+
+Lemma InT_seqext : forall {W : Type} Γ Δ A B,
+    InT A Γ ->
+    InT B Δ ->
+    existsT2 Φ1 Φ2 Ψ1 Ψ2, @seqext W Φ1 Φ2 Ψ1 Ψ2 ([A], [B]) = (Γ, Δ).
+Proof.
+  intros until 0. intros Hin1 Hin2.
+  destruct (InT_seqextL _ Δ _ Hin1) as [H1 [H2 H3]].
+  destruct (InT_seqextR Γ _ _ Hin2) as [J1 [J2 J3]].
+  unfold seqext in *.
+  repeat rewrite app_nil_r in H3.
+  repeat rewrite app_nil_r in J3.
+  inversion H3. inversion J3.
+  subst. repeat eexists.
+Qed.
+
+
+Ltac inv_contr_PropF :=
+  repeat clear_useless;
+  match goal with
+  | [ H : Var _ = _ |- _ ] => inversion H; subst
+  | [ H : Bot _ = _ |- _ ] => inversion H; subst
+  | [ H : ?A = _ , A : PropF ?V |- _ ] => inversion H; subst
+  end.
+
+        Ltac inversion_prod :=
+    repeat match goal with
+           | [ H : _ * _ |- _ ] => destruct H; clear H
+           | [ H : rel _ |- _ ] => unfold rel in H; destruct H 
+    end.
+
+Ltac dest_pairs :=
+  repeat match goal with
+         | [ d : ?P1 * ?P2 |- _ ] => destruct d
+         | [ d : rel ?P |- _ ] => destruct d
+         end.
+
+      
+      Ltac tac_match2 Σ Γ B :=
+  match Σ with
+  | context[ ?l1 ++ [B] ++ ?l2 ++ ?l3 ] => assoc_mid l2; rewrite <- (app_assoc Γ)
+  | context[ ?l1 ++ [B] ++ ?l2 ] => assoc_mid l1; rewrite (app_assoc _ l1);
+                                    repeat rewrite <- (app_assoc Γ)
+  end.
+
+
+
+ 
 

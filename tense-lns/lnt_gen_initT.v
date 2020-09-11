@@ -106,3 +106,36 @@ Proof.
     eapply IHA1. inversion H. subst. auto.
     all : apply dersrec_nil.
 Qed.
+
+
+Lemma Id_InT: forall {V : Set} GH Γ Δ d p,
+    InT (Var p) Γ ->
+    InT (Var p) Δ ->
+    derrec (@LNSKt_rules V) (fun _ => False) (GH ++ [(Γ,Δ,d)]).
+Proof.
+  intros until 0; intros Hin1 Hin2.
+  destruct (InT_seqext _ _ _ _ Hin1 Hin2) as [H1 [H2 [H3 [H4 H5]]]].
+  eapply derI. eapply prop.
+  econstructor.
+  eapply seqrule_same.
+  econstructor.
+  eapply Id_pfc.
+  eassumption.
+  econstructor.
+Qed.
+
+
+Lemma BotL_InT: forall {V : Set} GH Γ Δ d,
+    InT (Bot V) Γ ->
+    derrec (@LNSKt_rules V) (fun _ => False) (GH ++ [(Γ,Δ,d)]).
+Proof.
+  intros until 0; intros Hin.
+  destruct (InT_seqextL _ Δ _ Hin) as [H1 [H2 H3]].
+  eapply derI. eapply prop.
+  econstructor.
+  eapply seqrule_same.
+  econstructor.
+  eapply BotL_pfc.
+  eassumption.
+  econstructor.
+Qed.

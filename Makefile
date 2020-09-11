@@ -71,4 +71,3 @@ tense-lns/lntacsT.vo tense-lns/lntacsT.glob tense-lns/lntacsT.v.beautified: tens
 	(cd `dirname $*` ; pwd >> log ; coqc `basename $*.v`) 
 	#pwd >> log
 	# coqc -Q general "" -Q ll "" -Q modal "" -Q tense-lns "" $*.v
-

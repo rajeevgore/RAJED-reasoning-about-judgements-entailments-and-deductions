@@ -465,7 +465,7 @@ Lemma list_eq_nil: forall (A : Type) (x y : list A) (u : A),
   x ++ u :: y = [] -> False.
 Proof.  intros.  apply app_eq_nil in H.  cD.  discriminate.  Qed.
 
-Lemma app_eq_unitT :
+Lemma app_eq_unitT2 :
   forall {A : Type} (x y:list A) (a:A),
     x ++ y = [a] -> ((x = []) * (y = [a])) + ((x = [a]) * (y = [])).
 Proof.
@@ -480,7 +480,7 @@ Definition nil_eq_list A x y u p := @list_eq_nil A x y u (eq_sym p).
 Definition nil_eq_app A u v p := @app_eq_nil A u v (eq_sym p).
 Definition nil_eq_appT A u v p := @app_eq_nilT A u v (eq_sym p).
 Definition unit_eq_app A x y a p := @app_eq_unit A x y a (eq_sym p).
-Definition unit_eq_appT A x y a p := @app_eq_unitT A x y a (eq_sym p).
+Definition unit_eq_appT2 A x y a p := @app_eq_unitT2 A x y a (eq_sym p).
 
 Lemma list_eq_single: forall (A : Type) (x y : list A) (u v : A),
   x ++ u :: y = [v] -> x = [] /\ y = [] /\ u = v.
@@ -532,8 +532,8 @@ Ltac rem_nil_goal := repeat rewrite app_nil_l; repeat rewrite app_nil_r.
 Ltac rem_nil_hyp_arg H := repeat rewrite app_nil_l in H; repeat rewrite app_nil_r in H.
 Ltac rem_nil_hyp :=
   match goal with
-  | [ H : context[ [] ++ ?A ] |- _ ] => rem_nil_hyp_arg H
-  | [ H : context[ ?A ++ [] ] |- _ ] => rem_nil_hyp_arg H
+  | [ H : context[ [] ++ ?A ] |- _ ] => progress rem_nil_hyp_arg H
+  | [ H : context[ ?A ++ [] ] |- _ ] => progress rem_nil_hyp_arg H
   | _ => idtac
   end.
 
@@ -620,7 +620,20 @@ Ltac check_app_tail l1 l2 :=
   | _ => fail
   end.
 
+(* Updated *)
 Ltac clear_useless :=
+  repeat match goal with
+         | [H : ?a = ?a |- _] => clear H
+         | [H : [?a] = [?a] |- _] => clear H
+         | [H : ?a :: ?b = ?a :: ?b |- _] => clear H
+         | [H1 : ?a, H2 : ?a |- _] => clear H2
+         | [H1 : [?a] = [?b], H2 : ?c = ?d |- _ ] =>
+           rewrite H2 in H1; match type of H1 with ?d = ?d => clear H1 end
+         | [H1 : [?a] = [?b], H2 : ?c = ?d |- _ ] =>
+           rewrite <- H2 in H1; match type of H1 with ?d = ?d => clear H1 end
+         end.
+
+Ltac clear_useless_weak :=
   repeat match goal with
          | [H : ?a = ?a |- _] => clear H
          | [H : [?a] = [?a] |- _] => clear H
@@ -655,6 +668,445 @@ Ltac inversion_cons :=
          | [ H : ?a :: ?l1 = ?b :: ?l2 |- _] => inversion H; subst; clear_useless
          end.
 
+(* begin git conflict 1 *)
+
+Ltac inversion_pair :=
+  repeat (clear_useless; match goal with
+  | [ H : (?a,?b)=(?c,?d) |- _ ] => inversion H; clear H; subst
+  end; clear_useless).
+
+Ltac inv_singleton_str :=
+    repeat ( match goal with
+       | [ H : ?a :: [] = ?c :: ?d |- _ ] => inversion H; subst
+       | [ H : ?a :: ?b = ?c :: [] |- _ ] => inversion H; subst
+       | [ H : ?a :: ?b = ?c :: ?d |- _ ] => inversion H; subst
+       | [ H : ((?a,?b) = ?c) |- _ ] => inversion H; subst
+       | [ H : ?c = (?a,?b) |- _ ] => inversion H; subst
+       | [ H : ?C ?a = ?C ?b |- _ ] => inversion H; subst
+             end; clear_useless).
+
+
+Lemma tail_inv_singleton : forall {T : Type} (l1 l2 : list T) a b,
+    l1 ++ [a] = l2 ++ [b] -> (l1 = l2) * (a = b).
+Proof.
+  induction l1; intros l2 c d Heq.
+  simpl in *. destruct l2. simpl in Heq. inversion Heq. firstorder.
+  simpl in Heq. destruct l2. simpl in Heq. inversion Heq.
+  simpl in Heq. inversion Heq.
+  simpl in Heq. destruct l2. simpl in Heq. destruct l1. simpl in Heq. inversion Heq.
+  simpl in Heq. inversion Heq.
+  simpl in Heq. inversion Heq. subst.
+  apply IHl1 in H1. destruct H1 as [IH1 IH2].
+  subst. firstorder.
+Qed.
+
+Lemma tail_inv_singleton2 : forall {T : Type} (l1 l2 : list T) a b a' b',
+    l1 ++ [a;a'] = l2 ++ [b;b'] -> (l1 = l2) * (a = b) * (a' = b').
+Proof.
+  induction l1; intros l2 c d a' b' Heq.
+  simpl in *. destruct l2. simpl in Heq. inversion Heq. firstorder.
+  simpl in Heq. destruct l2. simpl in Heq. inversion Heq.
+  simpl in Heq. destruct l2. inversion Heq.
+  simpl in Heq. inversion Heq.
+  destruct l2. simpl in Heq. destruct l1. simpl in Heq. inversion Heq.
+  simpl in Heq. destruct l1; inversion Heq.
+  simpl in Heq. inversion Heq. subst.
+  apply IHl1 in H1. destruct H1 as [[H1 H2] H3]. 
+  subst. firstorder.
+Qed.
+
+Lemma list_insert1 : forall {T : Type} (Γ1 Γ2 Σ1 Σ2 : list T) A B,
+    Γ1 ++ [A] ++ Γ2 = Σ1 ++ Σ2 ->
+    existsT2 Γ1' Γ2', (Σ1 ++ [B] ++ Σ2 = Γ1' ++ [A] ++ Γ2') *
+                      (forall B, InT B Γ1 -> InT B Γ1') *
+                      (forall B, InT B Γ2 -> InT B Γ2').
+Proof.
+  intros until 0; intros Heq.
+  destruct Σ2. rewrite app_nil_r.
+  rewrite app_nil_r in Heq. subst.
+  eexists. eexists.
+  split. split. rewrite <- app_assoc. simpl. reflexivity.
+  firstorder.
+  intros C HC. apply InT_appL. assumption.
+  apply partition_2_2T in Heq.
+  sD. subst.
+  eexists (Σ1 ++ [B] ++ [t] ++ Heq).
+  eexists Γ2. split. split. list_assoc_r. reflexivity. firstorder.
+  apply InT_appE in X. destruct X. apply InT_appL. assumption.
+  apply InT_appR. apply InT_appR.
+  assumption.
+  firstorder.
+  subst.
+  eexists (Γ1 ++ [B]), (Σ2). split. split. firstorder.
+  intros C HC. apply InT_appL. assumption.
+  firstorder.
+  subst.
+  list_assoc_r. eexists Γ1, (Heq ++ [B] ++ [t] ++ Σ2).
+  split. split. reflexivity.
+  firstorder.
+  intros C HC. apply InT_appE in HC.
+  destruct HC. apply InT_appL. assumption.
+  apply InT_appR. apply InT_appR. assumption.
+Qed.
+
+  Inductive InT_pair_triple {T1 T2 T3 : Type} (t12 : T1*T2) : list ((list T1) * (list T2) * T3) -> Type :=
+  | InT_pt_hd l a b c t1 t2 : t12 = (t1,t2) -> InT t1 a -> InT t2 b -> InT_pair_triple t12 ((a,b,c) :: l)
+  | InT_pt_tl l a b c : InT_pair_triple t12 l -> InT_pair_triple t12 ((a,b,c) :: l).
+
+Lemma  InT_pt_I : forall {T1 T2 T3 : Type} L1 (l1 l2 : list T1) (l3 l4 : list T2) (d : T3) A B,
+  InT_pair_triple (A,B) (L1 ++ [(l1 ++ [A] ++ l2, l3 ++ [B] ++ l4, d)]).
+Proof.
+  induction L1; intros. simpl.
+  econstructor. reflexivity.
+  apply InT_appR. econstructor. reflexivity.
+  apply InT_appR. econstructor. reflexivity.
+
+  simpl. destruct a as [[a b] c].
+  econstructor 2. apply IHL1.
+Qed.
+
+Lemma partition_singleton_app : forall {T : Type} (L1 L2 L3 : list T) A B,
+    L1 ++ [A] = L2 ++ [B] ++ L3 ->
+    ((L3 = []) * (L1 = L2) * (A = B)) +
+    (existsT2 L4, (L3 = L4 ++ [A]) * (L1 = L2 ++ [B] ++ L4)).
+Proof.
+  induction L1; intros L2 L3 A B H.
+  simpl in *. destruct L2. simpl in *. inversion H. firstorder.
+  simpl in *. destruct L2; discriminate.
+  simpl in H. destruct L2. simpl in *. inversion H. subst.
+  right. exists L1. firstorder.
+  simpl in H. inversion H. subst.
+  apply IHL1 in H2. sD. subst. firstorder.
+  subst. right. eexists. split; reflexivity.
+Qed.
+
+
+Lemma InT_mid : forall {T : Type} (l1 l2 : list T) A,
+  InT A (l1 ++ [A] ++ l2).
+Proof.
+  intros. apply InT_appR. apply InT_appL.
+  econstructor. reflexivity.
+Qed.
+
+
+Lemma InT_singleton_mid : forall {T : Type} (l1 l2 l3 l4 : list T) A B,
+    A <> B ->
+    l1 ++ [A] ++ l2 = l3 ++ [B] ++ l4 ->
+    InT A l3 + InT A l4.
+Proof.
+  intros until 0. intros Hneq Heq.
+  pose proof (InT_mid l1 l2 A) as Hin.
+  rewrite Heq in Hin.
+  apply InT_appE in Hin.
+  destruct Hin. left. assumption.
+  inversion i. subst. contradiction.
+  subst. right. assumption.
+Qed.
+
+Lemma list_nil_or_tail_singleton : forall {T : Type} (l : list T),
+    (l = []) + existsT2 l2 a, l = l2 ++ [a].
+Proof.
+  induction l.
+  firstorder.
+  right. destruct IHl. subst. exists nil, a. firstorder.
+  destruct s as [l2' [a' H]].
+  subst. exists (a :: l2'), a'.  firstorder. 
+Qed.
+(*
+Lemma partition_LNS_app_mid : forall {T1 T2 : Type} L1 L2 L3 (Γ Σ Σ' : list T1) (Δ Π Π' : list T2) d,
+    L1 ++ [(Γ,Δ,d);(Σ,Π,bac)] =
+    L2 ++ (Σ',Π',fwd) :: L3 ->
+    existsT2 L4, (L3 = L4 ++ [(Σ,Π,bac)]) * (L1 ++ [(Γ,Δ,d)] = L2 ++ [(Σ',Π',fwd)] ++ L4).
+Proof.
+  intros until 0; intros Heq.
+  rewrite app_cons_single in Heq.
+  destruct (list_nil_or_tail_singleont L3) as [|[l2 [a Heq2]]];
+  subst. eapply tail_inv_singleton in Heq.
+  destruct Heq as [H1 H2]. inversion H2.
+  exists l2. subst.
+  rewrite (cons_singleton (l2 ++ _)) in Heq.
+  list_assoc_l'_arg Heq.
+  eapply tail_inv_singleton in Heq.
+  destruct Heq as [H1 H2]. subst. rewrite H1.
+  firstorder.
+Qed.
+*)
+Ltac hd_tl_inv_arg H :=
+    match goal with
+  | [ H : context[?a :: nil] |- _ ] => fail
+  | [ H : context[?a :: ?l] |- _ ] => repeat rewrite (cons_singleton l a) in H
+    end.
+
+Ltac list_assoc_r_single_hyp :=
+  match goal with
+  | [ H : (?l1 : list ?T) = ?l2 |- _ ] => list_assoc_r_arg H; tac_cons_singleton_hyp H ; rem_nil_hyp_arg H
+  end.
+
+Ltac list_assoc_r_single_arg H :=
+  list_assoc_r_arg H; tac_cons_singleton_hyp H ; rem_nil_hyp_arg H.
+
+Lemma app_singleton_inversion : forall {T : Type} (l1 l2 : list T) a b,
+    [a] ++ l1 = [b] ++ l2 -> (a = b) * (l1 = l2).
+Proof. intros until 0;  intros H; inversion H. firstorder. Qed.
+
+Lemma app_singleton_tl_inversion : forall {T : Type} (l1 l2 : list T) a b,
+    l1 ++ [a] = l2 ++ [b] -> (a = b) * (l1 = l2).
+Proof.
+  intros T l1 l2 a b H.
+  eapply if_eq_rev_eq in H.
+  do 2 rewrite rev_unit in H.
+  inversion H. apply if_rev_eq in H2.
+  subst. firstorder.
+Qed.
+
+Ltac inv_app_hd :=
+  repeat match goal with
+  | [ H : [?a] ++ ?l1 = [?b] ++ ?l2 |- _ ] => apply app_singleton_inversion in H; destruct H as [? H]; try subst a; try subst b
+  | _ => idtac
+         end.
+
+Ltac inv_app_tl :=
+  repeat match goal with
+  | [ H : ?l1 ++  [?a] = ?l2 ++ [?b] |- _ ] => apply app_singleton_tl_inversion in H; destruct H as [? H]; try subst a; try subst b
+  | _ => idtac
+         end.
+
+Lemma app_hd_inversion : forall {T : Type} (l : list T) a b,
+    [a] = [b] ++ l -> ( (a = b) * (l = []) ).
+Proof.
+  intros until 0; intros H.
+  inversion H. firstorder.
+Qed.
+
+Lemma app_tl_inversion : forall {T : Type} (l : list T) a b,
+    [a] = l ++ [b] -> ( (a = b) * (l = []) ).
+Proof.
+  induction l; intros aa bb H.
+  simpl in *. inversion H. firstorder.
+  simpl in H. inversion H.
+  destruct l; discriminate.
+Qed.
+
+Ltac inv_app_hd_arg H :=
+  repeat match type of H with
+  | [?a] ++ ?l1 = [?b] ++ ?l2 => apply app_singleton_inversion in H; let H' := fresh "H" in destruct H as [H' H]; try rewrite H' in *; try rewrite <- H' in *
+  | [?a] = [?b] ++ ?l2 => apply app_hd_inversion in H; let H' := fresh "H" in destruct H as [H' H]; try rewrite H' in *; try rewrite <- H' in *
+  | [?b] ++ ?l2 = [?a] => symmetry in H; apply app_hd_inversion in H; let H' := fresh "H" in destruct H as [H' H]; try rewrite H' in *; try rewrite <- H' in *
+  | _ => idtac
+         end.
+
+Ltac inv_app_tl_arg H :=
+  repeat match type of H with
+  | ?l1 ++  [?a] = ?l2 ++ [?b] => apply app_singleton_tl_inversion in H;let H' := fresh "H" in destruct H as [H' H]; try rewrite H' in *; try rewrite <- H' in *
+  | [?a] = ?l2 ++ [?b] => apply app_tl_inversion in H; let H' := fresh "H" in destruct H as [H' H]; try rewrite H' in *; try rewrite <- H' in *
+  | ?l2 ++ [?b] = [?a] => symmetry in H; apply app_tl_inversion in H; let H' := fresh "H" in destruct H as [H' H]; try rewrite H' in *; try rewrite <- H' in *
+  | _ => idtac
+         end.
+
+Ltac inv_app_hd_tl_arg H :=
+  list_assoc_r_single_arg H;
+  inv_app_hd_arg H;
+  list_assoc_l'_arg H;
+  inv_app_tl_arg H;
+  list_assoc_r_single_arg H;
+  clear_useless.
+
+(* Any equality between lists that have singletons as heads or tails -> destruct into respective smaller equalities. *)
+Ltac inv_app_hd_tl :=
+  repeat match goal with
+  | [ H : ?l1 = ?l2 |- _ ] => inv_app_hd_tl_arg H
+  end.
+
+Ltac tac_cons_singleton_eq_hyp :=
+  repeat match goal with
+         | [ H : (?l1 : list ?T) = ?l2 |- _ ] => tac_cons_singleton_hyp H;
+                                                   list_assoc_r_single_arg H
+         end.
+
+
+(* A version of app_eq_appT2_nn to rule out overlap between the two branchs where m = [] (hence No Nil mnemonic). *)
+Lemma app_eq_appT2_nn: forall (A : Type) (w x y z : list A),
+  w ++ x = y ++ z -> existsT2 (m : list A),
+    ((w = y ++ m) * (z = m ++ x) * (m <> [])) + ((y = w ++ m) * (x = m ++ z)).
+Proof.
+  induction w; intros until 0; intros H; simpl in *.
+  subst. exists y. right. tauto.
+  apply cons_eq_appT2 in H. destruct H as [[H1 H2]| [l [? H3]]]; subst.
+  exists (a :: w). left. simpl. firstorder. 
+  eapply IHw in H3. destruct H3 as [l2 [[H3 H4] | [H3 H4]]]; subst.
+  exists l2. sD. subst. left. tauto.
+  exists l2. right. tauto.
+Qed.
+
+Ltac app_eq_app_dest_arg H :=
+  eapply app_eq_appT2_nn in H; sD; subst.
+
+Ltac app_single_eq_dest_arg H :=
+  apply unit_eq_appT2 in H; sD; subst.
+
+Lemma app_eq_appT2_single_hdL : forall (A : Type) (x y z : list A) w,
+    [w] ++ x = y ++ z ->
+    (existsT2 m : list A,  ((y = [w] ++ m) * (x = m ++ z)))
+       + ((y = []) * (z = [w] ++ x)).
+Proof.
+  intros until 0.
+  intros H.
+  destruct y. simpl in *.  subst.
+  right. firstorder.
+  left. simpl in *. inversion H.
+  subst. exists y. firstorder.
+Qed.
+
+Lemma app_eq_appT2_single_hdR : forall (A : Type) (x z w : list A) y,
+    w ++ x = [y] ++ z ->
+    (existsT2 m : list A, (w = [y] ++ m) * (z = m ++ x)) +
+    ( (w = []) * (x = [y] ++ z)).
+Proof.
+  intros until 0.
+  intros H.
+  symmetry in H.
+  eapply app_eq_appT2_single_hdL.
+  assumption.
+Qed.
+
+Lemma app_eq_appT2_single_tlL : forall (A : Type) (x y z : list A) w,
+    x ++ [w] = y ++ z ->
+    (existsT2 m : list A,  ((z = m ++ [w]) * (x = y ++ m)))
+       + ((z = []) * (y = x ++ [w])).
+Proof.
+  intros until 0.
+  intros H.
+  destruct (list_nil_or_tail_singleton z). subst.
+ rewrite app_nil_r in H. subst.
+  right. firstorder. sD. subst.
+  left. list_assoc_l'_arg H.
+  eapply tail_inv_singleton in H.
+  sD. subst.
+  eexists. firstorder.
+Qed.
+
+Lemma app_eq_appT2_single_tlR : forall (A : Type) (x y z : list A) w,
+     y ++ z = x ++ [w] ->
+    (existsT2 m : list A,  ((z = m ++ [w]) * (x = y ++ m)))
+       + ((z = []) * (y = x ++ [w])).
+Proof.
+  intros until 0.
+  intros H.
+  symmetry in H.
+  eapply app_eq_appT2_single_tlL.
+  assumption.
+Qed.
+
+(* Where we have a partitioning of lists, split into cases.  *)
+Ltac app_eq_app_dest :=
+  repeat match goal with
+         | [ H : [?a] = ?l1 ++ ?l2 |- _ ] => app_single_eq_dest_arg H
+         | [ H : ?l1 ++ ?l2 = [?a] |- _ ] => symmetry in H; app_single_eq_dest_arg H
+         | [ H : [?a] = [?b] |- _ ] => inversion H
+         | [ H : ?l1 ++ ?l2 = ?l3 ++ ?l4 |- _ ] => app_eq_app_dest_arg H
+         end.
+
+Ltac inv_app_hd_tl_full :=
+  inv_app_hd_tl; repeat inversion_pair;
+  tac_cons_singleton_eq_hyp.
+
+Ltac app_eq_app_dest2 :=
+  repeat (inv_app_hd_tl_full ; subst ; try match goal with
+         | [ H : [?a] = ?l1 ++ ?l2 |- _ ] => app_single_eq_dest_arg H
+         | [ H : ?l1 ++ ?l2 = [?a] |- _ ] => symmetry in H; app_single_eq_dest_arg H
+         | [ H : [?a] = [?b] |- _ ] => inversion H
+         | [ H : [?a] ++ ?l2 = ?l3 ++ ?l4 |- _ ] => eapply app_eq_appT2_single_hdL in H
+         | [ H : ?l1 ++ ?l2 = [?a] ++ ?l4 |- _ ] => eapply app_eq_appT2_single_hdR in H
+         | [ H : ?l1 ++ ?l2 = ?l3 ++ ?l4 |- _ ] => app_eq_app_dest_arg H
+                                           end).
+
+Ltac app_eq_app_dest3_arg_pre H :=
+      (match goal with
+      | H:[?a] = ?l1 ++ ?l2 |- _ => app_single_eq_dest_arg H
+      | H:?l1 ++ ?l2 = [?a] |- _ => symmetry in H; app_single_eq_dest_arg H
+      | H:[?a] = [?b] |- _ => inversion H; clear H
+       end).
+
+Ltac app_eq_app_dest3_argL H :=
+      (match goal with
+      | H:[?a] ++ ?l2 = ?l3 ++ ?l4 |- _ => eapply app_eq_appT2_single_hdL in H
+      | H:?l1 ++ ?l2 = [?a] ++ ?l4 |- _ => eapply app_eq_appT2_single_hdR in H
+       end).
+
+Ltac app_eq_app_dest3_argR H :=
+      (match goal with
+      | H: ?l2 ++ [?a] = ?l3 ++ ?l4 |- _ => eapply app_eq_appT2_single_tlL in H
+      | H:?l1 ++ ?l2 = ?l4 ++ [?a] |- _ => eapply app_eq_appT2_single_tlR in H
+       end).
+
+Ltac app_eq_app_dest3_arg_app H :=
+      (match goal with
+      | H:?l1 ++ ?l2 = ?l3 ++ ?l4 |- _ => app_eq_app_dest_arg H
+       end).
+
+Ltac app_eq_app_dest3_arg H :=
+  (progress app_eq_app_dest3_arg_pre H) ||
+  (progress (list_assoc_r_single_arg H; app_eq_app_dest3_argL H)) ||
+  (progress (list_assoc_l'_arg H; app_eq_app_dest3_argR H)) ||
+  (progress (list_assoc_r_single_arg H; app_eq_app_dest3_arg_app H)).
+
+Ltac app_eq_app_dest3 :=
+  repeat (inv_app_hd_tl_full ; subst ; match goal with
+  | [H : (?l1 : list ?T) = ?l2 |- _ ] => app_eq_app_dest3_arg H; sD; subst
+          end); try (inv_app_hd_tl_full ; subst).
+
+Ltac app_eq_app_dest3' :=
+  repeat ((inv_app_hd_tl_full ; subst ; match goal with
+  | [H : (?l1 : list ?T) = ?l2 |- _ ] => app_eq_app_dest3_arg H; sD; subst
+          end); try (inv_app_hd_tl_full ; subst)).
+
+
+
+
+Ltac eapply_refl tac := eapply tac; reflexivity.
+
+
+Ltac assoc_mid_loc L :=
+  repeat match goal with
+         | [ |- context[ ?l1 ++ ?l2 ++ L ++ ?l3 ] ] => rewrite (app_assoc l1)
+         end.
+
+Ltac tac_match l1 l2 :=
+  match l1 with
+  | [] => fail
+  | l2 ++ ?s1 => idtac
+  | ?s1 ++ l2 => try rewrite <- (app_nil_r ?L1)
+  | ?s1 ++ l2 ++ ?s2 => try rewrite (app_assoc _ s1)
+  | ?s1 ++ ?s2 => try rewrite (app_assoc _ s1); tac_match s2 l2
+  end. 
+
+      Ltac tac_match' l1 AA :=
+  match l1 with
+  | [] => fail
+  | AA :: ?s1 => idtac
+  | ?s1 ++ [AA] => try rewrite <- (app_nil_r ?L1)
+  | ?s1 ++ AA :: ?s2 => try rewrite (app_assoc _ s1)
+  | ?s1 ++ ?s2 => try rewrite (app_assoc _ s1); tac_match' s2 AA
+  end.
+
+      
+      Ltac get_last_app H :=
+  match H with
+  | ?H1 ++ ?H2 => get_last_app H2
+  | _ => constr:(H)
+  end.
+
+Ltac get_snd_last_app H :=
+  match H with
+  | ?H1 ++ ?H2 ++ ?H3 => get_snd_last_app (H2 ++ H3)
+  | ?H1 ++ ?H2 => constr:(H1)
+  | _ => constr:(H)
+  end.
+
+(* end git conflict 1 *)
+
+(* begin git conflict 2 *)
+
 (* for manipulating lists got by appending shorter lists *)
 Inductive app_split_at X (T : list X) : list X -> list X -> list X -> Type :=
   | asa_single : app_split_at T T [] []
@@ -674,3 +1126,4 @@ Proof. intro asa. induction asa ; subst.
 rewrite app_nil_r. reflexivity. list_eq_assoc. list_eq_assoc. Qed.
 
 
+(* end git conflict 2 *)
