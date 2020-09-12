@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import Lia.
 
 Require Import gen genT.

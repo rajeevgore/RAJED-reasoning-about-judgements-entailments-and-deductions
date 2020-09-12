@@ -108,10 +108,7 @@ Inductive princrule_pfc (V : Set) : rlsT (rel (list (PropF V))) :=
       [pair [Imp A B ; B] [] ; pair [Imp A B] [A]] (pair [Imp A B] [])
   | BotL_pfc : princrule_pfc [] (pair [Bot V] []).
 
-(* we may also want to refer to rules individually *)
-Inductive Idrule (W : Type) : rlsT (rel (list W)) :=
-  | Idrule_I : forall A, Idrule [] (pair [A] [A]).
-
+(* Idrule defined in ../general/gen_seq.v *)
 (* propositional version of axiom rule *)
 Inductive Idrule_p (V : Set) : rlsT (rel (list (PropF V))) :=
   | Idrule_p_I : forall p, Idrule_p [] (pair [Var p] [Var p]).
@@ -128,13 +125,6 @@ Inductive ImpRrule (V : Set) : rlsT (rel (list (PropF V))) :=
 
 Definition Sctxt_Id' V A Γ1 Γ2 Δ1 Δ2 :=
   @Sctxt_nil (PropF V) (@princrule V) ([A], [A]) Γ1 Γ2 Δ1 Δ2 (Id' A).
-
-Lemma sr_Id_alt X (A : X) ant suc: InT A ant -> InT A suc ->
-  seqrule (@Idrule X) [] (ant, suc).
-Proof. intros. apply InT_split in X1.
-apply InT_split in X0. cD. subst. 
-eapply Sctxt_eq. apply (Idrule_I A).
-simpl. reflexivity.  simpl. reflexivity.  simpl. reflexivity. Qed.
 
 (*
 Lemma Sctxt_Id :

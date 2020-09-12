@@ -9,7 +9,7 @@ Add LoadPath "../general".
 Add LoadPath "../ll".
 Add LoadPath "../tense-lns".
 Require Import gen genT ddT.
-Require Import gen_tacs swappedT lntacsT.
+Require Import gen_tacs swappedT.
 Require Import gstep.
 Require Import fmlsext.
 Require Import lldefs.

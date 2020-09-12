@@ -5,7 +5,7 @@ Require Import ssreflect.
 Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.
-Require Import gen_tacs lntT.
+Require Import gen_tacs swappedT lntT.
 Require Import lntacsT.
 
 Ltac ms_cgs acm := 

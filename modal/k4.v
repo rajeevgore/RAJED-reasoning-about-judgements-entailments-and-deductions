@@ -18,24 +18,21 @@ Test Printing Universes.
 From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
-Add LoadPath "../tense-lns".
 Require Import gen. 
 Require Import genT.
 Require Import ddT.
 Require Import gstep.
 Require Import gen_ext.
 Require Import gen_seq.
-Require Import lntT.
 Require Import List_lemmasT.
 Require Import gen_tacs.
-Require Import lntacsT.
 
 (** * Definitions
 
 definition of Propositional Formulas*)
 
 
-(* already in ../tense-lns/lntT.v 
+(* copied from ../tense-lns/lntT.v *)
 Inductive PropF (V : Set): Type :=
  | Var : V -> PropF V
  | Bot : PropF V
@@ -48,7 +45,6 @@ Inductive PropF (V : Set): Type :=
  | BBox : PropF V -> PropF V
 (* | BDia : PropF V -> PropF V *)
 .
-*)
 
 Inductive isubf V : PropF V -> PropF V -> Type :=
   | Imp_subL : forall A B, isubf A (Imp A B)
@@ -66,10 +62,12 @@ Definition Seql W := rel (list W).
 (* two-sided sequent of lists of formulae *)
 Definition Seqlf V := Seql (PropF V).
 
-(* already in ../tense-lns/lntT.v 
+(* copied from ../tense-lns/lntT.v *)
 (* we may also want to refer to rules individually *)
+(* Idrule defined in ../general/gen_seq.v 
 Inductive Idrule V : rlsT (Seqlf V) :=
   | Idrule_I : forall A, Idrule [] (pair [A] [A]).
+  *)
 
 (* propositional version of axiom rule *)
 Inductive Idrule_p V : rlsT (Seqlf V) :=
@@ -84,7 +82,6 @@ Inductive ImpLrule V : rlsT (Seqlf V) :=
 
 Inductive ImpRrule V : rlsT (Seqlf V) :=
   | ImpRrule_I : forall A B, ImpRrule [pair [A] [B]] (pair [] [Imp A B]).
-*)
 
 (* shadows definition in ~/coq/lnt/tense-logic-in-Coq/lntT.v *)
 Inductive princrule {V} : rlsT (Seqlf V) :=

@@ -1,3 +1,4 @@
+Add LoadPath "../general".
 Require Import gen genT.
 Require Import lntT.
 Require Import lntacsT.

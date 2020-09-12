@@ -12,17 +12,14 @@ Test Printing Universes.
 From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
-Add LoadPath "../tense-lns".
 Require Import gen genT ddT dd_fc.
 Require Import List_lemmasT.
 Require Import gen_tacs gen_seq.
 Require Import swappedT.
-Require Import lntacsT.
 Require Import gstep.
 Require Import gentree.
 Require Import gen_ext.
 Require Import rtcT.
-Require Import lntT.
 Require Import k4.
 Require Import k4_exch.
 Require Import k4_inv.

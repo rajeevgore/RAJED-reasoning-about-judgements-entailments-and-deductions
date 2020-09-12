@@ -7,7 +7,7 @@ Require Import ssreflect.
 Require Import genT gen.
 Require Import ddT.
 Require Import List_lemmasT.
-Require Import gen_tacs lntT.
+Require Import gen_seq gen_tacs lntT.
 Require Import lntacsT.
 
 (** now the same thing for left context only **)

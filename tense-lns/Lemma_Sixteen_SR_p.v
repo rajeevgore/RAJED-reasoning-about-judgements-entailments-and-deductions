@@ -1,11 +1,12 @@
+Add LoadPath "../general".
 Require Import ssreflect.
 Require Import Lia.
 
-Require Import gen genT.
+Require Import gen genT gen_seq.
 Require Import ddT.
 Require Import dd_fc.
 Require Import List_lemmasT.
-Require Import lntT lntacsT lntlsT lntbRT lntmtacsT.
+Require Import lntT lntacsT gen_tacs lntlsT lntbRT lntmtacsT.
 Require Import lntb1LT lntb2LT.
 Require Import lntkt_exchT.
 Require Import lnt_weakeningT.

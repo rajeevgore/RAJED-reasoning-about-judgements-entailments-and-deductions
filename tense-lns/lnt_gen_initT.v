@@ -1,7 +1,7 @@
 Add LoadPath "../general".
 Require Import ssreflect.
  
-Require Import gen genT.
+Require Import gen genT gen_seq.
 Require Import ddT.
 Require Import List_lemmasT.
 Require Import gen_tacs lntT lntacsT lntlsT lntbRT lntmtacsT.

@@ -1,8 +1,9 @@
+Add LoadPath "../general".
 Require Import Lia.
 
-Require Import gen genT.
+Require Import gen genT gen_seq.
 Require Import ddT dd_fc.
-Require Import lntacsT.
+Require Import lntacsT gen_tacs.
 Require Import lntT.
 Require Import lntkt_exchT.
 Require Import size.

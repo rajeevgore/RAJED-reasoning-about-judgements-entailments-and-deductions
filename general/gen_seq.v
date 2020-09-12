@@ -269,7 +269,7 @@ Proof. intros rab ps c sea.
 destruct sea.  destruct r.  pose (rab _ _ r).
 eapply sextI. apply rmI. apply r0. Qed.
   
-(* derl_fst_ext_rls - similar for seqrule in lnt/tense-logic-in-Coq/lntT.v *)
+(* derl_fst_ext_rls - similar for seqrule above *)
 Lemma fst_ext_rls_fst_ext_rls (U W : Type) (pr : rlsT (list U * W)) :
   rsub (fst_ext_rls (fst_ext_rls pr)) (fst_ext_rls pr).
 Proof. unfold rsub. intros. inversion X. subst. clear X. 
@@ -551,3 +551,15 @@ destruct ser.
 eapply fextI. inversion r.
 
 *)
+
+(* we may also want to refer to rules individually *)
+Inductive Idrule (W : Type) : rlsT (rel (list W)) :=
+  | Idrule_I : forall A, Idrule [] (pair [A] [A]).
+
+Lemma sr_Id_alt X (A : X) ant suc: InT A ant -> InT A suc ->
+  seqrule (@Idrule X) [] (ant, suc).
+Proof. intros. apply InT_split in X1.
+apply InT_split in X0. cD. subst. 
+eapply Sctxt_eq. apply (Idrule_I A).
+simpl. reflexivity.  simpl. reflexivity.  simpl. reflexivity. Qed.
+

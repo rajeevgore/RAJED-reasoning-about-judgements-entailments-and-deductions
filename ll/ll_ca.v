@@ -7,7 +7,6 @@ From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
 Add LoadPath "../modal".
-Add LoadPath "../tense-lns".
 Require Import gen genT ddT.
 Require Import fmlsext.
 Require Import lldefs.

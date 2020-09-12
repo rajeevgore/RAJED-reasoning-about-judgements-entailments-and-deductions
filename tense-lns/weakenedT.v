@@ -1,7 +1,8 @@
+Add LoadPath "../general".
 Require Import List.
 Require Import existsT.
 Require Import List_lemmasT.
-Require Import gen genT lntacsT.
+Require Import gen genT gen_tacs lntacsT.
 Require Import lntT.
 
 Set Implicit Arguments.

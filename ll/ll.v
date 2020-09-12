@@ -7,9 +7,8 @@ From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
 Add LoadPath "../modal".
-Add LoadPath "../tense-lns".
 Require Import gen genT ddT.
-Require Import swappedT lntacsT.
+Require Import swappedT.
 Require Import fmlsext.
 Require Import lldefs ll_exch ll_cam.
 Require Import gstep.
