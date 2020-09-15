@@ -24,7 +24,6 @@ general: \
 general/gentree.vo \
 general/gstep.vo \
 general/rtcT.vo \
-general/gen_seq.vo \
 general/gen_tacs.vo \
 general/gen.vo \
 general/existsT.vo \
@@ -32,7 +31,8 @@ general/genT.vo \
 general/ddT.vo \
 general/dd_fc.vo \
 general/List_lemmasT.vo \
-general/swappedT.vo 
+general/swappedT.vo \
+general/gen_seq.vo 
 
 ljt/ljt.vo: ljt/ljt.v general/swappedT.vo general/List_lemmasT.vo general/gstep.vo general/gen_seq.vo
 ljt/ljt_inv.vo: ljt/ljt_inv.v ljt/ljt.vo
