@@ -530,7 +530,7 @@ Definition can_gen_init {V : Set}
    (exact nat || (intros; exact 0)).
 
  
-
+(*
 Lemma InT_seqextL : forall {W : Type} Γ Δ A,
     InT A Γ ->
     existsT2 Φ1 Φ2, @seqext W Φ1 Φ2 Δ [] ([A], []) = (Γ, Δ).
@@ -579,7 +579,7 @@ Proof.
   inversion H3. inversion J3.
   subst. repeat eexists.
 Qed.
-
+*)
 
 Ltac inv_contr_PropF :=
   repeat clear_useless;

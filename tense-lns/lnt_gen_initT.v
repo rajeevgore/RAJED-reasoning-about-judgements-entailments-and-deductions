@@ -115,7 +115,7 @@ Lemma Id_InT: forall {V : Set} GH Γ Δ d p,
     derrec (@LNSKt_rules V) (fun _ => False) (GH ++ [(Γ,Δ,d)]).
 Proof.
   intros until 0; intros Hin1 Hin2.
-  destruct (InT_seqext _ _ _ _ Hin1 Hin2) as [H1 [H2 [H3 [H4 H5]]]].
+  destruct (InT_seqext Hin1 Hin2) as [H1 [H2 [H3 [H4 H5]]]].
   eapply derI. eapply prop.
   econstructor.
   eapply seqrule_same.
@@ -131,7 +131,7 @@ Lemma BotL_InT: forall {V : Set} GH Γ Δ d,
     derrec (@LNSKt_rules V) (fun _ => False) (GH ++ [(Γ,Δ,d)]).
 Proof.
   intros until 0; intros Hin.
-  destruct (InT_seqextL _ Δ _ Hin) as [H1 [H2 H3]].
+  destruct (@InT_seqextL _ _ Δ _ Hin) as [H1 [H2 H3]].
   eapply derI. eapply prop.
   econstructor.
   eapply seqrule_same.

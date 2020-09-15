@@ -21,12 +21,12 @@ modal/k4_inv.vo \
 modal/k4.vo \
 modal/gen_ext.vo 
 general: \
+general/existsT.vo \
 general/gentree.vo \
 general/gstep.vo \
 general/rtcT.vo \
 general/gen_tacs.vo \
 general/gen.vo \
-general/existsT.vo \
 general/genT.vo \
 general/ddT.vo \
 general/dd_fc.vo \
@@ -71,3 +71,7 @@ general/gen_seq.vo: general/gen_seq.v general/gen_tacs.vo general/gstep.vo
 	(cd `dirname $*` ; pwd >> log ; coqc `basename $*.v`) 
 	#pwd >> log
 	# coqc -Q general "" -Q ll "" -Q modal "" -Q tense-lns "" $*.v
+
+clean : 
+	rm -rf  *.vo *.glob
+

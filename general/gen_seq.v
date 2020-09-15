@@ -9,7 +9,7 @@ Add LoadPath "../modal".
 Add LoadPath "../tense-lns".
 Require Import gen genT ddT gen_tacs.
 Require Import gstep.
-Require Import List_lemmasT gen_tacs swappedT.
+Require Import List_lemmasT gen_tacs swappedT existsT.
 Require Import Coq.Program.Basics.
 
 Inductive rlsmap U W (f : U -> W) (rls : rlsT U) : rlsT W :=
@@ -178,6 +178,55 @@ Lemma Sctxt_nil: forall (W : Type) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Type) ->
 Proof.
   intros until 0.  intros H. eapply Sctxt in H.
   simpl in H. exact H.
+Qed.
+
+Lemma InT_seqextL : forall {W : Type} Γ Δ A,
+    InT A Γ ->
+    existsT2 Φ1 Φ2, @seqext W Φ1 Φ2 Δ [] ([A], []) = (Γ, Δ).
+Proof.
+  induction Γ; intros Δ A Hin.
+  inversion Hin.
+  inversion Hin. subst.
+  repeat eexists. unfold seqext.
+  do 2 rewrite app_nil_r. erewrite app_nil_l.
+     reflexivity.
+  subst. destruct (IHΓ  Δ _ X) as [H1 [H2 H3]].
+  unfold seqext in *.
+  inversion H3.
+  repeat rewrite app_nil_r.
+  repeat eexists. rewrite app_comm_cons. reflexivity.
+Qed.
+
+Lemma InT_seqextR : forall {W : Type} Γ Δ B,
+    InT B Δ ->
+    existsT2 Ψ1 Ψ2, @seqext W Γ [] Ψ1 Ψ2 ([], [B]) = (Γ, Δ).
+Proof.
+  induction Δ; intros A Hin.
+  inversion Hin.
+  inversion Hin. subst.
+  repeat eexists. unfold seqext.
+  do 2 rewrite app_nil_r. erewrite app_nil_l.
+     reflexivity.
+  subst. destruct (IHΔ _ X) as [H1 [H2 H3]].
+  unfold seqext in *.
+  inversion H3.
+  repeat rewrite app_nil_r.
+  repeat eexists. rewrite app_comm_cons. reflexivity.
+Qed.
+
+Lemma InT_seqext : forall {W : Type} Γ Δ A B,
+    InT A Γ ->
+    InT B Δ ->
+    existsT2 Φ1 Φ2 Ψ1 Ψ2, @seqext W Φ1 Φ2 Ψ1 Ψ2 ([A], [B]) = (Γ, Δ).
+Proof.
+  intros until 0. intros Hin1 Hin2.
+  destruct (@InT_seqextL _ _ Δ _ Hin1) as [H1 [H2 H3]].
+  destruct (@InT_seqextR _ Γ _ _ Hin2) as [J1 [J2 J3]].
+  unfold seqext in *.
+  repeat rewrite app_nil_r in H3.
+  repeat rewrite app_nil_r in J3.
+  inversion H3. inversion J3.
+  subst. repeat eexists.
 Qed.
 
 (* fmlsext copied from ../ll/fmlsext.v *)
