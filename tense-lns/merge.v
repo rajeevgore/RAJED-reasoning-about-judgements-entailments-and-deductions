@@ -324,47 +324,6 @@ Proof.
   subst. eapply H1. assumption.
 Qed.
 
-Inductive leT (n : nat) : nat -> Type :=
-  leT_n : leT n n
-| leT_S : forall m : nat, leT n m -> leT n (S m).
-
-Lemma leT_0_m : forall m, leT 0 m.
-Proof.
-  induction m. econstructor.
-  econstructor. assumption.
-Qed.
-
-Lemma leT_S_S: forall n m, leT (S n) (S m) -> leT n m.
-Proof.
-  intros n m; revert n.
-  induction m; intros n H.
-  inversion H. econstructor.
-  subst. inversion H1.
-  inversion H. econstructor.
-  subst.
-  econstructor. eapply IHm.
-  assumption.
-Qed.
-
-Lemma leT_length : forall {T : Type} (l1 l2 : list T),
-  leT (length l1) (length l2) ->
-  existsT2 la lb, (l2 = la ++ lb) *
-                  (length la = length l1).
-Proof.
-  induction l1; intros l2 Hl.
-  simpl in *. exists nil, l2.
-  firstorder.
-  simpl in Hl. destruct l2.
-  inversion Hl.
-  simpl in Hl.
-  eapply leT_S_S in Hl.
-  eapply IHl1 in Hl.
-  destruct Hl as [la [lb [H1 H2]]].
-  subst.
-  simpl. exists (t :: la), lb.
-  simpl. firstorder.
-Qed.
-
 Lemma merge_ex_leT : forall {T : Set} G H GH,
 @merge T G H GH ->
 leT (length G) (length H) ->
@@ -384,7 +343,7 @@ Proof.
   econstructor. reflexivity. reflexivity.
   simpl in Hl. inversion Hl.
 
-  simpl in *. eapply leT_S_S in Hl.
+  simpl in *. eapply leT_S_n in Hl.
 (*   destruct (leT_length _ _ Hl) as [la [lb [Hlab Hlab2]]]. *)
   eapply IHHm in Hl. destruct Hl as [HH1 [HH2 [GGHH1 pf]]].
   do 3 destruct pf as [pf ?].
@@ -606,4 +565,3 @@ Proof.
   inversion Hs; try discriminate.
   repeat inversion_cons. all : eassumption.
 Qed.
-
