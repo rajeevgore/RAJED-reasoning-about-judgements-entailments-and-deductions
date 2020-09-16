@@ -321,6 +321,18 @@ Definition can_trf_rules_mono sty R rulesa rulesb r :=
 Definition can_trf_rules_rc_mono sty R rulesa rulesb r :=
   rsubI _ _ (@can_trf_rules_rc_mono' sty R rulesa rulesb r).
 
+Lemma can_trf_rules_rc_rel_eqv sty R R' rules:
+  req R R' -> forall ps (c : sty), 
+  can_trf_rules_rc R rules ps c -> can_trf_rules_rc R' rules ps c.
+Proof. unfold can_trf_rules_rc. unfold req. intros.
+apply X in X1.  specialize (X0 _ X1). cD.
+eexists.  split. eassumption.
+apply ForallTI_forall. intros. 
+eapply ForallTD_forall in X4.  2: eassumption.
+cD. eexists. split. eassumption.
+destruct X7. apply X in r. apply rT_step. exact r.
+apply rT_refl. Qed.
+
 (* union of two relations *)
 Polymorphic Inductive runion U V ra rb (ps : U) (c : V) : Type :=
   | run_l : ra ps c -> @runion U V ra rb ps c

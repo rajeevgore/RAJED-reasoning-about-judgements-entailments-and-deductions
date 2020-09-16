@@ -27,9 +27,19 @@ Inductive ImpLinv2 {V} : relationT (list (PropF V)) :=
 Inductive AndLinv {V} : relationT (list (PropF V)) :=
   | AndLinv_I : forall C D, AndLinv ([And C D]) ([C ; D]).
 Inductive OrLinv1 {V} : relationT (list (PropF V)) :=
-  | OrLinv1_I : forall C D, OrLinv1 ([Or C D]) ([C]).
+  | OrLinv1_I : forall C D, OrLinv1 [Or C D] [C].
 Inductive OrLinv2 {V} : relationT (list (PropF V)) :=
-  | OrLinv2_I : forall C D, OrLinv2 ([Or C D]) ([D]).
+  | OrLinv2_I : forall C D, OrLinv2 [Or C D] [D].
+Inductive ImpL_And_inv {V} : relationT (list (PropF V)) :=
+  | ImpL_And_inv_I : forall B C D,
+    ImpL_And_inv ([Imp (And C D) B]) ([Imp C (Imp D B)]).
+Inductive ImpL_Or_inv1 {V} : relationT (list (PropF V)) :=
+  | ImpL_Or_inv1_I : forall B C D, ImpL_Or_inv1 [Imp (Or C D) B] [Imp C B].
+Inductive ImpL_Or_inv2 {V} : relationT (list (PropF V)) :=
+  | ImpL_Or_inv2_I : forall B C D, ImpL_Or_inv2 [Imp (Or C D) B] [Imp D B].
+
+Inductive AndLinv1 {V} :  PropF V -> list (PropF V) -> Type :=
+  | AndLinv1_I : forall C D, AndLinv1 (And C D) ([C ; D]).
 
 (* extend relation with general context on the left and a singleton on the 
   right, suitable for ImpLinv2, AndLinv. OrLinv1/2 *)
@@ -75,6 +85,26 @@ Proof. intro ljnc.  eexists. split. apply asmI.
 apply ForallT_singleI.  eexists. split.  2: apply rT_refl.
 apply LJIE in ljnc. subst. simpl. apply InT_cons. apply InT_eq. Qed.
 
+Lemma lr_And' V Y rules Γ1 Γ2 ps0 C D p 
+  (LJAE : forall ps A B G, rules ps ([And A B], G) -> ps = [([A; B], G)]) :
+  rules ps0 ([@And V C D], p : Y) ->
+  {ps' & derl (fst_ext_rls rules) ps' (Γ1 ++ [C ; D] ++ Γ2, p) *
+  ForallT (fun p' => {p0 & InT p0 (map (apfst (fmlsext Γ1 Γ2)) ps0) *
+     clos_reflT (srs_ext_rel AndLinv) p0 p'}) ps'}.
+Proof. intro ljnc.  eexists. split. apply asmI.
+apply ForallT_singleI.  eexists. split.  2: apply rT_refl.
+apply LJAE in ljnc. subst. simpl. apply InT_eq. Qed.
+
+Lemma lr_gen U Y rules Γ1 Γ2 ps0 fml fmlsi any p 
+  (LJAE : forall ps G, rules ps ([fml], G) -> ps = [(fmlsi, G)]) :
+  rules ps0 ([fml : U], p : Y) ->
+  {ps' & derl (fst_ext_rls rules) ps' (Γ1 ++ fmlsi ++ Γ2, p) *
+  ForallT (fun p' => {p0 & InT p0 (map (apfst (fmlsext Γ1 Γ2)) ps0) *
+     clos_reflT (srs_ext_rel any) p0 p'}) ps'}.
+Proof. intro ljnc.  eexists. split. apply asmI.
+apply ForallT_singleI.  eexists. split.  2: apply rT_refl.
+apply LJAE in ljnc. subst. simpl. apply InT_eq. Qed.
+
 Lemma lr_And V Γ1 Γ2 ps0 C D p : @LJncrules V ps0 ([And C D], p) ->
   {ps' & derl LJrules ps' (Γ1 ++ [C ; D] ++ Γ2, p) *
   ForallT (fun p' => {p0 & InT p0 (map (apfst (fmlsext Γ1 Γ2)) ps0) *
@@ -114,9 +144,19 @@ Lemma ncdlj V ps0 l p Γ1 Γ2 : @LJncrules V ps0 (l, p) ->
 Proof. intro ljnc. apply in_derl. unfold LJrules.  eapply fextI.
 eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
 
+Lemma ncdgen W Y rules ps0 l p Γ1 Γ2 : rules ps0 (l : list W, p : Y) ->
+  derl (fst_ext_rls rules) (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ l ++ Γ2, p).
+Proof. intro ljnc. apply in_derl.  eapply fextI.
+eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
+
 Lemma ncdlje V ps0 p Γ1 Γ2 : @LJncrules V ps0 ([], p) ->
   derl LJrules (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ Γ2, p).
 Proof. intro ljnc. apply in_derl. unfold LJrules.  eapply fextI.
+eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
+
+Lemma ncdgene W Y rules ps0 p Γ1 Γ2 : rules ps0 ([] : list W, p : Y) ->
+  derl (fst_ext_rls rules) (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ Γ2, p).
+Proof. intro ljnc. apply in_derl.  eapply fextI.
 eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
 
 Lemma serl U W R G H J p : srs_ext_rel R (H, p) (J : list U, p : W) -> 
@@ -135,6 +175,14 @@ Lemma serrc U W R G H J p : srs_ext_rel R ([H], p) ([J : U], p : W) ->
   srs_ext_rel R (H :: G, p) (J :: G, p).
 Proof. intro srs. eapply serr in srs. simpl in srs. exact srs. Qed.
 
+Lemma serrc1 U W R G H J p : srs_ext_rel R ([H : U], p) (J, p : W) -> 
+  srs_ext_rel R (H :: G, p) (J ++ G, p).
+Proof. intro srs. eapply serr in srs. simpl in srs. exact srs. Qed.
+
+Lemma serrc2 U W R G H J p : srs_ext_rel R (H, p) ([J : U], p : W) -> 
+  srs_ext_rel R (H ++ G, p) (J :: G, p).
+Proof. intro srs. eapply serr in srs. simpl in srs. exact srs. Qed.
+
 Lemma serlc U W R (x : U) H J p : srs_ext_rel R (H, p) (J, p : W) -> 
   srs_ext_rel R (x :: H, p) (x :: J, p).
 Proof. intro srs. exact (serl [x] srs). Qed.
@@ -150,6 +198,7 @@ pose (srs_ext_relI _ _ _ p [] [] rhj).
 simpl in s. rewrite -> !app_nil_r in s. exact s. Qed.
 
 Ltac apser := repeat (apply serr || apply serl) ; 
+  try apply serrc2 ; try apply serrc1 ; 
   try apply serc2 ; try apply serrc ; try apply serne.
 
 (* version which sometimes works better *)
@@ -372,4 +421,146 @@ apply der_trf_rc_derl.  exact (@can_trf_ImpLinv2_lj V).  Qed.
 Lemma rel_adm_ImpLinv2 V :
   rel_adm LJrules (srs_ext_rel (@ImpLinv2 V)).
 Proof. apply crd_ra. apply can_rel_ImpLinv2. Qed.
+
+(* try to redo the above, more generally *)
+Lemma can_trf_AndLinv_gen V Y rules ps c
+  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
+  (LJAE : forall ps A B G, rules ps ([And A B], G) -> ps = [([A; B], G)]) :
+  fst_ext_rls rules ps c ->
+  can_trf_rules_rc (@srs_ext_rel _ Y (@AndLinv V)) 
+    (derl (fst_ext_rls rules)) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
+unfold can_trf_rules_rc. intros c' ser.
+inversion ser. clear ser. destruct c0. simpl in H.
+unfold fmlsext in H. inversion H. clear H. subst.
+destruct H0.  (* pose (LJnc_seL X). *)
+acacD'T2 ; subst.
+- rewrite ?app_nil_r in X. 
+assoc_mid H3.  eexists. split.  apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply AndLinv_I.
+- pose (nc_seL _ _ _ X).  apply sing_empty_app_cons in s.
+list_eq_ncT. cD. subst. simpl.  simpl in X. rewrite ?app_nil_r.
+apply lr_And'. exact LJAE. exact X.
+- pose (nc_seL _ _ _ X).  apply sing_empty_app_cons in s.
+cD. subst. simpl.  simpl in X. rewrite ?app_nil_r.
+apply lr_And'. exact LJAE. exact X.
+- eexists. split. assoc_mid l. apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply AndLinv_I.
+- pose (nc_seL _ _ _ X).
+apply sing_empty_app in s. sD. inversion s. subst. simpl.
+rewrite ?app_nil_r in X.  rewrite ?app_nil_r.
+apply lr_And'. exact LJAE. exact X.
+- list_eq_ncT. cD. subst. simpl in X.
+eexists. split. assoc_mid H4. apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply AndLinv_I.
+- list_eq_ncT. sD ; subst.
++ eexists. split.  apply ncdgene. apply X.
+apply fcr. intro. destruct q. 
+rewrite ?app_nil_r.
+apserx. apply AndLinv_I.
++ simpl. rewrite ?app_nil_r.  
+apply lr_And'. exact LJAE. exact X.
+- list_eq_ncT. cD.  list_eq_ncT. cD. subst. (* simpl. NO! *) list_assoc_l'.
+eexists. split. apply ncdgene. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply AndLinv_I.
+- eexists. split. assoc_mid l. apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+list_assoc_r'. simpl.  
+apserx. apply AndLinv_I.
+Qed.
+
+Print Implicit can_trf_AndLinv_gen.
+
+Print Implicit can_trf_AndLinv_lj.
+
+Lemma can_trf_AndLinv_lj' V ps c: @LJrules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@AndLinv V)) (derl (@LJrules _)) ps c.
+Proof. apply can_trf_AndLinv_gen.  apply LJnc_seL.  apply LJAE.  Qed.
+
+Inductive fslr U W R : list U -> W -> Type := 
+  | fslr_I : forall (u : U) (w : W), R u w -> fslr R [u] w. 
+
+Lemma can_trf_genLinv_gen W Y rules genLinv ps c
+  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
+  (rls_unique : forall ps u w G, 
+    genLinv u w -> rules ps ([u], G) -> ps = [(w, G)]) :
+  fst_ext_rls rules ps c ->
+  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) 
+    (derl (fst_ext_rls rules)) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
+unfold can_trf_rules_rc. intros c' ser.
+inversion ser. clear ser. destruct c0. simpl in H0.
+unfold fmlsext in H0. inversion H0. clear H0. subst.
+destruct X0.  
+acacD'T2 ; subst.
+- rewrite ?app_nil_r in X. 
+assoc_mid H2.  eexists. split.  apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply fslr_I. exact g.
+- pose (nc_seL _ _ _ X).  apply sing_empty_app_cons in s.
+list_eq_ncT. cD. subst. simpl.  simpl in X. rewrite ?app_nil_r.
+eapply lr_gen. 2: exact X. intros *.  apply rls_unique. exact g.
+- pose (nc_seL _ _ _ X).  apply sing_empty_app_cons in s.
+cD. subst. simpl.  simpl in X. rewrite ?app_nil_r.
+eapply lr_gen. 2: exact X. intros *.  apply rls_unique. exact g.
+- eexists. split. assoc_mid l. apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply fslr_I. exact g.
+- pose (nc_seL _ _ _ X).
+apply sing_empty_app in s. sD. inversion s. subst. simpl.
+rewrite ?app_nil_r in X.  rewrite ?app_nil_r.
+eapply lr_gen. 2: exact X. intros *.  apply rls_unique. exact g.
+- list_eq_ncT. cD. subst. simpl in X.
+eexists. split. assoc_mid H4. apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply fslr_I. exact g.
+- list_eq_ncT. sD ; subst.
++ eexists. split.  apply ncdgene. apply X.
+apply fcr. intro. destruct q. 
+rewrite ?app_nil_r.
+apserx. apply fslr_I. exact g.
++ simpl. rewrite ?app_nil_r.  
+eapply lr_gen. 2: exact X. intros *.  apply rls_unique. exact g.
+- list_eq_ncT. cD.  list_eq_ncT. cD. subst. (* simpl. NO! *) list_assoc_l'.
+eexists. split. apply ncdgene. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply fslr_I. exact g.
+- eexists. split. assoc_mid l. apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+list_assoc_r'. simpl.  
+apserx. apply fslr_I. exact g.
+Qed.
+
+Print Implicit can_trf_AndLinv_gen.
+Print Implicit can_trf_genLinv_gen.
+
+Print Implicit can_trf_AndLinv_lj.
+
+Lemma can_trf_AndLinv_gen' V Y rules ps c
+  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
+  (LJAE : forall ps A B G, rules ps ([And A B], G) -> ps = [([A; B], G)]) :
+  fst_ext_rls rules ps c ->
+  can_trf_rules_rc (@srs_ext_rel _ Y (fslr (@AndLinv1 V))) 
+    (derl (fst_ext_rls rules)) ps c.
+Proof. eapply can_trf_genLinv_gen.
+exact nc_seL. intros * auw. destruct auw. apply LJAE. Qed.
+
+Check can_trf_rules_rc_rel_eqv.
+
+(*
+Lemma can_trf_AndLinv_gen'' V Y rules ps c
+  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
+  (LJAE : forall ps A B G, rules ps ([And A B], G) -> ps = [([A; B], G)]) :
+  fst_ext_rls rules ps c ->
+  can_trf_rules_rc (@srs_ext_rel _ Y (@AndLinv V)) 
+    (derl (fst_ext_rls rules)) ps c.
+Proof. intro frpc.
+eapply can_trf_rules_rc_rel_eqv.
+eapply can_trf_genLinv_gen.
+exact nc_seL. intros * auw. destruct auw. apply LJAE. Qed.
+*)
 

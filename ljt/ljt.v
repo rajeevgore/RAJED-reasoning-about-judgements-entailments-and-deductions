@@ -72,6 +72,29 @@ Inductive ImpLrule {V} : rlsT (srseq (PropF V)) :=
   | ImpLrule_I : forall A B G, 
     ImpLrule [pair [Imp A B] A ; pair [B] G] (pair [Imp A B] G).
 
+(* trying this rule in place of Dyckhoff's atom rule *)
+Inductive ImpLrule_p {V} : rlsT (srseq (PropF V)) :=
+  | ImpLrule_p_I : forall p B G, ImpLrule_p
+    [pair [Imp (Var p) B] (Var p) ; pair [B] G] (pair [Imp (Var p) B] G).
+
+(* special ImpL rules in Dyckhoff's LJT system *)
+
+Inductive ImpL_atom_rule {V} : rlsT (list (PropF V)) :=
+  | ImpL_atom_rule_I : forall p B, 
+    ImpL_atom_rule [[B ; Var p]] ([Imp (Var p) B ; Var p]).
+
+Inductive ImpL_And_rule {V} : rlsT (list (PropF V)) :=
+  | ImpL_And_rule_I : forall B C D, 
+    ImpL_And_rule [[Imp C (Imp D B)]] ([Imp (And C D) B]).
+
+Inductive ImpL_Or_rule {V} : rlsT (list (PropF V)) :=
+  | ImpL_Or_rule_I : forall B C D, 
+    ImpL_Or_rule [[Imp C B ; Imp D B]] ([Imp (Or C D) B]).
+
+Inductive ImpL_Imp_rule {V} : rlsT (srseq (PropF V)) :=
+  | ImpL_Imp_rule_I : forall B C D G, 
+    ImpL_Imp_rule [pair [Imp D B ; C] D ; pair [B] G] (pair [Imp (Imp C D) B] G).
+
 (* right rules which just have context on the left *)
 Inductive LJsrrules {V} : rlsT (PropF V) :=
   | AndR_sr : forall ps c, AndRrule ps c -> LJsrrules ps c
@@ -84,6 +107,43 @@ Inductive LJslrules {V} : rlsT (list (PropF V)) :=
   | AndL_sl : forall ps c, AndLrule ps c -> LJslrules ps c
   | OrL_sl : forall ps c, OrLrule ps c -> LJslrules ps c
   | Bot_sl : forall ps c, Botrule ps c -> LJslrules ps c
+  .
+
+(* Dyckhoff rules with same rhs *)
+Inductive LJTilrules {V} : rlsT (list (PropF V)) :=
+  | And_il : forall ps c, ImpL_And_rule ps c -> LJTilrules ps c
+  | Or_il : forall ps c, ImpL_Or_rule ps c -> LJTilrules ps c
+  | atom_il : forall ps c, ImpL_atom_rule ps c -> LJTilrules ps c
+  .
+
+Inductive LJAilrules {V} : rlsT (list (PropF V)) :=
+  | And_ail : forall ps c, ImpL_And_rule ps c -> LJAilrules ps c
+  | Or_ail : forall ps c, ImpL_Or_rule ps c -> LJAilrules ps c
+  .
+
+(* all rules of LJT, without context *)
+Inductive LJTncrules {V} : rlsT (srseq (PropF V)) :=
+  | il_tnc : forall G ps c, 
+    rlsmap (flip pair G) LJTilrules ps c -> LJTncrules ps c
+  | Imp_tnc : forall ps c, ImpL_Imp_rule ps c -> LJTncrules ps c
+  | ImpR_tnc : forall ps c, ImpRrule ps c -> LJTncrules ps c
+  | Id_tnc : forall (A : V) ps c, Idrule (Var A) ps c -> LJTncrules ps c
+  | lrls_tnc : forall G ps c,
+    rlsmap (flip pair G) LJslrules ps c -> LJTncrules ps c
+  | rrls_tnc : forall ps c, rlsmap (pair []) LJsrrules ps c -> LJTncrules ps c
+  .
+
+(* all rules of LJA, without context *)
+Inductive LJAncrules {V} : rlsT (srseq (PropF V)) :=
+  | il_anc : forall G ps c, 
+    rlsmap (flip pair G) LJAilrules ps c -> LJAncrules ps c
+  | Imp_anc : forall ps c, ImpL_Imp_rule ps c -> LJAncrules ps c
+  | ImpL_anc : forall ps c, ImpLrule_p ps c -> LJAncrules ps c
+  | ImpR_anc : forall ps c, ImpRrule ps c -> LJAncrules ps c
+  | Id_anc : forall (A : V) ps c, Idrule (Var A) ps c -> LJAncrules ps c
+  | lrls_anc : forall G ps c,
+    rlsmap (flip pair G) LJslrules ps c -> LJAncrules ps c
+  | rrls_anc : forall ps c, rlsmap (pair []) LJsrrules ps c -> LJAncrules ps c
   .
 
 Lemma LJsl_single V ps c : @LJslrules V ps c -> {c' & c = [c']}.
@@ -104,14 +164,35 @@ Inductive LJncrules {V} : rlsT (srseq (PropF V)) :=
   .
 
 Definition LJrules {V} := fst_ext_rls (@LJncrules V).
+Definition LJTrules {V} := fst_ext_rls (@LJTncrules V).
+Definition LJArules {V} := fst_ext_rls (@LJAncrules V).
 
 Definition rrls_nc' V ps c rpc := @rrls_nc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_nc' V G ps c rpc := @lrls_nc V G _ _ (rmI _ _ ps c rpc).
 Definition ImpR_nc' V A B := ImpR_nc (@ImpRrule_I V A B).
 Definition ImpL_nc' V A B G := ImpL_nc (@ImpLrule_I V A B G).
 
+Definition rrls_tnc' V ps c rpc := @rrls_tnc V _ _ (rmI _ _ ps c rpc).
+Definition lrls_tnc' V G ps c rpc := @lrls_tnc V G _ _ (rmI _ _ ps c rpc).
+Definition il_tnc' V G ps c rpc := @il_tnc V G _ _ (rmI _ _ ps c rpc).
+Definition ImpR_tnc' V A B := ImpR_tnc (@ImpRrule_I V A B).
+Definition Imp_tnc' V B C D G := Imp_tnc (@ImpL_Imp_rule_I V B C D G).
+
+Definition rrls_anc' V ps c rpc := @rrls_anc V _ _ (rmI _ _ ps c rpc).
+Definition lrls_anc' V G ps c rpc := @lrls_anc V G _ _ (rmI _ _ ps c rpc).
+Definition il_anc' V G ps c rpc := @il_anc V G _ _ (rmI _ _ ps c rpc).
+Definition ImpR_anc' V A B := ImpR_anc (@ImpRrule_I V A B).
+Definition Imp_anc' V B C D G := Imp_anc (@ImpL_Imp_rule_I V B C D G).
+Definition ImpL_anc' V p B G := ImpL_anc (@ImpLrule_p_I V p B G).
+
 Lemma LJrules_req V : req (@LJrules V) (fst_ext_rls LJncrules).
 Proof.  unfold LJrules. apply req_refl. Qed.
+
+Lemma LJTrules_req V : req (@LJTrules V) (fst_ext_rls LJTncrules).
+Proof.  unfold LJTrules. apply req_refl. Qed.
+
+Lemma LJArules_req V : req (@LJArules V) (fst_ext_rls LJAncrules).
+Proof.  unfold LJArules. apply req_refl. Qed.
 
 Lemma LJrules_nc_rsub V : rsub LJncrules (@LJrules V).
 Proof.  unfold LJrules. intros ps c nc. 
@@ -131,10 +212,29 @@ Proof. intro ljnc. inversion ljnc ; subst ; clear ljnc.
   + destruct o.  apply se_single.  + destruct b.  apply se_single.
 - inversion X.  apply se_empty. Qed.
 
+(* doesn't hold for atomic rule 
+Lemma LJTnc_seL V ps cl cr : @LJTncrules V ps (cl, cr) -> sing_empty cl.
+*)
+
+Lemma LJAnc_seL V ps cl cr : @LJAncrules V ps (cl, cr) -> sing_empty cl.
+Proof. intro ljnc. inversion ljnc ; subst ; clear ljnc.
+- inversion X. destruct H1 ; destruct i ; apply se_single.
+- inversion H. apply se_single.
+- inversion H. apply se_single.
+- inversion H. apply se_empty.
+- inversion X. apply se_single.
+- inversion X. destruct X0. + destruct a.  apply se_single.
+  + destruct o.  apply se_single.  + destruct b.  apply se_single.
+- inversion X.  apply se_empty. Qed.
+
 Definition LJweakening V seq :=
   can_wkL_req (req_sym (LJrules_req V)) (@weakeningL _ _ seq _).
+Definition LJTweakening V seq :=
+  can_wkL_req (req_sym (LJTrules_req V)) (@weakeningL _ _ seq _).
+Definition LJAweakening V seq :=
+  can_wkL_req (req_sym (LJArules_req V)) (@weakeningL _ _ seq _).
 
-Print Implicit LJweakening.
+Print Implicit LJweakening.  Print Implicit LJAweakening.
 
 (* need to check derivability of Idrule for any formula *)
 Lemma idrule_der {V} A : derrec LJrules emptyT ([A : PropF V], A).
@@ -215,4 +315,14 @@ Lemma exchL_lj: forall V concl,
     derrec (@LJrules V) emptyT concl'.
 Proof. unfold LJrules. intro. apply der_trf.
 apply exchL_std_rule. apply LJnc_seL. Qed.
+
+(* exchange for LJA system *)
+Lemma exchL_lja: forall V concl,
+  derrec (@LJArules V) emptyT concl ->
+     forall concl', fst_rel (@swapped _) concl concl' ->
+    derrec (@LJArules V) emptyT concl'.
+Proof. unfold LJArules. intro. apply der_trf.
+apply exchL_std_rule. apply LJAnc_seL. Qed.
+
+Print Implicit exchL_lja.
 
