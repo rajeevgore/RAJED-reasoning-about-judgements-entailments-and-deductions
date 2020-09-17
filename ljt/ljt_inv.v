@@ -96,6 +96,15 @@ Proof. intro ljnc. inversion ljnc.
 + inversion H2.  reflexivity.  + inversion H2. + inversion X1.
 - inversion X. Qed.
 
+Lemma LJAAE V ps A B G :
+  LJAncrules ps ([@And V A B], G) -> ps = [([A ; B], G)].
+Proof. intro ljnc. inversion ljnc.
+- inversion X.  inversion H3 ; inversion H5.
+- inversion H. - inversion H.  - inversion H.  - inversion X. 
+- inversion X.  inversion X0. 
++ inversion H2.  reflexivity.  + inversion H2.  + inversion X1.  
+- inversion X.  Qed.
+
 Lemma LJOE V ps A B G :
   LJncrules ps ([@Or V A B], G) -> ps = [([A], G); ([B], G)].
 Proof. intro ljnc. inversion ljnc.
@@ -103,6 +112,15 @@ Proof. intro ljnc. inversion ljnc.
 - inversion X.  inversion X0.
 + inversion H2.  + inversion H2. reflexivity.  + inversion X1.
 - inversion X. Qed.
+
+Lemma LJAOE V ps A B G :
+  LJAncrules ps ([@Or V A B], G) -> ps = [([A], G); ([B], G)].
+Proof. intro ljnc. inversion ljnc.
+- inversion X.  inversion H3 ; inversion H5.
+- inversion H. - inversion H.  - inversion H.  - inversion X. 
+- inversion X.  inversion X0. 
++ inversion H2.  + inversion H2.  reflexivity.  + inversion X1.  
+- inversion X.  Qed.
 
 (* for use when the last rule is the rule being inverted *)
 Lemma lr_geni U Y rules Γ1 Γ2 ps0 fml fmlsi any p 
@@ -133,19 +151,9 @@ Proof. intro caq.  apply ForallTI_forall.  intros x inxm.
 apply InT_mapE in inxm. cD. subst.
 eexists. split.  exact (InT_map _ inxm1). apply caq. Qed.
 
-Lemma ncdlj V ps0 l p Γ1 Γ2 : @LJncrules V ps0 (l, p) ->
-  derl LJrules (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ l ++ Γ2, p).
-Proof. intro ljnc. apply in_derl. unfold LJrules.  eapply fextI.
-eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
-
 Lemma ncdgen W Y rules ps0 l p Γ1 Γ2 : rules ps0 (l : list W, p : Y) ->
   derl (fst_ext_rls rules) (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ l ++ Γ2, p).
 Proof. intro ljnc. apply in_derl.  eapply fextI.
-eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
-
-Lemma ncdlje V ps0 p Γ1 Γ2 : @LJncrules V ps0 ([], p) ->
-  derl LJrules (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ Γ2, p).
-Proof. intro ljnc. apply in_derl. unfold LJrules.  eapply fextI.
 eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
 
 Lemma ncdgene W Y rules ps0 p Γ1 Γ2 : rules ps0 ([] : list W, p : Y) ->
@@ -269,25 +277,7 @@ intros * guw rpg. rewrite (rls_unique _ _ _ _ guw rpg). apply InT_eq. Qed.
 
 Print Implicit can_trf_genLinv_gen.
 
-(*
-Print Implicit can_trf_AndLinv_lj.
-Print Implicit can_trf_AndLinv_gen.
-*)
-
-Lemma can_trf_AndLinv_gen' V Y rules ps c
-  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
-  (LJAE : forall ps A B G, rules ps ([And A B], G) -> ps = [([A; B], G)]) :
-  fst_ext_rls rules ps c ->
-  can_trf_rules_rc (@srs_ext_rel _ Y (fslr (@AndLinvs V))) 
-    (derl (fst_ext_rls rules)) ps c.
-Proof. eapply can_trf_genLinv_gen.
-exact nc_seL. intros * auw. destruct auw. apply LJAE. Qed.
-
-Check can_trf_rules_rc_rel_eqv.
-
-About can_trf_genLinv_gen.
-
-
+(** admissibility of inversion for LJ **)
 Lemma can_trf_AndLinv_lj V ps c: @LJrules _ ps c ->
   can_trf_rules_rc (srs_ext_rel (@AndLinv V)) (derl (@LJrules _)) ps c.
 Proof. apply can_trf_genLinv_gen.  apply LJnc_seL.
@@ -312,27 +302,81 @@ intros * auv.  destruct auv. intro rocd.
 apply LJIE in rocd. subst. solve_InT.  Qed.
 
 (* now inversion results in terms of rel_adm *)
-Lemma rel_adm_AndLinv V :
+Lemma LJ_rel_adm_AndLinv V :
   rel_adm LJrules (srs_ext_rel (@AndLinv V)).
 Proof. apply crd_ra. unfold can_rel.
 apply der_trf_rc_derl.  exact (@can_trf_AndLinv_lj V).  Qed.
 
-Lemma rel_adm_OrLinv1 V :
+Lemma LJ_rel_adm_OrLinv1 V :
   rel_adm LJrules (srs_ext_rel (@OrLinv1 V)).
 Proof. apply crd_ra. unfold can_rel.
 apply der_trf_rc_derl.  exact (@can_trf_OrLinv1_lj V).  Qed.
 
-Lemma rel_adm_OrLinv2 V :
+Lemma LJ_rel_adm_OrLinv2 V :
   rel_adm LJrules (srs_ext_rel (@OrLinv2 V)).
 Proof. apply crd_ra. unfold can_rel.
 apply der_trf_rc_derl.  exact (@can_trf_OrLinv2_lj V).  Qed.
 
-Lemma can_rel_ImpLinv2 V seq :
+Lemma LJ_can_rel_ImpLinv2 V seq :
 derrec LJrules emptyT seq ->
   can_rel LJrules (srs_ext_rel (Y:=PropF V)) ImpLinv2 seq.
 Proof. unfold can_rel.
 apply der_trf_rc_derl.  exact (@can_trf_ImpLinv2_lj V).  Qed.
 
-Lemma rel_adm_ImpLinv2 V :
+Lemma LJ_rel_adm_ImpLinv2 V :
   rel_adm LJrules (srs_ext_rel (@ImpLinv2 V)).
-Proof. apply crd_ra. apply can_rel_ImpLinv2. Qed.
+Proof. apply crd_ra. apply LJ_can_rel_ImpLinv2. Qed.
+
+(** admissibility of inversion for LJA **)
+Lemma can_trf_AndLinv_lja V ps c: @LJArules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@AndLinv V)) (derl (@LJArules _)) ps c.
+Proof. apply can_trf_genLinv_gen.  apply LJAnc_seL.
+intros * auv.  destruct auv.  apply LJAAE.  Qed.
+
+Lemma can_trf_OrLinv1_lja V ps c: @LJArules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@OrLinv1 V)) (derl (@LJArules _)) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJAnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJAOE in rocd. subst. solve_InT.  Qed.
+
+Lemma can_trf_OrLinv2_lja V ps c: @LJArules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@OrLinv2 V)) (derl (@LJArules _)) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJAnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJAOE in rocd. subst. solve_InT.  Qed.
+
+(*
+Lemma can_trf_ImpLinv2_lja V ps c: @LJrules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@ImpLinv2 V)) (derl (@LJrules _)) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJAnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJIE in rocd. subst. solve_InT.  Qed.
+*)
+
+(* now inversion results in terms of rel_adm *)
+Lemma LJA_rel_adm_AndLinv V :
+  rel_adm LJArules (srs_ext_rel (@AndLinv V)).
+Proof. apply crd_ra. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_AndLinv_lja V).  Qed.
+
+Lemma LJA_rel_adm_OrLinv1 V :
+  rel_adm LJArules (srs_ext_rel (@OrLinv1 V)).
+Proof. apply crd_ra. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_OrLinv1_lja V).  Qed.
+
+Lemma LJA_rel_adm_OrLinv2 V :
+  rel_adm LJArules (srs_ext_rel (@OrLinv2 V)).
+Proof. apply crd_ra. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_OrLinv2_lja V).  Qed.
+
+(*
+Lemma LJA_can_rel_ImpLinv2 V seq :
+derrec LJrules emptyT seq ->
+  can_rel LJrules (srs_ext_rel (Y:=PropF V)) ImpLinv2 seq.
+Proof. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_ImpLinv2_lj V).  Qed.
+
+Lemma LJA_rel_adm_ImpLinv2 V :
+  rel_adm LJrules (srs_ext_rel (@ImpLinv2 V)).
+Proof. apply crd_ra. apply LJA_can_rel_ImpLinv2. Qed.
+*)

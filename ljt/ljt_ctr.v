@@ -150,7 +150,7 @@ Print gen_step.
 Lemma lj_ra_And V A B : rel_adm LJrules (srs_ext_rel (sctr_rel A)) ->
   rel_adm LJrules (srs_ext_rel (sctr_rel B)) ->
   rel_adm LJrules (srs_ext_rel (sctr_rel (@And V A B))).
-Proof. intros. apply gen_sctrL_And.  apply rel_adm_AndLinv.
+Proof. intros. apply gen_sctrL_And.  apply LJ_rel_adm_AndLinv.
 unfold LJrules. intro. apply fer_mono.
 intros ps' c' ra.  eapply lrls_nc. 
 epose (rsubD (rm_mono (rsubI _ _ AndL_sl))).  exact (r _ _ ra).
@@ -168,7 +168,7 @@ Lemma lj_ra_Or V A B : rel_adm LJrules (srs_ext_rel (sctr_rel A)) ->
   rel_adm LJrules (srs_ext_rel (sctr_rel B)) ->
   rel_adm LJrules (srs_ext_rel (sctr_rel (@Or V A B))).
 Proof. intros. apply gen_sctrL_Or.  
-apply rel_adm_OrLinv1.  apply rel_adm_OrLinv2.
+apply LJ_rel_adm_OrLinv1.  apply LJ_rel_adm_OrLinv2.
 unfold LJrules. intro. apply fer_mono.
 intros ps' c' ra.  eapply lrls_nc. 
 epose (rsubD (rm_mono (rsubI _ _ OrL_sl))).  exact (r _ _ ra).
@@ -416,8 +416,8 @@ clear X ; inversion X0 as [x | x l X X1 a ] ; subst ; clear X1 X0 ;
 apply dersrec_singleI ;  apply (snd X) ;
 eapply (srs_ext_relI_eq _ _ _ M N (sctr_relI A S2)) ; list_eq_assoc ]].
 
-Check rel_adm_ImpLinv2.  Check crd_ra.
-About can_rel_ImpLinv2.
+Check LJ_rel_adm_ImpLinv2.  Check crd_ra.
+About LJ_can_rel_ImpLinv2.
 
 Definition srs_ext_relI_eq' W Y R ant ant' G Φ1 Φ2 seq1 raa eq1 :=
   @srs_ext_relI_eq W Y R ant ant' G Φ1 Φ2 seq1 _ raa eq1 eq_refl.
@@ -436,7 +436,7 @@ list_eq_assoc | ] ;
 inversion frp as [ | x l rp f0 ] ; subst ; clear frp f0 ;
 destruct rp as [ rpd rpc ] ; clear rpc ;
 (* now invert Imp A0 B in right premise *)
-apply can_rel_ImpLinv2 in rpd ;
+apply LJ_can_rel_ImpLinv2 in rpd ;
 unfold can_rel in rpd ;  erequire rpd ; require rpd ; [
 eapply (srs_ext_relI_eq' _ _ _ K L (ImpLinv2_I A0 B)) ;
 list_eq_assoc | ] ;  
