@@ -24,8 +24,10 @@ Inductive ImpRinv {V} : relationT (srseqf V) :=
   | ImpRinv_I : forall C D, ImpRinv (pair [] (Imp C D)) (pair [C] D).
 Inductive ImpLinv2 {V} : relationT (list (PropF V)) :=
   | ImpLinv2_I : forall C D, ImpLinv2 ([Imp C D]) ([D]).
+(*
 Inductive AndLinv {V} : relationT (list (PropF V)) :=
   | AndLinv_I : forall C D, AndLinv ([And C D]) ([C ; D]).
+  *)
 Inductive OrLinv1 {V} : relationT (list (PropF V)) :=
   | OrLinv1_I : forall C D, OrLinv1 [Or C D] [C].
 Inductive OrLinv2 {V} : relationT (list (PropF V)) :=
@@ -40,6 +42,14 @@ Inductive ImpL_Or_inv2 {V} : relationT (list (PropF V)) :=
 
 Inductive AndLinv1 {V} :  PropF V -> list (PropF V) -> Type :=
   | AndLinv1_I : forall C D, AndLinv1 (And C D) ([C ; D]).
+
+Inductive fslr U W R : list U -> W -> Type := 
+  | fslr_I : forall (u : U) (w : W), R u w -> fslr R [u] w. 
+
+Definition AndLinv {V} := fslr (@AndLinv1 V).
+
+Lemma AndLinv_I {V} (C D : PropF V) : AndLinv [And C D] [C; D].
+Proof. apply fslr_I. apply AndLinv1_I. Qed.
 
 (* extend relation with general context on the left and a singleton on the 
   right, suitable for ImpLinv2, AndLinv. OrLinv1/2 *)
@@ -255,6 +265,7 @@ Qed.
 
 Print Implicit can_trf_ImpLinv2_lj.
 
+(*
 Lemma can_trf_AndLinv_lj V ps c: @LJrules _ ps c ->
   can_trf_rules_rc (srs_ext_rel (@AndLinv V)) (derl (@LJrules _)) ps c.
 Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
@@ -301,6 +312,7 @@ apserx. apply AndLinv_I.
 Qed.
 
 Print Implicit can_trf_AndLinv_lj.
+*)
 
 Lemma can_trf_OrLinv1_lj V ps c: @LJrules _ ps c ->
   can_trf_rules_rc (srs_ext_rel (@OrLinv1 V)) (derl (@LJrules _)) ps c.
@@ -397,32 +409,8 @@ Qed.
 Print Implicit can_trf_OrLinv2_lj.
 Print Implicit der_trf_rc_derl.
 
-Lemma rel_adm_AndLinv V :
-  rel_adm LJrules (srs_ext_rel (@AndLinv V)).
-Proof. apply crd_ra. unfold can_rel.
-apply der_trf_rc_derl.  exact (@can_trf_AndLinv_lj V).  Qed.
-
-Lemma rel_adm_OrLinv1 V :
-  rel_adm LJrules (srs_ext_rel (@OrLinv1 V)).
-Proof. apply crd_ra. unfold can_rel.
-apply der_trf_rc_derl.  exact (@can_trf_OrLinv1_lj V).  Qed.
-
-Lemma rel_adm_OrLinv2 V :
-  rel_adm LJrules (srs_ext_rel (@OrLinv2 V)).
-Proof. apply crd_ra. unfold can_rel.
-apply der_trf_rc_derl.  exact (@can_trf_OrLinv2_lj V).  Qed.
-
-Lemma can_rel_ImpLinv2 V seq :
-derrec LJrules emptyT seq ->
-  can_rel LJrules (srs_ext_rel (Y:=PropF V)) ImpLinv2 seq.
-Proof. unfold can_rel.
-apply der_trf_rc_derl.  exact (@can_trf_ImpLinv2_lj V).  Qed.
-
-Lemma rel_adm_ImpLinv2 V :
-  rel_adm LJrules (srs_ext_rel (@ImpLinv2 V)).
-Proof. apply crd_ra. apply can_rel_ImpLinv2. Qed.
-
 (* try to redo the above, more generally *)
+(*
 Lemma can_trf_AndLinv_gen V Y rules ps c
   (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
   (LJAE : forall ps A B G, rules ps ([And A B], G) -> ps = [([A; B], G)]) :
@@ -480,9 +468,7 @@ Print Implicit can_trf_AndLinv_lj.
 Lemma can_trf_AndLinv_lj' V ps c: @LJrules _ ps c ->
   can_trf_rules_rc (srs_ext_rel (@AndLinv V)) (derl (@LJrules _)) ps c.
 Proof. apply can_trf_AndLinv_gen.  apply LJnc_seL.  apply LJAE.  Qed.
-
-Inductive fslr U W R : list U -> W -> Type := 
-  | fslr_I : forall (u : U) (w : W), R u w -> fslr R [u] w. 
+*)
 
 Lemma can_trf_genLinv_gen W Y rules genLinv ps c
   (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
@@ -535,10 +521,12 @@ list_assoc_r'. simpl.
 apserx. apply fslr_I. exact g.
 Qed.
 
-Print Implicit can_trf_AndLinv_gen.
 Print Implicit can_trf_genLinv_gen.
 
+(*
 Print Implicit can_trf_AndLinv_lj.
+Print Implicit can_trf_AndLinv_gen.
+*)
 
 Lemma can_trf_AndLinv_gen' V Y rules ps c
   (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
@@ -563,4 +551,38 @@ eapply can_trf_rules_rc_rel_eqv.
 eapply can_trf_genLinv_gen.
 exact nc_seL. intros * auw. destruct auw. apply LJAE. Qed.
 *)
+
+About can_trf_genLinv_gen.
+
+
+Lemma can_trf_AndLinv_lj V ps c: @LJrules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@AndLinv V)) (derl (@LJrules _)) ps c.
+Proof. apply can_trf_genLinv_gen.  apply LJnc_seL.
+intros * auv.  destruct auv.  apply LJAE.  Qed.
+
+(* now inversion results in terms of rel_adm *)
+Lemma rel_adm_AndLinv V :
+  rel_adm LJrules (srs_ext_rel (@AndLinv V)).
+Proof. apply crd_ra. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_AndLinv_lj V).  Qed.
+
+Lemma rel_adm_OrLinv1 V :
+  rel_adm LJrules (srs_ext_rel (@OrLinv1 V)).
+Proof. apply crd_ra. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_OrLinv1_lj V).  Qed.
+
+Lemma rel_adm_OrLinv2 V :
+  rel_adm LJrules (srs_ext_rel (@OrLinv2 V)).
+Proof. apply crd_ra. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_OrLinv2_lj V).  Qed.
+
+Lemma can_rel_ImpLinv2 V seq :
+derrec LJrules emptyT seq ->
+  can_rel LJrules (srs_ext_rel (Y:=PropF V)) ImpLinv2 seq.
+Proof. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_ImpLinv2_lj V).  Qed.
+
+Lemma rel_adm_ImpLinv2 V :
+  rel_adm LJrules (srs_ext_rel (@ImpLinv2 V)).
+Proof. apply crd_ra. apply can_rel_ImpLinv2. Qed.
 
