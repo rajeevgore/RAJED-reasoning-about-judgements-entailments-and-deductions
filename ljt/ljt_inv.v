@@ -22,9 +22,9 @@ Require Import ljt.
 (* probably won't need ImpRinv, AndRinv1/2 *)
 Inductive ImpRinv {V} : relationT (srseqf V) :=
   | ImpRinv_I : forall C D, ImpRinv (pair [] (Imp C D)) (pair [C] D).
+(*
 Inductive ImpLinv2 {V} : relationT (list (PropF V)) :=
   | ImpLinv2_I : forall C D, ImpLinv2 ([Imp C D]) ([D]).
-(*
 Inductive AndLinv {V} : relationT (list (PropF V)) :=
   | AndLinv_I : forall C D, AndLinv ([And C D]) ([C ; D]).
 Inductive OrLinv1 {V} : relationT (list (PropF V)) :=
@@ -40,7 +40,9 @@ Inductive ImpL_Or_inv1 {V} : relationT (list (PropF V)) :=
 Inductive ImpL_Or_inv2 {V} : relationT (list (PropF V)) :=
   | ImpL_Or_inv2_I : forall B C D, ImpL_Or_inv2 [Imp (Or C D) B] [Imp D B].
 
-Inductive AndLinvs {V} :  PropF V -> list (PropF V) -> Type :=
+Inductive ImpLinv2s {V} : PropF V -> list (PropF V) -> Type :=
+  | ImpLinv2s_I : forall C D, ImpLinv2s (Imp C D) ([D]).
+Inductive AndLinvs {V} : PropF V -> list (PropF V) -> Type :=
   | AndLinvs_I : forall C D, AndLinvs (And C D) ([C ; D]).
 Inductive OrLinv1s {V} : PropF V -> list (PropF V) -> Type :=
   | OrLinv1s_I : forall C D, OrLinv1s (Or C D) [C].
@@ -53,6 +55,7 @@ Inductive fslr U W R : list U -> W -> Type :=
 Definition AndLinv {V} := fslr (@AndLinvs V).
 Definition OrLinv1 {V} := fslr (@OrLinv1s V).
 Definition OrLinv2 {V} := fslr (@OrLinv2s V).
+Definition ImpLinv2 {V} := fslr (@ImpLinv2s V).
 
 Lemma AndLinv_I {V} (C D : PropF V) : AndLinv [And C D] [C; D].
 Proof. apply fslr_I. apply AndLinvs_I. Qed.
@@ -62,6 +65,9 @@ Proof. apply fslr_I. apply OrLinv1s_I. Qed.
 
 Lemma OrLinv2_I {V} (C D : PropF V) : OrLinv2 [Or C D] [D].
 Proof. apply fslr_I. apply OrLinv2s_I. Qed.
+
+Lemma ImpLinv2_I {V} (C D : PropF V) : ImpLinv2 [Imp C D] [D].
+Proof. apply fslr_I. apply ImpLinv2s_I. Qed.
 
 (* extend relation with general context on the left and a singleton on the 
   right, suitable for ImpLinv2, AndLinv. OrLinv1/2 *)
@@ -99,14 +105,6 @@ Proof. intro ljnc. inversion ljnc.
 - inversion X. Qed.
 
 (* for use when the last rule is the rule being inverted *)
-Lemma lr_Imp2 V Γ1 Γ2 ps0 C D p : @LJncrules V ps0 ([Imp C D], p) ->
-  {ps' & derl LJrules ps' (Γ1 ++ [D] ++ Γ2, p) *
-  ForallT (fun p' => {p0 & InT p0 (map (apfst (fmlsext Γ1 Γ2)) ps0) *
-     clos_reflT (srs_ext_rel ImpLinv2) p0 p'}) ps'}.
-Proof. intro ljnc.  eexists. split. apply asmI.
-apply ForallT_singleI.  eexists. split.  2: apply rT_refl.
-apply LJIE in ljnc. subst. simpl. apply InT_cons. apply InT_eq. Qed.
-
 Lemma lr_geni U Y rules Γ1 Γ2 ps0 fml fmlsi any p 
   (LJIE : forall ps G, rules ps ([fml], G) -> InT (fmlsi, G) ps) :
   rules ps0 ([fml : U], p : Y) ->
@@ -126,8 +124,6 @@ Lemma lr_gen U Y rules Γ1 Γ2 ps0 fml fmlsi any p
      clos_reflT (srs_ext_rel any) p0 p'}) ps'}.
 Proof. apply lr_geni. intros * rpg.
 rewrite (LJAE ps G rpg). apply InT_eq. Qed.
-
-Print Implicit lr_Imp2.
 
 Lemma fcr U V W crtsi afcd afd ps0 :
   (forall q : U, crtsi (afcd q : V) (afd q : W)) -> 
@@ -205,53 +201,6 @@ Ltac apser' := list_assoc_l' ; repeat (apply serr) ;
   try apply serc2 ; try apply serrc ; try apply serne.
 
 Ltac apserx := apply rT_step ; simpl ; unfold fmlsext ;  apser.
-
-Lemma can_trf_ImpLinv2_lj V ps c: @LJrules _ ps c ->
-  can_trf_rules_rc (srs_ext_rel (@ImpLinv2 V)) (derl (@LJrules _)) ps c.
-Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
-unfold can_trf_rules_rc. intros c' ser.
-inversion ser. clear ser. destruct c0. simpl in H.
-unfold fmlsext in H. inversion H. clear H. subst.
-destruct H0.  (* pose (LJnc_seL X). *)
-acacD'T2 ; subst.
-- rewrite ?app_nil_r in X. 
-assoc_mid H3.  eexists. split.  apply ncdlj. apply X.
-apply fcr. intro. destruct q. 
-apserx. apply ImpLinv2_I.
-- pose (LJnc_seL X).  apply sing_empty_app_cons in s.
-list_eq_ncT. cD. subst. simpl.  simpl in X. rewrite ?app_nil_r.
-apply (lr_Imp2 _ _ X).
-- pose (LJnc_seL X).  apply sing_empty_app_cons in s.
-cD. subst. simpl.  simpl in X. rewrite ?app_nil_r.
-apply (lr_Imp2 _ _ X).
-- eexists. split. assoc_mid l. apply ncdlj. apply X.
-apply fcr. intro. destruct q. 
-apserx. apply ImpLinv2_I.
-- pose (LJnc_seL X).
-apply sing_empty_app in s. sD. inversion s. subst. simpl.
-rewrite ?app_nil_r in X.  rewrite ?app_nil_r.
-apply (lr_Imp2 _ _ X).
-- list_eq_ncT. cD. subst. simpl in X.
-eexists. split. assoc_mid H4. apply ncdlj. apply X.
-apply fcr. intro. destruct q. 
-apserx. apply ImpLinv2_I.
-- list_eq_ncT. sD ; subst.
-+ eexists. split.  apply ncdlje. apply X.
-apply fcr. intro. destruct q. 
-rewrite ?app_nil_r.
-apserx. apply ImpLinv2_I.
-+ simpl. rewrite ?app_nil_r.  apply (lr_Imp2 _ _ X).
-- list_eq_ncT. cD.  list_eq_ncT. cD. subst. (* simpl. NO! *) list_assoc_l'.
-eexists. split. apply ncdlje. apply X.
-apply fcr. intro. destruct q. 
-apserx. apply ImpLinv2_I.
-- eexists. split. assoc_mid l. apply ncdlj. apply X.
-apply fcr. intro. destruct q. 
-list_assoc_r'. simpl.  
-apserx. apply ImpLinv2_I.
-Qed.
-
-Print Implicit can_trf_ImpLinv2_lj.
 
 Print Implicit der_trf_rc_derl.
 
@@ -355,6 +304,12 @@ Lemma can_trf_OrLinv2_lj V ps c: @LJrules _ ps c ->
 Proof. apply can_trf_genLinv_geni.  apply LJnc_seL.
 intros * auv.  destruct auv. intro rocd.  
 apply LJOE in rocd. subst. solve_InT.  Qed.
+
+Lemma can_trf_ImpLinv2_lj V ps c: @LJrules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@ImpLinv2 V)) (derl (@LJrules _)) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJIE in rocd. subst. solve_InT.  Qed.
 
 (* now inversion results in terms of rel_adm *)
 Lemma rel_adm_AndLinv V :
