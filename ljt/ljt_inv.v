@@ -22,23 +22,17 @@ Require Import ljt.
 (* probably won't need ImpRinv, AndRinv1/2 *)
 Inductive ImpRinv {V} : relationT (srseqf V) :=
   | ImpRinv_I : forall C D, ImpRinv (pair [] (Imp C D)) (pair [C] D).
-(*
-Inductive ImpLinv2 {V} : relationT (list (PropF V)) :=
-  | ImpLinv2_I : forall C D, ImpLinv2 ([Imp C D]) ([D]).
-Inductive AndLinv {V} : relationT (list (PropF V)) :=
-  | AndLinv_I : forall C D, AndLinv ([And C D]) ([C ; D]).
-Inductive OrLinv1 {V} : relationT (list (PropF V)) :=
-  | OrLinv1_I : forall C D, OrLinv1 [Or C D] [C].
-Inductive OrLinv2 {V} : relationT (list (PropF V)) :=
-  | OrLinv2_I : forall C D, OrLinv2 [Or C D] [D].
-  *)
-Inductive ImpL_And_inv {V} : relationT (list (PropF V)) :=
-  | ImpL_And_inv_I : forall B C D,
-    ImpL_And_inv ([Imp (And C D) B]) ([Imp C (Imp D B)]).
-Inductive ImpL_Or_inv1 {V} : relationT (list (PropF V)) :=
-  | ImpL_Or_inv1_I : forall B C D, ImpL_Or_inv1 [Imp (Or C D) B] [Imp C B].
-Inductive ImpL_Or_inv2 {V} : relationT (list (PropF V)) :=
-  | ImpL_Or_inv2_I : forall B C D, ImpL_Or_inv2 [Imp (Or C D) B] [Imp D B].
+
+Inductive ImpL_And_invs {V} : PropF V -> list (PropF V) -> Type :=
+  | ImpL_And_invs_I : forall B C D,
+    ImpL_And_invs (Imp (And C D) B) ([Imp C (Imp D B)]).
+Inductive ImpL_Or_invs {V} : PropF V -> list (PropF V) -> Type :=
+  | ImpL_Or_invs_I : forall B C D, 
+    ImpL_Or_invs (Imp (Or C D) B) [Imp C B ; Imp D B].
+Inductive ImpL_Imp_inv2s {V} : PropF V -> list (PropF V) -> Type :=
+  | ImpL_Imp_inv2s_I : forall B C D, ImpL_Imp_inv2s (Imp (Imp C D) B) [B].
+Inductive ImpL_Var_inv2s {V} : PropF V -> list (PropF V) -> Type :=
+  | ImpL_Var_inv2s_I : forall B p, ImpL_Var_inv2s (Imp (Var p) B) [B].
 
 Inductive ImpLinv2s {V} : PropF V -> list (PropF V) -> Type :=
   | ImpLinv2s_I : forall C D, ImpLinv2s (Imp C D) ([D]).
@@ -56,6 +50,10 @@ Definition AndLinv {V} := fslr (@AndLinvs V).
 Definition OrLinv1 {V} := fslr (@OrLinv1s V).
 Definition OrLinv2 {V} := fslr (@OrLinv2s V).
 Definition ImpLinv2 {V} := fslr (@ImpLinv2s V).
+Definition ImpL_And_inv {V} := fslr (@ImpL_And_invs V).
+Definition ImpL_Or_inv {V} := fslr (@ImpL_Or_invs V).
+Definition ImpL_Imp_inv2 {V} := fslr (@ImpL_Imp_inv2s V).
+Definition ImpL_Var_inv2 {V} := fslr (@ImpL_Var_inv2s V).
 
 Lemma AndLinv_I {V} (C D : PropF V) : AndLinv [And C D] [C; D].
 Proof. apply fslr_I. apply AndLinvs_I. Qed.
@@ -79,6 +77,44 @@ Lemma srs_ext_relI_eq W Y R ant ant' G (Φ1 Φ2 : list W) seq1 seq2: R ant ant' 
   seq1 = (Φ1 ++ ant ++ Φ2, G) -> seq2 = (Φ1 ++ ant' ++ Φ2, G : Y) -> 
   srs_ext_rel R seq1 seq2.
 Proof. intros. subst. apply srs_ext_relI. exact X. Qed.
+
+Lemma LJAIAE V ps B C D G :
+  LJAncrules ps ([@Imp V (And C D) B], G) -> ps = [([Imp C (Imp D B)], G)].
+Proof. intro ljnc. inversion ljnc.
+- inversion X.  inversion H3 ; inversion H5. reflexivity.
+- inversion H. - inversion H.  - inversion H.  - inversion X. 
+- inversion X.  inversion X0. 
++ inversion H2. + inversion H2.  + inversion X1.  
+- inversion X.  Qed.
+
+Lemma LJAIOE V ps B C D G :
+  LJAncrules ps ([@Imp V (Or C D) B], G) -> ps = [([Imp C B; Imp D B], G)].
+Proof. intro ljnc. inversion ljnc.
+- inversion X.  inversion H3 ; inversion H5. reflexivity.
+- inversion H. - inversion H.  - inversion H.  - inversion X. 
+- inversion X.  inversion X0. 
++ inversion H2. + inversion H2.  + inversion X1.  
+- inversion X.  Qed.
+
+Lemma LJAIIE V ps B C D G :
+  LJAncrules ps ([@Imp V (Imp C D) B], G) -> ps = [([Imp D B; C], D); ([B], G)].
+Proof. intro ljnc. inversion ljnc.
+- inversion X.  inversion H3 ; inversion H5. 
+- inversion H. reflexivity.
+- inversion H.  - inversion H.  - inversion X. 
+- inversion X.  inversion X0. 
++ inversion H2. + inversion H2.  + inversion X1.  
+- inversion X.  Qed.
+
+Lemma LJAIpE V ps B p G : LJAncrules ps ([@Imp V (Var p) B], G) ->
+  ps = [([Imp (Var p) B], Var p); ([B], G)].
+Proof. intro ljnc. inversion ljnc.
+- inversion X.  inversion H3 ; inversion H5. 
+- inversion H.  - inversion H. reflexivity.
+- inversion H.  - inversion X. 
+- inversion X.  inversion X0. 
++ inversion H2. + inversion H2.  + inversion X1.  
+- inversion X.  Qed.
 
 Lemma LJIE V ps A B G :
   LJncrules ps ([@Imp V A B], G) -> ps = [([Imp A B], A); ([B], G)].
@@ -345,13 +381,27 @@ Proof. apply can_trf_genLinv_geni.  apply LJAnc_seL.
 intros * auv.  destruct auv. intro rocd.  
 apply LJAOE in rocd. subst. solve_InT.  Qed.
 
-(*
-Lemma can_trf_ImpLinv2_lja V ps c: @LJrules _ ps c ->
-  can_trf_rules_rc (srs_ext_rel (@ImpLinv2 V)) (derl (@LJrules _)) ps c.
+Lemma can_trf_ImpL_Or_inv_lja V ps c: @LJArules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@ImpL_Or_inv V)) (derl (@LJArules _)) ps c.
+Proof. apply can_trf_genLinv_gen.  apply LJAnc_seL.
+intros * auv.  destruct auv.  apply LJAIOE. Qed.
+
+Lemma can_trf_ImpL_And_inv_lja V ps c: @LJArules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@ImpL_And_inv V)) (derl (@LJArules _)) ps c.
+Proof. apply can_trf_genLinv_gen.  apply LJAnc_seL.
+intros * auv.  destruct auv.  apply LJAIAE. Qed.
+
+Lemma can_trf_ImpL_Imp_inv_lja V ps c: @LJArules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@ImpL_Imp_inv2 V)) (derl (@LJArules _)) ps c.
 Proof. apply can_trf_genLinv_geni.  apply LJAnc_seL.
 intros * auv.  destruct auv. intro rocd.  
-apply LJIE in rocd. subst. solve_InT.  Qed.
-*)
+apply LJAIIE in rocd. subst. solve_InT.  Qed.
+
+Lemma can_trf_ImpL_Var_inv_lja V ps c: @LJArules _ ps c ->
+  can_trf_rules_rc (srs_ext_rel (@ImpL_Var_inv2 V)) (derl (@LJArules _)) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJAnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJAIpE in rocd. subst. solve_InT.  Qed.
 
 (* now inversion results in terms of rel_adm *)
 Lemma LJA_rel_adm_AndLinv V :
@@ -368,6 +418,9 @@ Lemma LJA_rel_adm_OrLinv2 V :
   rel_adm LJArules (srs_ext_rel (@OrLinv2 V)).
 Proof. apply crd_ra. unfold can_rel.
 apply der_trf_rc_derl.  exact (@can_trf_OrLinv2_lja V).  Qed.
+
+(* not sure whether we will need remaining results for LJA in the form of 
+  LJA_rel_adm ... or LJA_can_rel *)
 
 (*
 Lemma LJA_can_rel_ImpLinv2 V seq :
