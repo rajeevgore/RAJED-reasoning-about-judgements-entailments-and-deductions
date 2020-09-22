@@ -63,7 +63,7 @@ general/ddT.vo general/ddT.glob general/ddT.v.beautified: general/ddT.v general/
 general/dd_fc.vo general/dd_fc.glob general/dd_fc.v.beautified: general/dd_fc.v general/ddT.vo
 general/List_lemmasT.vo general/List_lemmasT.glob general/List_lemmasT.v.beautified: general/List_lemmasT.v general/existsT.vo general/genT.vo general/gen.vo
 general/swappedT.vo general/swappedT.glob general/swappedT.v.beautified: general/swappedT.v general/existsT.vo general/gen_tacs.vo general/List_lemmasT.vo
-general/gen_seq.vo: general/gen_seq.v general/gen_tacs.vo general/gstep.vo
+general/gen_seq.vo: general/gen_seq.v general/gen_tacs.vo general/gstep.vo general/swappedT.vo
 
 %.vo : %.v
 	#echo doing $*.v >>log

@@ -355,6 +355,17 @@ rewrite - fmlsext_fmlsext. apply fwk.  Qed.
 
 Print Implicit weakeningL.
 
+(* this is an alternative weakening result! *)
+Lemma fer_der U W rules cl cr ra ra' :
+  derrec (fst_ext_rls rules) emptyT (cl, cr) ->
+  derrec (fst_ext_rls rules) emptyT (ra ++ cl ++ ra' : list U, cr : W).
+Proof. intro d.
+apply derl_derrec_nil.
+apply fst_ext_rls_derl_fst_ext_rls'.
+eapply fextI.
+apply derrec_nil_derl in d.
+eapply rmI_eq. exact d. reflexivity. reflexivity. Qed.
+
 (** exchange **)
 (* properties can exchange adjacent sublists, and resulting sequent
   is derivable (not conditional on unexchanged version being derivable *)

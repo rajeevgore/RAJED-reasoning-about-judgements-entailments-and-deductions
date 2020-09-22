@@ -46,16 +46,6 @@ Definition cedcD X rules A cl cr (c : @cedc X rules A cl cr) :=
 Definition cadmD X rules A (c : @cut_adm X rules A) :=
   match c with | cadmI d => d end.
 
-(* we already have this, in effect, as LJweakening *)
-Lemma fer_lj_der V cl cr ra ra' : derrec LJrules emptyT (cl, cr) ->
-  derrec (@LJrules V) emptyT (ra ++ cl ++ ra', cr).
-Proof. intro d.
-apply derl_derrec_nil.
-apply fst_ext_rls_derl_fst_ext_rls'.
-eapply fextI.
-apply derrec_nil_derl in d.
-eapply rmI_eq. exact d. reflexivity. reflexivity. Qed.
-
 Ltac sfea := simpl ;  unfold fmlsext ;  list_eq_assoc.
 
 (* left rule on left premise *)
@@ -91,7 +81,7 @@ destruct X.  clear c.  destruct X1.  clear d0.  destruct c.
 specialize (d0 _ _ _ _ eq_refl eq_refl).
 eapply derI. eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
 apply ImpL_nc'.  sfea.
-apply dlCons.  pose (fer_lj_der ra ra' d).  apply (eq_rect _ _ d1). sfea.
+apply dlCons.  pose (fer_der ra ra' d).  apply (eq_rect _ _ d1). sfea.
 apply dersrec_singleI. apply (eq_rect _ _ d0). sfea.
 Qed.
 
@@ -146,7 +136,7 @@ simpl in cle.  inversion cle. subst. clear cle.
 unfold fmlsext. 
 Print Implicit LJweakening.
 Print Implicit exchL_lj.
-pose (fer_lj_der Γ1 Γ2 dr).
+pose (fer_der Γ1 Γ2 dr).
 pose (exchL_lj d).
 specialize (d0 (ra ++ (Γ1  ++ fml :: ra') ++ Γ2, D)).
 require d0.  apply fst_relI. swap_tac.
@@ -154,7 +144,7 @@ apply (exchL_lj d0).  apply fst_relI. swap_tac. Qed.
 
 Lemma InT_der_LJ V A ant : InT A ant -> derrec (@LJrules V) emptyT (ant, A).
 Proof. intro ia.  apply InT_split in ia.  cD. subst.
-exact (fer_lj_der _ _ (idrule_der A)). Qed.
+exact (fer_der _ _ (idrule_der A)). Qed.
 
 (* Id rule on right premise *)
 Lemma gs2_idR V A fml any drsb psl psr cl cr : 
@@ -165,9 +155,9 @@ clear sub fpl fpr dr. destruct fidr. destruct r. destruct i.
 simpl in cre. unfold fmlsext in cre. simpl in cre.
 inversion cre. subst. clear cre.
 acacD'T2 ; subst.
-- exact (fer_lj_der _ _ dl).
+- exact (fer_der _ _ dl).
 - apply InT_der_LJ. solve_InT.
-- exact (fer_lj_der _ _ dl).
+- exact (fer_der _ _ dl).
 - apply InT_der_LJ. solve_InT.
 Qed.
 

@@ -40,6 +40,9 @@ Proof.
   apply swapped_I'.
 Qed.
 
+Lemma swapped_cc T (x y : T) l : swapped (x :: y :: l) (y :: x :: l).
+Proof. apply (swapped_I' [] [x] [y] l). Qed.
+
 Definition swapped_single T (x : T) := swapped_cons x (swapped_same []).
 
 Lemma swapped_nilLE T Y: @swapped T [] Y -> Y = [].
@@ -338,4 +341,8 @@ Proof. intros.  show_swapped_1.  Qed.
 
 Goal forall T A B C D, swapped (D ++ A ++ B ++ C) (A ++ B ++ C ++ D : list T).
 Proof. intros.  show_swapped_1.  Qed.
+
+Lemma swap_ins T (Γ1 Γ2 Φ1 Φ2 l : list T) :
+  Φ1 ++ Φ2 = Γ1 ++ Γ2 -> swapped (Γ1 ++ l ++ Γ2) (Φ1 ++ l ++ Φ2).
+Proof. intro eqll. acacD'T2 ; subst ; swap_tac. Qed.
 
