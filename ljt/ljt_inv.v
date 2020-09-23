@@ -524,7 +524,32 @@ Ltac ljailtac H2 H0 := eexists ; split ;
 Ltac ljsltac H2 H0 := eexists ; split ;
   [ apply LJsl_adm_lem ; apply H2 | fcr2_tac H0 ].
 
-(*
+Lemma f1crr W q qs R : {p : W & InT p (q :: qs) * clos_reflT R p q}.
+Proof. eexists. exact (pair (InT_eq _ _) (rT_refl _ _)). Qed.
+
+Ltac drstac fd1 fd2 X0 X2 := simpl ;  unfold fmlsext ;  apply dlCons ; [
+(* need to do weakening and exchange here *)
+apply (fer_der fd1 fd2) in X0 ; apply (exchL_lja X0) ;  apply fst_relI ;
+rewrite ?app_nil_r ; simpl ; swap_tac_Rc |
+apply dersrec_singleI ; apply (eq_rect _ _ X2) ; list_eq_assoc ].
+
+Ltac fictac list_assoc_x := simpl ; apply ForallT_cons ; [ apply f1crr |
+apply ForallT_singleI ; eexists ; apply (pair (InT_2nd _ _ _)) ;
+apply rT_step ; unfold fmlsext ; list_assoc_x ;
+apply rr_ext_relI ; apply ImpRinv_I ]. 
+
+Ltac ljartac thm fc1 fc2 := eapply (@fextI _ _ _ fc1 fc2) ;
+eapply rmI_eqc ; [ apply thm |  
+unfold fmlsext ; simpl ; list_eq_assoc ].
+
+Ltac ljartac' fc1 fc2 := eapply (@fextI _ _ _ fc1 fc2) ;
+eapply rmI_eqc ; [ apply ImpL_anc' |  
+unfold fmlsext ; simpl ; list_eq_assoc ].
+
+Ltac admtac X1 X3 := unfold fmlsext ; rewrite ?app_nil_r ;
+apply admI ; intro drs ; inversion drs ; inversion X1 ; subst ; clear X1 X3 ;
+eapply derI.
+
 Lemma can_trf_ImpRinv_lja V ps c : @LJArules V ps c ->
   can_trf_rules_rc (rr_ext_rel ImpRinv) (adm LJArules) ps c.
 Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
@@ -543,34 +568,59 @@ apply sing_empty_app in s. sD ; subst.
 - (* ImpL_Imp_rule *)
 inversion H. inversion H0. subst. clear H H0 s.
 acacD'T2 ; subst.
-+ 
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_r.
+++ admtac X1 X3.
++++ ljartac Imp_anc' (Γ1 ++ [C0]) Γ2.
++++ drstac [C0] ([] : list (PropF V)) X0 X2.
 
++ list_eq_ncT. cD. subst.
 eexists [ _ ; _ ]. split. all: cycle 1. 
-apply ForallT_cons.
-eexists. split. simpl. apply InT_eq. apply rT_refl.
-apply ForallT_singleI. eexists. split. simpl. apply InT_cons. apply InT_eq.
-apply rT_step. unfold fmlsext.  apply rr_ext_relI. apply ImpRinv_I.
-unfold fmlsext. rewrite ?app_nil_r.
-apply admI.  intro drs.  inversion drs.  inversion X1.  subst. clear X1 X3.
-eapply derI.
-eapply (@fextI _ _ _ (Γ1 ++ [C0]) Γ2).
-eapply rmI_eq.
-apply Imp_anc.
-apply ImpL_Imp_rule_I.
-reflexivity.
-unfold fmlsext. simpl. list_eq_assoc.
-simpl.  unfold fmlsext. 
-apply dlCons.
-(* need to do weakening and exchange here *)
+++ fictac list_assoc_l.
+++ admtac X1 X3.
++++ ljartac Imp_anc' Γ1 (C0 :: Γ2).
++++ drstac ([] : list (PropF V)) [C0] X0 X2.
 
-About LJAweakening.
-Print can_wkL.
-Print wkL_valid'.
-Print wkL_valid.
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_l.
+++ admtac X1 X3.
++++ ljartac Imp_anc' Γ1 (H1 ++ C0 :: Φ2).
++++ drstac ([] : list (PropF V)) [C0] X0 X2.
 
-admit.
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_r.
+++ admtac X1 X3.
++++ ljartac Imp_anc' (Φ1 ++ [C0] ++ H3) Γ2.
++++ drstac [C0] ([] : list (PropF V)) X0 X2.
+
 - (* ImpLrule_p *)
-admit.
+inversion H. inversion H0. subst. clear H H0 s.
+acacD'T2 ; subst.
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_r.
+++ admtac X1 X3.
++++ ljartac ImpL_anc' (Γ1 ++ [C]) Γ2.
++++ drstac [C] ([] : list (PropF V)) X0 X2.
+
++ list_eq_ncT. cD. subst.
+eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_l.
+++ admtac X1 X3.
++++ ljartac ImpL_anc' Γ1 (C :: Γ2).
++++ drstac ([] : list (PropF V)) [C] X0 X2.
+
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_l.
+++ admtac X1 X3.
++++ ljartac ImpL_anc' Γ1 (H1 ++ C :: Φ2).
++++ drstac ([] : list (PropF V)) [C] X0 X2.
+
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_r.
+++ admtac X1 X3.
++++ ljartac ImpL_anc' (Φ1 ++ [C] ++ H3) Γ2.
++++ drstac [C] ([] : list (PropF V)) X0 X2.
+
 - (* ImpRrule *)
 inversion H. inversion H0. subst.  inversion H2. subst. clear H2 H0 H.
 eexists. split. all: cycle 1.
@@ -595,6 +645,7 @@ inversion H6 ; inversion H.
 Qed.
 
 
+(*
 not sure how feasible general version is 
 Lemma can_trf_genRinv_geni W Y rules genRinv ps c
   (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 

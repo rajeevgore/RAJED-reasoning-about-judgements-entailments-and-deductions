@@ -19,6 +19,9 @@ Lemma rmI_eq U W (f : U -> W) (rls : rlsT U) ps c mps mc :
   rls ps c -> mps = map f ps -> mc = f c -> rlsmap f rls mps mc.
 Proof. intros. subst. apply rmI ; assumption. Qed.
 
+Definition rmI_eqc U W f rls ps c mc rpc :=
+  @rmI_eq U W f rls ps c _ mc rpc eq_refl.
+
 Inductive relmap U W (f : U -> W) (rel : relationT U) : relationT W :=
   | rlI : forall p c, rel p c -> relmap f rel (f p) (f c).
 
