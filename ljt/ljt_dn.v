@@ -160,3 +160,15 @@ Lemma LJA_der_id_mp {V} :
   (forall G, derrec LJArules emptyT (A :: G, A)) *
   (forall B H, derrec LJArules emptyT (A :: Imp A B :: H, B)).
 *)
+
+(* Lemma 3.2(2) of Dyckhoff & Negri JSL 2000 *)
+Lemma LJA_der_mp {V} (A B : PropF V) H :
+  derrec LJArules emptyT (A :: Imp A B :: H, B).
+Proof. 
+pose (LJA_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
+2: eapply (radmD r). 
+eapply (rr_ext_relI_eqc _ _ _ [] _).
+apply ImpRinv_I. reflexivity. clear r.
+apply LJA_der_id. apply AccT_dnsubfml. Qed.
+
+
