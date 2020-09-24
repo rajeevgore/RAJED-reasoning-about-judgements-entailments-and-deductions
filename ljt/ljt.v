@@ -184,6 +184,7 @@ Definition il_anc' V G ps c rpc := @il_anc V G _ _ (rmI _ _ ps c rpc).
 Definition ImpR_anc' V A B := ImpR_anc (@ImpRrule_I V A B).
 Definition Imp_anc' V B C D G := Imp_anc (@ImpL_Imp_rule_I V B C D G).
 Definition ImpL_anc' V p B G := ImpL_anc (@ImpLrule_p_I V p B G).
+Definition Id_anc' V v := Id_anc (@Idrule_I V (Var v)).
 
 Lemma LJrules_req V : req (@LJrules V) (fst_ext_rls LJncrules).
 Proof.  unfold LJrules. apply req_refl. Qed.
