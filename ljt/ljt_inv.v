@@ -19,9 +19,19 @@ Require Import gen_tacs.
 Require Import gen_seq gstep rtcT.
 Require Import ljt.
 
-(* probably won't need ImpRinv, AndRinv1/2 *)
 Inductive ImpRinv {V} : PropF V -> srseq (PropF V) -> Type :=
   | ImpRinv_I : forall C D, ImpRinv (Imp C D) (pair [C] D).
+
+Inductive AndRinv1 {V} : relationT (PropF V) :=
+  | AndRinv1_I : forall C D, AndRinv1 (And C D) C.
+Inductive AndRinv2 {V} : relationT (PropF V) :=
+  | AndRinv2_I : forall C D, AndRinv2 (And C D) C.
+Inductive OrRinv1 {V} : relationT (PropF V) :=
+  | OrRinv1_I : forall C D, OrRinv1 (Or C D) C.
+Inductive OrRinv2 {V} : relationT (PropF V) :=
+  | OrRinv2_I : forall C D, OrRinv2 (Or C D) C.
+Inductive BotRinv {V} : relationT (PropF V) :=
+  | BotRinv_I : forall C, BotRinv (Bot V) C.
 
 Inductive ImpL_And_invs {V} : PropF V -> list (PropF V) -> Type :=
   | ImpL_And_invs_I : forall B C D,
@@ -66,6 +76,12 @@ Proof. apply fslr_I. apply OrLinv2s_I. Qed.
 
 Lemma ImpLinv2_I {V} (C D : PropF V) : ImpLinv2 [Imp C D] [D].
 Proof. apply fslr_I. apply ImpLinv2s_I. Qed.
+
+(* extend relation on rhs with general context on the left
+  suitable for AndRinv1/2 OrRinv1/2 *)
+Inductive ant_rel W Y R : relationT (list W * Y) :=
+  | ant_relI : forall ant suc suc', R suc suc' ->
+    ant_rel R (ant, suc) (ant, suc').
 
 (* extend relation with general context on the left and a singleton on the 
   right, suitable for ImpLinv2, AndLinv. OrLinv1/2 *)
@@ -653,11 +669,12 @@ Qed.
 
 
 (*
-not sure how feasible general version is 
+try general version where only right rules are right only 
+not even sure if this feasible
 Lemma can_trf_genRinv_geni W Y rules genRinv ps c
   (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
-  (rls_unique : forall ps u v w, 
-    genRinv w (u, v) -> rules ps ([], w) -> InT (u : list W, v : Y) ps) :
+  (rls_unique : forall ps u v cl, genRinvs (u, vs) -> rules ps (cl, u) ->
+    sigT2 (fun v => InT v vs) (fun v => InT (u : list W, v : Y) ps) :
   fst_ext_rls rules ps c ->
   can_trf_rules_rc (@rr_ext_rel W Y genRinv) 
     (derl (fst_ext_rls rules)) ps c.
@@ -675,4 +692,56 @@ apply sing_empty_app in s. sD ; subst.
 Lemma LJA_rel_adm_ImpR V : rel_adm LJArules (rr_ext_rel (@ImpRinv V)).
 Proof. apply crd_ra. unfold can_rel.
 apply der_trf_rc_adm.  exact can_trf_ImpRinv_lja.  Qed.
+
+Lemma can_trf_AndRinv1_lja {V} ps c : @LJArules V ps c ->
+  can_trf_rules_rc (ant_rel AndRinv1) (adm LJArules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
+unfold can_trf_rules_rc. intros c' ser.
+inversion ser. clear ser. destruct c0. simpl in H.
+unfold fmlsext in H. inversion H. clear H. subst.
+inversion X ; subst.
+- (* LJAilrules *)
+inversion X0. subst.
+eexists. split. apply in_adm. eapply fextI. eapply rmI_eqc.
+eapply il_anc. apply rmI. exact H2. reflexivity.
+apply fcr2. intro. apply rT_step. simpl.
+apply ant_relI. exact H0.
+- (* ImpL_Imp_rule *)
+inversion H. subst. clear H.
+eexists [_ ; _]. split. all: cycle 1.
+apply ForallT_cons. eexists. split. apply InT_eq. apply rT_refl.
+apply ForallT_singleI.
+eexists. split. apply InT_2nd. apply rT_step.
+simpl. apply ant_relI. apply H0.
+apply in_adm. simpl.
+eapply fextI. eapply rmI_eq. apply Imp_anc'.
+reflexivity.  reflexivity.
+- (* ImpLrule_p *)
+inversion H. subst. clear H.
+eexists [_ ; _]. split. all: cycle 1.
+apply ForallT_cons. eexists. split. apply InT_eq. apply rT_refl.
+apply ForallT_singleI.
+eexists. split. apply InT_2nd. apply rT_step.
+simpl. apply ant_relI. apply H0.
+apply in_adm. simpl.
+eapply fextI. eapply rmI_eq. apply ImpL_anc'.
+reflexivity.  reflexivity.
+- (* ImpRrule *)
+inversion H. inversion H0. subst. inversion H2.
+- (* Idrule (Var - so n/a) *)
+inversion X0.  inversion H0. subst.  inversion H1.
+- (* LJslrules *)
+inversion X0. subst.
+eexists. split. apply in_adm. eapply fextI. eapply rmI_eqc.
+eapply lrls_anc. apply rmI. exact X1. reflexivity.
+apply fcr2. intro. apply rT_step. simpl.
+apply ant_relI. exact H0.
+- (* LJsrrules *)
+destruct H0. inversion X0. subst. clear X0.
+inversion H1 ; inversion H. (* eliminates two cases of OrR rules *)
+subst. eexists. split. apply rsub_derl_adm. apply asmI.
+apply ForallT_singleI.
+eexists. split. simpl.
+2: apply rT_refl.  solve_InT.
+Qed.
 
