@@ -693,26 +693,33 @@ Lemma LJA_rel_adm_ImpR V : rel_adm LJArules (rr_ext_rel (@ImpRinv V)).
 Proof. apply crd_ra. unfold can_rel.
 apply der_trf_rc_adm.  exact can_trf_ImpRinv_lja.  Qed.
 
-Lemma can_trf_AndRinv1_lja {V} ps c : @LJArules V ps c ->
-  can_trf_rules_rc (ant_rel AndRinv1) (adm LJArules) ps c.
-Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
+(* try for a somewhat general version for invertibility of simple right rules *)
+Lemma can_trf_genRinv2_lja' V genRinv Γ1 Γ2 ps c 
+  (rls_unique : forall (u w : PropF V), 
+    genRinv u w -> c = apfst (fmlsext Γ1 Γ2) ([], u) ->
+      InT (apfst (fmlsext Γ1 Γ2) ([], w)) ps) 
+  (not_Imp : forall p q r, genRinv (Imp q r) p -> False)
+  (not_Var : forall p v, genRinv (Var v) p -> False) :
+  rlsmap (apfst (fmlsext Γ1 Γ2)) LJAncrules ps c ->
+  can_trf_rules_rc (ant_rel genRinv) (adm LJArules) ps c.
+Proof. intro ljpc. inversion ljpc. subst. clear ljpc.
 unfold can_trf_rules_rc. intros c' ser.
-inversion ser. clear ser. destruct c0. simpl in H.
-unfold fmlsext in H. inversion H. clear H. subst.
+inversion ser. clear ser. destruct c0. simpl in H0.
+unfold fmlsext in H0. inversion H0. clear H0. subst.
 inversion X ; subst.
 - (* LJAilrules *)
-inversion X0. subst.
+inversion X1. subst. clear X1.
 eexists. split. apply in_adm. eapply fextI. eapply rmI_eqc.
-eapply il_anc. apply rmI. exact H2. reflexivity.
+eapply il_anc. apply rmI. exact H1. reflexivity.
 apply fcr2. intro. apply rT_step. simpl.
-apply ant_relI. exact H0.
+apply ant_relI. exact X0.
 - (* ImpL_Imp_rule *)
 inversion H. subst. clear H.
 eexists [_ ; _]. split. all: cycle 1.
 apply ForallT_cons. eexists. split. apply InT_eq. apply rT_refl.
 apply ForallT_singleI.
 eexists. split. apply InT_2nd. apply rT_step.
-simpl. apply ant_relI. apply H0.
+simpl. apply ant_relI. apply X0.
 apply in_adm. simpl.
 eapply fextI. eapply rmI_eq. apply Imp_anc'.
 reflexivity.  reflexivity.
@@ -722,26 +729,171 @@ eexists [_ ; _]. split. all: cycle 1.
 apply ForallT_cons. eexists. split. apply InT_eq. apply rT_refl.
 apply ForallT_singleI.
 eexists. split. apply InT_2nd. apply rT_step.
-simpl. apply ant_relI. apply H0.
+simpl. apply ant_relI. apply X0.
 apply in_adm. simpl.
 eapply fextI. eapply rmI_eq. apply ImpL_anc'.
 reflexivity.  reflexivity.
 - (* ImpRrule *)
-inversion H. inversion H0. subst. inversion H2.
+inversion H. subst. destruct (not_Imp _ _ _ X0).
 - (* Idrule (Var - so n/a) *)
-inversion X0.  inversion H0. subst.  inversion H1.
+inversion X1. subst.  destruct (not_Var _ _ X0).
 - (* LJslrules *)
-inversion X0. subst.
+inversion X1. subst. clear X1.
 eexists. split. apply in_adm. eapply fextI. eapply rmI_eqc.
-eapply lrls_anc. apply rmI. exact X1. reflexivity.
+eapply lrls_anc. apply rmI. exact X2. reflexivity.
 apply fcr2. intro. apply rT_step. simpl.
-apply ant_relI. exact H0.
+apply ant_relI. exact X0.
 - (* LJsrrules *)
-destruct H0. inversion X0. subst. clear X0.
-inversion H1 ; inversion H. (* eliminates two cases of OrR rules *)
-subst. eexists. split. apply rsub_derl_adm. apply asmI.
+inversion X1. subst. clear X1.
+specialize (rls_unique _ _ X0 eq_refl).
+apply InT_mapE in rls_unique. cD. inversion rls_unique0. subst.
+eexists. split. apply rsub_derl_adm. apply asmI.
+apply ForallT_singleI.
+eapply InT_mapE in rls_unique1. cD.
+inversion rls_unique2. subst.
+eexists. split. simpl.  2: apply rT_refl.
+eapply arg1_cong_imp.  2: apply InT_map.  2: apply InT_map.
+2: apply rls_unique3.  reflexivity.
+Qed.
+
+About can_trf_genRinv2_lja'.
+
+Lemma can_trf_genRinv_lja V genRinv ps c (rls_unique : forall ps u w, 
+    genRinv u w -> LJAncrules ps ([] : list _, u) -> InT ([] : list _, w) ps) 
+  (not_Imp : forall p q r, genRinv (Imp q r) p -> False)
+  (not_Var : forall p v, genRinv (Var v) p -> False) :
+  @LJArules V ps c -> can_trf_rules_rc (ant_rel genRinv) (adm LJArules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
+unfold can_trf_rules_rc. intros c' ser.
+inversion ser. clear ser. destruct c0. simpl in H0.
+unfold fmlsext in H0. inversion H0. clear H0. subst.
+inversion X ; subst.
+- (* LJAilrules *)
+inversion X1. subst. clear X1.
+eexists. split. apply in_adm. eapply fextI. eapply rmI_eqc.
+eapply il_anc. apply rmI. exact H1. reflexivity.
+apply fcr2. intro. apply rT_step. simpl.
+apply ant_relI. exact X0.
+- (* ImpL_Imp_rule *)
+inversion H. subst. clear H.
+eexists [_ ; _]. split. all: cycle 1.
+apply ForallT_cons. eexists. split. apply InT_eq. apply rT_refl.
+apply ForallT_singleI.
+eexists. split. apply InT_2nd. apply rT_step.
+simpl. apply ant_relI. apply X0.
+apply in_adm. simpl.
+eapply fextI. eapply rmI_eq. apply Imp_anc'.
+reflexivity.  reflexivity.
+- (* ImpLrule_p *)
+inversion H. subst. clear H.
+eexists [_ ; _]. split. all: cycle 1.
+apply ForallT_cons. eexists. split. apply InT_eq. apply rT_refl.
+apply ForallT_singleI.
+eexists. split. apply InT_2nd. apply rT_step.
+simpl. apply ant_relI. apply X0.
+apply in_adm. simpl.
+eapply fextI. eapply rmI_eq. apply ImpL_anc'.
+reflexivity.  reflexivity.
+- (* ImpRrule *)
+inversion H. subst. destruct (not_Imp _ _ _ X0).
+- (* Idrule (Var - so n/a) *)
+inversion X1. subst.  destruct (not_Var _ _ X0).
+- (* LJslrules *)
+inversion X1. subst. clear X1.
+eexists. split. apply in_adm. eapply fextI. eapply rmI_eqc.
+eapply lrls_anc. apply rmI. exact X2. reflexivity.
+apply fcr2. intro. apply rT_step. simpl.
+apply ant_relI. exact X0.
+- (* LJsrrules *)
+inversion X1. subst. clear X1.
+specialize (rls_unique _ _ _ X0 X).
+apply InT_mapE in rls_unique. cD. inversion rls_unique0. subst.
+eexists. split. apply rsub_derl_adm. apply asmI.
 apply ForallT_singleI.
 eexists. split. simpl.
-2: apply rT_refl.  solve_InT.
+2: apply rT_refl.
+eapply InT_map in rls_unique1.
+eapply InT_map in rls_unique1.
+eapply arg1_cong_imp.
+2: apply rls_unique1.  reflexivity.
 Qed.
+
+About can_trf_genRinv_lja.
+
+(* more general version 
+Lemma can_trf_genRinvs_lja V genRinv ps c 
+
+About can_trf_genRinvs_lja.
+*)
+
+Lemma can_trf_AndRinv1_lja' {V} ps c : @LJArules V ps c ->
+  can_trf_rules_rc (ant_rel AndRinv1) (adm LJArules) ps c.
+Proof. apply can_trf_genRinv_lja.
+- intros * auw ljar.  destruct auw.
+inversion ljar ; subst.
++ inversion X. simpl. subst. inversion H1 ; subst ; inversion H.
++ inversion H.  + inversion H.  + inversion H.  + inversion X.
++ inversion X. inversion X0 ; subst.
+++ inversion H0.  ++ inversion H0.  ++ inversion X1.
++ inversion X. inversion H1 ; subst ; inversion H2 ; solve_InT.
+- intros * ari. inversion ari.
+- intros * ari. inversion ari.
+Qed.
+
+About can_trf_AndRinv1_lja. 
+
+Lemma can_trf_AndRinv2_lja {V} ps c : @LJArules V ps c ->
+  can_trf_rules_rc (ant_rel AndRinv2) (adm LJArules) ps c.
+Proof. apply can_trf_genRinv_lja.
+- intros * auw ljar.  destruct auw.
+inversion ljar ; subst.
++ inversion X. simpl. subst. inversion H1 ; subst ; inversion H.
++ inversion H.  + inversion H.  + inversion H.  + inversion X.
++ inversion X. inversion X0 ; subst.
+++ inversion H0.  ++ inversion H0.  ++ inversion X1.
++ inversion X. inversion H1 ; subst ; inversion H2 ; solve_InT.
+- intros * ari. inversion ari.
+- intros * ari. inversion ari.
+Qed.
+
+(* not inversion of any rule, but similar proof *) 
+Lemma can_trf_BotRinv_lja {V} ps c : @LJArules V ps c ->
+  can_trf_rules_rc (ant_rel BotRinv) (adm LJArules) ps c.
+Proof. apply can_trf_genRinv_lja.
+- intros * auw ljar.  destruct auw.
+inversion ljar ; subst.
++ inversion X. simpl. subst. inversion H1 ; subst ; inversion H.
++ inversion H.  + inversion H.  + inversion H.  + inversion X.
++ inversion X. inversion X0 ; subst.
+++ inversion H0.  ++ inversion H0.  ++ inversion X1.
++ inversion X. inversion H1 ; subst ; inversion H2 ; solve_InT.
+- intros * ari. inversion ari.
+- intros * ari. inversion ari.
+Qed.
+
+(*
+Lemma can_trf_OrRinv_lja {V} ps c : @LJArules V ps c ->
+  sigT (fun OrRinv => ((OrRinv = OrRinv1) + (OrRinv = OrRinv2)) *
+  (((OrRinv = OrRinv1) + (OrRinv = OrRinv2)) -> 
+  can_trf_rules_rc (ant_rel OrRinv) (adm LJArules) ps c)).
+Proof. intro ljpc. eexists. split. all: cycle 1.
+intro or12.  sD ; rewrite or12 ; clear or12.
+
+eapply can_trf_genRinv2_lja'.
+- intros * oruw ceq. sD ; subst.
+rewrite or12 in auw.
+intro lj0. 
+inversion lj0.
+
++ inversion X. simpl. subst. inversion H3 ; subst ; inversion H.
++ inversion H.  + inversion H.  + inversion H.  + inversion X.
++ inversion X. inversion X0 ; subst.
+++ inversion H2.  ++ inversion H2.  ++ inversion X1.
++ inversion X. inversion H3 ; subst ; inversion H4 ; solve_InT.
+
+
+- intros * ari. inversion ari.
+
+*)
+
 
