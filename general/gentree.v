@@ -15,6 +15,17 @@ Require Import rtcT.
 
 Require Import gstep.
 
+Definition measure {U} f (dtn dt : U) := f dtn < f dt.
+
+Lemma AccT_measure' U f n : forall dt : U, f dt < n -> AccT (measure f) dt.
+Proof.  induction n.
+- intros.  apply Nat.nlt_0_r in H.  contradiction H.
+- intros.  apply AccT_intro.  intros.  unfold measure in H0.  apply IHn.
+apply Lt.lt_n_Sm_le in H.  eapply Lt.lt_le_trans ; eassumption.  Qed.
+
+Definition AccT_measure U f dt := 
+  @AccT_measure' U f _ dt (Nat.lt_succ_diag_r _).
+
 (** conditions for inductive proofs for a tree **)
 
 Definition gen_step_tr W rules fty P (A : fty) sub 
@@ -283,17 +294,6 @@ intros dtq gbd.  apply (X1 dtq gbd (a1 dtq gbd)).
 Qed.
 
 Check gen_step2_c_lem.  Check gen_step2_tr_lem.  Check gf_step2_tr_lem.
-
-Definition measure {U} f (dtn dt : U) := f dtn < f dt.
-
-Lemma AccT_measure' U f n : forall dt : U, f dt < n -> AccT (measure f) dt.
-Proof.  induction n.
-- intros.  apply Nat.nlt_0_r in H.  contradiction H.
-- intros.  apply AccT_intro.  intros.  unfold measure in H0.  apply IHn.
-apply Lt.lt_n_Sm_le in H.  eapply Lt.lt_le_trans ; eassumption.  Qed.
-
-Definition AccT_measure U f dt := 
-  @AccT_measure' U f _ dt (Nat.lt_succ_diag_r _).
 
 Definition size_step2_tr U W fty rulesa rulesb P (A : fty) sub :=
     gf_step2_tr P A sub (measure (@derrec_fc_size U rulesa emptyT))
