@@ -20,7 +20,10 @@ Require Import gen genT ddT dd_fc.
 Require Import gen_tacs swappedT.
 Require Import List_lemmasT.
 Require Import fmlsext.
-Require Import lldefs ll_lems ll_exch ll_cam.
+Require Import lldefs.
+Require Import ll_lems.
+Require Import ll_exch.
+Require Import ll_cam.
 Require Import gstep gentree.
 
 Lemma merge_ctr_lem W rules prsl a

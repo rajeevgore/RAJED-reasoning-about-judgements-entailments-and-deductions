@@ -14,10 +14,10 @@ Test Printing Universes.
 From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
-Require Import gen genT ddT.
+Require Import gen genT ddT dd_fc.
 Require Import List_lemmasT swappedT.
 Require Import gen_tacs.
-Require Import gen_seq gstep rtcT.
+Require Import gen_seq gstep gentree rtcT.
 Require Import ljt ljt_inv.
 Require Import Coq.Program.Basics.
 
@@ -171,4 +171,22 @@ eapply (rr_ext_relI_eqc _ _ _ [] _).
 apply ImpRinv_I. reflexivity. clear r.
 apply LJA_der_id. apply AccT_dnsubfml. Qed.
 
+(* Lemma 4.1 of Dyckhoff & Negri JSL 2000
+
+Check gstep.gen_step_lemT.
+Check gen_step_c_lem.  Check gen_step_tr_lem. Check gf2_step_tr_lem.
+Check height_step_tr_lem.
+
+
+Lemma LJA_ImpL_adm V G1 G2 B D E : adm LJArules 
+  (map (apfst (fmlsext G1 G2)) [ ([], D) ; ([B], E)])
+  ((apfst (fmlsext G1 G2)) ([@Imp V D B], E)).
+Proof. apply admI. intro drs.
+inversion drs. subst. clear drs.
+apply dersrec_singleD in X0.
+revert X0.  revert E. revert B.
+
+
+
+*)
 
