@@ -192,34 +192,6 @@ apply in_nextup_nu in inn.  apply InT_mapI.
 exists (fcI dtq). split. simpl. rewrite der_concl_eq. reflexivity.  exact inn.
 Qed.
 
-(*
-(** results linking the conditions for intudtive proofs for two trees **)
-Lemma gs2_gs2c U W rulesa rulesb fty P (A : fty) sub ca cb dta dtb:
-  iffT (@gen_step2 U W fty P A sub 
-    (derrec rulesa emptyT) (derrec rulesb emptyT) 
-    (map (@derrec_fc_concl _ _ _) (nextup (fcI dta))) ca
-    (map (@derrec_fc_concl _ _ _) (nextup (fcI dtb))) cb)
-  (@gen_step2_c U W rulesa rulesb fty P A sub ca cb dta dtb).
-Proof. unfold gen_step2.  unfold gen_step2_c. apply pair ; intros.
-- specialize (X X0). clear X0.
-apply (fun fa fb => X fa fb dta dtb) ; clear X ; apply ForallTI_forall ;
-intros x inmn ; apply InT_mapE in inmn ; cD ; subst ;  split ;
-try apply der_der_fc.
-+ destruct inmn.  apply nextup_in_nu in inmn1.
-simpl. rewrite der_concl_eq.  eapply X1 in inmn1. exact inmn1.
-+ destruct inmn.  apply nextup_in_nu in inmn1.
-simpl. rewrite der_concl_eq.  eapply X2 in inmn1. exact inmn1.
-- specialize (X X0). clear X0.
-apply X ; clear X ; intros * inn.
-+ eapply ForallTD_forall in X1. cD. exact X0.
-apply in_nextup_nu in inn.  apply InT_mapI.
-exists (fcI dtp). split. simpl. rewrite der_concl_eq. reflexivity.  exact inn.
-+ eapply ForallTD_forall in X2. cD. exact X0.
-apply in_nextup_nu in inn.  apply InT_mapI.
-exists (fcI dtq). split. simpl. rewrite der_concl_eq. reflexivity.  exact inn.
-Qed.
-*)
-
 Lemma gs2tr_gf2 U W rulesa rulesb fty P A sub dta dtb :
   iffT (@gen_step2_tr U W rulesa rulesb fty P A sub dta dtb)
     (@gf_step2_tr _ _ fty P A sub 
