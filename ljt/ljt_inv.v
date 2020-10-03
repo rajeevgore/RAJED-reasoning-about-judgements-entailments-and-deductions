@@ -507,6 +507,18 @@ Lemma LJA_rel_adm_OrLinv2 {V} :
 Proof. apply crd_ra. unfold can_rel.
 apply der_trf_rc_derl.  exact (@can_trf_OrLinv2_lja V).  Qed.
 
+Lemma LJA_can_rel_ImpL_And_inv {V} seq :
+  derrec LJArules emptyT seq ->
+  can_rel LJArules (@srs_ext_rel _ _) (@ImpL_And_inv V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_ImpL_And_inv_lja V).  Qed.
+
+Lemma LJA_can_rel_ImpL_Or_inv {V} seq :
+  derrec LJArules emptyT seq ->
+  can_rel LJArules (@srs_ext_rel _ _) (@ImpL_Or_inv V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_ImpL_Or_inv_lja V).  Qed.
+
 (* not sure whether we will need remaining results for LJA in the form of 
   LJA_rel_adm ... or LJA_can_rel *)
 
