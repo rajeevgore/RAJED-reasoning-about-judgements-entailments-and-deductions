@@ -178,46 +178,6 @@ Definition l41prop {V} (D : PropF V) seq :=
   forall B E, derrec LJArules emptyT (fmlsext G1 G2 [B], E) ->
   derrec LJArules emptyT (apfst (fmlsext G1 G2) ([Imp D B], E)).
 
-(*
-
-Check gen_step_lemT.
-Check gen_step_c_lem.  Check gen_step_tr_lem. Check gf2_step_tr_lem.
-Check height_step_tr_lem.
-
-(* proof using gen_step_lemT *)
-Definition l41dtprop {V} rules prems (D : PropF V) dt := 
-  l41prop D (@derrec_fc_concl _ rules prems dt).
-
-
-Lemma LJA_ImpL_adm V D : forall dt,
-  @l41dtprop V LJArules emptyT D dt.
-Proof. intro.
-eapply height_step_tr_lem.
-admit.
-clear dt.
-intros. 
-unfold height_step_tr.
-unfold gf2_step_tr.
-intros sub fdt.
-unfold l41dtprop.
-unfold l41prop.
-
-  
-  
-Lemma LJA_ImpL_adm V D : forall seq, derrec LJArules emptyT seq -> 
-  @l41prop V D seq.
-Proof. eapply gen_step_lemT.
-admit.
-intros * ljpc.
-unfold gen_step.
-intros acc fdl der.
-unfold l41prop.
-intros * cgg * dbe.
-destruct ljpc.
-inversion r. clear r. subst. destruct X.
-- admit.
-- 
-
 Lemma LJA_inv_ail V G1 G2 E ps c :
   (@LJAilrules V) ps c ->
   derrec LJArules emptyT (G1 ++ c ++ G2, E) -> 
@@ -237,11 +197,85 @@ apply dce.  simpl.  unfold fmlsext.
 eapply srs_ext_relI_eq.  apply fslr_I.
 apply ImpL_Or_invs_I.  reflexivity.  reflexivity. Qed.
 
+(* not sure if we need this *)
 Lemma LJAil_psne V ps c : (@LJAilrules V) ps c ->
   sigT (fun p => sigT (fun pt => ps = p :: pt)).
 Proof. intro ljpc. 
 destruct ljpc ; destruct i ; eexists ; eexists ; reflexivity. Qed.
 
+Lemma LJAil_sing V ps c : (@LJAilrules V) ps c -> sigT (fun c' => c = [c']).
+Proof. intro ljpc.  destruct ljpc ; destruct i ; eexists ; reflexivity. Qed.
+
+Lemma LJAil_sing_empty V ps c : (@LJAilrules V) ps c -> sing_empty c.
+Proof. intro ljpc.  destruct ljpc ; destruct i ; apply se_single. Qed.
+
+Lemma pair_eqD U W a b c d : (a : U, b : W) = (c, d) -> (a = c) * (b = d).
+Proof. intro H. inversion H. tauto. Qed.
+
+Ltac appe := match goal with
+    | [ H : _ = _ |- _ ] => apply pair_eqD in H ; destruct H end.
+
+(* apply rule in desired conclusion *)
+
+Ltac inv_ail c0 H fp dbe cin1 := 
+simpl ;  unfold fmlsext ;  assoc_mid c0 ;
+eapply derI ; [ eapply fextI ;  eapply rmI_eqc ; [
+eapply il_anc ;  apply rmI ;  apply H | reflexivity ] | ] ;
+apply dersrecI_forall ;  intros c cin ;
+apply InT_mapE in cin ; cD ; rename_last cin1 ;
+apply InT_mapE in cin1 ; cD ;
+(* invert rule in dbe *)
+revert dbe ; unfold fmlsext ; assoc_mid c0 ; intro dbe ;
+pose (LJA_inv_ail _ _ H dbe) as d ;
+eapply dersrecD_forall in d ; [ |
+apply InT_map ;  apply InT_map ; eassumption ] ;
+eapply ForallTD_forall in fp ; [ |
+apply InT_map ;  apply InT_map ; eassumption ] ;
+unfold l41prop in fp ;
+appe ; appe ; subst ;
+unfold fmlsext ;  assoc_single_mid ;
+simpl in fp ;  unfold fmlsext in fp ;
+apply (snd fp) ; [ list_eq_assoc |
+simpl in d ;  unfold fmlsext in d ;
+apply (eq_rect _ _ d) ; list_eq_assoc ].
+
+Lemma gs_LJA_ImpL_Ail V (D : PropF V) ps c Γ1 Γ2 G 
+  (r : rlsmap (flip pair G) LJAilrules ps c) :
+  gen_step l41prop D isubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad.
+unfold l41prop. intros * ceq * dbe.
+inversion r. subst. clear r. 
+rewrite ceq in dc.
+simpl in ceq. unfold fmlsext in ceq.
+inversion ceq. subst. clear ceq.
+acacD'T2 ; subst.
+
+- inv_ail c0 H fp dbe cin1.
+
+- pose (LJAil_sing_empty H). apply sing_empty_app in s.  sD ; subst.
++ simpl in H.  rewrite ?app_nil_r.
+rewrite ?app_nil_r in dbe.  rewrite ?app_nil_r in dc.
+inv_ail H2 H fp dbe cin1.
++ rewrite ?app_nil_r in H.  simpl in dc.  simpl in dbe.
+inv_ail H1 H fp dbe cin1.
+
+- inv_ail c0 H fp dbe cin1.
+
+Qed.
+
+Check gs_LJA_ImpL_Ail.
+
+(*
+
+Check gen_step_lemT.
+Check gen_step_c_lem.  Check gen_step_tr_lem. Check gf2_step_tr_lem.
+Check height_step_tr_lem.
+
+(* proof using gen_step_lemT, don't think we want this *)
+Definition l41dtprop {V} rules prems (D : PropF V) dt := 
+  l41prop D (@derrec_fc_concl _ rules prems dt).
+  
 Lemma hs_LJA_ImpL_adm V (D : PropF V)
   c (dt : derrec LJArules emptyT c) ps (br : botRule_fc (fcI dt) ps c) :
   @LJArules V ps c -> 
@@ -250,38 +284,7 @@ Proof. intro ljpc. inversion ljpc ; subst ; clear ljpc.
 inversion X ; subst ; clear X.
 destruct X0.
 - (* left compound Imp rules, invertible *)
-apply (gs_hs br).
-
-need to make this a separate lemma 
-
-unfold gen_step. intros sad fp dc. clear sad br.
-unfold l41prop. intros * ceq * dbe.
-inversion r. subst. clear r. 
-rewrite ceq in dc.
-simpl in ceq. unfold fmlsext in ceq.
-inversion ceq. subst. clear ceq.
-acacD'T2 ; subst.
-+
-(* apply rule in desired conclusion *)
-simpl.  unfold fmlsext.  assoc_mid c0.
-eapply derI.  eapply fextI.  eapply rmI_eqc.
-eapply il_anc.  apply rmI.  apply H. reflexivity.
-apply dersrecI_forall.  intros c cin.
-apply InT_mapE in cin. cD.  apply InT_mapE in cin1. cD.
-(* invert rule in dbe *)
-revert dbe. unfold fmlsext. assoc_mid c0. intro dbe.
-pose (LJA_inv_ail _ _ H dbe).
-eapply dersrecD_forall in d. 
-2: apply InT_map.  2: apply InT_map. 2: eassumption.
-eapply ForallTD_forall in fp.
-2: apply InT_map.  2: apply InT_map. 2: eassumption.
-unfold l41prop in fp.
-inversion cin3. inversion cin0. subst. clear cin3 cin0.
-unfold fmlsext.  assoc_single_mid.
-simpl in fp.  unfold fmlsext in fp.
-apply (snd fp). list_eq_assoc.
-simpl in d.  unfold fmlsext in d.
-apply (eq_rect _ _ d). list_eq_assoc.
+apply (gs_hs br).  eapply gs_LJA_ImpL_Ail. exact r.
 
 
 
@@ -297,12 +300,6 @@ apply (height_step_tr_lem _ (AccT_isubfml D)).
 intros. clear seq dt.  destruct dt0.
 apply (hs_LJA_ImpL_adm (get_botrule _) (bot_is_rule _)).  Qed.
   
-
-    A isubfml (fcI dl) (fcI dr).
-Proof. intros ma mb. inversion mb ; subst.
-- inversion ma ; subst.
-apply (gs2_hs2 brl brr).
-
 
 *)
 
