@@ -345,11 +345,34 @@ inversion X ; subst ; clear X.
 destruct X0.
 - (* left compound Imp rules, invertible *)
 apply (gs_hs br).  eapply gs_LJA_ImpL_Ail. exact r.
--
-admit. -
-admit. -
-admit. -
-admit. 
+
+- admit.
+- admit. 
+
+- (* ImpRrule, IH not used *) destruct i.
+apply (gs_hs br). clear br dt.  unfold gen_step.
+intros sub fdt dab. clear sub dab.
+inversion fdt. clear X0 fdt. subst.  unfold l41prop.
+intros * abeq * dbe. destruct X. clear l.
+inversion abeq. clear abeq. subst.
+(* apply ImpL_Imp_rule *)
+eapply derI.  eapply fextI.  apply rmI.  apply Imp_anc'.
+unfold fmlsext in H0. simpl in H0.
+eapply swap_ins in H0.
+unfold fmlsext in d.  eapply exchL_lja in d.
+2: apply fst_relI. 2: exact (swapped_comm H0).
+drstac ([] : list (PropF V)) [Imp B B0] d dbe.
+apply (swapped_I [] (A :: G2) [Imp B B0] []).
+reflexivity. rewrite app_nil_r. reflexivity.
+
+- (* Idrule, so D is Var _ , IH not used *) destruct i.
+unfold height_step_tr.  unfold gf2_step_tr.  intros sub fdt. clear sub fdt br.  
+unfold dtfun.  rewrite der_fc_concl_eq.  unfold l41prop.
+intros * vveq * dbe.  inversion vveq. clear vveq.
+eapply derI.  eapply fextI.  apply rmI.  apply ImpL_anc'.
+simpl in dt. rewrite -> H0 in dt.
+(* need to do weakening and exchange here - use tactic from ljt_inv.v *)
+drstac ([] : list (PropF V)) [Imp (Var A) B] dt dbe.
 
 - (* common left rules, invertible *)
 apply (gs_hs br).  eapply gs_LJA_ImpL_sl. exact r.
