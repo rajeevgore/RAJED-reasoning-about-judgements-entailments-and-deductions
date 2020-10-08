@@ -252,41 +252,16 @@ Ltac appe := match goal with
 
 (* apply rule in desired conclusion *)
 
-Ltac inv_ail c0 H fp dbe cin1 := 
+Ltac inv_gl_tac gl_anc LJA_inv_gl c0 H fp dbe cin1 := 
 simpl ;  unfold fmlsext ;  assoc_mid c0 ;
 eapply derI ; [ eapply fextI ;  eapply rmI_eqc ; [
-eapply il_anc ;  apply rmI ;  apply H | reflexivity ] | ] ;
+eapply gl_anc ;  apply rmI ;  apply H | reflexivity ] | ] ;
 apply dersrecI_forall ;  intros c cin ;
 apply InT_mapE in cin ; cD ; rename_last cin1 ;
 apply InT_mapE in cin1 ; cD ;
 (* invert rule in dbe *)
 revert dbe ; unfold fmlsext ; assoc_mid c0 ; intro dbe ;
-pose (LJA_inv_ail _ _ H dbe) as d ;
-eapply dersrecD_forall in d ; [ |
-apply InT_map ;  apply InT_map ; eassumption ] ;
-eapply ForallTD_forall in fp ; [ |
-apply InT_map ;  apply InT_map ; eassumption ] ;
-unfold l41prop in fp ;
-appe ; appe ; subst ;
-unfold fmlsext ;  assoc_single_mid ;
-simpl in fp ;  unfold fmlsext in fp ;
-apply (snd fp) ; [ list_eq_assoc |
-simpl in d ;  unfold fmlsext in d ;
-apply (eq_rect _ _ d) ; list_eq_assoc ].
-
-(* 
-get general version for both inv_ail and inv_sl
-*)
-Ltac inv_sl c0 H fp dbe cin1 := 
-simpl ;  unfold fmlsext ;  assoc_mid c0 ;
-eapply derI ; [ eapply fextI ;  eapply rmI_eqc ; [
-eapply lrls_anc ;  apply rmI ;  apply H | reflexivity ] | ] ;
-apply dersrecI_forall ;  intros c cin ;
-apply InT_mapE in cin ; cD ; rename_last cin1 ;
-apply InT_mapE in cin1 ; cD ;
-(* invert rule in dbe *)
-revert dbe ; unfold fmlsext ; assoc_mid c0 ; intro dbe ;
-pose (LJA_inv_sl _ _ H dbe) as d ;
+pose (LJA_inv_gl _ _ _ _ _ _ H dbe) as d ;
 eapply dersrecD_forall in d ; [ |
 apply InT_map ;  apply InT_map ; eassumption ] ;
 eapply ForallTD_forall in fp ; [ |
@@ -311,21 +286,20 @@ simpl in ceq. unfold fmlsext in ceq.
 inversion ceq. subst. clear ceq.
 acacD'T2 ; subst.
 
-- inv_ail c0 H fp dbe cin1.
+- inv_gl_tac (@il_anc) LJA_inv_ail c0 H fp dbe cin1.
 
 - pose (LJAil_sing_empty H). apply sing_empty_app in s.  sD ; subst.
 + simpl in H.  rewrite ?app_nil_r.
 rewrite ?app_nil_r in dbe.  rewrite ?app_nil_r in dc.
-inv_ail H2 H fp dbe cin1.
+inv_gl_tac (@il_anc) LJA_inv_ail H2 H fp dbe cin1.
 + rewrite ?app_nil_r in H.  simpl in dc.  simpl in dbe.
-inv_ail H1 H fp dbe cin1.
+inv_gl_tac (@il_anc) LJA_inv_ail H1 H fp dbe cin1.
 
-- inv_ail c0 H fp dbe cin1.
+- inv_gl_tac (@il_anc) LJA_inv_ail c0 H fp dbe cin1.
 Qed.
 
 Check gs_LJA_ImpL_Ail.
 
-(*
 Lemma gs_LJA_ImpL_sl V (D : PropF V) ps c Γ1 Γ2 G 
   (r : rlsmap (flip pair G) LJslrules ps c) :
   gen_step l41prop D isubfml (derrec LJArules emptyT)
@@ -338,17 +312,16 @@ simpl in ceq. unfold fmlsext in ceq.
 inversion ceq. subst. clear ceq.
 acacD'T2 ; subst.
 
-- inv_sl c0 X fp dbe cin1.
+- inv_gl_tac (@lrls_anc) LJA_inv_sl c0 X fp dbe cin1.
 
-(* to complete from here *)
 - pose (LJsl_sing_empty X). apply sing_empty_app in s.  sD ; subst.
 + simpl in X.  rewrite ?app_nil_r.
 rewrite ?app_nil_r in dbe.  rewrite ?app_nil_r in dc.
-inv_sl H2 X fp dbe cin1.
+inv_gl_tac (@lrls_anc) LJA_inv_sl H2 X fp dbe cin1.
 + rewrite ?app_nil_r in X.  simpl in dc.  simpl in dbe.
-inv_sl H0 X fp dbe cin1.
+inv_gl_tac (@lrls_anc) LJA_inv_sl H0 X fp dbe cin1.
 
-- inv_sl c0 X fp dbe cin1.
+- inv_gl_tac (@lrls_anc) LJA_inv_sl c0 X fp dbe cin1.
 Qed.
 
 Check gs_LJA_ImpL_sl.
@@ -399,4 +372,3 @@ apply (hs_LJA_ImpL_adm (get_botrule _) (bot_is_rule _)).  Qed.
   
 
 *)
-
