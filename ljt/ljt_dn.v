@@ -178,6 +178,35 @@ Definition l41prop {V} (D : PropF V) seq :=
   forall B E, derrec LJArules emptyT (fmlsext G1 G2 [B], E) ->
   derrec LJArules emptyT (apfst (fmlsext G1 G2) ([Imp D B], E)).
 
+Lemma LJA_inv_sl V G1 G2 E ps c :
+  (@LJslrules V) ps c ->
+  derrec LJArules emptyT (G1 ++ c ++ G2, E) -> 
+  dersrec LJArules emptyT (map (apfst (fmlsext G1 G2)) 
+  (map (flip pair E) ps)).
+Proof. intros ljpc dce.  destruct ljpc.
+- destruct a.
+apply LJA_can_rel_AndLinv in dce.
+unfold can_rel in dce.
+apply dersrec_singleI.
+apply dce.  simpl.  unfold fmlsext.
+eapply srs_ext_relI_eq.  apply fslr_I.
+apply AndLinvs_I.  reflexivity.  reflexivity.
+- destruct o.
+apply dlCons.
++ apply LJA_can_rel_OrLinv1 in dce.
+unfold can_rel in dce.
+apply dce.  simpl.  unfold fmlsext.
+eapply srs_ext_relI_eq.  apply fslr_I.
+apply OrLinv1s_I.  reflexivity.  reflexivity.
++ apply dersrec_singleI.
+apply LJA_can_rel_OrLinv2 in dce.
+unfold can_rel in dce.
+apply dce.  simpl.  unfold fmlsext.
+eapply srs_ext_relI_eq.  apply fslr_I.
+apply OrLinv2s_I.  reflexivity.  reflexivity.
+- (* Botrule *)
+destruct b. apply dlNil. Qed.
+
 Lemma LJA_inv_ail V G1 G2 E ps c :
   (@LJAilrules V) ps c ->
   derrec LJArules emptyT (G1 ++ c ++ G2, E) -> 
@@ -209,6 +238,12 @@ Proof. intro ljpc.  destruct ljpc ; destruct i ; eexists ; reflexivity. Qed.
 Lemma LJAil_sing_empty V ps c : (@LJAilrules V) ps c -> sing_empty c.
 Proof. intro ljpc.  destruct ljpc ; destruct i ; apply se_single. Qed.
 
+Lemma LJsl_sing_empty V ps c : (@LJslrules V) ps c -> sing_empty c.
+Proof. intro ljpc.  destruct ljpc. 
+destruct a. apply se_single. 
+destruct o. apply se_single. 
+destruct b. apply se_single.  Qed.
+
 Lemma pair_eqD U W a b c d : (a : U, b : W) = (c, d) -> (a = c) * (b = d).
 Proof. intro H. inversion H. tauto. Qed.
 
@@ -227,6 +262,31 @@ apply InT_mapE in cin1 ; cD ;
 (* invert rule in dbe *)
 revert dbe ; unfold fmlsext ; assoc_mid c0 ; intro dbe ;
 pose (LJA_inv_ail _ _ H dbe) as d ;
+eapply dersrecD_forall in d ; [ |
+apply InT_map ;  apply InT_map ; eassumption ] ;
+eapply ForallTD_forall in fp ; [ |
+apply InT_map ;  apply InT_map ; eassumption ] ;
+unfold l41prop in fp ;
+appe ; appe ; subst ;
+unfold fmlsext ;  assoc_single_mid ;
+simpl in fp ;  unfold fmlsext in fp ;
+apply (snd fp) ; [ list_eq_assoc |
+simpl in d ;  unfold fmlsext in d ;
+apply (eq_rect _ _ d) ; list_eq_assoc ].
+
+(* 
+get general version for both inv_ail and inv_sl
+*)
+Ltac inv_sl c0 H fp dbe cin1 := 
+simpl ;  unfold fmlsext ;  assoc_mid c0 ;
+eapply derI ; [ eapply fextI ;  eapply rmI_eqc ; [
+eapply lrls_anc ;  apply rmI ;  apply H | reflexivity ] | ] ;
+apply dersrecI_forall ;  intros c cin ;
+apply InT_mapE in cin ; cD ; rename_last cin1 ;
+apply InT_mapE in cin1 ; cD ;
+(* invert rule in dbe *)
+revert dbe ; unfold fmlsext ; assoc_mid c0 ; intro dbe ;
+pose (LJA_inv_sl _ _ H dbe) as d ;
 eapply dersrecD_forall in d ; [ |
 apply InT_map ;  apply InT_map ; eassumption ] ;
 eapply ForallTD_forall in fp ; [ |
@@ -261,10 +321,37 @@ inv_ail H2 H fp dbe cin1.
 inv_ail H1 H fp dbe cin1.
 
 - inv_ail c0 H fp dbe cin1.
-
 Qed.
 
 Check gs_LJA_ImpL_Ail.
+
+(*
+Lemma gs_LJA_ImpL_sl V (D : PropF V) ps c Γ1 Γ2 G 
+  (r : rlsmap (flip pair G) LJslrules ps c) :
+  gen_step l41prop D isubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad.
+unfold l41prop. intros * ceq * dbe.
+inversion r. subst. clear r. 
+rewrite ceq in dc.
+simpl in ceq. unfold fmlsext in ceq.
+inversion ceq. subst. clear ceq.
+acacD'T2 ; subst.
+
+- inv_sl c0 X fp dbe cin1.
+
+(* to complete from here *)
+- pose (LJsl_sing_empty X). apply sing_empty_app in s.  sD ; subst.
++ simpl in X.  rewrite ?app_nil_r.
+rewrite ?app_nil_r in dbe.  rewrite ?app_nil_r in dc.
+inv_sl H2 X fp dbe cin1.
++ rewrite ?app_nil_r in X.  simpl in dc.  simpl in dbe.
+inv_sl H0 X fp dbe cin1.
+
+- inv_sl c0 X fp dbe cin1.
+Qed.
+
+Check gs_LJA_ImpL_sl.
 
 (*
 
@@ -285,8 +372,18 @@ inversion X ; subst ; clear X.
 destruct X0.
 - (* left compound Imp rules, invertible *)
 apply (gs_hs br).  eapply gs_LJA_ImpL_Ail. exact r.
+-
+admit. -
+admit. -
+admit. -
+admit. 
 
+- (* common left rules, invertible *)
+apply (gs_hs br).  eapply gs_LJA_ImpL_sl. exact r.
 
+- admit.
+
+Admitted.
 
 
 
