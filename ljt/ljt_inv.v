@@ -565,6 +565,7 @@ Ltac ljsltac H2 H0 := eexists ; split ;
 Lemma f1crr W q qs R : {p : W & InT p (q :: qs) * clos_reflT R p q}.
 Proof. eexists. exact (pair (InT_eq _ _) (rT_refl _ _)). Qed.
 
+(* note, could now replace this by use of insL_lja *)
 Ltac drstac fd1 fd2 X0 X2 := simpl ;  unfold fmlsext ;  apply dlCons ; [
 (* need to do weakening and exchange here *)
 apply (fer_der fd1 fd2) in X0 ; apply (exchL_lja X0) ;  apply fst_relI ;

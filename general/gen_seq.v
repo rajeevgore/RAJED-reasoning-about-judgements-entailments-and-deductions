@@ -529,6 +529,15 @@ Qed.
 
 Print Implicit exchR_std_rule.
 
+(* combining exchange and weakening to insert in the middle *)
+Lemma gen_insL U W rules cl cr mid G:
+  (forall ps (U0 : list U) (S : W), rules ps (U0, S) -> sing_empty U0) ->
+  derrec (fst_ext_rls rules) emptyT (cl ++ cr, G) ->
+  derrec (fst_ext_rls rules) emptyT (cl ++ mid ++ cr, G).
+Proof. intros ser dlr.
+apply (der_trf (exchL_std_rule ser) (fer_der [] mid dlr)).
+apply fst_relI. simpl. swap_tac. Qed.
+
 Definition rev_pair {U W} (p : U * W) := let (x, y) := p in (y, x).
 
 Lemma sext_rev_fext U W (rules : rlsT (U * list W)) ps c :

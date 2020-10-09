@@ -327,3 +327,7 @@ apply exchL_std_rule. apply LJAnc_seL. Qed.
 
 Print Implicit exchL_lja.
 
+(* insertion for LJ, LJA systems *)
+Definition insL_lj V cl cr mid G := @gen_insL _ _ _ cl cr mid G (@LJnc_seL V).
+Definition insL_lja V cl cr mid G := @gen_insL _ _ _ cl cr mid G (@LJAnc_seL V).
+
