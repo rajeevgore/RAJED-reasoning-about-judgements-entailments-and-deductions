@@ -121,6 +121,9 @@ Inductive LJAilrules {V} : rlsT (list (PropF V)) :=
   | Or_ail : forall ps c, ImpL_Or_rule ps c -> LJAilrules ps c
   .
 
+Definition And_ail' V A B C := And_ail (@ImpL_And_rule_I V A B C).
+Definition Or_ail' V A B C := Or_ail (@ImpL_Or_rule_I V A B C).
+
 (* all rules of LJT, without context *)
 Inductive LJTncrules {V} : rlsT (srseq (PropF V)) :=
   | il_tnc : forall G ps c, 

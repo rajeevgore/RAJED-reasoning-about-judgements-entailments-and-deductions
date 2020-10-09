@@ -326,6 +326,49 @@ Qed.
 
 Check gs_LJA_ImpL_sl.
 
+Lemma gs_LJA_ImpL_sr V (D : PropF V) ps c Γ1 Γ2 
+  (r : rlsmap (pair []) LJsrrules ps c) :
+  gen_step l41prop D isubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. 
+unfold l41prop. intros * ceq * dbe.
+inversion r. subst. clear r. 
+inversion ceq. subst. clear ceq. 
+destruct H.
+- destruct a.  simpl in fp.  inversion fp.
+inversion X0. clear fp X0 X2. subst.
+rewrite H1 in X.  rewrite H1 in X1.
+pose (sad _ (isub_AndR _ _) _ (fst X1)).
+specialize (l _ _ eq_refl _ _ dbe).
+specialize (sad _ (isub_AndL _ _) _ (fst X)).
+specialize (sad _ _ eq_refl _ _ l).
+clear dc dbe H1 X X1 l.
+eapply derI. eapply fextI. apply rmI.
+apply il_anc'. apply And_ail'.
+exact (dersrec_singleI sad).
+- destruct o.  simpl in fp.  inversion fp.  clear fp X0. subst.
+rewrite H1 in X.
+specialize (sad _ (isub_OrL _ _) _ (fst X)).
+specialize (sad _ _ eq_refl _ _ dbe).
+clear dc dbe H1 X.
+eapply derI. eapply fextI. apply rmI.
+apply il_anc'. apply Or_ail'. simpl. simpl in sad.
+pose (insL_lja (G1 ++ [Imp A B]) G2 [Imp B0 B]).
+rewrite <- !app_assoc in d.
+apply d in sad.  unfold fmlsext.  exact (dersrec_singleI sad).
+- destruct o.  simpl in fp.  inversion fp.  clear fp X0. subst.
+rewrite H1 in X.
+specialize (sad _ (isub_OrR _ _) _ (fst X)).
+specialize (sad _ _ eq_refl _ _ dbe).
+clear dc dbe H1 X.
+eapply derI. eapply fextI. apply rmI.
+apply il_anc'. apply Or_ail'. simpl. simpl in sad.
+pose (insL_lja G1 (Imp B0 B :: G2) [Imp A B]).
+apply d in sad.  unfold fmlsext.  exact (dersrec_singleI sad).
+Qed.
+
+Check gs_LJA_ImpL_sr.
+
 (*
 
 Check gen_step_lemT.
@@ -376,7 +419,8 @@ apply dersrec_singleI. exact dbe.
 - (* common left rules, invertible *)
 apply (gs_hs br).  eapply gs_LJA_ImpL_sl. exact r.
 
-- admit.
+- (* simple right rules *)
+apply (gs_hs br).  eapply gs_LJA_ImpL_sr. exact r.
 
 Admitted.
 
