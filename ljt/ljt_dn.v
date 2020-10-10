@@ -326,6 +326,63 @@ Qed.
 
 Check gs_LJA_ImpL_sl.
 
+Ltac gs_Imp_p_tac V c p A B D E X X0 X1 dbe L1 L2 L3 L4 L5 L6 L7 L8 :=
+erequire c ; require c ; [
+(* inversion of ImpLrule_p (2nd premise) in dbe *)
+eapply (srs_ext_relI_eqp _ [Imp (Var p) A] [A] L1 L2) ; [
+split ; apply ImpL_Var_inv2s_I |
+unfold fmlsext ; list_eq_assoc ] | ] ; 
+(* apply IH to 2nd premise of ... |- D *)
+clear dbe ; unfold l41prop in X0 ; specialize (X0 L3 L4) ;
+require X0 ; [ list_eq_assoc | ] ;
+specialize (X0 B E) ;
+require X0 ; [ unfold fmlsext ; apply (eq_rect _ _ c) ; list_eq_assoc | ] ;
+(* weaken Imp D B into X *)
+clear X1 c ; simpl in X0 ; unfold fmlsext in X0 ;
+pose (@insL_lja V L5 L6 [Imp D B] (Var p)) as d ;
+require d ; [ apply (eq_rect _ _ X) ; list_eq_assoc | ] ;
+clear X ; simpl ; unfold fmlsext ;
+(* now apply ImpLrule_p *)
+eapply derI ; [ eapply (@fextI _ _ _ L7 L8) ;
+eapply rmI_eqc ; [ apply ImpL_anc' |
+simpl ; unfold fmlsext ; list_eq_assoc ] |
+apply dlCons ; [
+  simpl ; unfold fmlsext ; apply (eq_rect _ _ d) ; list_eq_assoc |
+apply dersrec_singleI ;
+simpl ; unfold fmlsext ; apply (eq_rect _ _ X0) ; list_eq_assoc ] ].
+
+Lemma gs_LJA_ImpL_Imp_p V (D : PropF V) ps c Γ1 Γ2 (r : ImpLrule_p ps c) :
+  gen_step l41prop D isubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad dc.
+unfold l41prop. intros * ceq * dbe.  destruct r as [p A D'].
+inversion ceq. subst. clear ceq. 
+inversion fp.  inversion X0. clear fp X0 X2. subst.
+
+unfold fmlsext in H0.  unfold fmlsext in X.  unfold fmlsext in X1.
+pose (LJA_can_rel_ImpL_Var_inv2 dbe). 
+unfold can_rel in c.
+acacD'T2 ; subst ; clear X2.
+
+- gs_Imp_p_tac V c p A B D E X X0 X1 dbe
+(G1 ++ [B] ++ H0) Γ2 G1 (H0 ++ [A] ++ Γ2)
+ G1 (H0 ++ [Imp (Var p) A] ++ Γ2) (G1 ++ [Imp D B] ++ H0) Γ2.
+
+- gs_Imp_p_tac V c p A B D E X X0 X1 dbe
+(Γ1 ++ [B]) Γ2 Γ1 ([A] ++ Γ2) Γ1 ([Imp (Var p) A] ++ Γ2) (Γ1 ++ [Imp D B]) Γ2.
+
+- list_eq_ncT. cD. subst.
+gs_Imp_p_tac V c p A B D E X X0 X1 dbe
+ Γ1 ([B] ++ Γ2) (Γ1 ++ [A]) Γ2 (Γ1 ++ [Imp (Var p) A]) Γ2 Γ1 ([Imp D B] ++ Γ2).
+
+- gs_Imp_p_tac V c p A B D E X X0 X1 dbe
+ Γ1 (H2 ++ [B] ++ G2) (Γ1 ++ [A] ++ H2) G2
+ (Γ1 ++ [Imp (Var p) A] ++ H2) G2 Γ1 (H2 ++ [Imp D B] ++ G2).
+
+Qed.
+
+Check gs_LJA_ImpL_Imp_p.
+
 Lemma gs_LJA_ImpL_sr V (D : PropF V) ps c Γ1 Γ2 
   (r : rlsmap (pair []) LJsrrules ps c) :
   gen_step l41prop D isubfml (derrec LJArules emptyT)
@@ -390,7 +447,7 @@ destruct X0.
 apply (gs_hs br).  eapply gs_LJA_ImpL_Ail. exact r.
 
 - admit.
-- admit. 
+- (* ImpLrule_p *) apply (gs_hs br).  apply gs_LJA_ImpL_Imp_p. exact i.
 
 - (* ImpRrule, IH not used *) destruct i.
 apply (gs_hs br). clear br dt.  unfold gen_step.

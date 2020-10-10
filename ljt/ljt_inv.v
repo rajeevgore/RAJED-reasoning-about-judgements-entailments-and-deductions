@@ -97,6 +97,9 @@ Proof. intros. subst. apply srs_ext_relI. exact X. Qed.
 Definition srs_ext_relI_eqc W Y R ant ant' G Φ1 Φ2 seq2 raa :=
   @srs_ext_relI_eq W Y R ant ant' G Φ1 Φ2 _ seq2 raa eq_refl.
 
+Definition srs_ext_relI_eqp W Y R ant ant' G Φ1 Φ2 seq1 raa eq1 :=
+  @srs_ext_relI_eq W Y R ant ant' G Φ1 Φ2 seq1 _ raa eq1 eq_refl.
+
 (* extend relation with general context on the left,
   given right rule which may put stuff on the left in premise, eg ImpR
   right, suitable for ImpLinv2, AndLinv. OrLinv1/2 *)
@@ -479,13 +482,13 @@ Lemma can_trf_ImpL_And_inv_lja {V} ps c: @LJArules V ps c ->
 Proof. apply can_trf_genLinv_gen.  apply LJAnc_seL.
 intros * auv.  destruct auv.  apply LJAIAE. Qed.
 
-Lemma can_trf_ImpL_Imp_inv_lja {V} ps c: @LJArules V ps c ->
+Lemma can_trf_ImpL_Imp_inv2_lja {V} ps c: @LJArules V ps c ->
   can_trf_rules_rc (srs_ext_rel ImpL_Imp_inv2) (derl LJArules) ps c.
 Proof. apply can_trf_genLinv_geni.  apply LJAnc_seL.
 intros * auv.  destruct auv. intro rocd.  
 apply LJAIIE in rocd. subst. solve_InT.  Qed.
 
-Lemma can_trf_ImpL_Var_inv_lja {V} ps c: @LJArules V ps c ->
+Lemma can_trf_ImpL_Var_inv2_lja {V} ps c: @LJArules V ps c ->
   can_trf_rules_rc (srs_ext_rel ImpL_Var_inv2) (derl LJArules) ps c.
 Proof. apply can_trf_genLinv_geni.  apply LJAnc_seL.
 intros * auv.  destruct auv. intro rocd.  
@@ -521,6 +524,18 @@ Lemma LJA_can_rel_ImpL_Or_inv {V} seq :
   can_rel LJArules (@srs_ext_rel _ _) (@ImpL_Or_inv V) seq.
 Proof. unfold can_rel.
 apply der_trf_rc_derl.  exact (@can_trf_ImpL_Or_inv_lja V).  Qed.
+
+Lemma LJA_can_rel_ImpL_Var_inv2 {V} seq :
+  derrec LJArules emptyT seq ->
+  can_rel LJArules (@srs_ext_rel _ _) (@ImpL_Var_inv2 V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_ImpL_Var_inv2_lja V).  Qed.
+
+Lemma LJA_can_rel_ImpL_Imp_inv2 {V} seq :
+  derrec LJArules emptyT seq ->
+  can_rel LJArules (@srs_ext_rel _ _) (@ImpL_Imp_inv2 V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_ImpL_Imp_inv2_lja V).  Qed.
 
 (* not sure whether we will need remaining results for LJA in the form of 
   LJA_rel_adm ... or LJA_can_rel *)
@@ -748,6 +763,7 @@ eapply arg1_cong_imp.
 Qed.
 
 About can_trf_genRinv_lja.
+
 Lemma can_trf_AndRinv1_lja {V} ps c : @LJArules V ps c ->
   can_trf_rules_rc (ant_rel AndRinv1) (adm LJArules) ps c.
 Proof. apply can_trf_genRinv_lja.
