@@ -326,24 +326,24 @@ Qed.
 
 Check gs_LJA_ImpL_sl.
 
-Ltac gs_Imp_p_tac V c p A B D E X X0 X1 dbe L1 L2 L3 L4 L5 L6 L7 L8 :=
+Ltac gs_Imp_p_tac V c p A B D E X X0 X1 dbe La Ra Lb Rb Lc Rc Ld Rd :=
 erequire c ; require c ; [
 (* inversion of ImpLrule_p (2nd premise) in dbe *)
-eapply (srs_ext_relI_eqp _ [Imp (Var p) A] [A] L1 L2) ; [
+eapply (srs_ext_relI_eqp _ [Imp (Var p) A] [A] La Ra) ; [
 split ; apply ImpL_Var_inv2s_I |
 unfold fmlsext ; list_eq_assoc ] | ] ; 
 (* apply IH to 2nd premise of ... |- D *)
-clear dbe ; unfold l41prop in X0 ; specialize (X0 L3 L4) ;
+clear dbe ; unfold l41prop in X0 ; specialize (X0 Lb Rb) ;
 require X0 ; [ list_eq_assoc | ] ;
 specialize (X0 B E) ;
 require X0 ; [ unfold fmlsext ; apply (eq_rect _ _ c) ; list_eq_assoc | ] ;
 (* weaken Imp D B into X *)
 clear X1 c ; simpl in X0 ; unfold fmlsext in X0 ;
-pose (@insL_lja V L5 L6 [Imp D B] (Var p)) as d ;
+pose (@insL_lja V Lc Rc [Imp D B] (Var p)) as d ;
 require d ; [ apply (eq_rect _ _ X) ; list_eq_assoc | ] ;
 clear X ; simpl ; unfold fmlsext ;
 (* now apply ImpLrule_p *)
-eapply derI ; [ eapply (@fextI _ _ _ L7 L8) ;
+eapply derI ; [ eapply (@fextI _ _ _ Ld Rd) ;
 eapply rmI_eqc ; [ apply ImpL_anc' |
 simpl ; unfold fmlsext ; list_eq_assoc ] |
 apply dlCons ; [
@@ -435,6 +435,94 @@ Check height_step_tr_lem.
 (* proof using gen_step_lemT, don't think we want this *)
 Definition l41dtprop {V} rules prems (D : PropF V) dt := 
   l41prop D (@derrec_fc_concl _ rules prems dt).
+  *)
+  
+Ltac gs_ImpL_tac V B C D E F G H X X1 dbe La Ra Lb Rb Lc Rc Ld Rd :=
+(* inversion in dbe *)
+apply LJA_can_rel_ImpL_Imp_inv2 in dbe ;
+unfold can_rel in dbe ;  erequire dbe ;  require dbe ; [
+eapply (srs_ext_relI_eqp _ [Imp (Imp F G) H] [H] La Ra) ; [
+split ; apply ImpL_Imp_inv2s_I | unfold fmlsext ; list_eq_assoc ] | ] ;
+(* apply IH *)
+unfold l41prop in X1 ;  simpl in X1 ; unfold fmlsext in X1 ;
+specialize (X1 Lb Rb) ; require X1 ; [ list_eq_assoc | ] ;
+specialize (X1 B E) ;
+require X1 ; [ apply (eq_rect _ _ dbe) ; list_eq_assoc | ] ; clear dbe ;
+(* apply weakening to left premise of ... |- D *)
+unfold fmlsext in X ;
+pose (@insL_lja V Lc Rc [Imp D B] G) as d ;
+require d ; [ apply (eq_rect _ _ X) ; list_eq_assoc | ] ;
+clear X ; simpl ; unfold fmlsext ;
+(* now apply ImpL_Imp_rule *)
+eapply derI ; [ eapply (@fextI _ _ _ Ld Rd) ;
+apply (rmI_eqc _ _ _ _ (Imp_anc' H F G E)) ;
+simpl ; unfold fmlsext ; list_eq_assoc |
+simpl ; unfold fmlsext ;
+apply dlCons ; [ apply (eq_rect _ _ d) ; list_eq_assoc |
+apply dersrec_singleI ; apply (eq_rect _ _ X1) ; list_eq_assoc ] ].
+
+Lemma gs_LJA_ImpL_ImpL V (D : PropF V) ps c Γ1 Γ2 (r : ImpL_Imp_rule ps c) :
+  gen_step l41prop D isubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad dc.
+unfold l41prop. intros * ceq * dbe.  destruct r as [H F G D'].
+inversion ceq. subst. clear ceq. 
+inversion fp.  inversion X0. clear fp X0 X2. subst.
+apply fst in X. (* left premise of ... |- D, will want to weaken *)
+apply snd in X1. (* right premise of ... |- D, will want to use IH *)
+unfold fmlsext in H1.
+acacD'T2 ; subst.
+
+- gs_ImpL_tac V B C D E F G H X X1 dbe
+(G1 ++ [B] ++ H1) Γ2 G1 (H1 ++ [H] ++ Γ2)
+G1 (H1 ++ [Imp G H; F] ++ Γ2) (G1 ++ [Imp D B] ++ H1) Γ2.
+
+- rewrite ?app_nil_r.  rewrite ?app_nil_r in dbe. 
+gs_ImpL_tac V B C D E F G H X X1 dbe
+(Γ1 ++ [B]) Γ2 Γ1 ([H] ++ Γ2)
+Γ1 ([Imp G H; F] ++ Γ2) (Γ1 ++ [Imp D B]) Γ2.
+
+- list_eq_ncT. cD. subst.
+gs_ImpL_tac V B C D E F G H X X1 dbe
+Γ1 ([B] ++ Γ2) (Γ1 ++ [H]) Γ2
+(Γ1 ++ [Imp G H; F]) Γ2 Γ1 ([Imp D B] ++ Γ2).
+
+- gs_ImpL_tac V B C D E F G H X X1 dbe
+Γ1 (H2 ++ [B] ++ G2) (Γ1 ++ [H] ++ H2) G2
+(Γ1 ++ [Imp G H; F] ++ H2) G2 Γ1 (H2 ++ [Imp D B] ++ G2).
+
+Qed.
+
+Check gs_LJA_ImpL_ImpL.
+
+
+
+  (*
+  
+  don't need this 
+
+Lemma hs_LJA_ImpL_ImpL' V (D : PropF V)
+  c (dt : derrec LJArules emptyT c) ps (br : botRule_fc (fcI dt) ps c) :
+  fst_ext_rls ImpL_Imp_rule ps c -> 
+  height_step_tr (dtfun l41prop) D isubfml (fcI dt).
+Proof.  unfold height_step_tr.  unfold gf2_step_tr.
+intros fer sub fdt. 
+inversion fer.  inversion X. subst.  clear sub fer X.
+destruct H1 as [H F G D'].
+intros G1 G2 dce * dbe.
+rewrite der_fc_concl_eq in dce.
+simpl in dce.  unfold fmlsext in dce.
+inversion dce. subst. clear dce.
+(* this gives prems of lhs derivable, we need derivable of lesser height 
+pose (botRule_fc_drs br).
+these lose info that ps is of lesser height, or that dt is derI ... 
+inversion dt. inversion H0. Undo 2.
+could do revert fdt. revert br. dependent induction dt.
+but need to use separate lemmas botRule_fc_ps and nextup_height
+*)
+Check (nextup (fcI dt)).
+
+(* TODO - change this to gs *)
   
 Lemma hs_LJA_ImpL_adm V (D : PropF V)
   c (dt : derrec LJArules emptyT c) ps (br : botRule_fc (fcI dt) ps c) :
@@ -446,7 +534,9 @@ destruct X0.
 - (* left compound Imp rules, invertible *)
 apply (gs_hs br).  eapply gs_LJA_ImpL_Ail. exact r.
 
-- admit.
+- (* ImpL_Imp_rule *)
+apply (hs_LJA_ImpL_ImpL br).  apply rmI in i. exact (fextI i).
+
 - (* ImpLrule_p *) apply (gs_hs br).  apply gs_LJA_ImpL_Imp_p. exact i.
 
 - (* ImpRrule, IH not used *) destruct i.
