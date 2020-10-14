@@ -543,53 +543,7 @@ Qed.
 
 Check gs_LJA_ImpL_adm.
 
-Lemma hs_LJA_ImpL_adm V (D : PropF V)
-  c (dt : derrec LJArules emptyT c) ps (br : botRule_fc (fcI dt) ps c) :
-  @LJArules V ps c -> 
-  height_step_tr (dtfun l41prop) D isubfml (fcI dt).
-Proof. intro ljpc. inversion ljpc ; subst ; clear ljpc.
-inversion X ; subst ; clear X.
-destruct X0.
-- (* left compound Imp rules, invertible *)
-apply (gs_hs br).  eapply gs_LJA_ImpL_Ail. exact r.
-
-- (* ImpL_Imp_rule *)
-apply (gs_hs br).  eapply gs_LJA_ImpL_ImpL. exact i.
-
-- (* ImpLrule_p *) apply (gs_hs br).  apply gs_LJA_ImpL_Imp_p. exact i.
-
-- (* ImpRrule, IH not used *) destruct i.
-apply (gs_hs br). clear br dt.  unfold gen_step.
-intros sub fdt dab. clear sub dab.
-inversion fdt. clear X0 fdt. subst.  unfold l41prop.
-intros * abeq * dbe. destruct X. clear l.
-inversion abeq. clear abeq. subst.
-(* apply ImpL_Imp_rule *)
-eapply derI.  eapply fextI.  apply rmI.  apply Imp_anc'.
-unfold fmlsext in H0. simpl in H0.
-eapply swap_ins in H0.
-unfold fmlsext in d.  eapply exchL_lja in d.
-2: apply fst_relI. 2: exact (swapped_comm H0).
-apply dlCons.  exact (insL_lja _ _ [Imp B B0] d).
-apply dersrec_singleI. exact dbe.
-
-- (* Idrule, so D is Var _ , IH not used *) destruct i.
-unfold height_step_tr.  unfold gf2_step_tr.  intros sub fdt. clear sub fdt br.  
-unfold dtfun.  rewrite der_fc_concl_eq.  unfold l41prop.
-intros * vveq * dbe.  inversion vveq. clear vveq.
-eapply derI.  eapply fextI.  apply rmI.  apply ImpL_anc'.
-simpl in dt. rewrite -> H0 in dt.
-apply dlCons.  exact (insL_lja _ _ [Imp (Var A) B] dt).
-apply dersrec_singleI. exact dbe.
-
-- (* common left rules, invertible *)
-apply (gs_hs br).  eapply gs_LJA_ImpL_sl. exact r.
-
-- (* simple right rules *)
-apply (gs_hs br).  eapply gs_LJA_ImpL_sr. exact r.
-
-Qed.
-
+(* Lemma 4.1 of Dyckhoff & Negri *)
 Lemma LJA_ImpL_adm V D : forall seq, derrec LJArules emptyT seq -> 
   @l41prop V D seq.
 Proof.  eapply gen_step_lemT. apply AccT_isubfml.
@@ -598,16 +552,4 @@ apply gs_LJA_ImpL_adm. exact X. Qed.
 
 Check LJA_ImpL_adm.
 
-(*
-Lemma LJA_ImpL_adm V D : forall seq, derrec LJArules emptyT seq -> 
-  @l41prop V D seq.
-Proof.  intros seq dt.
-assert (dtfun l41prop D (fcI dt)).
-all: cycle 1.
-unfold dtfun in X. simpl in X.  rewrite !der_concl_eq in X. exact X.
-apply (height_step_tr_lem _ (AccT_isubfml D)).
-intros. clear seq dt.  destruct dt0.
-apply (hs_LJA_ImpL_adm (get_botrule _) (bot_is_rule _)).  Qed.
-  *)
-  
 
