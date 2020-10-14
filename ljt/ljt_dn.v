@@ -590,8 +590,15 @@ apply (gs_hs br).  eapply gs_LJA_ImpL_sr. exact r.
 
 Qed.
 
+Lemma LJA_ImpL_adm V D : forall seq, derrec LJArules emptyT seq -> 
+  @l41prop V D seq.
+Proof.  eapply gen_step_lemT. apply AccT_isubfml.
+intros * ljpc.  destruct ljpc. inversion r.
+apply gs_LJA_ImpL_adm. exact X. Qed.
 
+Check LJA_ImpL_adm.
 
+(*
 Lemma LJA_ImpL_adm V D : forall seq, derrec LJArules emptyT seq -> 
   @l41prop V D seq.
 Proof.  intros seq dt.
@@ -601,5 +608,6 @@ unfold dtfun in X. simpl in X.  rewrite !der_concl_eq in X. exact X.
 apply (height_step_tr_lem _ (AccT_isubfml D)).
 intros. clear seq dt.  destruct dt0.
 apply (hs_LJA_ImpL_adm (get_botrule _) (bot_is_rule _)).  Qed.
+  *)
   
 
