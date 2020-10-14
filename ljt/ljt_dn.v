@@ -499,6 +499,50 @@ Check gs_LJA_ImpL_ImpL.
 
 (* TODO - change this to gs *)
   
+Lemma gs_LJA_ImpL_adm V (D : PropF V) ps c Γ1 Γ2 (r : LJAncrules ps c) :
+  gen_step l41prop D isubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof.  destruct r.
+- (* left compound Imp rules, invertible *)
+eapply gs_LJA_ImpL_Ail. exact r.
+
+- (* ImpL_Imp_rule *)
+eapply gs_LJA_ImpL_ImpL. exact i.
+
+- (* ImpLrule_p *) apply gs_LJA_ImpL_Imp_p. exact i.
+
+- (* ImpRrule, IH not used *) destruct i.  unfold gen_step.
+intros sub fdt dab. clear sub dab.
+inversion fdt. clear X0 fdt. subst.  unfold l41prop.
+intros * abeq * dbe. destruct X. clear l.
+inversion abeq. clear abeq. subst.
+(* apply ImpL_Imp_rule *)
+eapply derI.  eapply fextI.  apply rmI.  apply Imp_anc'.
+unfold fmlsext in H0. simpl in H0.
+eapply swap_ins in H0.
+unfold fmlsext in d.  eapply exchL_lja in d.
+2: apply fst_relI. 2: exact (swapped_comm H0).
+apply dlCons.  exact (insL_lja _ _ [Imp B B0] d).
+apply dersrec_singleI. exact dbe.
+
+- (* Idrule, so D is Var _ , IH not used *) destruct i.
+unfold gen_step.  intros sub fdt dt. clear sub fdt.  unfold l41prop.
+intros * vveq * dbe.  inversion vveq. clear vveq.
+eapply derI.  eapply fextI.  apply rmI.  apply ImpL_anc'.
+simpl in dt. rewrite -> H0 in dt.
+apply dlCons.  exact (insL_lja _ _ [Imp (Var A) B] dt).
+apply dersrec_singleI. exact dbe.
+
+- (* common left rules, invertible *)
+eapply gs_LJA_ImpL_sl. exact r.
+
+- (* simple right rules *)
+eapply gs_LJA_ImpL_sr. exact r.
+
+Qed.
+
+Check gs_LJA_ImpL_adm.
+
 Lemma hs_LJA_ImpL_adm V (D : PropF V)
   c (dt : derrec LJArules emptyT c) ps (br : botRule_fc (fcI dt) ps c) :
   @LJArules V ps c -> 
