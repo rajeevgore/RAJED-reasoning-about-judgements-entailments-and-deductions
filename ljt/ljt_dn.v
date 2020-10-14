@@ -497,31 +497,6 @@ Check gs_LJA_ImpL_ImpL.
 
 
 
-  (*
-  
-  don't need this 
-
-Lemma hs_LJA_ImpL_ImpL' V (D : PropF V)
-  c (dt : derrec LJArules emptyT c) ps (br : botRule_fc (fcI dt) ps c) :
-  fst_ext_rls ImpL_Imp_rule ps c -> 
-  height_step_tr (dtfun l41prop) D isubfml (fcI dt).
-Proof.  unfold height_step_tr.  unfold gf2_step_tr.
-intros fer sub fdt. 
-inversion fer.  inversion X. subst.  clear sub fer X.
-destruct H1 as [H F G D'].
-intros G1 G2 dce * dbe.
-rewrite der_fc_concl_eq in dce.
-simpl in dce.  unfold fmlsext in dce.
-inversion dce. subst. clear dce.
-(* this gives prems of lhs derivable, we need derivable of lesser height 
-pose (botRule_fc_drs br).
-these lose info that ps is of lesser height, or that dt is derI ... 
-inversion dt. inversion H0. Undo 2.
-could do revert fdt. revert br. dependent induction dt.
-but need to use separate lemmas botRule_fc_ps and nextup_height
-*)
-Check (nextup (fcI dt)).
-
 (* TODO - change this to gs *)
   
 Lemma hs_LJA_ImpL_adm V (D : PropF V)
@@ -535,7 +510,7 @@ destruct X0.
 apply (gs_hs br).  eapply gs_LJA_ImpL_Ail. exact r.
 
 - (* ImpL_Imp_rule *)
-apply (hs_LJA_ImpL_ImpL br).  apply rmI in i. exact (fextI i).
+apply (gs_hs br).  eapply gs_LJA_ImpL_ImpL. exact i.
 
 - (* ImpLrule_p *) apply (gs_hs br).  apply gs_LJA_ImpL_Imp_p. exact i.
 
@@ -569,7 +544,7 @@ apply (gs_hs br).  eapply gs_LJA_ImpL_sl. exact r.
 - (* simple right rules *)
 apply (gs_hs br).  eapply gs_LJA_ImpL_sr. exact r.
 
-Admitted.
+Qed.
 
 
 
@@ -584,4 +559,3 @@ intros. clear seq dt.  destruct dt0.
 apply (hs_LJA_ImpL_adm (get_botrule _) (bot_is_rule _)).  Qed.
   
 
-*)
