@@ -207,6 +207,21 @@ apply ForallT_singleI.  eexists. split.  2: apply rT_refl.
 apply LJIE in ljnc. 
 eapply arg1_cong_imp.  2: exact (InT_map _ ljnc).  reflexivity. Qed.
 
+Lemma lr_genia U Y rules Γ1 Γ2 ps0 fml fmlsi any p 
+  (LJIE : forall ps G, rules ps ([fml], G) -> 
+    forall Γ1 Γ2, adm (fst_ext_rls rules) (map (apfst (fmlsext Γ1 Γ2)) ps)
+       (fmlsext Γ1 Γ2 fmlsi, G)) :
+  rules ps0 ([fml : U], p : Y) ->
+  {ps' & adm (fst_ext_rls rules) ps' (Γ1 ++ fmlsi ++ Γ2, p) *
+  ForallT (fun p' => {p0 & InT p0 (map (apfst (fmlsext Γ1 Γ2)) ps0) *
+     clos_reflT (srs_ext_rel any) p0 p'}) ps'}.
+Proof. intro ljnc.  
+eapply LJIE in ljnc.  
+eexists. split.  exact ljnc.
+apply ForallTI_forall.  intros * inxm.
+eexists. split.  exact inxm.
+apply rT_refl. Qed.
+
 Lemma lr_gen U Y rules Γ1 Γ2 ps0 fml fmlsi any p 
   (LJAE : forall ps G, rules ps ([fml], G) -> ps = [(fmlsi, G)]) :
   rules ps0 ([fml : U], p : Y) ->
@@ -245,6 +260,9 @@ Lemma ncdgene W Y rules ps0 p Γ1 Γ2 : rules ps0 ([] : list W, p : Y) ->
   derl (fst_ext_rls rules) (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ Γ2, p).
 Proof. intro ljnc. apply in_derl.  eapply fextI.
 eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
+
+Definition ncagene W Y rules ps0 p Γ1 Γ2 rplp :=
+  derl_sub_adm (@ncdgene W Y rules ps0 p Γ1 Γ2 rplp).
 
 Lemma serl U W R G H J p : srs_ext_rel R (H, p) (J : list U, p : W) -> 
   srs_ext_rel R (G ++ H, p) (G ++ J, p).
@@ -343,6 +361,61 @@ Ltac aprre := repeat (apply rrer || apply rrel || apply rrelc) ;
 
 Print Implicit der_trf_rc_derl.
 
+Lemma can_trf_genLinv_gena W Y rules genLinv ps c
+  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
+  (rls_unique : forall ps u w G, genLinv u w -> rules ps ([u], G) -> 
+    forall Γ1 Γ2, adm (fst_ext_rls rules) (map (apfst (fmlsext Γ1 Γ2)) ps) 
+      (fmlsext Γ1 Γ2 w, G)) :
+  fst_ext_rls rules ps c ->
+  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) 
+    (adm (fst_ext_rls rules)) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
+unfold can_trf_rules_rc. intros c' ser.
+inversion ser. clear ser. destruct c0. simpl in H0.
+unfold fmlsext in H0. inversion H0. clear H0. subst.
+destruct X0.  
+acacD'T2 ; subst.
+- rewrite ?app_nil_r in X. 
+assoc_mid H2.  eexists. split.  apply ncagen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply fslr_I. exact g.
+- pose (nc_seL _ _ _ X).  apply sing_empty_app_cons in s.
+list_eq_ncT. cD. subst. simpl.  simpl in X. rewrite ?app_nil_r.
+eapply lr_genia. 2: exact X. intros *.  apply rls_unique. exact g.
+- pose (nc_seL _ _ _ X).  apply sing_empty_app_cons in s.
+cD. subst. simpl.  simpl in X. rewrite ?app_nil_r.
+eapply lr_genia. 2: exact X. intros *.  apply rls_unique. exact g.
+- eexists. split. assoc_mid l. apply ncagen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply fslr_I. exact g.
+- pose (nc_seL _ _ _ X).
+apply sing_empty_app in s. sD. inversion s. subst. simpl.
+rewrite ?app_nil_r in X.  rewrite ?app_nil_r.
+eapply lr_genia. 2: exact X. intros *.  apply rls_unique. exact g.
+- list_eq_ncT. cD. subst. simpl in X.
+eexists. split. assoc_mid H4. apply ncagen. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply fslr_I. exact g.
+- list_eq_ncT. sD ; subst.
++ eexists. split.  apply ncagene. apply X.
+apply fcr. intro. destruct q. 
+rewrite ?app_nil_r.
+apserx. apply fslr_I. exact g.
++ simpl. rewrite ?app_nil_r.  
+eapply lr_genia. 2: exact X. intros *.  apply rls_unique. exact g.
+- list_eq_ncT. cD.  list_eq_ncT. cD. subst. (* simpl. NO! *) list_assoc_l'.
+eexists. split. apply ncagene. apply X.
+apply fcr. intro. destruct q. 
+apserx. apply fslr_I. exact g.
+- eexists. split. assoc_mid l. apply ncagen. apply X.
+apply fcr. intro. destruct q. 
+list_assoc_r'. simpl.  
+apserx. apply fslr_I. exact g.
+Qed.
+
+Print Implicit can_trf_genLinv_gena.
+
+(* TODO - change this to adm, and use can_trf_genLinv_gena *)
 Lemma can_trf_genLinv_geni W Y rules genLinv ps c
   (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
   (rls_unique : forall ps u w G, 

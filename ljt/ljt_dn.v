@@ -552,4 +552,5 @@ apply gs_LJA_ImpL_adm. exact X. Qed.
 
 Check LJA_ImpL_adm.
 
+(* Lemma 4.2 of Dyckhoff & Negri *)
 
