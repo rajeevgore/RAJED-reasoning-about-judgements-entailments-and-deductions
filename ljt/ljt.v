@@ -170,24 +170,24 @@ Definition LJrules {V} := fst_ext_rls (@LJncrules V).
 Definition LJTrules {V} := fst_ext_rls (@LJTncrules V).
 Definition LJArules {V} := fst_ext_rls (@LJAncrules V).
 
-Definition rrls_nc' V ps c rpc := @rrls_nc V _ _ (rmI _ _ ps c rpc).
-Definition lrls_nc' V G ps c rpc := @lrls_nc V G _ _ (rmI _ _ ps c rpc).
-Definition ImpR_nc' V A B := ImpR_nc (@ImpRrule_I V A B).
-Definition ImpL_nc' V A B G := ImpL_nc (@ImpLrule_I V A B G).
+Definition rrls_nc' {V} ps c rpc := @rrls_nc V _ _ (rmI _ _ ps c rpc).
+Definition lrls_nc' {V} G ps c rpc := @lrls_nc V G _ _ (rmI _ _ ps c rpc).
+Definition ImpR_nc' {V} A B := ImpR_nc (@ImpRrule_I V A B).
+Definition ImpL_nc' {V} A B G := ImpL_nc (@ImpLrule_I V A B G).
 
-Definition rrls_tnc' V ps c rpc := @rrls_tnc V _ _ (rmI _ _ ps c rpc).
-Definition lrls_tnc' V G ps c rpc := @lrls_tnc V G _ _ (rmI _ _ ps c rpc).
-Definition il_tnc' V G ps c rpc := @il_tnc V G _ _ (rmI _ _ ps c rpc).
-Definition ImpR_tnc' V A B := ImpR_tnc (@ImpRrule_I V A B).
-Definition Imp_tnc' V B C D G := Imp_tnc (@ImpL_Imp_rule_I V B C D G).
+Definition rrls_tnc' {V} ps c rpc := @rrls_tnc V _ _ (rmI _ _ ps c rpc).
+Definition lrls_tnc' {V} G ps c rpc := @lrls_tnc V G _ _ (rmI _ _ ps c rpc).
+Definition il_tnc' {V} G ps c rpc := @il_tnc V G _ _ (rmI _ _ ps c rpc).
+Definition ImpR_tnc' {V} A B := ImpR_tnc (@ImpRrule_I V A B).
+Definition Imp_tnc' {V} B C D G := Imp_tnc (@ImpL_Imp_rule_I V B C D G).
 
-Definition rrls_anc' V ps c rpc := @rrls_anc V _ _ (rmI _ _ ps c rpc).
-Definition lrls_anc' V G ps c rpc := @lrls_anc V G _ _ (rmI _ _ ps c rpc).
-Definition il_anc' V G ps c rpc := @il_anc V G _ _ (rmI _ _ ps c rpc).
-Definition ImpR_anc' V A B := ImpR_anc (@ImpRrule_I V A B).
+Definition rrls_anc' {V} ps c rpc := @rrls_anc V _ _ (rmI _ _ ps c rpc).
+Definition lrls_anc' {V} G ps c rpc := @lrls_anc V G _ _ (rmI _ _ ps c rpc).
+Definition il_anc' {V} G ps c rpc := @il_anc V G _ _ (rmI _ _ ps c rpc).
+Definition ImpR_anc' {V} A B := ImpR_anc (@ImpRrule_I V A B).
 Definition Imp_anc' V B C D G := Imp_anc (@ImpL_Imp_rule_I V B C D G).
 Definition ImpL_anc' V p B G := ImpL_anc (@ImpLrule_p_I V p B G).
-Definition Id_anc' V v := Id_anc (@Idrule_I V (Var v)).
+Definition Id_anc' {V} v := Id_anc (@Idrule_I V (Var v)).
 
 Lemma LJrules_req V : req (@LJrules V) (fst_ext_rls LJncrules).
 Proof.  unfold LJrules. apply req_refl. Qed.
