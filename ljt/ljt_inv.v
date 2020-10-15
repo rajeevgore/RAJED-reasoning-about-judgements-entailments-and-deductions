@@ -559,6 +559,10 @@ Lemma LJA_can_rel_OrLinv2 {V} seq :
 Proof. unfold can_rel.
 apply der_trf_rc_adm.  exact (@can_trf_OrLinv2_lja V).  Qed.
 
+Definition LJA_rel_adm_AndLinv V := snd (crd_ra _ _ _) (@LJA_can_rel_AndLinv V).
+Definition LJA_rel_adm_OrLinv1 V := snd (crd_ra _ _ _) (@LJA_can_rel_OrLinv1 V).
+Definition LJA_rel_adm_OrLinv2 V := snd (crd_ra _ _ _) (@LJA_can_rel_OrLinv2 V).
+
 Lemma LJA_can_rel_ImpL_And_inv {V} seq :
   derrec LJArules emptyT seq ->
   can_rel LJArules (@srs_ext_rel _ _) (@ImpL_And_inv V) seq.

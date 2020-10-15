@@ -4,7 +4,8 @@ ljt/ljt.vo \
 ljt/ljt_inv.vo \
 ljt/ljt_ctr.vo \
 ljt/ljt_ca.vo \
-ljt/ljt_dn.vo 
+ljt/ljt_dn.vo \
+ljt/ljt_dncc.vo 
 ll: \
 ll/ll_camq.vo \
 ll/ll_cam.vo \
@@ -40,6 +41,7 @@ ljt/ljt_inv.vo: ljt/ljt_inv.v ljt/ljt.vo
 ljt/ljt_ctr.vo: ljt/ljt_ctr.v ljt/ljt_inv.vo
 ljt/ljt_ca.vo: ljt/ljt_ca.v ljt/ljt_ctr.vo
 ljt/ljt_dn.vo: ljt/ljt_dn.v ljt/ljt_inv.vo
+ljt/ljt_dncc.vo: ljt/ljt_dncc.v ljt/ljt_dn.vo ljt/ljt_ctr.vo
 ll/ll_camq.vo ll/ll_camq.glob ll/ll_camq.v.beautified: ll/ll_camq.v general/dd_fc.vo general/swappedT.vo general/List_lemmasT.vo ll/fmlsext.vo ll/lldefs.vo ll/ll_lems.vo ll/ll_exch.vo ll/ll_cam.vo
 ll/ll_cam.vo ll/ll_cam.glob ll/ll_cam.v.beautified: ll/ll_cam.v general/dd_fc.vo general/swappedT.vo general/gentree.vo
 ll/ll_ca.vo ll/ll_ca.glob ll/ll_ca.v.beautified: ll/ll_ca.v general/ddT.vo
