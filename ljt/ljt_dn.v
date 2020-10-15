@@ -595,7 +595,7 @@ Proof. apply fslr_I. apply dn42invs_I. Qed.
 
 Lemma can_trf_dn42inv_lja {V} ps c: @LJArules V ps c ->
   can_trf_rules_rc (srs_ext_rel dn42inv) (adm LJArules) ps c.
-Proof. apply can_trf_genLinv_gena.  apply LJAnc_seL.
+Proof. apply can_trf_genLinv_geng.  apply LJAnc_seL.
 intros * auv.  destruct auv.
 apply LJA_dn42_princ.  Qed.
 
