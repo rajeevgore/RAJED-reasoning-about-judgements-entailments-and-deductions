@@ -553,4 +553,56 @@ apply gs_LJA_ImpL_adm. exact X. Qed.
 Check LJA_ImpL_adm.
 
 (* Lemma 4.2 of Dyckhoff & Negri *)
+Lemma LJA_dn42_princ V ps B C D E :
+  LJAncrules ps ([Imp (Imp C D) B], E) ->
+  forall Γ1 Γ2 : list (PropF V),
+  adm (fst_ext_rls LJAncrules) (map (apfst (fmlsext Γ1 Γ2)) ps)
+    (fmlsext Γ1 Γ2 [C; Imp D B; Imp D B], E).
+Proof. intro ljpc. inversion ljpc ; subst ; clear ljpc.
+- inversion X.  inversion H1 ; inversion H3.
+
+- (* the non-trivial case *) inversion H. subst. clear H. 
+simpl. unfold fmlsext. simpl.
+intros *. apply admI. intro drs.
+inversion drs. subst. clear drs.
+pose (@LJA_ImpL_adm V D _ X _ _ eq_refl B E).  require d.
+clear X d.  inversion X0. clear X0 X1. subst.
+pose (@insL_lja V (Γ1 ++ [B]) Γ2 [Imp D B ; C] E).
+require d.  apply (eq_rect _ _ X). list_eq_assoc.
+apply (eq_rect _ _ d). list_eq_assoc.
+(* now need exchange *)
+clear X X0.  simpl in d.  unfold fmlsext in d. 
+apply (exchL_lja d).  apply fst_relI.
+apply (swapped_I Γ1 [Imp D B ; Imp D B] [C] Γ2) ; list_eq_assoc.
+
+- inversion H. 
+- inversion H.
+- inversion X.
+- inversion X.  inversion X0.
++ inversion H0.  + inversion H0.  + inversion X1.
+- inversion X. 
+Qed.
+
+Inductive dn42invs {V} : PropF V -> list (PropF V) -> Type :=
+  | dn42invs_I : forall B C D, 
+    dn42invs (Imp (Imp C D) B) [C ; Imp D B ; Imp D B].
+
+Definition dn42inv {V} := fslr (@dn42invs V).
+
+Lemma dn42inv_I {V} (B C D : PropF V) : 
+  dn42inv [Imp (Imp C D) B] [C ; Imp D B ; Imp D B].
+Proof. apply fslr_I. apply dn42invs_I. Qed.
+
+Lemma can_trf_dn42inv_lja {V} ps c: @LJArules V ps c ->
+  can_trf_rules_rc (srs_ext_rel dn42inv) (adm LJArules) ps c.
+Proof. apply can_trf_genLinv_gena.  apply LJAnc_seL.
+intros * auv.  destruct auv.
+apply LJA_dn42_princ.  Qed.
+
+Lemma can_rel_dn42inv {V} seq :
+derrec LJArules emptyT seq ->
+  can_rel LJArules (srs_ext_rel (Y:=PropF V)) dn42inv seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact can_trf_dn42inv_lja.  Qed.
+
 
