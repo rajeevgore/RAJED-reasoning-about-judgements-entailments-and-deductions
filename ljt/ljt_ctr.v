@@ -505,6 +505,21 @@ clear X ; inversion X0 as [x | x l X X1 a ] ; subst ; clear X1 X0 ;
 apply dersrec_singleI ;  apply (snd X) ;
 eapply (srs_ext_relI_eq _ _ _ M N (sctr_relI A S2)) ; list_eq_assoc ]].
 
+(* adapt gs_lj_ImpL to lja *)
+Ltac gsiltac_a sub fp A S1 S2 p B G H J K L M N :=
+clear sub ; eapply derI ; [
+eapply (fextI_eqc' _ H J) ; [
+exact (ImpL_anc (ImpLrule_p_I p B G)) |
+simpl ; unfold fmlsext ; simpl ;  list_eq_assoc ] |
+simpl ; unfold fmlsext ; simpl ;
+inversion fp as [x | x l X X0 a ] ; clear fp ; subst ; apply dlCons ; [
+clear X0 ;  apply (snd X) ;
+eapply (srs_ext_relI_eq _ _ _ K L (sctr_relI A S1)) ;
+list_eq_assoc |
+clear X ; inversion X0 as [x | x l X X1 a ] ; subst ; clear X1 X0 ;
+apply dersrec_singleI ;  apply (snd X) ;
+eapply (srs_ext_relI_eq _ _ _ M N (sctr_relI A S2)) ; list_eq_assoc ]].
+
 Check LJ_rel_adm_ImpLinv2.  Check crd_ra.
 About LJ_can_rel_ImpLinv2.
 
@@ -539,6 +554,66 @@ pose (dlCons lpc (dersrec_singleI sub)) as d ;
 eapply derI ; [  eapply (fextI_eqc' _ P Q) ; [
 exact (ImpL_nc (ImpLrule_I A0 B G)) | list_eq_assoc ] | 
 apply (eq_rect _ _ d) ;  list_eq_assoc ].
+
+Ltac gsilptac_a sub fp S p B G H J K L M N P Q := 
+inversion fp as [ | x l lp frp ] ; subst ; clear fp ;
+destruct lp as [ lpd lpc ] ;
+unfold can_rel in lpc ;  erequire lpc ; require lpc ; [
+eapply (srs_ext_relI_eq' _ _ _ H J (sctr_relI (Imp (Var p) B) S)) ;
+list_eq_assoc | ] ;
+(* now lpc is left premise, contracted *)
+inversion frp as [ | x l rp f0 ] ; subst ; clear frp f0 ;
+destruct rp as [ rpd rpc ] ; clear rpc ;
+(* now invert Imp (Var p) B in right premise *)
+apply LJA_can_rel_ImpL_Var_inv2 in rpd ; 
+unfold can_rel in rpd ;  erequire rpd ; require rpd ; [
+eapply (srs_ext_relI_eq' _ _ _ K L (ImpL_Var_inv2_I p B)) ;
+list_eq_assoc | ] ;  
+(* now rpd is right premise, with other Imp (Var p) B inverted to give B *)
+specialize (sub B (dnsub_ImpR _ _) _ rpd) ;
+unfold can_rel in sub ;  erequire sub ; require sub ; [
+eapply (srs_ext_relI_eq' _ _ _ M N (sctr_relI B S)) ;
+list_eq_assoc | ] ; 
+(* now sub is right premise, with B contracted *)
+pose (dlCons lpc (dersrec_singleI sub)) as d ;
+eapply derI ; [  eapply (fextI_eqc' _ P Q) ; [
+exact (ImpL_anc (ImpLrule_p_I p B G)) | list_eq_assoc ] | 
+apply (eq_rect _ _ d) ;  list_eq_assoc ].
+
+Lemma gs_lja_ImpL V A Γ1 Γ2 ps c : @ImpLrule_p V ps c -> gen_step
+    (can_rel LJArules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A
+    dnsubfml (derrec LJArules emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
+    (apfst (fmlsext Γ1 Γ2) c).
+Proof.  intro i. destruct i.  unfold gen_step.
+simpl. unfold fmlsext. simpl.
+intros sub fp dc seq' sc.
+inversion sc. destruct X. clear sc. subst.
+acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst). (* 7 subgoals *)
+
+- (* principal formula of Impl is first occurrence of contracted formula *)
+gsilptac_a sub fp S p B G Γ1 Φ2 (Γ1 ++ B :: S) Φ2 Γ1 Φ2 Γ1 (S ++ Φ2).
+
+- gsiltac_a sub fp A S S p B G Γ1 (H2 ++ (A :: S) ++ Φ2)
+  (Γ1 ++ Imp (Var p) B :: H2) Φ2 (Γ1 ++ B :: H2) Φ2.
+ 
+- gsiltac_a sub fp A S S p B G (Φ1 ++ A :: S) Γ2
+  Φ1 (Imp (Var p) B :: Γ2) Φ1 (B :: Γ2).
+
+- (* principal formula of Impl is first occurrence of contracted formula *)
+gsilptac_a sub fp S p B G Φ1 Φ2 (Φ1 ++ B :: S) Φ2 Φ1 Φ2 Φ1 (S ++ Φ2).
+
+- acacD'T2 ; subst.
++ (* principal formula of Impl is second occurrence of contracted formula *)
+gsilptac_a sub fp H3 p B G Φ1 Φ2 Φ1 (H3 ++ B :: Φ2) Φ1 Φ2 Φ1 (H3 ++ Φ2).
++ gsiltac_a sub fp A (H3 ++ Imp (Var p) B :: H5) (H3 ++ B :: H5) 
+  p B G (Φ1 ++ A :: H3) (H5 ++ Φ2) Φ1 Φ2 Φ1 Φ2.
+
+- (* principal formula of Impl is second occurrence of contracted formula *)
+gsilptac_a sub fp S p B G Φ1 Φ2 Φ1 (S ++ B :: Φ2) Φ1 Φ2 Φ1 (S ++ Φ2).
+
+- gsiltac_a sub fp A S S p B G (Φ1 ++ A :: S ++ H2) Γ2
+  Φ1 (H2 ++ Imp (Var p) B :: Γ2) Φ1 (H2 ++ B :: Γ2).
+Qed.
 
 Lemma gs_lj_ImpL V A Γ1 Γ2 ps c : ImpLrule ps c -> gen_step
     (can_rel LJrules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A

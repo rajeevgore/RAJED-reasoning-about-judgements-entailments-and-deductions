@@ -77,6 +77,9 @@ Proof. apply fslr_I. apply OrLinv2s_I. Qed.
 Lemma ImpLinv2_I {V} (C D : PropF V) : ImpLinv2 [Imp C D] [D].
 Proof. apply fslr_I. apply ImpLinv2s_I. Qed.
 
+Lemma ImpL_Var_inv2_I {V} p (D : PropF V) : ImpL_Var_inv2 [Imp (Var p) D] [D].
+Proof. apply fslr_I. apply ImpL_Var_inv2s_I. Qed.
+
 (* extend relation on rhs with general context on the left
   suitable for AndRinv1/2 OrRinv1/2 *)
 Inductive ant_rel W Y R : relationT (list W * Y) :=

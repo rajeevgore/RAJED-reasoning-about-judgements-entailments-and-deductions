@@ -191,7 +191,7 @@ exact (gs_lja_ilrules _ _ r).
 - (* ImpL_Imp_rule *)
 admit.
 - (* ImpLrule *)
-admit.
+exact (gs_lja_ImpL _ _ i).
 - (* ImpRrule *)
 exact (gs_lja_ImpR _ _ _ i).
 - (* Idrule *)
