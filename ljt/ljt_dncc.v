@@ -193,7 +193,7 @@ admit.
 - (* ImpLrule *)
 admit.
 - (* ImpRrule *)
-admit.
+exact (gs_lja_ImpR _ _ _ i).
 - (* Idrule *)
 eapply gs_sctr_Id. 2: exact i. apply rsubI. apply Id_anc.
 - (* left rules *)

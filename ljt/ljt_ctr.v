@@ -446,8 +446,8 @@ Check gs_ljg_glrules.
 
 Lemma eq_rect_0 P Q : P -> P = Q -> Q.  Proof. intros. subst. exact X. Qed.
 
-Ltac gsirtac1 L1 L2 := 
-eapply (fextI_eqc' _ L1 L2) ; [ apply ImpR_nc' |
+Ltac gsirtac2 thm L1 L2 := 
+eapply (fextI_eqc' _ L1 L2) ; [ apply thm |
 simpl ; unfold fmlsext ; simpl ;
 list_assoc_r' ; reflexivity ].
 
@@ -459,31 +459,37 @@ clear fp X0 ; apply (snd X) ;
 pose (srs_ext_relI _ _ _ B Φ1 Φ2 (sctr_relI A S)) as s ;
 eapply eq_rect_0 ; [ exact s | list_assoc_r' ; reflexivity ].
 
-Lemma gs_lj_ImpR V A Γ1 Γ2 any ps c : ImpRrule ps c -> gen_step
-    (can_rel LJrules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A
-    any (derrec (@LJrules V) emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
+Lemma gs_ljg_ImpR V A rules Γ1 Γ2 any ps c 
+  (ImpR_gnc' : forall A B, rules [([A], B)] ([], Imp A B)) :
+  ImpRrule ps c -> gen_step (can_rel (fst_ext_rls rules)
+      (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A
+    any (derrec (fst_ext_rls rules) emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
     (apfst (fmlsext Γ1 Γ2) c).
 Proof.  intro i. destruct i.  unfold gen_step.
 simpl. unfold fmlsext. simpl.
 intros sub fp dc seq' sc. clear sub.
 inversion sc. destruct X. clear sc. subst.
 acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst). (* 6 subgoals *)
-- eapply derI. gsirtac1 Γ1 (H0 ++ (A :: S) ++ Φ2).
+- eapply derI. gsirtac2 ImpR_gnc' Γ1 (H0 ++ (A :: S) ++ Φ2).
 gsirtac3 B (Γ1 ++ A0 :: H0) Φ2 A S fp.
-- eapply derI. gsirtac1 Φ1 ((A :: S) ++ Φ2).
+- eapply derI. gsirtac2 ImpR_gnc' Φ1 ((A :: S) ++ Φ2).
 gsirtac3 B (Φ1 ++ [A0]) Φ2 A S fp.
-- eapply derI. gsirtac1 (Φ1 ++ A :: H3) (H6 ++ Φ2).
+- eapply derI. gsirtac2 ImpR_gnc' (Φ1 ++ A :: H3) (H6 ++ Φ2).
 gsirtac3 B Φ1 Φ2 A (H3 ++ A0 :: H6) fp.
-- eapply derI. gsirtac1 (Φ1 ++ A :: S) Φ2.
+- eapply derI. gsirtac2 ImpR_gnc' (Φ1 ++ A :: S) Φ2.
 gsirtac3 B Φ1 Φ2 A (S ++ [A0]) fp.
-- eapply derI. gsirtac1 (Φ1 ++ A :: S) Φ2.
+- eapply derI. gsirtac2 ImpR_gnc' (Φ1 ++ A :: S) Φ2.
 gsirtac3 B Φ1 (A0 :: Φ2) A S fp.
-- eapply derI. gsirtac1 (Φ1 ++ A :: S ++ H2) Γ2.
+- eapply derI. gsirtac2 ImpR_gnc' (Φ1 ++ A :: S ++ H2) Γ2.
 gsirtac3 B Φ1 (H2 ++ A0 :: Γ2) A S fp.
 Qed.
 
-Check gs_lj_ImpR.
+Check gs_ljg_ImpR.
 
+Definition gs_lj_ImpR V A Γ1 Γ2 any ps c :=
+  @gs_ljg_ImpR V A _ Γ1 Γ2 any ps c ImpR_nc'.
+Definition gs_lja_ImpR V A Γ1 Γ2 any ps c :=
+  @gs_ljg_ImpR V A _ Γ1 Γ2 any ps c ImpR_anc'.
 
 Ltac gsiltac sub fp A S1 S2 A0 B G H J K L M N :=
 clear sub ; eapply derI ; [
