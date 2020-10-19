@@ -21,27 +21,6 @@ Require Import gen_seq gstep gentree rtcT.
 Require Import ljt ljt_inv.
 Require Import Coq.Program.Basics.
 
-(* a definition of subformula corresponding to the weight defined by D&N *)
-Inductive dnsubfml {V} : PropF V -> PropF V -> Type :=
-  | dnsub_Imp_ImpL : forall B C D, dnsubfml (Imp D B) (Imp (Imp C D) B)
-  | dnsub_Imp_AndL : forall B C D, dnsubfml (Imp C (Imp D B)) (Imp (And C D) B)
-  | dnsub_Imp_OrL2 : forall B C D, dnsubfml (Imp D B) (Imp (Or C D) B)
-  | dnsub_Imp_OrL1 : forall B C D, dnsubfml (Imp C B) (Imp (Or C D) B)
-  | dnsub_ImpL : forall C D, dnsubfml C (Imp C D)
-  | dnsub_ImpR : forall C D, dnsubfml D (Imp C D)
-  | dnsub_AndL : forall C D, dnsubfml C (And C D)
-  | dnsub_AndR : forall C D, dnsubfml D (And C D)
-  | dnsub_OrL : forall C D, dnsubfml C (Or C D)
-  | dnsub_OrR : forall C D, dnsubfml D (Or C D).
-
-(*
-Lemma AccT_dnsubfml {V} (A : PropF V) : AccT dnsubfml A.
-Proof. induction A ; apply AccT_intro ; intros A' isf ;
-  inversion isf ; subst ; assumption. Qed.
-  *)
-
-Axiom AccT_dnsubfml : forall V (A : PropF V), AccT dnsubfml A.
-
 (* Lemma 3.2(1) of Dyckhoff & Negri JSL 2000 *)
 Lemma LJA_der_id {V} :
   forall (A : PropF V) (a : AccT dnsubfml A), 

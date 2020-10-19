@@ -217,21 +217,34 @@ apply crd_ra.  apply lja_ra_Or.
 apply crd_ra.  exact (sub A (isub_OrL _ _)).
 apply crd_ra.  exact (sub B (isub_OrR _ _)). Qed.
 
+(* may be redundant due to gen_der_Id following *)
 Lemma lj_der_Id V prems Γ1 Γ2 (p : V : Set) : 
   derrec LJrules prems (Γ1 ++ Var p :: Γ2, Var p).
 Proof. eapply derI.  eapply fextI_eqc'. eapply Id_nc.
 apply Idrule_I. reflexivity. apply dlNil. Qed.
 
-Lemma gs_sctr_Id V A p any Γ1 Γ2 ps c : Idrule (@Var V p) ps c -> gen_step
-  (can_rel LJrules (fun fml' => srs_ext_rel (sctr_rel fml'))) A
-  any (derrec LJrules emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
+Lemma gen_der_Id V prems rules Γ (p : V : Set) : 
+  rsub (Idrule (@Var V p)) rules -> InT (Var p) Γ ->
+  derrec (fst_ext_rls rules) prems (Γ, Var p).
+Proof. intros rs ing. 
+apply InT_split in ing. cD. subst.
+eapply derI.  eapply fextI_eqc'. 
+apply rs. apply Idrule_I.
+reflexivity. apply dlNil. Qed.
+
+Lemma gs_sctr_Id V A rules p any Γ1 Γ2 ps c :
+  rsub (Idrule (@Var V p)) rules -> 
+  Idrule (@Var V p) ps c -> gen_step
+  (can_rel (fst_ext_rls rules) (fun fml' => srs_ext_rel (sctr_rel fml'))) A
+  any (derrec (fst_ext_rls rules) emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
   (apfst (fmlsext Γ1 Γ2) c).
-Proof. intros i sub fp dc. clear sub fp dc.
+Proof. intros rs i sub fp dc. clear sub fp dc.
 intros seq' ser.  inversion i. subst.
 simpl in ser.  inversion ser. inversion X. subst. clear ser X.
 unfold fmlsext in H0. simpl in H0.
-acacD'T2 ; subst ; assoc_single_mid' (Var p) ; try (apply lj_der_Id).
-all : acacD'T2 ; subst ; assoc_single_mid' (Var p) ; try (apply lj_der_Id).
+eapply (gen_der_Id _ rs).
+acacD'T2 ; subst ; try solve_InT.
+all : acacD'T2 ; subst ; try solve_InT.
 list_eq_ncT. tauto.  Qed.
 
 Lemma usefmm U V W X Y a b c f g rls ups ps : ForallT a (map b (map c ps)) ->
@@ -344,42 +357,43 @@ rewrite <- app_comm_cons.  apply lj_der_Bot.
 Qed.
 
 Lemma lja_ctr_lrls {V} ps s (l : @LJslrules V ps [s])
-  (sub : forall A', isubfml A' s -> forall x, derrec LJArules emptyT x ->
+  (sub : forall A', dnsubfml A' s -> forall x, derrec LJArules emptyT x ->
     can_rel LJArules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml')) A' x) :
   rel_adm LJArules (srs_ext_rel (sctr_rel s)).
 Proof. inversion l ; subst ; clear l.
 + inversion H. subst. clear H.  apply lja_ra_And.
-apply crd_ra.  exact (sub A (isub_AndL _ _)).
-apply crd_ra.  exact (sub B (isub_AndR _ _)).
+apply crd_ra.  exact (sub A (dnsub_AndL _ _)).
+apply crd_ra.  exact (sub B (dnsub_AndR _ _)).
 + inversion H. subst. clear H.  apply lja_ra_Or.
-apply crd_ra.  exact (sub A (isub_OrL _ _)).
-apply crd_ra.  exact (sub B (isub_OrR _ _)).
+apply crd_ra.  exact (sub A (dnsub_OrL _ _)).
+apply crd_ra.  exact (sub B (dnsub_OrR _ _)).
 + (* Botrule *) clear sub.  inversion X. repeat split.
 inversion X0.  inversion X1.  subst. intro.
 rewrite <- app_comm_cons.  apply lja_der_Bot.
 Qed.
 
-Lemma gs_ljg_lrules V A rules Γ1 Γ2 (G : PropF V) ps c 
+Lemma gs_ljg_glrules V A rules lrules subf Γ1 Γ2 (G : PropF V) ps c  
+  (lr_single : forall ps c, lrules ps c -> {c' : PropF V & c = [c']}) 
   (lr_gnc' : forall G ps c, 
-    LJslrules ps c -> rules (map (flip pair G) ps) (flip pair G c)) 
-  (ljg_ctr_lrls : forall ps s, @LJslrules V ps [s] ->
-    (forall A', isubfml A' s -> forall x, derrec (fst_ext_rls rules) emptyT x ->
+    lrules ps c -> rules (map (flip pair G) ps) (flip pair G c)) 
+  (ljg_ctr_il : forall ps s, lrules ps [s] ->
+    (forall A', subf A' s -> forall x, derrec (fst_ext_rls rules) emptyT x ->
       can_rel (fst_ext_rls rules)
         (fun fml' => srs_ext_rel (sctr_rel fml')) A' x) ->
     rel_adm (fst_ext_rls rules) (srs_ext_rel (sctr_rel s))) :
-  rlsmap (flip pair G) (@LJslrules V) ps c ->
+  rlsmap (flip pair G) lrules ps c ->
   gen_step (can_rel (fst_ext_rls rules) 
-      (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A isubfml
+      (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A subf
     (derrec (fst_ext_rls rules) emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
     (apfst (fmlsext Γ1 Γ2) c).
 Proof.  intro r. destruct r.  unfold gen_step.
 simpl. unfold fmlsext. simpl.
 intros sub fp dc seq' sc. 
 inversion sc. destruct X. clear sc. subst.
-pose (LJsl_single l). cD. subst.  simpl in H0.
+pose (lr_single _ _ l). cD. subst.  simpl in H0.
 acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst). (* 7 subgoals *)
 - (* principal formula is occurrence of contracted formula *)
-clear fp. pose (rel_admD (ljg_ctr_lrls _ _ l sub)).
+clear fp. pose (rel_admD (ljg_ctr_il _ _ l sub)).
 revert dc. apply r. clear sub r.  apser'. apply sctr_relI.
 - clear sub. eapply derI. eapply fextI_eqc'. exact (lr_gnc' G _ _ l).
 simpl. unfold fmlsext. simpl.
@@ -389,11 +403,11 @@ clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr).
 simpl. unfold fmlsext. simpl.
 apser'.  apply (sctr_relI A S).
 - (* principal formula is occurrence of contracted formula *)
-clear fp. pose (rel_admD (ljg_ctr_lrls _ _ l sub)).
+clear fp. pose (rel_admD (ljg_ctr_il _ _ l sub)).
 revert dc. apply r. clear sub r.  apser'. apply sctr_relI.
 - acacD'T2 ; subst. (* why is this necessary? *)
 + (* principal formula is occurrence of contracted formula *)
-clear fp. pose (rel_admD (ljg_ctr_lrls _ _ l sub)).
+clear fp. pose (rel_admD (ljg_ctr_il _ _ l sub)).
 revert dc. apply r. clear sub r.  apser'. apply sctr_relI.
 + (* principal formula between occurrences of contracted formula *)
 clear sub. eapply derI. eapply fextI_eqc'. exact (lr_gnc' G _ _ l).
@@ -412,7 +426,7 @@ clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr).
 simpl. unfold fmlsext. simpl.
 apser'.  apply (sctr_relI A S).
 - (* principal formula is occurrence of contracted formula *)
-clear fp. pose (rel_admD (ljg_ctr_lrls _ _ l sub)).
+clear fp. pose (rel_admD (ljg_ctr_il _ _ l sub)).
 revert dc. apply r. clear sub r.  apser'. apply sctr_relI.
 - clear sub. eapply derI. eapply fextI_eqc'. exact (lr_gnc' G _ _ l).
 simpl. unfold fmlsext. simpl.
@@ -423,12 +437,12 @@ simpl. unfold fmlsext. simpl.
 apser'.  apply (sctr_relI A S).
 Qed.
 
-Definition gs_lj_lrules V A Γ1 Γ2 G ps c :=
-  @gs_ljg_lrules V A LJncrules Γ1 Γ2 G ps c lrls_nc' lj_ctr_lrls.
-Definition gs_lja_lrules V A Γ1 Γ2 G ps c :=
-  @gs_ljg_lrules V A LJAncrules Γ1 Γ2 G ps c lrls_anc' lja_ctr_lrls.
+Definition gs_lj_lrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
+  A _ _ _ Γ1 Γ2 G ps c LJsl_single lrls_nc' lj_ctr_lrls.
+Definition gs_lja_lrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
+  A _ _ _ Γ1 Γ2 G ps c LJsl_single lrls_anc' lja_ctr_lrls.
 
-Check gs_ljg_lrules.
+Check gs_ljg_glrules.
 
 Lemma eq_rect_0 P Q : P -> P = Q -> Q.  Proof. intros. subst. exact X. Qed.
 
@@ -557,7 +571,6 @@ Qed.
 
 Print Implicit gs_lj_ImpL.
 
-
 Lemma ctr_adm_lj V (fml : PropF V) : 
   forall seq, derrec LJrules emptyT seq -> 
   can_rel LJrules (fun fml' => srs_ext_rel (sctr_rel fml')) fml seq.
@@ -569,7 +582,7 @@ exact (gs_lj_ImpL _ _ i).
 - (* ImpRrule *)
 exact (gs_lj_ImpR _ _ _ i). 
 - (* Idrule *)
-exact (gs_sctr_Id _ _ _ i). 
+eapply gs_sctr_Id. 2: exact i. apply rsubI. apply Id_nc.
 - (* left rules *)
 exact (gs_lj_lrules _ _ r).
 - (* right rules *) 

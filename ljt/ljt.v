@@ -37,6 +37,27 @@ Lemma AccT_isubfml {V} (A : PropF V) : AccT isubfml A.
 Proof. induction A ; apply AccT_intro ; intros A' isf ;
   inversion isf ; subst ; assumption. Qed.
 
+(* a definition of subformula corresponding to the weight defined by D&N *)
+Inductive dnsubfml {V} : PropF V -> PropF V -> Type :=
+  | dnsub_Imp_ImpL : forall B C D, dnsubfml (Imp D B) (Imp (Imp C D) B)
+  | dnsub_Imp_AndL : forall B C D, dnsubfml (Imp C (Imp D B)) (Imp (And C D) B)
+  | dnsub_Imp_OrL2 : forall B C D, dnsubfml (Imp D B) (Imp (Or C D) B)
+  | dnsub_Imp_OrL1 : forall B C D, dnsubfml (Imp C B) (Imp (Or C D) B)
+  | dnsub_ImpL : forall C D, dnsubfml C (Imp C D)
+  | dnsub_ImpR : forall C D, dnsubfml D (Imp C D)
+  | dnsub_AndL : forall C D, dnsubfml C (And C D)
+  | dnsub_AndR : forall C D, dnsubfml D (And C D)
+  | dnsub_OrL : forall C D, dnsubfml C (Or C D)
+  | dnsub_OrR : forall C D, dnsubfml D (Or C D).
+
+(*
+Lemma AccT_dnsubfml {V} (A : PropF V) : AccT dnsubfml A.
+Proof. induction A ; apply AccT_intro ; intros A' isf ;
+  inversion isf ; subst ; assumption. Qed.
+  *)
+
+Axiom AccT_dnsubfml : forall V (A : PropF V), AccT dnsubfml A.
+
 (* singleton-on-the-right sequent *)
 Definition srseq A := prod (list A) A.
 
@@ -149,9 +170,12 @@ Inductive LJAncrules {V} : rlsT (srseq (PropF V)) :=
   | rrls_anc : forall ps c, rlsmap (pair []) LJsrrules ps c -> LJAncrules ps c
   .
 
-Lemma LJsl_single V ps c : @LJslrules V ps c -> {c' & c = [c']}.
+Lemma LJsl_single {V} ps c : @LJslrules V ps c -> {c' & c = [c']}.
 Proof. intro ljsl.  destruct ljsl ; rename_last r ;
 destruct r ; subst ; eexists ; reflexivity. Qed.
+
+Lemma LJAil_single {V} ps c : LJAilrules ps c -> {c' : PropF V & c = [c']}.
+Proof. intro. destruct H ; destruct i ; eexists ; reflexivity. Qed.
 
 (* all rules, without left context,
   note Idrule for propositions only, saves effort doing invertibility
