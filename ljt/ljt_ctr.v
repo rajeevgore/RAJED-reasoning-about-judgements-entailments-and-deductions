@@ -29,6 +29,10 @@ Inductive ctr_rel V (fml : V) : relationT (list V) :=
 Inductive lsctr_rel V (fmls : list V) : relationT (list V) :=
   | lsctr_relI S : lsctr_rel fmls (fmls ++ S ++ fmls) (fmls ++ S). 
 
+Lemma sctr_relI_eqp V (fml : V) S seq :
+  seq = (fml :: S ++ [fml]) -> sctr_rel fml seq (fml :: S).
+Proof. intro. subst. apply sctr_relI. Qed.
+
 (* note, doing contractions of Imp A B when principal,
   requires inversion and contraction of B (induction on formula)
   and contraction of Imp A B in premise (induction on derivation)
@@ -256,6 +260,16 @@ apply InT_mapE in incp1. cD.  subst.
 eapply ForallTD_forall in fa. 
 exact (dp _ fa).
 exact (InT_map _ (InT_map _ incp3)).
+Qed.
+
+Lemma usefm U V Y a b f rls ups ps : ForallT a (map b ps) ->
+  (forall p : U, a (b p : V) -> derrec rls ups (f p : Y)) -> 
+  dersrec rls ups (map f ps).
+Proof. intros fa dp.  apply dersrecI_forall.
+intros c0 incp.  apply InT_mapE in incp. cD.  subst.
+eapply ForallTD_forall in fa. 
+exact (dp _ fa).
+exact (InT_map _ incp1).
 Qed.
 
 Lemma gs_ljg_rrules V A rules any Γ1 Γ2 ps c
@@ -700,3 +714,25 @@ list_eq_assoc.  list_eq_assoc. Qed.
 
 About asa_ser_lsctr.
 
+(* lemmas for tactics to do contraction *)
+Lemma ser_appL W Y R L1 L2 L2' (G : Y) :
+  @srs_ext_rel W Y R (L2, G) (L2', G) ->
+  srs_ext_rel R (L1 ++ L2, G) (L1 ++ L2', G).
+Proof. intro ser. inversion ser. eapply srs_ext_relI_eq.
+exact X. list_assoc_l'. reflexivity.
+list_assoc_l'. reflexivity. Qed.
+
+Lemma ser_appR W Y R L1 L1' L2 (G : Y) :
+  @srs_ext_rel W Y R (L1, G) (L1', G) ->
+  srs_ext_rel R (L1 ++ L2, G) (L1' ++ L2, G).
+Proof. intro ser. inversion ser. list_assoc_r'. 
+apply srs_ext_relI.  exact X. Qed.
+
+Lemma ser_appc W Y R (c : W) L2 L2' (G : Y) :
+  srs_ext_rel R (L2, G) (L2', G) ->
+  srs_ext_rel R (c :: L2, G) (c :: L2', G).
+Proof. intro ser. inversion ser. rewrite !app_comm_cons.
+apply srs_ext_relI.  exact X. Qed.
+
+
+  

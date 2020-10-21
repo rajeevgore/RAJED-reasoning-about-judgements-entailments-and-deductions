@@ -474,10 +474,6 @@ Qed.
 
 Check gs_LJA_ImpL_ImpL.
 
-
-
-(* TODO - change this to gs *)
-  
 Lemma gs_LJA_ImpL_adm V (D : PropF V) ps c Γ1 Γ2 (r : LJAncrules ps c) :
   gen_step l41prop D isubfml (derrec LJArules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
@@ -583,5 +579,4 @@ derrec LJArules emptyT seq ->
   can_rel LJArules (srs_ext_rel (Y:=PropF V)) dn42inv seq.
 Proof. unfold can_rel.
 apply der_trf_rc_adm.  exact can_trf_dn42inv_lja.  Qed.
-
 

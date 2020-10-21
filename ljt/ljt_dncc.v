@@ -137,48 +137,107 @@ Qed.
 Definition gs_lja_ilrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
   A _ _ _ Γ1 Γ2 G ps c LJAil_single il_anc' lja_ctr_il.
 
-(*
+(* tactic for srs_ext_rel (sctr_rel A) X Y where X is given *)
+Ltac sersctacR1 A := ((apply (ser_appR (single A)) ; fail 1) || 
+  (apply ser_appR)).
+(* for some reason we need eapply using ser_appR *)
+Ltac sersctacR1e A := ((eapply (ser_appR (single A)) ; fail 1) || 
+  (apply ser_appR)).
+Ltac sersctacL1 A := 
+  (apply (ser_appc A) ; fail 1) || (apply ser_appL || apply ser_appc).
 
-
-*)
-
+Ltac sersctac A := rewrite ?(cons_app_single A) ;
+  list_assoc_l' ; rewrite ?(cons_app_single _ (single A)) ;
+  rewrite ?app_nil_r ; list_assoc_l' ; repeat (sersctacR1e A) ;
+  rewrite - ?app_assoc ; repeat (sersctacL1 A).
 
 (* 
+(* difficult case of contraction for Lemma 5.1, as top of pg 1505 *)
+
+Lemma gs_lja_ImpL_Imp V A Γ1 Γ2 ps c : ImpL_Imp_rule ps c ->
+  gen_step (can_rel (fst_ext_rls LJAncrules)
+      (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A dnsubfml
+    (derrec (fst_ext_rls LJAncrules) emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof.  intro r. destruct r.  unfold gen_step.
+intros sub fp dc seq' sc.
+inversion sc. destruct X. clear sc. subst.
+unfold fmlsext in H0.  simpl in H0.
+acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst). (* 7 subgoals *)
+
+- (* principal formula is occurrence of contracted formula *)
+simpl in fp. unfold fmlsext in fp. simpl in fp. 
+inversion fp. apply fst in X. subst. clear fp.
+(* apply Lemma 4.2 to X *)
+apply can_rel_dn42inv in X.
+unfold can_rel in X.  erequire X.  require X.
+assoc_single_mid' (Imp (Imp C D) B).
+eapply srs_ext_relI_c1.  apply dn42inv_I.
+
+(* now contract Imp D B, twice, and C, once *)
+pose (sub _ (dnsub_Imp_ImpL _ _ _)).
+
+apply c in X.  unfold can_rel in X.  erequire X.  require X.
+sersctac (Imp D B).
+apply srs_ext_relI_nil.  eapply sctr_relI_eqp.
+list_assoc_r'. apply f_equal.  list_assoc_l'. reflexivity.
+
+apply c in X.  unfold can_rel in X.  erequire X.  require X.
+sersctac (Imp D B).
+apply srs_ext_relI_nil.  eapply sctr_relI_eqp.
+list_assoc_r'. apply f_equal.  list_assoc_l'. reflexivity.
 
 
+need to change it all to transitive closure of dnsubfml 
 
-for contraction for LJA have so far
-Check lja_ra_And.
-Check lja_ra_Or.
-Check gs_sctr_lja_And.
-Check gs_sctr_lja_Or.
-Check gs_lja_rrules.
-Check lja_der_Bot.
-Check lja_ctr_lrls.
-Check gs_lja_lrules.
 
-proof for lj
+admit.
 
-Lemma ctr_adm_lj V (fml : PropF V) :
-  forall seq, derrec LJrules emptyT seq ->
-  can_rel LJrules (fun fml' => srs_ext_rel (sctr_rel fml')) fml seq.
-Proof. eapply gen_step_lemT. apply AccT_isubfml.
-intros * ljpc. destruct ljpc.
-destruct r. destruct l.
-- (* ImpLrule *)
-exact (gs_lj_ImpL _ _ i).
-- (* ImpRrule *)
-exact (gs_lj_ImpR _ _ _ i).
-- (* Idrule *)
-exact (gs_sctr_Id _ _ _ i). CHANGED
-- (* left rules *)
-exact (gs_lj_lrules _ _ r).
-- (* right rules *)
-exact (gs_lj_rrules _ _ _ r).
+- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
+simpl. unfold fmlsext. simpl.
+list_assoc_r'. reflexivity.
+eapply usefm. exact fp.
+clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr). clear fpdcr.
+destruct p. simpl. unfold fmlsext. simpl.
+apser'.  apply (sctr_relI A S).
 
-Qed.
+- (* principal formula is occurrence of contracted formula *)
+admit.
 
-similar proof for lja
+- acacD'T2 ; subst. (* why is this necessary? *)
++ (* principal formula is occurrence of contracted formula *)
+admit.
+
++ (* principal formula between occurrences of contracted formula *)
+clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
+simpl. unfold fmlsext. simpl.
+assoc_single_mid' (Imp (Imp C D) B). reflexivity.
+eapply usefm. exact fp.
+clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr). clear fpdcr.
+destruct p. simpl. unfold fmlsext. simpl.
+apser'.  eapply arg1_cong_imp.
+2: apply sctr_relI.  list_eq_assoc.
+
+- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
+simpl. unfold fmlsext. simpl.
+list_assoc_l'. reflexivity.
+eapply usefm. exact fp.
+clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr). clear fpdcr.
+destruct p. simpl. unfold fmlsext. simpl.
+apser'.  apply (sctr_relI A S).
+
+- (* principal formula is occurrence of contracted formula *)
+admit.
+
+- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
+simpl. unfold fmlsext. simpl.
+list_assoc_l'. reflexivity.
+eapply usefm. exact fp.
+clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr). clear fpdcr.
+destruct p. simpl. unfold fmlsext. simpl.
+apser'.  apply (sctr_relI A S).
+
+Admitted.
 
 Lemma ctr_adm_lja V (fml : PropF V) :
   forall seq, derrec LJArules emptyT seq ->
@@ -189,7 +248,7 @@ destruct r. destruct l.
 - (* LJAilrules *)
 exact (gs_lja_ilrules _ _ r).
 - (* ImpL_Imp_rule *)
-admit.
+exact (gs_lja_ImpL_Imp _ _ i).
 - (* ImpLrule *)
 exact (gs_lja_ImpL _ _ i).
 - (* ImpRrule *)
@@ -201,7 +260,7 @@ exact (gs_lja_lrules _ _ r).
 - (* right rules *)
 exact (gs_lja_rrules _ _ _ r).
 
-Admitted.
+Qed.
 
 *)
 

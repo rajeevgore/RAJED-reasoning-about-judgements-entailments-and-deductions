@@ -103,6 +103,13 @@ Definition srs_ext_relI_eqc W Y R ant ant' G Φ1 Φ2 seq2 raa :=
 Definition srs_ext_relI_eqp W Y R ant ant' G Φ1 Φ2 seq1 raa eq1 :=
   @srs_ext_relI_eq W Y R ant ant' G Φ1 Φ2 seq1 _ raa eq1 eq_refl.
 
+Definition srs_ext_relI_c1 W Y R a := @srs_ext_relI W Y R [a].
+
+Lemma srs_ext_relI_nil W Y R (ant ant' : list W) (G : Y) : 
+  R ant ant' -> srs_ext_rel R (ant, G) (ant', G).
+Proof. intro raa. pose (srs_ext_relI R _ _ G [] [] raa).
+rewrite -> !app_nil_r in s. exact s. Qed.
+
 (* extend relation with general context on the left,
   given right rule which may put stuff on the left in premise, eg ImpR
   right, suitable for ImpLinv2, AndLinv. OrLinv1/2 *)
