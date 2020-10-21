@@ -137,27 +137,67 @@ Qed.
 Definition gs_lja_ilrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
   A _ _ _ Γ1 Γ2 G ps c LJAil_single il_anc' lja_ctr_il.
 
-(* tactic for srs_ext_rel (sctr_rel A) X Y where X is given *)
-Ltac sersctacR1 A := ((apply (ser_appR (single A)) ; fail 1) || 
+(* tactic for srs_ext_rel ... X Y where X is given,
+  where relation is (eg) contraction on or inversion of A,
+  strips off all before and after A in goal *)
+Ltac sertacR1 A := ((apply (ser_appR (single A)) ; fail 1) || 
   (apply ser_appR)).
 (* for some reason we need eapply using ser_appR *)
-Ltac sersctacR1e A := ((eapply (ser_appR (single A)) ; fail 1) || 
+Ltac sertacR1e A := ((eapply (ser_appR (single A)) ; fail 1) || 
   (apply ser_appR)).
-Ltac sersctacL1 A := 
+Ltac sertacL1 A := 
   (apply (ser_appc A) ; fail 1) || (apply ser_appL || apply ser_appc).
 
-Ltac sersctac A := rewrite ?(cons_app_single A) ;
+Ltac sertac A := rewrite ?(cons_app_single A) ;
   list_assoc_l' ; rewrite ?(cons_app_single _ (single A)) ;
-  rewrite ?app_nil_r ; list_assoc_l' ; repeat (sersctacR1e A) ;
-  rewrite - ?app_assoc ; repeat (sersctacL1 A).
+  rewrite ?app_nil_r ; list_assoc_l' ; repeat (sertacR1e A) ;
+  rewrite - ?app_assoc ; repeat (sertacL1 A).
 
-(* 
+(* for contraction on A , X is can_rel ... *)
+Ltac sersctrtac X A := 
+unfold can_rel in X ; erequire X ; require X ; [ sertac A ;
+apply srs_ext_relI_nil ; eapply sctr_relI_eqp ;
+list_assoc_r' ; apply f_equal ; list_assoc_l' ; reflexivity | ].
+
+Ltac appii fml X sub := 
+assoc_single_mid' fml ;
+eapply derI ; [ eapply fextI ; eapply rmI_eqc ; [ apply Imp_anc' |
+simpl ; unfold fmlsext ; reflexivity ] |
+apply dlCons ; [
+apply (eq_rect _ _ X) ; simpl ; unfold fmlsext ; list_eq_assoc |
+apply dersrec_singleI ;
+apply (eq_rect _ _ sub) ; simpl ; unfold fmlsext ; list_eq_assoc ]].
+
+Ltac appii2 A B X1 sub := 
+apply LJA_can_rel_ImpL_Imp_inv2 in X1 ;
+unfold can_rel in X1 ;  erequire X1 ;  require X1 ; [
+sertac A ;
+apply srs_ext_relI_nil ; apply fslr_I ;  apply ImpL_Imp_inv2s_I | 
+(* now contract B in X1 *)
+specialize (sub _ (tT_step _ _ _ (dnsub_ImpR _ _)) _ X1) ;
+sersctrtac sub B ;
+(* now apply ImpL_Imp_rule *)
+simpl in sub ; clear X1 ].
+
+Ltac app42i fp X A := 
+simpl in fp ; unfold fmlsext in fp ; simpl in fp ; 
+inversion fp ; apply fst in X ; subst ; clear fp ;
+(* apply Lemma 4.2 to X *)
+apply can_rel_dn42inv in X ;
+unfold can_rel in X ;  erequire X ;  require X ; [
+assoc_single_mid' A ;
+eapply srs_ext_relI_c1 ;  apply dn42inv_I | ].
+
+Lemma tc_dns_ii V B C D : clos_transT dnsubfml C (@Imp V (Imp C D) B).
+Proof. eapply tT_trans ; apply tT_step ; apply dnsub_ImpL. Qed.
+
+
 (* difficult case of contraction for Lemma 5.1, as top of pg 1505 *)
 
 Lemma gs_lja_ImpL_Imp V A Γ1 Γ2 ps c : ImpL_Imp_rule ps c ->
   gen_step (can_rel (fst_ext_rls LJAncrules)
-      (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A dnsubfml
-    (derrec (fst_ext_rls LJAncrules) emptyT)
+      (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A 
+    (clos_transT dnsubfml) (derrec (fst_ext_rls LJAncrules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof.  intro r. destruct r.  unfold gen_step.
 intros sub fp dc seq' sc.
@@ -166,32 +206,20 @@ unfold fmlsext in H0.  simpl in H0.
 acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst). (* 7 subgoals *)
 
 - (* principal formula is occurrence of contracted formula *)
-simpl in fp. unfold fmlsext in fp. simpl in fp. 
-inversion fp. apply fst in X. subst. clear fp.
-(* apply Lemma 4.2 to X *)
-apply can_rel_dn42inv in X.
-unfold can_rel in X.  erequire X.  require X.
-assoc_single_mid' (Imp (Imp C D) B).
-eapply srs_ext_relI_c1.  apply dn42inv_I.
+app42i fp X (Imp (Imp C D) B).
 
-(* now contract Imp D B, twice, and C, once *)
-pose (sub _ (dnsub_Imp_ImpL _ _ _)).
+(* now contract Imp D B, twice *)
+pose (sub _ (tT_step _ _ _ (dnsub_Imp_ImpL _ _ _))).
+apply c in X. sersctrtac X (Imp D B).
+apply c in X. sersctrtac X (Imp D B).
 
-apply c in X.  unfold can_rel in X.  erequire X.  require X.
-sersctac (Imp D B).
-apply srs_ext_relI_nil.  eapply sctr_relI_eqp.
-list_assoc_r'. apply f_equal.  list_assoc_l'. reflexivity.
+(* now contract C *) clear c ;  pose (sub C (tc_dns_ii _ _ _) _ X) ; 
+sersctrtac c C ; simpl in c ; clear X.
 
-apply c in X.  unfold can_rel in X.  erequire X.  require X.
-sersctac (Imp D B).
-apply srs_ext_relI_nil.  eapply sctr_relI_eqp.
-list_assoc_r'. apply f_equal.  list_assoc_l'. reflexivity.
-
-
-need to change it all to transitive closure of dnsubfml 
-
-
-admit.
+inversion X0. subst. clear X0 X1. apply fst in X.
+(* apply inversion to Imp (Imp C D) B in X to get B *)
+appii2 (Imp (Imp C D) B) B X sub.
+appii (Imp (Imp C D) B) c sub.
 
 - clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
 simpl. unfold fmlsext. simpl.
@@ -202,11 +230,32 @@ destruct p. simpl. unfold fmlsext. simpl.
 apser'.  apply (sctr_relI A S).
 
 - (* principal formula is occurrence of contracted formula *)
-admit.
+app42i fp X (Imp (Imp C D) B).
+(* now contract Imp D B, twice *)
+pose (sub _ (tT_step _ _ _ (dnsub_Imp_ImpL _ _ _))).
+apply c in X. sersctrtac X (Imp D B).
+apply c in X. sersctrtac X (Imp D B).
+(* now contract C *) clear c ;  pose (sub C (tc_dns_ii _ _ _) _ X) ; 
+sersctrtac c C ; simpl in c ; clear X.
+inversion X0. subst. clear X0 X1. apply fst in X.
+(* apply inversion to Imp (Imp C D) B in X to get B *)
+appii2 (Imp (Imp C D) B) B X sub.
+appii (Imp (Imp C D) B) c sub.
 
 - acacD'T2 ; subst. (* why is this necessary? *)
 + (* principal formula is occurrence of contracted formula *)
-admit.
+
+app42i fp X (Imp (Imp C D) B).
+(* now contract Imp D B, twice *)
+pose (sub _ (tT_step _ _ _ (dnsub_Imp_ImpL _ _ _))).
+apply c in X. sersctrtac X (Imp D B).
+apply c in X. sersctrtac X (Imp D B).
+(* now contract C *) clear c ;  pose (sub C (tc_dns_ii _ _ _) _ X) ; 
+sersctrtac c C ; simpl in c ; clear X.
+inversion X0. subst. clear X0 X1. apply fst in X.
+(* apply inversion to Imp (Imp C D) B in X to get B *)
+appii2 (Imp (Imp C D) B) B X sub.
+appii (Imp (Imp C D) B) c sub.
 
 + (* principal formula between occurrences of contracted formula *)
 clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
@@ -227,7 +276,17 @@ destruct p. simpl. unfold fmlsext. simpl.
 apser'.  apply (sctr_relI A S).
 
 - (* principal formula is occurrence of contracted formula *)
-admit.
+app42i fp X (Imp (Imp C D) B).
+(* now contract Imp D B, twice *)
+pose (sub _ (tT_step _ _ _ (dnsub_Imp_ImpL _ _ _))).
+apply c in X. sersctrtac X (Imp D B).
+apply c in X. sersctrtac X (Imp D B).
+(* now contract C *) clear c ;  pose (sub C (tc_dns_ii _ _ _) _ X) ; 
+sersctrtac c C ; simpl in c ; clear X.
+inversion X0. subst. clear X0 X1. apply fst in X.
+(* apply inversion to Imp (Imp C D) B in X to get B *)
+appii2 (Imp (Imp C D) B) B X sub.
+appii (Imp (Imp C D) B) c sub.
 
 - clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
 simpl. unfold fmlsext. simpl.
@@ -237,8 +296,11 @@ clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr). clear fpdcr.
 destruct p. simpl. unfold fmlsext. simpl.
 apser'.  apply (sctr_relI A S).
 
-Admitted.
+Qed.
 
+Check gs_lja_ImpL_Imp.
+
+(*
 Lemma ctr_adm_lja V (fml : PropF V) :
   forall seq, derrec LJArules emptyT seq ->
   can_rel LJArules (fun fml' => srs_ext_rel (sctr_rel fml')) fml seq.

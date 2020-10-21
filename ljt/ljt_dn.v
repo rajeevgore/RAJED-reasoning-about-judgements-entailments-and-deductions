@@ -532,7 +532,7 @@ Lemma LJA_dn42_princ V ps B C D E :
   LJAncrules ps ([Imp (Imp C D) B], E) ->
   forall Γ1 Γ2 : list (PropF V),
   adm (fst_ext_rls LJAncrules) (map (apfst (fmlsext Γ1 Γ2)) ps)
-    (fmlsext Γ1 Γ2 [C; Imp D B; Imp D B], E).
+    (fmlsext Γ1 Γ2 [Imp D B ; Imp D B ; C], E).
 Proof. intro ljpc. inversion ljpc ; subst ; clear ljpc.
 - inversion X.  inversion H1 ; inversion H3.
 
@@ -546,9 +546,7 @@ pose (@insL_lja V (Γ1 ++ [B]) Γ2 [Imp D B ; C] E).
 require d.  apply (eq_rect _ _ X). list_eq_assoc.
 apply (eq_rect _ _ d). list_eq_assoc.
 (* now need exchange *)
-clear X X0.  simpl in d.  unfold fmlsext in d. 
-apply (exchL_lja d).  apply fst_relI.
-apply (swapped_I Γ1 [Imp D B ; Imp D B] [C] Γ2) ; list_eq_assoc.
+clear X X0.  simpl in d.  unfold fmlsext in d.  exact d.
 
 - inversion H. 
 - inversion H.
@@ -560,12 +558,12 @@ Qed.
 
 Inductive dn42invs {V} : PropF V -> list (PropF V) -> Type :=
   | dn42invs_I : forall B C D, 
-    dn42invs (Imp (Imp C D) B) [C ; Imp D B ; Imp D B].
+    dn42invs (Imp (Imp C D) B) [Imp D B ; Imp D B ; C].
 
 Definition dn42inv {V} := fslr (@dn42invs V).
 
 Lemma dn42inv_I {V} (B C D : PropF V) : 
-  dn42inv [Imp (Imp C D) B] [C ; Imp D B ; Imp D B].
+  dn42inv [Imp (Imp C D) B] [Imp D B ; Imp D B ; C].
 Proof. apply fslr_I. apply dn42invs_I. Qed.
 
 Lemma can_trf_dn42inv_lja {V} ps c: @LJArules V ps c ->
