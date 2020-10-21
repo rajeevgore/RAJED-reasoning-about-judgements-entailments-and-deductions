@@ -300,29 +300,31 @@ Qed.
 
 Check gs_lja_ImpL_Imp.
 
-(*
+(* Proposition 5.1, contraction admissibility for LJA *)
 Lemma ctr_adm_lja V (fml : PropF V) :
   forall seq, derrec LJArules emptyT seq ->
   can_rel LJArules (fun fml' => srs_ext_rel (sctr_rel fml')) fml seq.
-Proof. eapply gen_step_lemT. apply AccT_dnsubfml.
+Proof. eapply gen_step_lemT. apply AccT_tc.  apply AccT_dnsubfml.
 intros * ljpc. destruct ljpc.
 destruct r. destruct l.
 - (* LJAilrules *)
+eapply gen_step_sub_mono. intro. apply tT_step.
 exact (gs_lja_ilrules _ _ r).
 - (* ImpL_Imp_rule *)
 exact (gs_lja_ImpL_Imp _ _ i).
 - (* ImpLrule *)
+eapply gen_step_sub_mono. intro. apply tT_step.
 exact (gs_lja_ImpL _ _ i).
 - (* ImpRrule *)
 exact (gs_lja_ImpR _ _ _ i).
 - (* Idrule *)
 eapply gs_sctr_Id. 2: exact i. apply rsubI. apply Id_anc.
 - (* left rules *)
+eapply gen_step_sub_mono. intro. apply tT_step.
 exact (gs_lja_lrules _ _ r).
 - (* right rules *)
 exact (gs_lja_rrules _ _ _ r).
-
 Qed.
 
-*)
+Check ctr_adm_lja.
 
