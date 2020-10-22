@@ -88,24 +88,18 @@ apply fslr_I. apply (ImpL_Or_invs_I B C D).
 list_assoc_r. simpl. reflexivity.  reflexivity.
 revert derp. list_assoc_r. simpl. intro derp.
 (* contract Imp C B *)
-destruct ctra. erequire r.  erequire r.  require r.
-eapply (srs_ext_relI_eq _ _ _ Φ1 (Imp D B :: Φ2)).
-apply (sctr_relI (Imp C B) (Imp D B :: S)).  reflexivity.  reflexivity.
-destruct r. revert d. list_assoc_r'. simpl.  intro d.
-apply d in derp. clear d.
+eapply crd_ra2I in ctra. 2: exact derp.
+sersctrtac ctra (Imp C B). clear derp.
 (* contract Imp D B *)
-destruct ctrb.  erequire r.  erequire r.  require r.
-eapply (srs_ext_relI_eq _ _ _ (Φ1 ++ [Imp C B]) Φ2).
-apply (sctr_relI (Imp D B) S).  
-list_assoc_r'. simpl.  reflexivity.
-list_assoc_r'. simpl.  reflexivity.
-destruct r.  apply d in derp. clear d.
-(* apply ImpL_Or_rule rule to contracted premises *)
+eapply crd_ra2I in ctrb. 2: exact ctra.
+sersctrtac ctrb (Imp D B). clear ctra.
+(* apply ImpL_Or_rule rule to contracted premise *)
 eapply derI. apply (rsubD (rs G)).
 eapply (@fextI _ _ _ Φ1 (S ++ Φ2)).
 eapply rmI_eq. apply rmI. apply ImpL_Or_rule_I.
 reflexivity. simpl.  reflexivity.
-simpl. apply dersrec_singleI. apply derp.  Qed.
+simpl. apply dersrec_singleI. 
+unfold fmlsext. apply (eq_rect _ _ ctrb). list_eq_assoc.  Qed.
 
 Print Implicit gen_sctrL_ImpL_Or.
 
@@ -136,28 +130,6 @@ Qed.
 
 Definition gs_lja_ilrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
   A _ _ _ Γ1 Γ2 G ps c LJAil_single il_anc' lja_ctr_il.
-
-(* tactic for srs_ext_rel ... X Y where X is given,
-  where relation is (eg) contraction on or inversion of A,
-  strips off all before and after A in goal *)
-Ltac sertacR1 A := ((apply (ser_appR (single A)) ; fail 1) || 
-  (apply ser_appR)).
-(* for some reason we need eapply using ser_appR *)
-Ltac sertacR1e A := ((eapply (ser_appR (single A)) ; fail 1) || 
-  (apply ser_appR)).
-Ltac sertacL1 A := 
-  (apply (ser_appc A) ; fail 1) || (apply ser_appL || apply ser_appc).
-
-Ltac sertac A := rewrite ?(cons_app_single A) ;
-  list_assoc_l' ; rewrite ?(cons_app_single _ (single A)) ;
-  rewrite ?app_nil_r ; list_assoc_l' ; repeat (sertacR1e A) ;
-  rewrite - ?app_assoc ; repeat (sertacL1 A).
-
-(* for contraction on A , X is can_rel ... *)
-Ltac sersctrtac X A := 
-unfold can_rel in X ; erequire X ; require X ; [ sertac A ;
-apply srs_ext_relI_nil ; eapply sctr_relI_eqp ;
-list_assoc_r' ; apply f_equal ; list_assoc_l' ; reflexivity | ].
 
 Ltac appii fml X sub := 
 assoc_single_mid' fml ;

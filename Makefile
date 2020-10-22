@@ -38,7 +38,7 @@ general/swappedT.vo
 
 ljt/ljt.vo: ljt/ljt.v general/swappedT.vo general/List_lemmasT.vo general/gstep.vo general/gen_seq.vo
 ljt/ljt_inv.vo: ljt/ljt_inv.v ljt/ljt.vo
-ljt/ljt_ctr.vo: ljt/ljt_ctr.v ljt/ljt_inv.vo
+ljt/ljt_ctr.vo: ljt/ljt_ctr.v ljt/ljt_inv.vo 
 ljt/ljt_ca.vo: ljt/ljt_ca.v ljt/ljt_ctr.vo
 ljt/ljt_dn.vo: ljt/ljt_dn.v ljt/ljt_inv.vo
 ljt/ljt_dncc.vo: ljt/ljt_dncc.v ljt/ljt_dn.vo ljt/ljt_ctr.vo

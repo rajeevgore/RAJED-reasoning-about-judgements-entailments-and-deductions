@@ -723,4 +723,14 @@ destruct X. exact (d ds).
 - intro dc. repeat split. intro dp.
 exact (dc p dp c X). Qed.
 
+Lemma crd_ra2 sty fty ity rules (R : relationT ity -> relationT sty)
+  (R' : fty -> relationT ity) fml:
+  iffT (rel_adm rules (R (R' fml)))
+  (forall seq, derrec rules emptyT seq ->
+    can_rel rules (fun fml' => R (R' fml')) fml seq).
+Proof. split. intros. apply crd_ra ; assumption.
+intros. eapply crd_ra in X. exact X. Qed.
+
+Definition crd_ra2I sty fty ity rules R R' fml :=
+  fst (@crd_ra2 sty fty ity rules R R' fml).
 
