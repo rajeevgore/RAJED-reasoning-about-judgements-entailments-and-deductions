@@ -217,11 +217,12 @@ Proof. intro ljpc.  destruct ljpc ; destruct i ; eexists ; reflexivity. Qed.
 Lemma LJAil_sing_empty V ps c : (@LJAilrules V) ps c -> sing_empty c.
 Proof. intro ljpc.  destruct ljpc ; destruct i ; apply se_single. Qed.
 
+Lemma LJsl_sing V ps c : (@LJslrules V) ps c -> sigT (fun c' => c = [c']).
+Proof. intro ljpc.  
+destruct ljpc ; rename_last r ; destruct r ; eexists ; reflexivity. Qed.
+
 Lemma LJsl_sing_empty V ps c : (@LJslrules V) ps c -> sing_empty c.
-Proof. intro ljpc.  destruct ljpc. 
-destruct a. apply se_single. 
-destruct o. apply se_single. 
-destruct b. apply se_single.  Qed.
+Proof. intro ljpc. apply LJsl_sing in ljpc. cD. subst. apply se_single.  Qed. 
 
 Lemma pair_eqD U W a b c d : (a : U, b : W) = (c, d) -> (a = c) * (b = d).
 Proof. intro H. inversion H. tauto. Qed.

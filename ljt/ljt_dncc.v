@@ -315,3 +315,114 @@ specialize (X B G). require X. apply (eq_rect _ _ X1). list_eq_assoc.
 eapply ctr_adm_lja in X.
 (* contract Imp A B *) sersctrtac X (Imp A B). 
 apply (eq_rect _ _ X). list_eq_assoc. Qed.
+
+(* Proposition 5.3 of Dyckhoff & Negri JSL 2000 *)
+(* relevant property of sequent to be proved by induction *)
+Definition l53prop {V} (AB : PropF V) seq :=
+  forall A B, AB = Imp A B -> 
+  forall G1 G2 E, seq = (G1 ++ AB :: G2, E) -> 
+  derrec LJArules emptyT (G1 ++ B :: G2, E).
+
+Ltac inv53tac X B fp dl grls_anc :=
+eapply derI ; [ eapply fextI ;
+eapply (rmI_eqc _ _ _ _ (grls_anc _ _ _ _ (rmI _ _ _ _ X))) ;
+simpl ;  unfold fmlsext ;  reflexivity |
+eapply (usefmm _ _ _ _ _ fp) ;
+intro ; simpl ; intro dl ; apply snd in dl ;
+unfold l53prop in dl ; specialize (dl _ _ eq_refl) ;
+unfold fmlsext ; assoc_single_mid' B ; apply dl ;
+unfold fmlsext ; list_eq_assoc ].
+
+Lemma gs_LJA_53_sl V (D : PropF V) ps c Γ1 Γ2 G 
+  (r : rlsmap (flip pair G) LJslrules ps c) :
+  gen_step l53prop D dnsubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad.
+unfold l53prop. intros * deq * ceq. subst.
+inversion r. subst. clear r. 
+inversion ceq. subst. clear ceq. unfold fmlsext in H0.
+acacD'T2 ; subst. (* 6 subgoals *)
+
+- apply LJsl_sing in X. cD. inversion X0.
+
+- inversion X ; subst ; rename_last slr ; inversion slr.
+
+- assoc_mid c0.  inv53tac X B fp dl @lrls_anc.
+
+- rewrite ?app_nil_r in X. assoc_mid H0. inv53tac X B fp dl @lrls_anc.
+
+- pose (LJsl_sing X). cD. list_eq_ncT. sD.
++ inversion s1. subst. clear s1.
+simpl in X.
+inversion X ; subst ; rename_last slr ; inversion slr.
++ inversion s1.
+
+- assoc_mid c0.  inv53tac X B fp dl @lrls_anc.
+Qed.
+
+Lemma gs_LJA_53_Ail V (D : PropF V) ps c Γ1 Γ2 G 
+  (r : rlsmap (flip pair G) LJAilrules ps c) :
+  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. 
+unfold l53prop. intros * deq * ceq. subst.
+inversion r. subst. clear r. 
+inversion ceq. subst. clear ceq. unfold fmlsext in H1.
+acacD'T2 ; subst. (* 6 subgoals *)
+
+- apply LJAil_sing in H. cD. inversion H0.
+
+- clear dc. inversion H ; subst ; inversion H0 ; subst ; clear H H0 ;
+inversion fp ; subst ; clear fp X0 ; apply fst in X.
++ (* Imp_AndL *) pose (sad _ (tT_step _ _ _ (dnsub_Imp_AndL _ _ _)) _ X).
+specialize (l _ _ eq_refl G1 Γ2 E).
+require l. unfold fmlsext. list_eq_assoc. clear X.
+specialize (sad (Imp D B)).
+require sad.  eapply tT_trans ; apply tT_step.
+apply dnsub_ImpR.  apply dnsub_Imp_AndL.
+specialize (sad _ l _ _ eq_refl _ _ _ eq_refl). exact sad.
++ (* Imp_OrL *) pose (sad _ (tT_step _ _ _ (dnsub_Imp_OrL1 _ _ _)) _ X).
+specialize (l _ _ eq_refl G1 (Imp D B :: Γ2) E).
+require l. unfold fmlsext. list_eq_assoc. clear X.
+specialize (sad _ (tT_step _ _ _ (dnsub_Imp_OrL2 _ _ _)) _ l).
+specialize (sad _ _ eq_refl (G1 ++ [B]) Γ2 E).
+require sad. unfold fmlsext. list_eq_assoc. clear l.
+(* now need to contract B *)
+eapply ctr_adm_lja in sad.  sersctrtac sad B.
+apply (eq_rect _ _ sad). list_eq_assoc.
+
+- clear sad. assoc_mid c0.  inv53tac H B fp dl @il_anc.
+
+- rewrite ?app_nil_r in H. assoc_mid H1. inv53tac H B fp dl @il_anc.
+
+- pose (LJAil_sing H). cD. list_eq_ncT. sD.
++ inversion s1. subst. clear s1.
+simpl in H.  clear dc.
+inversion H ; subst ; inversion H0 ; subst ; clear H H0 ;
+inversion fp ; subst ; clear fp X0 ; apply fst in X.
+++ (* Imp_AndL *) pose (sad _ (tT_step _ _ _ (dnsub_Imp_AndL _ _ _)) _ X).
+specialize (l _ _ eq_refl Γ1 Γ2 E).
+require l. unfold fmlsext. list_eq_assoc. clear X.
+specialize (sad (Imp D B)).
+require sad.  eapply tT_trans ; apply tT_step.
+apply dnsub_ImpR.  apply dnsub_Imp_AndL.
+rewrite ?app_nil_r.
+specialize (sad _ l _ _ eq_refl _ _ _ eq_refl). exact sad.
+++ (* Imp_OrL *) pose (sad _ (tT_step _ _ _ (dnsub_Imp_OrL1 _ _ _)) _ X).
+specialize (l _ _ eq_refl Γ1 (Imp D B :: Γ2) E).
+require l. unfold fmlsext. list_eq_assoc. clear X.
+specialize (sad _ (tT_step _ _ _ (dnsub_Imp_OrL2 _ _ _)) _ l).
+specialize (sad _ _ eq_refl (Γ1 ++ [B]) Γ2 E).
+require sad. unfold fmlsext. list_eq_assoc. clear l.
+(* now need to contract B *)
+eapply ctr_adm_lja in sad.  sersctrtac sad B.
+apply (eq_rect _ _ sad). list_eq_assoc.
+
++ inversion s1.
+
+- clear sad. assoc_mid c0.  inv53tac H B fp dl @il_anc.
+
+Qed.
+
+Check gs_LJA_53_Ail.
+
