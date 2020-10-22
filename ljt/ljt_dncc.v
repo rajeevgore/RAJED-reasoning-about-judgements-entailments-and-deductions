@@ -300,3 +300,18 @@ Qed.
 
 Check ctr_adm_lja.
 
+(* Proposition 5.2, admissibility of LJ in LJA *)
+Lemma lj_ImpL_adm_lja {V} : rsub (fst_ext_rls ImpLrule) (adm (@LJArules V)).
+Proof. split. destruct X.
+inversion r. subst. clear r. destruct H.
+simpl. unfold fmlsext. intro drs.
+inversion drs. inversion X0. subst. clear drs X0 X2.
+(* weaken second premise *) apply (insL_lja _ _ [Imp A B]) in X1.
+(* apply Lemma 4.1 *) eapply LJA_ImpL_adm in X.
+unfold l41prop in X.
+specialize (X (Γ1 ++ [Imp A B]) Γ2).  require X. list_eq_assoc.
+simpl in X. unfold fmlsext in X. 
+specialize (X B G). require X. apply (eq_rect _ _ X1). list_eq_assoc.
+eapply ctr_adm_lja in X.
+(* contract Imp A B *) sersctrtac X (Imp A B). 
+apply (eq_rect _ _ X). list_eq_assoc. Qed.
