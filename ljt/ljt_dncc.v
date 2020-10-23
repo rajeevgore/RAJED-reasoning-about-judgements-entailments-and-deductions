@@ -163,7 +163,6 @@ eapply srs_ext_relI_c1 ;  apply dn42inv_I | ].
 Lemma tc_dns_ii V B C D : clos_transT dnsubfml C (@Imp V (Imp C D) B).
 Proof. eapply tT_trans ; apply tT_step ; apply dnsub_ImpL. Qed.
 
-
 (* difficult case of contraction for Lemma 5.1, as top of pg 1505 *)
 
 Lemma gs_lja_ImpL_Imp V A Γ1 Γ2 ps c : ImpL_Imp_rule ps c ->
@@ -425,4 +424,27 @@ apply (eq_rect _ _ sad). list_eq_assoc.
 Qed.
 
 Check gs_LJA_53_Ail.
+
+Lemma gs_LJA_53_sr V (D : PropF V) ps c Γ1 Γ2 
+  (r : rlsmap (pair []) LJsrrules ps c) :
+  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad.
+unfold l53prop. intros * deq * ceq. subst.
+inversion r. subst. clear r. 
+inversion ceq. subst. clear ceq. 
+assert (map (apfst (fmlsext Γ1 Γ2)) (map (pair []) ps0) =
+  map (pair (G1 ++ Imp A B :: G2)) ps0).
+{ clear H fp.  induction ps0 ; simpl.
+reflexivity. rewrite IHps0. rewrite H1. reflexivity. }
+rewrite H0 in fp.
+eapply derI.  eapply fextI.  eapply rmI_eqc.
+apply rrls_anc.  apply rmI.  exact H.
+simpl. unfold fmlsext. reflexivity.
+eapply (usefm12 _ _ _ _ fp). clear fp.
+intro ; simpl ; intro dl ; apply snd in dl ;
+unfold l53prop in dl ; specialize (dl _ _ eq_refl _ _ _ eq_refl) ;
+unfold fmlsext ; exact dl.
+Qed.
+
 

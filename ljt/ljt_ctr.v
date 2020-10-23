@@ -262,6 +262,17 @@ exact (dp _ fa).
 exact (InT_map _ (InT_map _ incp3)).
 Qed.
 
+Lemma usefm12 U V X Y a b f g rls ups ps : ForallT a (map b ps) ->
+  (forall p : U, a (b p : V) -> derrec rls ups (f (g p : X) : Y)) -> 
+  dersrec rls ups (map f (map g ps)).
+Proof. intros fa dp.  apply dersrecI_forall.
+intros c0 incp.  apply InT_mapE in incp. cD.
+apply InT_mapE in incp1. cD.  subst.
+eapply ForallTD_forall in fa. 
+exact (dp _ fa).
+exact (InT_map _ incp3).
+Qed.
+
 Lemma usefm U V Y a b f rls ups ps : ForallT a (map b ps) ->
   (forall p : U, a (b p : V) -> derrec rls ups (f p : Y)) -> 
   dersrec rls ups (map f ps).
