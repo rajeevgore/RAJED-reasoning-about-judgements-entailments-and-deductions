@@ -447,4 +447,15 @@ unfold l53prop in dl ; specialize (dl _ _ eq_refl _ _ _ eq_refl) ;
 unfold fmlsext ; exact dl.
 Qed.
 
+Lemma gs_LJA_53_Id V D p ps c Γ1 Γ2 (r : Idrule (@Var V p)ps c) :
+  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad fp.
+unfold l53prop. intros * deq * ceq. subst.
+inversion r. subst. clear r.
+inversion ceq. subst. clear ceq.
+unfold fmlsext in H0.
+eapply gen_der_Id. unfold rsub. apply Id_anc.
+acacD'T2 ; subst ; try solve_InT ; rename_last vi ; inversion vi.
+Qed.
 
