@@ -459,3 +459,29 @@ eapply gen_der_Id. unfold rsub. apply Id_anc.
 acacD'T2 ; subst ; try solve_InT ; rename_last vi ; inversion vi.
 Qed.
 
+Lemma gs_LJA_53_ImpR V D ps c Γ1 Γ2 (r : @ImpRrule V ps c) :
+  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad dc.
+unfold l53prop. intros * deq * ceq. subst.
+destruct r.  inversion ceq. subst. clear ceq.
+unfold fmlsext in H0. simpl in H0.
+simpl in fp. unfold fmlsext in fp.
+inversion fp. subst. clear fp X0.
+apply snd in X. unfold l53prop in X. specialize (X _ _ eq_refl).
+acacD'T2 ; subst.
+- specialize (X (G1 ++ [A0]) G2 B0). require X. list_eq_assoc.
+eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_anc'.  reflexivity.
+apply dersrec_singleI.  apply (eq_rect _ _ X). list_eq_assoc.
+- specialize (X G1 (H2 ++ A0 :: Γ2) B0). require X. list_eq_assoc.
+eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_anc'.  
+list_assoc_l'.  reflexivity.
+apply dersrec_singleI.  apply (eq_rect _ _ X).
+simpl. unfold fmlsext.  list_eq_assoc.
+- specialize (X (Γ1 ++ A0 :: H0) G2 B0). require X. list_eq_assoc.
+eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_anc'.  
+list_assoc_r'. simpl. unfold fmlsext. simpl.  reflexivity.
+apply dersrec_singleI.  apply (eq_rect _ _ X).  list_eq_assoc.
+Qed.
+
+
