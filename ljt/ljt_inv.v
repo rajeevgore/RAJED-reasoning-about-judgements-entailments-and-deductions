@@ -110,6 +110,11 @@ Lemma srs_ext_relI_nil W Y R (ant ant' : list W) (G : Y) :
 Proof. intro raa. pose (srs_ext_relI R _ _ G [] [] raa).
 rewrite -> !app_nil_r in s. exact s. Qed.
 
+Lemma srs_ext_relI_alt W Y R x y :
+  relfst (ext_rel R) x y -> @srs_ext_rel W Y R x y.
+Proof. intro rer. destruct rer. destruct e.
+apply srs_ext_relI. exact r. Qed.
+
 (* extend relation with general context on the left,
   given right rule which may put stuff on the left in premise, eg ImpR
   right, suitable for ImpLinv2, AndLinv. OrLinv1/2 *)

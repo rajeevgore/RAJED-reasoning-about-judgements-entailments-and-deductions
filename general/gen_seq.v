@@ -200,8 +200,71 @@ Lemma fmlsext_def : forall (W : Type) Φ1 Φ2 U,
       @fmlsext W Φ1 Φ2 U = (Φ1 ++ U ++ Φ2).
 Proof. reflexivity. Qed.
 
+(* applying a function to a pair *)
 Definition apfst U V W (f : U -> V) (p : U * W) := let (x, y) := p in (f x, y).
 Definition apsnd U V W (f : U -> V) (p : W * U) := let (x, y) := p in (x, f y).
+
+(* extend a relation to a pair *)
+Inductive relfst U V W (R : U -> V -> Type) : (U * W) -> (V * W) -> Type :=
+  | relfstI : forall (u : U) (v : V) (w : W), R u v -> relfst R (u, w) (v, w).
+Inductive relsnd U V W (R : U -> V -> Type) : (W * U) -> (W * V) -> Type :=
+  | relsndI : forall (u : U) (v : V) (w : W), R u v -> relsnd R (w, u) (w, v).
+
+(* extending a relation with context *)
+Inductive ext_rel W R : relationT (list W) :=
+  | ext_relI : forall ant ant' Φ1 Φ2, R ant ant' ->
+    ext_rel R (Φ1 ++ ant ++ Φ2) (Φ1 ++ ant' ++ Φ2).
+
+Lemma ext_relI_eq W R ant ant' (Φ1 Φ2 : list W) seq1 seq2: R ant ant' ->
+  seq1 = (Φ1 ++ ant ++ Φ2) -> seq2 = (Φ1 ++ ant' ++ Φ2) ->
+  ext_rel R seq1 seq2.
+Proof. intros. subst. apply ext_relI. exact X. Qed.
+
+Definition ext_relI_eqc W R ant ant' Φ1 Φ2 seq2 raa :=
+  @ext_relI_eq W R ant ant' Φ1 Φ2 _ seq2 raa eq_refl.
+
+Definition ext_relI_eqp W R ant ant' Φ1 Φ2 seq1 raa eq1 :=
+  @ext_relI_eq W R ant ant' Φ1 Φ2 seq1 _ raa eq1 eq_refl.
+
+Definition ext_relI_c1 W R a := @ext_relI W R [a].
+
+Lemma ext_relI_nil W R (ant ant' : list W) :
+  R ant ant' -> ext_rel R ant ant'.
+Proof. intro raa. pose (ext_relI R _ _ [] [] raa).
+rewrite -> !app_nil_r in e. exact e. Qed.
+
+(* lemmas for tactics to find extension of a relation *)
+Lemma er_appL W R L1 L2 L2' :
+  @ext_rel W R L2 L2' -> ext_rel R (L1 ++ L2) (L1 ++ L2').
+Proof. intro ser. inversion ser. eapply ext_relI_eq.
+exact X. list_assoc_l'. reflexivity.
+list_assoc_l'. reflexivity. Qed.
+
+Lemma er_appR W R L1 L1' L2 :
+  @ext_rel W R L1 L1' -> ext_rel R (L1 ++ L2) (L1' ++ L2).
+Proof. intro ser. inversion ser. list_assoc_r'.
+apply ext_relI.  exact X. Qed.
+
+Lemma er_appc W R (c : W) L2 L2' :
+  ext_rel R L2 L2' -> ext_rel R (c :: L2) (c :: L2').
+Proof. intro ser. inversion ser. rewrite !app_comm_cons.
+apply ext_relI.  exact X. Qed.
+
+(* tactic for ext_rel ... X Y where X is given,
+  where relation is (eg) contraction on or inversion of A,
+  strips off all before and after A in goal *)
+Ltac ertacR1 A := ((apply (er_appR (single A)) ; fail 1) ||
+  (apply er_appR)).
+(* for some reason we need eapply using er_appR *)
+Ltac ertacR1e A := ((eapply (er_appR (single A)) ; fail 1) ||
+  (apply er_appR)).
+Ltac ertacL1 A :=
+  (apply (er_appc A) ; fail 1) || (apply er_appL || apply er_appc).
+
+Ltac ertac A := rewrite ?(cons_app_single A) ;
+  list_assoc_l' ; rewrite ?(cons_app_single _ (single A)) ;
+  rewrite ?app_nil_r ; list_assoc_l' ; repeat (ertacR1e A) ;
+  rewrite - ?app_assoc ; repeat (ertacL1 A).
 
 (** fst_ext_rls - adding left- and right-context 
   to the antecedent of a sequent rule *)

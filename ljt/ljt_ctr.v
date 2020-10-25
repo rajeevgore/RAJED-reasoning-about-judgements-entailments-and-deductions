@@ -725,7 +725,7 @@ list_eq_assoc.  list_eq_assoc. Qed.
 
 About asa_ser_lsctr.
 
-(* lemmas for tactics to do contraction *)
+(* lemmas for tactics to do contraction, may not be used any more *)
 Lemma ser_appL W Y R L1 L2 L2' (G : Y) :
   @srs_ext_rel W Y R (L2, G) (L2', G) ->
   srs_ext_rel R (L1 ++ L2, G) (L1 ++ L2', G).
@@ -745,26 +745,11 @@ Lemma ser_appc W Y R (c : W) L2 L2' (G : Y) :
 Proof. intro ser. inversion ser. rewrite !app_comm_cons.
 apply srs_ext_relI.  exact X. Qed.
 
-(* tactic for srs_ext_rel ... X Y where X is given,
-  where relation is (eg) contraction on or inversion of A,
-  strips off all before and after A in goal *)
-Ltac sertacR1 A := ((apply (ser_appR (single A)) ; fail 1) || 
-  (apply ser_appR)).
-(* for some reason we need eapply using ser_appR *)
-Ltac sertacR1e A := ((eapply (ser_appR (single A)) ; fail 1) || 
-  (apply ser_appR)).
-Ltac sertacL1 A := 
-  (apply (ser_appc A) ; fail 1) || (apply ser_appL || apply ser_appc).
-
-Ltac sertac A := rewrite ?(cons_app_single A) ;
-  list_assoc_l' ; rewrite ?(cons_app_single _ (single A)) ;
-  rewrite ?app_nil_r ; list_assoc_l' ; repeat (sertacR1e A) ;
-  rewrite - ?app_assoc ; repeat (sertacL1 A).
-
 (* for contraction on A , X is can_rel ... *)
 Ltac sersctrtac X A := 
-unfold can_rel in X ; erequire X ; require X ; [ sertac A ;
-apply srs_ext_relI_nil ; eapply sctr_relI_eqp ;
+unfold can_rel in X ; erequire X ; require X ; [
+apply srs_ext_relI_alt ; apply relfstI ; ertac A ;
+apply ext_relI_nil ; eapply sctr_relI_eqp ;
 list_assoc_r' ; apply f_equal ; list_assoc_l' ; reflexivity | ].
 
 
