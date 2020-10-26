@@ -252,7 +252,9 @@ apply ext_relI.  exact X. Qed.
 
 (* tactic for ext_rel ... X Y where X is given,
   where relation is (eg) contraction on or inversion of A,
-  strips off all before and after A in goal *)
+  strips off all before and after A in goal,
+  eg to solve (ie contracting Imp D B) ext_rel (sctr_rel (Imp C B))
+    (Φ1 ++ Imp C B :: Imp D B :: S ++ Imp C B :: Imp D B :: Φ2) ?Goal0 *)
 Ltac ertacR1 A := ((apply (er_appR (single A)) ; fail 1) ||
   (apply er_appR)).
 (* for some reason we need eapply using er_appR *)
@@ -265,6 +267,10 @@ Ltac ertac A := rewrite ?(cons_app_single A) ;
   list_assoc_l' ; rewrite ?(cons_app_single _ (single A)) ;
   rewrite ?app_nil_r ; list_assoc_l' ; repeat (ertacR1e A) ;
   rewrite - ?app_assoc ; repeat (ertacL1 A).
+
+(* for applying ertac to eg G1 ++ A0 :: Imp A B :: G2 = ?H *)
+Lemma eq_erI A x y : ext_rel eq x y -> @eq (list A) x y.
+Proof. intro er. destruct er. subst. reflexivity. Qed.
 
 (** fst_ext_rls - adding left- and right-context 
   to the antecedent of a sequent rule *)

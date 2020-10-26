@@ -332,9 +332,9 @@ unfold l53prop in dl ; specialize (dl _ _ eq_refl) ;
 unfold fmlsext ; assoc_single_mid' B ; apply dl ;
 unfold fmlsext ; list_eq_assoc ].
 
-Lemma gs_LJA_53_sl V (D : PropF V) ps c Γ1 Γ2 G 
+Lemma gs_LJA_53_sl V (D : PropF V) any ps c Γ1 Γ2 G 
   (r : rlsmap (flip pair G) LJslrules ps c) :
-  gen_step l53prop D dnsubfml (derrec LJArules emptyT)
+  gen_step l53prop D any (derrec LJArules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. clear sad.
 unfold l53prop. intros * deq * ceq. subst.
@@ -425,6 +425,74 @@ Qed.
 
 Check gs_LJA_53_Ail.
 
+Ltac inv53itac B fp c dl grls_anc :=
+eapply derI ; [ eapply fextI ;
+eapply (rmI_eqc _ _ _ _ (grls_anc _ _ _)) ;
+simpl ;  unfold fmlsext ;  reflexivity |
+eapply (usefm _ _ _ fp) ; clear fp ;
+intro c ; destruct c ; simpl ; unfold fmlsext ;
+intro dl ; apply snd in dl ;
+unfold l53prop in dl ; specialize (dl _ _ eq_refl) ;
+assoc_single_mid' B ; apply dl ; list_eq_assoc ].
+
+Lemma gs_LJA_53_Imp V D any ps c Γ1 Γ2 (r : @ImpL_Imp_rule V ps c) :
+  gen_step l53prop D any (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad dc.
+unfold l53prop. intros * deq * ceq. subst.
+destruct r.
+inversion ceq. subst. clear ceq. unfold fmlsext in H0.
+acacD'T2 ; subst. (* 7 subgoals *)
+
+- inversion fp.  inversion X0.
+apply (eq_rect _ _ (fst X1)).  unfold fmlsext. list_eq_assoc.
+
+- assoc_mid [Imp (Imp C D) B0].  inv53itac B fp c dl (@Imp_anc' V B0).
+
+- inversion H4.
+
+- list_eq_ncT. cD. subst. clear H0.
+assoc_mid [Imp (Imp C D) B0].  inv53itac B fp c dl (@Imp_anc' V B0).
+
+- inversion H5. subst. clear H5.  inversion fp.  inversion X0.
+apply (eq_rect _ _ (fst X1)).  unfold fmlsext. list_eq_assoc.
+
+- list_eq_ncT. inversion H8.
+
+- assoc_mid [Imp (Imp C D) B0].  inv53itac B fp c dl (@Imp_anc' V B0).
+Qed.
+
+Check gs_LJA_53_Imp.
+
+Lemma gs_LJA_53_ImpL_p V D any ps c Γ1 Γ2 (r : @ImpLrule_p V ps c) :
+  gen_step l53prop D any (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad dc.
+unfold l53prop. intros * deq * ceq. subst.
+destruct r.
+inversion ceq. subst. clear ceq. unfold fmlsext in H0.
+acacD'T2 ; subst. (* 7 subgoals *)
+
+- inversion fp.  inversion X0.
+apply (eq_rect _ _ (fst X1)).  unfold fmlsext. list_eq_assoc.
+
+- assoc_mid [Imp (Var p) B0].  inv53itac B fp c dl (@ImpL_anc' V).
+
+- inversion H4.
+
+- list_eq_ncT. cD. subst. clear H0.
+assoc_mid [Imp (Var p) B0].  inv53itac B fp c dl (@ImpL_anc' V).
+
+- inversion H5. subst. clear H5.  inversion fp.  inversion X0.
+apply (eq_rect _ _ (fst X1)).  unfold fmlsext. list_eq_assoc.
+
+- list_eq_ncT. inversion H8.
+
+- assoc_mid [Imp (Var p) B0].  inv53itac B fp c dl (@ImpL_anc' V).
+Qed.
+
+Check gs_LJA_53_ImpL_p.
+
 Lemma gs_LJA_53_sr V (D : PropF V) ps c Γ1 Γ2 
   (r : rlsmap (pair []) LJsrrules ps c) :
   gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
@@ -484,4 +552,23 @@ list_assoc_r'. simpl. unfold fmlsext. simpl.  reflexivity.
 apply dersrec_singleI.  apply (eq_rect _ _ X).  list_eq_assoc.
 Qed.
 
+Lemma gs_LJA_53 V D ps c Γ1 Γ2 (r : @LJAncrules V ps c) :
+  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. destruct r.
+- eapply gs_LJA_53_Ail. exact r.
+- apply gs_LJA_53_Imp. exact i.
+- apply gs_LJA_53_ImpL_p. exact i.
+- apply gs_LJA_53_ImpR. exact i.
+- eapply gs_LJA_53_Id. exact i.
+- eapply gs_LJA_53_sl. exact r.
+- apply gs_LJA_53_sr. exact r.
+Qed.
+
+Lemma ImpL_inv_adm_lja V (D : PropF V) :
+  forall seq, derrec LJArules emptyT seq -> l53prop D seq.
+Proof. eapply gen_step_lemT. apply AccT_tc.  apply AccT_dnsubfml.
+intros * ljpc. destruct ljpc. destruct r. apply gs_LJA_53. apply l. Qed.
+
+Check ImpL_inv_adm_lja.
 
