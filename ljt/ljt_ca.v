@@ -49,22 +49,34 @@ Definition cadmD X rules A (c : @cut_adm X rules A) :=
 Ltac sfea := simpl ;  unfold fmlsext ;  list_eq_assoc.
 
 (* left rule on left premise *)
-Lemma gs2_lrlsL V fml any drsa drsb G psl psr cl cr :
-  fst_ext_rls (rlsmap (flip pair G) (@LJslrules V)) psl cl -> 
-  gen_step2 (cedc LJrules) fml any drsa drsb psl cl psr cr.
+Lemma gs2_lrlsL_gen fty (fml : fty) any rules (lrules : rlsT (list fty))
+  drsa drsb (G : fty) psl psr cl cr 
+  (lr_gnc' : forall G ps c,
+    lrules ps c -> rules (map (flip pair G) ps) (flip pair G c)) :
+  fst_ext_rls (rlsmap (flip pair G) lrules) psl cl -> 
+  gen_step2 (cedc (fst_ext_rls rules)) fml any drsa drsb psl cl psr cr.
 Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
 clear sub fpr. destruct fmrr. destruct r. destruct r. 
 simpl in cle.  unfold fmlsext in cle.  simpl in cle.
 inversion cle. clear cle. subst.
-unfold LJrules.
 eapply derI.  eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
-exact (lrls_nc' D l).  sfea.
+eapply (lr_gnc' D _ _ l). sfea.
 eapply usefmm. exact fpl.
 intro. simpl. intro dc. destruct dc.
 unfold fmlsext in c0. 
 unfold fmlsext. simpl. destruct c0.
 specialize (d0 _ _ _ _ eq_refl eq_refl).
 apply (eq_rect _ _ d0). list_eq_assoc.  Qed.
+
+Definition gs2_lrlsL_lj V fml any drsa drsb G psl psr cl cr := 
+  @gs2_lrlsL_gen (PropF V) fml any LJncrules LJslrules
+  drsa drsb G psl psr cl cr lrls_nc'.
+Definition gs2_lrlsL_lja V fml any drsa drsb G psl psr cl cr := 
+  @gs2_lrlsL_gen (PropF V) fml any LJAncrules LJslrules
+  drsa drsb G psl psr cl cr lrls_anc'.
+Definition gs2_AilL_lja V fml any drsa drsb G psl psr cl cr := 
+  @gs2_lrlsL_gen (PropF V) fml any LJAncrules LJAilrules
+  drsa drsb G psl psr cl cr il_anc'.
 
 (* ImpL rule on left premise *)
 Lemma gs2_ImpLL V fml any drsb psl psr cl cr :
@@ -86,21 +98,28 @@ apply dersrec_singleI. apply (eq_rect _ _ d0). sfea.
 Qed.
 
 (* right rule on right premise *)
-Lemma gs2_rrlsR V fml any drsa drsb psl psr cl cr :
-  fst_ext_rls (rlsmap (pair []) (@LJsrrules V)) psr cr -> 
-  gen_step2 (cedc LJrules) fml any drsa drsb psl cl psr cr.
+Lemma gs2_rrlsR_gen fty (fml : fty) any rules rrules drsa drsb psl psr cl cr 
+  (rr_gnc' : forall ps c, rrules ps c -> rules (map (pair []) ps) (pair [] c)) :
+  fst_ext_rls (rlsmap (pair []) rrules) psr cr -> 
+  gen_step2 (cedc (fst_ext_rls rules)) fml any drsa drsb psl cl psr cr.
 Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
 clear sub fpl. destruct fmrr. destruct r. destruct r. 
 simpl in cre.  unfold fmlsext in cre.  simpl in cre.
 inversion cre. clear cre. subst.
-unfold LJrules.
-eapply derI.  eapply fextI_eqc'.  exact (rrls_nc' l).
+eapply derI.  eapply fextI_eqc'.  exact (rr_gnc' _ _ r).
 simpl.  unfold fmlsext.  simpl. reflexivity.
 eapply usefmm. exact fpr.
 intro. simpl. intro dc. destruct dc.
 unfold fmlsext in c. simpl in c. rewrite H0 in c.
 unfold fmlsext. simpl. destruct c.
 exact (d0 _ _ _ _ eq_refl eq_refl).  Qed.
+
+Definition gs2_rrlsR_lj V fml any drsa drsb psl psr cl cr := 
+  @gs2_rrlsR_gen (PropF V) fml any LJncrules LJsrrules
+  drsa drsb psl psr cl cr rrls_nc'.
+Definition gs2_rrlsR_lja V fml any drsa drsb psl psr cl cr := 
+  @gs2_rrlsR_gen (PropF V) fml any LJAncrules LJsrrules
+  drsa drsb psl psr cl cr rrls_anc'.
 
 Ltac irrtac d0 Γ1 Γ2 := require d0 ; [ list_eq_assoc | ] ; eapply derI ; [
   eapply (fextI_eqc' _ Γ1 Γ2) ; [ apply ImpR_nc' | ] ; sfea |
@@ -284,7 +303,7 @@ specialize (sub fpl).  rewrite !H4 in sub.
 specialize (sub fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
 + (* left rules on the left *)
-eapply fextI' in r.  eapply gs2_lrlsL in r.  apply r in sub.
+eapply fextI' in r.  eapply gs2_lrlsL_lj in r.  apply r in sub.
 specialize (sub fpl).  rewrite !H4 in sub.
 specialize (sub fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
@@ -319,7 +338,7 @@ specialize (sub fpl).  rewrite !H3 in sub.
 specialize (sub fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
 + (* left rules on the left *)
-eapply fextI' in r.  eapply gs2_lrlsL in r.  apply r in sub.
+eapply fextI' in r.  eapply gs2_lrlsL_lj in r.  apply r in sub.
 specialize (sub fpl).  rewrite !H3 in sub.
 specialize (sub fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
@@ -338,7 +357,7 @@ simpl. rewrite IHps0. reflexivity. }
 rewrite H in fpl.  rewrite H1 in fpr.
 exact (lj_lrlsR_rrlsL _ _ sub fpl fpr X0 H0).
 - (* right rules on the right *)
-eapply fextI' in X.  eapply gs2_rrlsR in X.  apply X in sub.
+eapply fextI' in X.  eapply gs2_rrlsR_lj in X.  apply X in sub.
 specialize (sub fpl fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
 Qed.
@@ -439,12 +458,12 @@ destruct l.
 + eapply gs2_ImpLL.  apply fextI'. exact i0.
 + admit.
 + eapply gs2_idL.  apply fextI'. exact i0.
-+ eapply gs2_lrlsL. apply fextI'. exact r.
++ eapply gs2_lrlsL_lj. apply fextI'. exact r.
 + admit.
 - eapply gs2_ImpRR.  apply fextI'. exact i.
 - eapply gs2_idR.  apply fextI'. exact i.  
 - admit.
-- apply gs2_rrlsR. apply fextI'. exact r0.
+- apply gs2_rrlsR_lj. apply fextI'. exact r0.
 *)
 About lj_gs2. 
 About lj_cut_adm. 
