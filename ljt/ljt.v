@@ -222,15 +222,6 @@ Proof.  unfold LJTrules. apply req_refl. Qed.
 Lemma LJArules_req V : req (@LJArules V) (fst_ext_rls LJAncrules).
 Proof.  unfold LJArules. apply req_refl. Qed.
 
-Lemma LJrules_nc_rsub V : rsub LJncrules (@LJrules V).
-Proof.  unfold LJrules. intros ps c nc. 
-apply (@fextI _ _ _ [] []). eapply rmI_eq. apply nc.
-clear nc. induction ps.
-reflexivity. simpl. rewrite - IHps.
-destruct a. simpl. unfold fmlsext.  simpl. rewrite app_nil_r.  reflexivity.
-destruct c. simpl. unfold fmlsext.  simpl. rewrite app_nil_r.  reflexivity.
-Qed.
-
 Lemma LJnc_seL V ps cl cr : @LJncrules V ps (cl, cr) -> sing_empty cl.
 Proof. intro ljnc. inversion ljnc ; subst ; clear ljnc.
 - inversion H. apply se_single.
@@ -265,11 +256,11 @@ Definition LJAweakening V seq :=
 Print Implicit LJweakening.  Print Implicit LJAweakening.
 
 (* need to check derivability of Idrule for any formula *)
-Lemma idrule_der {V} A : derrec LJrules emptyT ([A : PropF V], A).
+Lemma idrule_der_lj {V} A : derrec LJrules emptyT ([A : PropF V], A).
 Proof. induction A.
-- eapply derI. apply LJrules_nc_rsub.
+- eapply derI. apply rsub_fer.
 eapply Id_nc. apply Idrule_I. apply dlNil.
-- eapply derI. apply LJrules_nc_rsub.
+- eapply derI. apply rsub_fer.
 eapply lrls_nc. eapply rmI_eq.  apply Bot_sl.
 apply Botrule_I.  reflexivity.  reflexivity.  apply dlNil.
 
@@ -283,31 +274,25 @@ apply dersrec_singleI.  eapply derI.
 eapply ImpL_nc.  apply ImpLrule_I.
 reflexivity.  simpl.  unfold fmlsext.  reflexivity.
 ++ simpl.  unfold fmlsext.  simpl.  apply dlCons.
-+++ epose (@LJweakening _ _).  unfold can_wkL in c.  specialize (c IHA1).
-unfold wkL_valid' in c.  unfold wkL_valid in c.  specialize (c [Imp A1 A2] []).
-unfold fmlsext in c.  simpl in c. exact c.
-+++ apply dersrec_singleI.  epose (@LJweakening _ _).  unfold can_wkL in c.
-specialize (c IHA2).  unfold wkL_valid' in c.  unfold wkL_valid in c.
-specialize (c [] [A1]).  unfold fmlsext in c.  simpl in c. exact c.
++++ apply (fer_der [Imp A1 A2] []) in IHA1.
+rewrite app_nil_r in IHA1. exact IHA1.
++++ apply dersrec_singleI. apply (fer_der [] [A1] IHA2).
 
 - (* And *) eapply derI. 
-+ apply LJrules_nc_rsub.  eapply lrls_nc.  eapply rmI_eq.
++ apply rsub_fer.  eapply lrls_nc.  eapply rmI_eq.
 apply AndL_sl.  apply AndLrule_I.  reflexivity.  reflexivity.
 + simpl.  apply dersrec_singleI. eapply derI.
 ++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eq.
 eapply rrls_nc.  apply rmI.
 apply AndR_sr.  apply AndRrule_I.  reflexivity.  reflexivity.
 ++ simpl. unfold fmlsext. simpl.  apply dlCons.
-+++ epose (@LJweakening _ _).  unfold can_wkL in c.  specialize (c IHA1).
-unfold wkL_valid' in c.  unfold wkL_valid in c.  specialize (c [] [A2]).
-unfold fmlsext in c.  simpl in c. exact c.
++++ apply (fer_der [] [A2] IHA1).
 +++ apply dersrec_singleI.
-epose (@LJweakening _ _).  unfold can_wkL in c.  specialize (c IHA2).
-unfold wkL_valid' in c.  unfold wkL_valid in c.  specialize (c [A1] []).
-unfold fmlsext in c.  simpl in c. exact c.
+apply (fer_der [A1] []) in IHA2.
+rewrite app_nil_r in IHA2. exact IHA2.
 
 - (* Or *) eapply derI. 
-+ apply LJrules_nc_rsub.  eapply lrls_nc.  eapply rmI_eq.
++ apply rsub_fer.  eapply lrls_nc.  eapply rmI_eq.
 apply OrL_sl.  apply OrLrule_I.  reflexivity.  reflexivity.
 + simpl. apply dlCons.
 ++ eapply derI.
@@ -324,7 +309,7 @@ simpl. unfold fmlsext. reflexivity.
 +++ simpl. unfold fmlsext. simpl. apply dersrec_singleI. apply IHA2.
 Qed.
 
-Print Implicit idrule_der.
+Print Implicit idrule_der_lj.
 
 Lemma fer_Id V A ant : InT A ant -> fst_ext_rls (@Idrule V A) [] (ant, A).
 Proof. intro ia. apply InT_split in ia.  cD. subst.

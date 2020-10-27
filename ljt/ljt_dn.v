@@ -528,6 +528,56 @@ apply gs_LJA_ImpL_adm. exact X. Qed.
 
 Check LJA_ImpL_adm.
 
+Lemma idrule_der_lja {V} A : derrec LJArules emptyT ([A : PropF V], A).
+Proof. induction A.
+- eapply derI. apply rsub_fer.
+eapply Id_anc. apply Idrule_I. apply dlNil.
+- eapply derI. apply rsub_fer.
+eapply lrls_anc. eapply rmI_eq.  apply Bot_sl.
+apply Botrule_I.  reflexivity.  reflexivity.  apply dlNil.
+- (* Imp - apply ImpR rule *)
+eapply derI. eapply (@fextI _ _ _ _ []).
+eapply rmI_eqc.  apply ImpR_anc'.  
+simpl. unfold fmlsext. rewrite !app_nil_r.  reflexivity.
+apply dersrec_singleI.  simpl. unfold fmlsext. rewrite !app_nil_r.
+(* use Lemma 4.1 *)
+pose (@LJA_ImpL_adm _ A1 _ IHA1 [] [A1] eq_refl A2 A2).
+simpl in d. unfold fmlsext in d.  apply d. clear d.
+apply (fer_der [] [A1] IHA2). 
+
+- (* And *) eapply derI. 
++ apply rsub_fer.  eapply lrls_anc.  eapply rmI_eq.
+apply AndL_sl.  apply AndLrule_I.  reflexivity.  reflexivity.
++ simpl.  apply dersrec_singleI. eapply derI.
+++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eq.
+eapply rrls_anc.  apply rmI.
+apply AndR_sr.  apply AndRrule_I.  reflexivity.  reflexivity.
+++ simpl. unfold fmlsext. simpl.  apply dlCons.
++++ apply (fer_der [] [A2] IHA1).
++++ apply dersrec_singleI.
+apply (fer_der [A1] []) in IHA2.
+rewrite app_nil_r in IHA2. exact IHA2.
+
+- (* Or *) eapply derI. 
++ apply rsub_fer.  eapply lrls_anc.  eapply rmI_eq.
+apply OrL_sl.  apply OrLrule_I.  reflexivity.  reflexivity.
++ simpl. apply dlCons.
+++ eapply derI.
++++ eapply (@fextI _ _ _ [A1] []).  eapply rmI_eq.
+eapply rrls_anc.  apply rmI.
+apply OrR1_sr.  apply OrR1rule_I.  reflexivity.
+simpl. unfold fmlsext. reflexivity.
++++ simpl. unfold fmlsext. simpl. apply dersrec_singleI. apply IHA1.
+++ apply dersrec_singleI.  eapply derI.
++++ eapply (@fextI _ _ _ [A2] []).  eapply rmI_eq.
+eapply rrls_anc.  apply rmI.
+apply OrR2_sr.  apply OrR2rule_I.  reflexivity.
+simpl. unfold fmlsext. reflexivity.
++++ simpl. unfold fmlsext. simpl. apply dersrec_singleI. apply IHA2.
+Qed.
+
+Print Implicit idrule_der_lja.
+
 (* Lemma 4.2 of Dyckhoff & Negri *)
 Lemma LJA_dn42_princ V ps B C D E :
   LJAncrules ps ([Imp (Imp C D) B], E) ->

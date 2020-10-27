@@ -153,8 +153,7 @@ Proof. intros fidr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
 clear sub fpl fpr dl. destruct fidr. destruct r. destruct i.
 simpl in cle.  inversion cle. subst. clear cle.
 unfold fmlsext. 
-Print Implicit LJweakening.
-Print Implicit exchL_lj.
+(* Print Implicit LJweakening.  Print Implicit exchL_lj. *)
 pose (fer_der Γ1 Γ2 dr).
 pose (exchL_lj d).
 specialize (d0 (ra ++ (Γ1  ++ fml :: ra') ++ Γ2, D)).
@@ -163,7 +162,7 @@ apply (exchL_lj d0).  apply fst_relI. swap_tac. Qed.
 
 Lemma InT_der_LJ V A ant : InT A ant -> derrec (@LJrules V) emptyT (ant, A).
 Proof. intro ia.  apply InT_split in ia.  cD. subst.
-exact (fer_der _ _ (idrule_der A)). Qed.
+  exact (fer_der _ _ (idrule_der_lj A)). Qed.
 
 (* Id rule on right premise *)
 Lemma gs2_idR V A fml any drsb psl psr cl cr : 
