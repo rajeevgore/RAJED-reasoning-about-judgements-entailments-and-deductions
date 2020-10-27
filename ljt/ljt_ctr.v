@@ -748,7 +748,7 @@ apply srs_ext_relI.  exact X. Qed.
 (* for contraction on A , X is can_rel ... *)
 Ltac sersctrtac X A := 
 unfold can_rel in X ; erequire X ; require X ; [
-apply srs_ext_relI_alt ; apply relfstI ; ertac A ;
+apply srs_ext_relI_alt ; apply fst_relI ; ertac A ;
 apply ext_relI_nil ; eapply sctr_relI_eqp ;
 list_assoc_r' ; apply f_equal ; list_assoc_l' ; reflexivity | ].
 

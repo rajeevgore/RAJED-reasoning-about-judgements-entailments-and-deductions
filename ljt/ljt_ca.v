@@ -146,26 +146,55 @@ acacD'T2 ; subst.
 Qed.
 
 (* Id rule on left premise - requires weakening and exchange *)
-Lemma gs2_idL V A fml any drsa psl psr cl cr : 
+Lemma gs2_idL_gen V rules A fml any drsa psl psr cl cr  
+  (exchL : forall concl, derrec (fst_ext_rls rules) emptyT concl ->
+     forall concl', fst_rel (@swapped _) concl concl' ->
+       derrec (fst_ext_rls rules) emptyT concl') :
   fst_ext_rls (@Idrule V A) psl cl ->
-  gen_step2 (cedc LJrules) fml any drsa (derrec LJrules emptyT) psl cl psr cr.
+  gen_step2 (cedc (fst_ext_rls rules)) fml any 
+    drsa (derrec (fst_ext_rls rules) emptyT) psl cl psr cr.
 Proof. intros fidr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
 clear sub fpl fpr dl. destruct fidr. destruct r. destruct i.
 simpl in cle.  inversion cle. subst. clear cle.
 unfold fmlsext. 
-(* Print Implicit LJweakening.  Print Implicit exchL_lj. *)
 pose (fer_der Γ1 Γ2 dr).
-pose (exchL_lj d).
+pose (exchL _ d).
 specialize (d0 (ra ++ (Γ1  ++ fml :: ra') ++ Γ2, D)).
 require d0.  apply fst_relI. swap_tac.
-apply (exchL_lj d0).  apply fst_relI. swap_tac. Qed.
+apply (exchL _ d0).  apply fst_relI. swap_tac. Qed.
+
+Definition gs2_idL_lj V A fml any drsa psl psr cl cr :=
+  @gs2_idL_gen V LJncrules A fml any drsa psl psr cl cr (@exchL_lj V).
+Definition gs2_idL_lja V A fml any drsa psl psr cl cr :=
+  @gs2_idL_gen V LJAncrules A fml any drsa psl psr cl cr (@exchL_lja V).
+
+Lemma InT_der_gen V rules p ant : rsub (Idrule (@Var V p)) rules ->
+  InT (Var p) ant -> derrec (fst_ext_rls rules) emptyT (ant, Var p).
+Proof. intros rsir ia.  apply InT_split in ia.  cD. subst.
+eapply derI. apply (@fextI _ _ _ ia ia0).
+eapply rmI_eqc. apply rsir. apply Idrule_I. reflexivity. apply dlNil. Qed.
 
 Lemma InT_der_LJ V A ant : InT A ant -> derrec (@LJrules V) emptyT (ant, A).
 Proof. intro ia.  apply InT_split in ia.  cD. subst.
   exact (fer_der _ _ (idrule_der_lj A)). Qed.
 
 (* Id rule on right premise *)
-Lemma gs2_idR V A fml any drsb psl psr cl cr : 
+Lemma gs2_idR_gen V rules p fml any drsb psl psr cl cr : 
+  rsub (Idrule (Var p)) rules -> fst_ext_rls (@Idrule V (Var p)) psr cr ->
+  gen_step2 (cedc (fst_ext_rls rules)) fml any 
+    (derrec (fst_ext_rls rules) emptyT) drsb psl cl psr cr.
+Proof. intros rsir fidr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
+clear sub fpl fpr dr. destruct fidr. destruct r. destruct i.
+simpl in cre. unfold fmlsext in cre. simpl in cre.
+inversion cre. subst. clear cre.
+acacD'T2 ; subst.
+- exact (fer_der _ _ dl).
+- apply (InT_der_gen rsir). solve_InT.
+- exact (fer_der _ _ dl).
+- apply (InT_der_gen rsir). solve_InT.
+Qed.
+
+Lemma gs2_idR_lj V A fml any drsb psl psr cl cr : 
   fst_ext_rls (@Idrule V A) psr cr ->
   gen_step2 (cedc LJrules) fml any (derrec LJrules emptyT) drsb psl cl psr cr.
 Proof. intros fidr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
@@ -297,7 +326,7 @@ exact (d _ _ _ _ eq_refl eq_refl).
 + (* ImpR on the left *)
 eapply lj_ImpR_ImpL ; eassumption.
 + (* Id on the left *)
-eapply fextI' in i.  eapply gs2_idL in i.  apply i in sub.
+eapply fextI' in i.  eapply gs2_idL_lj in i.  apply i in sub.
 specialize (sub fpl).  rewrite !H4 in sub.
 specialize (sub fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
@@ -316,7 +345,7 @@ eapply fextI' in H.  eapply gs2_ImpRR in H.  apply H in sub.
 specialize (sub fpl fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
 - (* Id on the right *)
-eapply fextI' in X.  eapply gs2_idR in X.  apply X in sub.
+eapply fextI' in X.  eapply gs2_idR_lj in X.  apply X in sub.
 specialize (sub fpl fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
 - (* left rules on the right *)
@@ -332,7 +361,7 @@ clear sub fpl fpr dl dr.
 inversion X. destruct i. simpl in H3. inversion H3. subst. clear H3.
 inversion X0.  inversion H.  inversion H.  inversion X1.
 + (* Id on the left *)
-eapply fextI' in i.  eapply gs2_idL in i.  apply i in sub.
+eapply fextI' in i.  eapply gs2_idL_lj in i.  apply i in sub.
 specialize (sub fpl).  rewrite !H3 in sub.
 specialize (sub fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
@@ -456,11 +485,11 @@ destruct l.
 - destruct r. destruct l.
 + eapply gs2_ImpLL.  apply fextI'. exact i0.
 + admit.
-+ eapply gs2_idL.  apply fextI'. exact i0.
++ eapply gs2_idL_lj.  apply fextI'. exact i0.
 + eapply gs2_lrlsL_lj. apply fextI'. exact r.
 + admit.
 - eapply gs2_ImpRR.  apply fextI'. exact i.
-- eapply gs2_idR.  apply fextI'. exact i.  
+- eapply gs2_idR_lj.  apply fextI'. exact i.  
 - admit.
 - apply gs2_rrlsR_lj. apply fextI'. exact r0.
 *)

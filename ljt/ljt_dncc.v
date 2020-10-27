@@ -143,7 +143,7 @@ apply (eq_rect _ _ sub) ; simpl ; unfold fmlsext ; list_eq_assoc ]].
 Ltac appii2 A B X1 sub := 
 apply LJA_can_rel_ImpL_Imp_inv2 in X1 ;
 unfold can_rel in X1 ;  erequire X1 ;  require X1 ; [
-apply srs_ext_relI_alt ; apply relfstI ; ertac A ; 
+apply srs_ext_relI_alt ; apply fst_relI ; ertac A ; 
 apply ext_relI_nil ; apply fslr_I ;  apply ImpL_Imp_inv2s_I | 
 (* now contract B in X1 *)
 specialize (sub _ (tT_step _ _ _ (dnsub_ImpR _ _)) _ X1) ;

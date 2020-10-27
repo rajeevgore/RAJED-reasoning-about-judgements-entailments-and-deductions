@@ -111,7 +111,7 @@ Proof. intro raa. pose (srs_ext_relI R _ _ G [] [] raa).
 rewrite -> !app_nil_r in s. exact s. Qed.
 
 Lemma srs_ext_relI_alt W Y R x y :
-  relfst (ext_rel R) x y -> @srs_ext_rel W Y R x y.
+  fst_rel (ext_rel R) x y -> @srs_ext_rel W Y R x y.
 Proof. intro rer. destruct rer. destruct e.
 apply srs_ext_relI. exact r. Qed.
 
