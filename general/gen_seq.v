@@ -335,11 +335,15 @@ Proof. unfold fmlsext. rewrite app_nil_r.  reflexivity. Qed.
 Lemma apfst_nil_nil U W (x : list U * W) : apfst (fmlsext [] []) x = x.
 Proof. destruct x. simpl. rewrite fe_nil_nil. reflexivity. Qed.
 
+Lemma map_apfst_nil_nil U W (xs : list (list U * W)) :
+  map (apfst (fmlsext [] [])) xs = xs.
+Proof. induction xs.  reflexivity.  simpl.  rewrite IHxs.
+rewrite apfst_nil_nil.  reflexivity. Qed.
+
 Lemma rsub_fer U W (rls : rlsT (list U * W)) : rsub rls (fst_ext_rls rls).
 Proof. intros u v ruv. apply (@fextI _ _ _ [] []).
 eapply rmI_eq. apply ruv.  clear ruv.
-induction u.  reflexivity.  simpl.  rewrite - IHu.
-rewrite apfst_nil_nil.  reflexivity.
+rewrite map_apfst_nil_nil.  reflexivity.
 rewrite apfst_nil_nil.  reflexivity. Qed.
 
 Lemma fer_mono U W (rlsa rlsb : rlsT (list U * W)) :

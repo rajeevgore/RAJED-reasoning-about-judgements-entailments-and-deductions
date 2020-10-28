@@ -215,6 +215,20 @@ acacD'T2 ; subst.
 - apply InT_der_LJ. solve_InT.
 Qed.
 
+(* gen_step2 property for srseq such that rule on left is principal *)
+Definition gs2_sr_princ U rules subf fml la lc rc Γ1 Γ2 (D : U) psl psr :=
+  (forall A' : U, subf A' fml ->
+        forall dl, derrec (fst_ext_rls rules) emptyT dl ->
+        forall dr, derrec (fst_ext_rls rules) emptyT dr ->
+        cedc (fst_ext_rls rules) A' dl dr) ->
+  (ForallT (fun pl => derrec (fst_ext_rls rules) emptyT pl *
+           cedc (fst_ext_rls rules) fml pl (lc ++ fml :: rc, D)) 
+	   (map (apfst (fmlsext Γ1 Γ2)) psl)) ->
+  (ForallT (fun pr => derrec (fst_ext_rls rules) emptyT pr *
+           cedc (fst_ext_rls rules) fml (la, fml) pr)
+          (map (apfst (fmlsext lc rc)) psr)) ->
+  derrec (fst_ext_rls rules) emptyT (lc ++ la ++ rc, D).
+
 Ltac lctr_tac lctr_adm d1 lc := eapply lctr_adm in d1 ;
   unfold can_rel in d1 ;  erequire d1 ;  require d1 ; [
   eapply (@asa_ser_lsctr _ _ lc) ;  solve_asa | ] ;
@@ -222,21 +236,11 @@ Ltac lctr_tac lctr_adm d1 lc := eapply lctr_adm in d1 ;
 
 (* note the form of these lemmas, which is to ensure that the
   left rule on the right premise is principal *)
-Lemma lj_ImpR_ImpL V fml la lc rc Γ1 Γ2 (D : PropF V) psl psr cl
-  (sub : forall A' : PropF V, isubfml A' fml ->
-        forall dl, derrec (fst_ext_rls LJncrules) emptyT dl ->
-        forall dr, derrec (fst_ext_rls LJncrules) emptyT dr ->
-        cedc (fst_ext_rls LJncrules) A' dl dr)
-  (fpl : ForallT (fun pl => derrec (fst_ext_rls LJncrules) emptyT pl *
-           cedc (fst_ext_rls LJncrules) fml pl (lc ++ fml :: rc, D)) 
-	   (map (apfst (fmlsext Γ1 Γ2)) psl))
-  (fpr : ForallT (fun pr => derrec (fst_ext_rls LJncrules) emptyT pr *
-           cedc (fst_ext_rls LJncrules) fml (la, fml) pr)
-          (map (apfst (fmlsext lc rc)) psr)) :
-  ImpLrule psr ([fml], D) -> ImpRrule psl cl ->
+Lemma lj_ImpR_ImpL V fml la lc rc Γ1 Γ2 D psl psr cl :
+  @ImpLrule V psr ([fml], D) -> ImpRrule psl cl ->
   apfst (fmlsext Γ1 Γ2) cl = (la, fml) ->
-  derrec (fst_ext_rls LJncrules) emptyT (lc ++ la ++ rc, D).
-Proof. intros ir il cle.
+  gs2_sr_princ LJncrules isubfml fml la lc rc Γ1 Γ2 D psl psr.
+Proof. intros ir il cle sub fpl fpr.
 inversion ir. destruct il.
 simpl in cle. unfold fmlsext in cle.  simpl in cle.
 inversion cle. subst. clear ir cle.
@@ -274,27 +278,21 @@ inversion il ; clear il ; inversion H ; clear H ; subst. Qed.
 Lemma gen_lrlsR_rrlsL V rules fml la lc rc D psl psr 
   (lctr_adm : forall fmls seq, derrec (fst_ext_rls rules) emptyT seq ->
     can_rel (fst_ext_rls rules) 
-    (fun fmls' => srs_ext_rel (lsctr_rel fmls')) fmls seq)
-  (sub : forall A', isubfml A' fml ->
-        forall dl, derrec (fst_ext_rls rules) emptyT dl ->
-        forall dr, derrec (fst_ext_rls rules) emptyT dr ->
-        cedc (fst_ext_rls rules) A' dl dr)
-  (fpl : ForallT (fun pl => derrec (fst_ext_rls rules) emptyT pl *
-           cedc (fst_ext_rls rules) fml pl (lc ++ fml :: rc, D)) 
-	   (map (pair la) psl))
-  (fpr : ForallT (fun pr => derrec (fst_ext_rls rules) emptyT pr *
-           cedc (fst_ext_rls rules) fml (la, fml) pr)
-          (map (fun ps => (lc ++ ps ++ rc, D)) psr)) :
-  @LJslrules V psr [fml] -> LJsrrules psl fml ->
-  derrec (fst_ext_rls rules) emptyT (lc ++ la ++ rc, D).
-Proof. intros ir il.
+    (fun fmls' => srs_ext_rel (lsctr_rel fmls')) fmls seq) :
+  @LJslrules V psr [fml] -> @LJsrrules V psl fml ->
+  gs2_sr_princ rules isubfml fml la lc rc [] [] D 
+    (map (pair la) psl) (map (flip pair D) psr).
+Proof. intros ir il sub fpl fpr.
+rewrite map_apfst_nil_nil in fpl.
 inversion ir ; clear ir ; 
 ((inversion X ; clear X) || (inversion H ; clear H)) ; subst ; 
-inversion il ; clear il ; inversion H ; clear H ; subst.
-- (* And on both sides *) simpl in fpr.  simpl in fpl.
+inversion il ; clear il ; inversion H ; clear H ; subst ;
+simpl in fpr ; simpl in fpl.
+- (* And on both sides *)
 inversion fpr. clear fpr X0. destruct X. clear c.
 (* cut on A *) inversion fpl. clear fpl. subst. destruct X. clear c.
 destruct (sub _ (isub_AndL _ _) _ d0 _ d).
+unfold fmlsext in d1. simpl in d1.
 specialize (d1 _ _ _ _ eq_refl eq_refl).
 (* cut on B *) inversion X0. clear X0 X1. subst. destruct X. clear c.
 destruct (sub _ (isub_AndR _ _) _ d2 _ d1).
@@ -302,12 +300,12 @@ specialize (d3 _ (lc ++ la) rc D eq_refl).
 require d3. list_eq_assoc.
 (* now need a contraction *)
 clear sub d d0 d1 d2.  lctr_tac lctr_adm d3 la. exact d3.
-- (* Or on both sides *) simpl in fpr.  simpl in fpl.
+- (* Or on both sides *)
 inversion fpr. clear fpr X0. destruct X. clear c.
 inversion fpl. clear fpl X0. destruct X. clear c. subst.
 destruct (sub _ (isub_OrL _ _) _ d0 _ d).
 exact (d1 _ _ _ _ eq_refl eq_refl).
-- (* Or on both sides *) simpl in fpr.  simpl in fpl.
+- (* Or on both sides *)
 inversion fpr. clear fpr X. inversion X0. clear X0 X1. destruct X. clear c.
 inversion fpl. clear fpl X0. destruct X. clear c. subst.
 destruct (sub _ (isub_OrR _ _) _ d0 _ d).
@@ -318,6 +316,15 @@ About gen_lrlsR_rrlsL.
 
 Definition lj_lrlsR_rrlsL V fml la lc rc D psl psr :=
   @gen_lrlsR_rrlsL V LJncrules fml la lc rc D psl psr (@lctr_adm_lj V).
+
+Lemma mafmpe U W (Γ1 Γ2 : list U) (ps : list W) :
+  map (apfst (fmlsext Γ1 Γ2)) (map (pair []) ps) = map (pair (Γ1 ++ Γ2)) ps.
+Proof. induction ps. reflexivity.  simpl. rewrite IHps. reflexivity. Qed.
+
+Lemma mafmfp U W (lc rc : list U) (D : W) ps :
+  map (apfst (fmlsext lc rc)) (map (flip pair D) ps) = 
+  map (fun ps => (lc ++ ps ++ rc, D)) ps.
+Proof.  induction ps. reflexivity.  simpl. rewrite IHps. reflexivity. Qed.
 
 (* lemma for right principal cases, lc and rc are left and right context
   of the right premise of the cut and the last rule on the right *)
@@ -395,17 +402,9 @@ exact (d _ _ _ _ eq_refl eq_refl).
 + (* right rules on the left *)
 inversion X. inversion r. subst. clear X r. simpl in H3.
 inversion H3. subst. clear H3.
-unfold fmlsext. simpl.
-assert (map (apfst (fmlsext Γ1 Γ2)) (map (pair []) ps1) =
-  map (pair (Γ1 ++ Γ2)) ps1).
-{ clear sub fpl fpr H0.  induction ps1. reflexivity.
-simpl. rewrite IHps1. reflexivity. }
-assert (map (apfst (fmlsext lc rc)) (map (flip pair D) ps0) = 
-  map (fun ps : list (PropF V) => (lc ++ ps ++ rc, D)) ps0).
-{ clear sub fpl fpr X0 ljr.  induction ps0. reflexivity.
-simpl. rewrite IHps0. reflexivity. }
-rewrite H in fpl.  rewrite H1 in fpr.
-exact (lj_lrlsR_rrlsL _ _ sub fpl fpr X0 H0).
+unfold fmlsext. simpl.  rewrite mafmpe in fpl.  
+eapply lj_lrlsR_rrlsL ; try eassumption.
+rewrite map_apfst_nil_nil. exact fpl.
 - (* right rules on the right *)
 eapply fextI' in X.  eapply gs2_rrlsR_lj in X.  apply X in sub.
 specialize (sub fpl fpr dl dr). destruct sub.
