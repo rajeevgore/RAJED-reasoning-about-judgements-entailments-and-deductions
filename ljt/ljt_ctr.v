@@ -699,9 +699,11 @@ Qed.
 Print Implicit ctr_adm_lj.
 
 (* extending contraction of one formula to contraction of a list of formulae *)
-Lemma lctr_adm_lj V fmls : 
-  forall seq, derrec LJrules emptyT seq -> 
-  can_rel (@LJrules V) (fun fmls' => srs_ext_rel (lsctr_rel fmls')) fmls seq.
+Lemma lctr_adm_gen U Y (rules : rlsT (list U * Y)) fmls 
+  (ctr_adm : forall (fml : U) seq, derrec rules emptyT seq ->
+    can_rel rules (fun fml' => srs_ext_rel (sctr_rel fml')) fml seq) :
+  forall seq, derrec rules emptyT seq -> 
+  can_rel rules (fun fmls' => srs_ext_rel (lsctr_rel fmls')) fmls seq.
 Proof. intros seq ds. unfold can_rel.
 induction fmls ; intros seq' slss ; destruct slss ; inversion l ; subst.
 apply (eq_rect _ _ ds). list_eq_assoc.
@@ -710,10 +712,13 @@ require IHfmls.  pose (lsctr_relI fmls (S ++ [a])).
 pose (srs_ext_relI _ _ _ G (Φ1 ++ [a]) Φ2 l0).
 eapply arg1_cong_imp'.  apply (eq_rect _ _ s).
 list_eq_assoc.  list_eq_assoc.
-eapply (ctr_adm_lj IHfmls).
+eapply (ctr_adm _ _ IHfmls).
 apply srs_ext_relI.  rewrite app_assoc.  apply sctr_relI. Qed.
 
-Print Implicit lctr_adm_lj.
+Print Implicit lctr_adm_gen.
+
+Definition lctr_adm_lj V fmls :=
+  @lctr_adm_gen _ _ (@LJrules V) fmls (@ctr_adm_lj V).
 
 Lemma asa_ser_lsctr U W T A B C D E G :
   @app_split_at U T A B C -> app_split_at T C D E ->

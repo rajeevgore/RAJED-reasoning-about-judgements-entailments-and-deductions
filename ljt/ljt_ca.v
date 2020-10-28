@@ -215,11 +215,13 @@ acacD'T2 ; subst.
 - apply InT_der_LJ. solve_InT.
 Qed.
 
-Ltac lctr_tac d1 lc := eapply lctr_adm_lj in d1 ;
+Ltac lctr_tac lctr_adm d1 lc := eapply lctr_adm in d1 ;
   unfold can_rel in d1 ;  erequire d1 ;  require d1 ; [
   eapply (@asa_ser_lsctr _ _ lc) ;  solve_asa | ] ;
   simpl in d1 ;  rewrite ?app_nil_r in d1.
 
+(* note the form of these lemmas, which is to ensure that the
+  left rule on the right premise is principal *)
 Lemma lj_ImpR_ImpL V fml la lc rc Γ1 Γ2 (D : PropF V) psl psr cl
   (sub : forall A' : PropF V, isubfml A' fml ->
         forall dl, derrec (fst_ext_rls LJncrules) emptyT dl ->
@@ -256,25 +258,35 @@ specialize (d1 _ _ _ _ eq_refl eq_refl).
 (* now lots of contraction *)
 clear d X d0 X1.
 
-lctr_tac d1 lc.  lctr_tac d1 Γ1.  lctr_tac d1 Γ2.  lctr_tac d1 rc.
+lctr_tac lctr_adm_lj d1 lc.  lctr_tac lctr_adm_lj d1 Γ1.
+lctr_tac lctr_adm_lj d1 Γ2.  lctr_tac lctr_adm_lj d1 rc.
 
 apply (eq_rect _ _ d1). list_eq_assoc. Qed.
 
 About lj_ImpR_ImpL.
 
-Lemma lj_lrlsR_rrlsL V fml la lc rc (D : PropF V) psl psr 
-  (sub : forall A' : PropF V, isubfml A' fml ->
-        forall dl, derrec (fst_ext_rls LJncrules) emptyT dl ->
-        forall dr, derrec (fst_ext_rls LJncrules) emptyT dr ->
-        cedc (fst_ext_rls LJncrules) A' dl dr)
-  (fpl : ForallT (fun pl => derrec (fst_ext_rls LJncrules) emptyT pl *
-           cedc (fst_ext_rls LJncrules) fml pl (lc ++ fml :: rc, D)) 
+Lemma gen_AilR_rrlsL V fml psl psr :
+  @LJAilrules V psr [fml] -> LJsrrules psl fml -> False.
+Proof. intros ir il.  inversion ir ; clear ir ; 
+((inversion X ; clear X) || (inversion H ; clear H)) ; subst ; 
+inversion il ; clear il ; inversion H ; clear H ; subst. Qed.
+
+Lemma gen_lrlsR_rrlsL V rules fml la lc rc D psl psr 
+  (lctr_adm : forall fmls seq, derrec (fst_ext_rls rules) emptyT seq ->
+    can_rel (fst_ext_rls rules) 
+    (fun fmls' => srs_ext_rel (lsctr_rel fmls')) fmls seq)
+  (sub : forall A', isubfml A' fml ->
+        forall dl, derrec (fst_ext_rls rules) emptyT dl ->
+        forall dr, derrec (fst_ext_rls rules) emptyT dr ->
+        cedc (fst_ext_rls rules) A' dl dr)
+  (fpl : ForallT (fun pl => derrec (fst_ext_rls rules) emptyT pl *
+           cedc (fst_ext_rls rules) fml pl (lc ++ fml :: rc, D)) 
 	   (map (pair la) psl))
-  (fpr : ForallT (fun pr => derrec (fst_ext_rls LJncrules) emptyT pr *
-           cedc (fst_ext_rls LJncrules) fml (la, fml) pr)
+  (fpr : ForallT (fun pr => derrec (fst_ext_rls rules) emptyT pr *
+           cedc (fst_ext_rls rules) fml (la, fml) pr)
           (map (fun ps => (lc ++ ps ++ rc, D)) psr)) :
-  LJslrules psr [fml] -> LJsrrules psl fml ->
-  derrec (fst_ext_rls LJncrules) emptyT (lc ++ la ++ rc, D).
+  @LJslrules V psr [fml] -> LJsrrules psl fml ->
+  derrec (fst_ext_rls rules) emptyT (lc ++ la ++ rc, D).
 Proof. intros ir il.
 inversion ir ; clear ir ; 
 ((inversion X ; clear X) || (inversion H ; clear H)) ; subst ; 
@@ -289,7 +301,7 @@ destruct (sub _ (isub_AndR _ _) _ d2 _ d1).
 specialize (d3 _ (lc ++ la) rc D eq_refl).
 require d3. list_eq_assoc.
 (* now need a contraction *)
-clear sub d d0 d1 d2.  lctr_tac d3 la. exact d3.
+clear sub d d0 d1 d2.  lctr_tac lctr_adm d3 la. exact d3.
 - (* Or on both sides *) simpl in fpr.  simpl in fpl.
 inversion fpr. clear fpr X0. destruct X. clear c.
 inversion fpl. clear fpl X0. destruct X. clear c. subst.
@@ -302,7 +314,10 @@ destruct (sub _ (isub_OrR _ _) _ d0 _ d).
 exact (d1 _ _ _ _ eq_refl eq_refl).
 Qed.
 
-About lj_lrlsR_rrlsL.
+About gen_lrlsR_rrlsL.
+
+Definition lj_lrlsR_rrlsL V fml la lc rc D psl psr :=
+  @gen_lrlsR_rrlsL V LJncrules fml la lc rc D psl psr (@lctr_adm_lj V).
 
 (* lemma for right principal cases, lc and rc are left and right context
   of the right premise of the cut and the last rule on the right *)
@@ -399,16 +414,6 @@ Qed.
 
 About lj_gs2_rp.
 
-Lemma sing_empty_LJncrules V ps fmls D :
-  @LJncrules V ps (fmls, D) -> sing_empty fmls.
-Proof. intro lj. inversion lj ; subst ; 
-try (inversion H || inversion X) ;
-try (apply se_empty || apply se_single).
-subst. inversion X0 ; subst ;
-try (inversion H || inversion X1) ;
-try (apply se_empty || apply se_single).
-Qed.
-
 Lemma lj_gs2 V fml psl psr cl cr:
   @LJrules V psl cl -> @LJrules V psr cr ->
   gen_step2 (cedc LJrules) fml isubfml (derrec LJrules emptyT)
@@ -428,7 +433,7 @@ destruct (ForallTD_forall fpr (InT_map _ incm1)) ;
 clear d ; destruct c ;
 specialize (d _ (ra ++ incm) ra' c0 eq_refl) ;
 require d ; [ sfea | apply (eq_rect _ _ d) ; list_eq_assoc ].
-- pose (sing_empty_LJncrules l). inversion s. subst. simpl.
+- pose (LJnc_seL l). inversion s. subst. simpl.
 simpl in *. unfold fmlsext in fpl. unfold fmlsext in dr.
 rewrite app_nil_r in fpl.  rewrite app_nil_r in fpr. rewrite app_nil_r in dr.
 eapply (lj_gs2_rp _ _ (fextI r) l sub fpl fpr dl dr).
@@ -454,7 +459,7 @@ destruct fpr. clear d. destruct c.
 specialize (d _ (Γ0 ++ incm) ra' c0 eq_refl).
 require d.  sfea.
 apply (eq_rect _ _ d). list_eq_assoc.
-- pose (sing_empty_LJncrules l). inversion s. list_eq_ncT. inversion H0.
+- pose (LJnc_seL l). inversion s. list_eq_ncT. inversion H0.
 list_eq_ncT. sD ; inversion H1. subst.
 simpl in *. unfold fmlsext in *.  rewrite app_nil_r.
 eapply (lj_gs2_rp _ _ (fextI r) l sub fpl fpr dl dr).

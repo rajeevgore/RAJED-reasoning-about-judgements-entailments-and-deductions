@@ -15,7 +15,7 @@ Require Import gen genT ddT dd_fc.
 Require Import List_lemmasT swappedT.
 Require Import gen_tacs.
 Require Import gen_seq gstep gentree rtcT.
-Require Import ljt ljt_inv ljt_dn ljt_ctr.
+Require Import ljt ljt_inv ljt_dn ljt_ctr ljt_ca.
 Require Import Coq.Program.Basics.
 
 Lemma gen_sctrL_ImpL_And V W rules (B C D : PropF V)
@@ -299,6 +299,10 @@ Qed.
 
 Check ctr_adm_lja.
 
+(* for contracting a list of formulae in LJA *)
+Definition lctr_adm_lja V fmls :=
+  @lctr_adm_gen _ _ (@LJArules V) fmls (@ctr_adm_lja V).
+
 (* Proposition 5.2, admissibility of LJ in LJA *)
 Lemma lj_ImpL_adm_lja {V} : rsub (fst_ext_rls ImpLrule) (adm (@LJArules V)).
 Proof. split. destruct X.
@@ -571,4 +575,8 @@ Proof. eapply gen_step_lemT. apply AccT_tc.  apply AccT_dnsubfml.
 intros * ljpc. destruct ljpc. destruct r. apply gs_LJA_53. apply l. Qed.
 
 Check ImpL_inv_adm_lja.
+
+(* cut admissibility *)
+Definition lja_lrlsR_rrlsL V fml la lc rc D psl psr :=
+  @gen_lrlsR_rrlsL V LJAncrules fml la lc rc D psl psr (@lctr_adm_lja V).
 
