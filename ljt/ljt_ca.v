@@ -225,9 +225,9 @@ Definition gs2_sr_princ U rules subf fml la lc rc Γ1 Γ2 (D : U) psl psr :=
            cedc (fst_ext_rls rules) fml pl (lc ++ fml :: rc, D)) 
 	   (map (apfst (fmlsext Γ1 Γ2)) psl)) ->
   (ForallT (fun pr => derrec (fst_ext_rls rules) emptyT pr *
-           cedc (fst_ext_rls rules) fml (la, fml) pr)
+           cedc (fst_ext_rls rules) fml (Γ1 ++ la ++ Γ2, fml) pr)
           (map (apfst (fmlsext lc rc)) psr)) ->
-  derrec (fst_ext_rls rules) emptyT (lc ++ la ++ rc, D).
+  derrec (fst_ext_rls rules) emptyT (lc ++ (Γ1 ++ la ++ Γ2) ++ rc, D).
 
 Ltac lctr_tac lctr_adm d1 lc := eapply lctr_adm in d1 ;
   unfold can_rel in d1 ;  erequire d1 ;  require d1 ; [
@@ -236,15 +236,12 @@ Ltac lctr_tac lctr_adm d1 lc := eapply lctr_adm in d1 ;
 
 (* note the form of these lemmas, which is to ensure that the
   left rule on the right premise is principal *)
-Lemma lj_ImpR_ImpL V fml la lc rc Γ1 Γ2 D psl psr cl :
-  @ImpLrule V psr ([fml], D) -> ImpRrule psl cl ->
-  apfst (fmlsext Γ1 Γ2) cl = (la, fml) ->
+Lemma lj_ImpR_ImpL V fml la lc rc Γ1 Γ2 D psl psr :
+  @ImpLrule V psr ([fml], D) -> ImpRrule psl (la, fml) ->
   gs2_sr_princ LJncrules isubfml fml la lc rc Γ1 Γ2 D psl psr.
-Proof. intros ir il cle sub fpl fpr.
-inversion ir. destruct il.
-simpl in cle. unfold fmlsext in cle.  simpl in cle.
-inversion cle. subst. clear ir cle.
-inversion H4. subst. clear H4.
+Proof. intros ir il sub fpl fpr.
+inversion ir. inversion il. subst.
+inversion H5.  subst. clear ir il H5.
 (* first, use IH to cut A -> B from first premise of right premise *)
 inversion fpr. subst. clear fpr.
 destruct (snd X). clear X.
@@ -252,16 +249,13 @@ specialize (d _ _ _ _ eq_refl eq_refl).
 (* now cut on A with premise of left premise *)
 inversion fpl. subst. clear fpl X1.
 pose (sub _ (isub_ImpL _ _) _ d _ (fst X)).
-destruct c.
-specialize (d0 _ _ _ _ eq_refl eq_refl).
+destruct c.  specialize (d0 _ _ _ _ eq_refl eq_refl).
 (* now cut on B with second premise of right premise *)
 inversion X0. clear X0 X2. subst.
 specialize (sub _ (isub_ImpR _ _) _ d0 _ (fst X1)).
-destruct sub.
-specialize (d1 _ _ _ _ eq_refl eq_refl).
+destruct sub.  specialize (d1 _ _ _ _ eq_refl eq_refl).
 (* now lots of contraction *)
 clear d X d0 X1.
-
 lctr_tac lctr_adm_lj d1 lc.  lctr_tac lctr_adm_lj d1 Γ1.
 lctr_tac lctr_adm_lj d1 Γ2.  lctr_tac lctr_adm_lj d1 rc.
 
@@ -275,31 +269,32 @@ Proof. intros ir il.  inversion ir ; clear ir ;
 ((inversion X ; clear X) || (inversion H ; clear H)) ; subst ; 
 inversion il ; clear il ; inversion H ; clear H ; subst. Qed.
 
-Lemma gen_lrlsR_rrlsL V rules fml la lc rc D psl psr 
+Lemma gen_lrlsR_rrlsL V rules fml la lc rc G1 G2 D psl psr 
   (lctr_adm : forall fmls seq, derrec (fst_ext_rls rules) emptyT seq ->
     can_rel (fst_ext_rls rules) 
     (fun fmls' => srs_ext_rel (lsctr_rel fmls')) fmls seq) :
   @LJslrules V psr [fml] -> @LJsrrules V psl fml ->
-  gs2_sr_princ rules isubfml fml la lc rc [] [] D 
+  gs2_sr_princ rules isubfml fml la lc rc G1 G2 D 
     (map (pair la) psl) (map (flip pair D) psr).
 Proof. intros ir il sub fpl fpr.
-rewrite map_apfst_nil_nil in fpl.
 inversion ir ; clear ir ; 
 ((inversion X ; clear X) || (inversion H ; clear H)) ; subst ; 
 inversion il ; clear il ; inversion H ; clear H ; subst ;
 simpl in fpr ; simpl in fpl.
 - (* And on both sides *)
-inversion fpr. clear fpr X0. destruct X. clear c.
+inversion fpr. clear fpr X0. destruct X. clear c. subst.
 (* cut on A *) inversion fpl. clear fpl. subst. destruct X. clear c.
 destruct (sub _ (isub_AndL _ _) _ d0 _ d).
 unfold fmlsext in d1. simpl in d1.
 specialize (d1 _ _ _ _ eq_refl eq_refl).
 (* cut on B *) inversion X0. clear X0 X1. subst. destruct X. clear c.
 destruct (sub _ (isub_AndR _ _) _ d2 _ d1).
-specialize (d3 _ (lc ++ la) rc D eq_refl).
-require d3. list_eq_assoc.
+rewrite app_assoc in d3.
+specialize (d3 _ _ _ D eq_refl eq_refl).
 (* now need a contraction *)
-clear sub d d0 d1 d2.  lctr_tac lctr_adm d3 la. exact d3.
+unfold fmlsext in d3.  clear sub d d0 d1 d2.
+lctr_tac lctr_adm d3 la.  lctr_tac lctr_adm d3 G1.
+lctr_tac lctr_adm d3 G2. apply (eq_rect _ _ d3). list_eq_assoc.
 - (* Or on both sides *)
 inversion fpr. clear fpr X0. destruct X. clear c.
 inversion fpl. clear fpl X0. destruct X. clear c. subst.
@@ -314,8 +309,10 @@ Qed.
 
 About gen_lrlsR_rrlsL.
 
-Definition lj_lrlsR_rrlsL V fml la lc rc D psl psr :=
-  @gen_lrlsR_rrlsL V LJncrules fml la lc rc D psl psr (@lctr_adm_lj V).
+Definition lj_lrlsR_rrlsL V fml la lc rc G1 G2 D psl psr :=
+  @gen_lrlsR_rrlsL V LJncrules fml la lc rc G1 G2 D psl psr (@lctr_adm_lj V).
+Definition lj_lrlsR_rrlsLe V fml lc rc G1 G2 D psl psr :=
+  @gen_lrlsR_rrlsL V LJncrules fml [] lc rc G1 G2 D psl psr (@lctr_adm_lj V).
 
 Lemma mafmpe U W (Γ1 Γ2 : list U) (ps : list W) :
   map (apfst (fmlsext Γ1 Γ2)) (map (pair []) ps) = map (pair (Γ1 ++ Γ2)) ps.
@@ -325,6 +322,7 @@ Lemma mafmfp U W (lc rc : list U) (D : W) ps :
   map (apfst (fmlsext lc rc)) (map (flip pair D) ps) = 
   map (fun ps => (lc ++ ps ++ rc, D)) ps.
 Proof.  induction ps. reflexivity.  simpl. rewrite IHps. reflexivity. Qed.
+
 
 (* lemma for right principal cases, lc and rc are left and right context
   of the right premise of the cut and the last rule on the right *)
@@ -353,6 +351,8 @@ specialize (sub fpl).  rewrite !H4 in sub.
 specialize (sub fpr dl dr). destruct sub.
 exact (d _ _ _ _ eq_refl eq_refl).
 + (* ImpR on the left *)
+destruct c. simpl in H4. unfold fmlsext in H4.
+inversion H4. subst. clear H4.
 eapply lj_ImpR_ImpL ; eassumption.
 + (* Id on the left *)
 eapply fextI' in i.  eapply gs2_idL_lj in i.  apply i in sub.
@@ -402,9 +402,8 @@ exact (d _ _ _ _ eq_refl eq_refl).
 + (* right rules on the left *)
 inversion X. inversion r. subst. clear X r. simpl in H3.
 inversion H3. subst. clear H3.
-unfold fmlsext. simpl.  rewrite mafmpe in fpl.  
-eapply lj_lrlsR_rrlsL ; try eassumption.
-rewrite map_apfst_nil_nil. exact fpl.
+unfold fmlsext. simpl.  
+eapply lj_lrlsR_rrlsLe ; try eassumption.
 - (* right rules on the right *)
 eapply fextI' in X.  eapply gs2_rrlsR_lj in X.  apply X in sub.
 specialize (sub fpl fpr dl dr). destruct sub.
