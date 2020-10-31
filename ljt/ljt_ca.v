@@ -323,91 +323,71 @@ Lemma mafmfp U W (lc rc : list U) (D : W) ps :
   map (fun ps => (lc ++ ps ++ rc, D)) ps.
 Proof.  induction ps. reflexivity.  simpl. rewrite IHps. reflexivity. Qed.
 
+Lemma gs2_rp U rules subfml (fml : U) la lc rc G1 G2 D psl psr
+  (dl : derrec (fst_ext_rls rules) emptyT (G1 ++ la ++ G2, fml))
+  (dr : derrec (fst_ext_rls rules) emptyT (lc ++ fml :: rc, D)) :
+  gen_step2 (cedc (fst_ext_rls rules)) fml subfml 
+    (derrec (fst_ext_rls rules) emptyT) (derrec (fst_ext_rls rules) emptyT) 
+    (map (apfst (fmlsext G1 G2)) psl) (G1 ++ la ++ G2, fml)
+    (map (apfst (fmlsext lc rc)) psr) (lc ++ fml :: rc, D) ->
+  gs2_sr_princ rules subfml fml la lc rc G1 G2 D psl psr.
+Proof.  unfold gen_step2. unfold gs2_sr_princ.
+intros gs2 sub fpl fpr.  specialize (gs2 sub fpl fpr dl dr). 
+clear sub fpl fpr dl dr. apply gs2 ; reflexivity. Qed.
 
 (* lemma for right principal cases, lc and rc are left and right context
   of the right premise of the cut and the last rule on the right *)
-Lemma lj_gs2_rp V fml la lc rc (D : PropF V) psl psr 
-  (ljl : fst_ext_rls LJncrules psl (la, fml))
+Lemma lj_gs2_rp V fml la lc rc G1 G2 (D : PropF V) psl psr 
+  (ljl : LJncrules psl (la, fml))
   (ljr : LJncrules psr ([fml], D))
-  (sub : forall A' : PropF V, isubfml A' fml ->
-        forall dl, derrec (fst_ext_rls LJncrules) emptyT dl ->
-        forall dr, derrec (fst_ext_rls LJncrules) emptyT dr ->
-        cedc (fst_ext_rls LJncrules) A' dl dr)
-  (fpl : ForallT (fun pl => derrec (fst_ext_rls LJncrules) emptyT pl *
-           cedc (fst_ext_rls LJncrules) fml pl (lc ++ fml :: rc, D)) psl)
-  (fpr : ForallT (fun pr => derrec (fst_ext_rls LJncrules) emptyT pr *
-           cedc (fst_ext_rls LJncrules) fml (la, fml) pr)
-          (map (apfst (fmlsext lc rc)) psr))
-  (dl : derrec (fst_ext_rls LJncrules) emptyT (la, fml))
+  (dl : derrec (fst_ext_rls LJncrules) emptyT (G1 ++ la ++ G2, fml))
   (dr : derrec (fst_ext_rls LJncrules) emptyT (lc ++ fml :: rc, D)) :
-  derrec (fst_ext_rls LJncrules) emptyT (lc ++ la ++ rc, D).
+  gs2_sr_princ LJncrules isubfml fml la lc rc G1 G2 D psl psr.
 Proof. inversion ljr ; subst. 
 - (* ImpL on the right *)
-inversion ljl.  inversion X.  subst.  clear ljl X.
-destruct X0.
+inversion ljl ; subst.  
 + (* ImpL on the left *)
-eapply fextI' in i.  eapply gs2_ImpLL in i.  apply i in sub.
-specialize (sub fpl).  rewrite !H4 in sub.
-specialize (sub fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  apply gs2_ImpLL.
+eapply fextI. apply (rmI_eqc _ _ _ _ H0). reflexivity.
 + (* ImpR on the left *)
-destruct c. simpl in H4. unfold fmlsext in H4.
-inversion H4. subst. clear H4.
 eapply lj_ImpR_ImpL ; eassumption.
 + (* Id on the left *)
-eapply fextI' in i.  eapply gs2_idL_lj in i.  apply i in sub.
-specialize (sub fpl).  rewrite !H4 in sub.
-specialize (sub fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_idL_lj.
+eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
 + (* left rules on the left *)
-eapply fextI' in r.  eapply gs2_lrlsL_lj in r.  apply r in sub.
-specialize (sub fpl).  rewrite !H4 in sub.
-specialize (sub fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_lrlsL_lj.
+eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
 + (* right rules on the left - formulae different *)
-clear sub fpl fpr dl dr.
-destruct r. inversion H4. subst. clear H4.
-inversion H. subst. clear H ljr.
-inversion l ; subst ; inversion H.
+clear dl dr.
+inversion X. inversion H. subst. clear H X.
+inversion H2 ; subst ; inversion H.
 - (* ImpR on the right *)
-eapply fextI' in H.  eapply gs2_ImpRR_lj in H.  apply H in sub.
-specialize (sub fpl fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_ImpRR_lj.
+eapply fextI. apply (rmI_eqc _ _ _ _ H). reflexivity.
 - (* Id on the right *)
-eapply fextI' in X.  eapply gs2_idR_lj in X.  apply X in sub.
-specialize (sub fpl fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_idR_lj.
+eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
 - (* left rules on the right *)
-inversion ljl.  inversion X0.  subst.  clear ljl X0.
-destruct X1.
+inversion ljl ; subst.
 + (* ImpL on the left *)
-eapply fextI' in i.  eapply gs2_ImpLL in i.  apply i in sub.
-specialize (sub fpl).  rewrite !H3 in sub.
-specialize (sub fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_ImpLL.
+eapply fextI. apply (rmI_eqc _ _ _ _ H). reflexivity.
 + (* ImpR on the left - formulae different *)
-clear sub fpl fpr dl dr.
-inversion X. destruct i. simpl in H3. inversion H3. subst. clear H3.
-inversion X0.  inversion H.  inversion H.  inversion X1.
+clear dl dr.
+inversion X. inversion H. subst. clear X H.
+inversion X0.  inversion H.  inversion H.  inversion X.
 + (* Id on the left *)
-eapply fextI' in i.  eapply gs2_idL_lj in i.  apply i in sub.
-specialize (sub fpl).  rewrite !H3 in sub.
-specialize (sub fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_idL_lj.
+eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 + (* left rules on the left *)
-eapply fextI' in r.  eapply gs2_lrlsL_lj in r.  apply r in sub.
-specialize (sub fpl).  rewrite !H3 in sub.
-specialize (sub fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_lrlsL_lj.
+eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 + (* right rules on the left *)
-inversion X. inversion r. subst. clear X r. simpl in H3.
-inversion H3. subst. clear H3.
-unfold fmlsext. simpl.  
+inversion X0.  inversion X. subst.
 eapply lj_lrlsR_rrlsLe ; try eassumption.
 - (* right rules on the right *)
-eapply fextI' in X.  eapply gs2_rrlsR_lj in X.  apply X in sub.
-specialize (sub fpl fpr dl dr). destruct sub.
-exact (d _ _ _ _ eq_refl eq_refl).
+eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_rrlsR_lj.
+eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
 Qed.
 
 About lj_gs2_rp.
@@ -434,7 +414,10 @@ require d ; [ sfea | apply (eq_rect _ _ d) ; list_eq_assoc ].
 - pose (LJnc_seL l). inversion s. subst. simpl.
 simpl in *. unfold fmlsext in fpl. unfold fmlsext in dr.
 rewrite app_nil_r in fpl.  rewrite app_nil_r in fpr. rewrite app_nil_r in dr.
-eapply (lj_gs2_rp _ _ (fextI r) l sub fpl fpr dl dr).
+
+inversion r.  destruct c.  inversion H1. subst. clear H1 r.
+apply (lj_gs2_rp _ _ _ _ X l dl dr sub fpl fpr).
+
 - clear sub fpl. 
 eapply derI.  eapply (fextI_eqc' _ (ra ++ la ++ cre2) Γ3 _ _ l). sfea.
 apply dersrecI_forall.  intros c incm.
@@ -460,7 +443,11 @@ apply (eq_rect _ _ d). list_eq_assoc.
 - pose (LJnc_seL l). inversion s. list_eq_ncT. inversion H0.
 list_eq_ncT. sD ; inversion H1. subst.
 simpl in *. unfold fmlsext in *.  rewrite app_nil_r.
-eapply (lj_gs2_rp _ _ (fextI r) l sub fpl fpr dl dr).
+
+inversion r.  destruct c.  inversion H2. subst. clear H2 r.
+apply (lj_gs2_rp _ _ _ _ X l dl dr sub fpl fpr).
+
+
 - clear sub fpl. 
 eapply derI.  eapply (fextI_eqc' _ Γ0 (cre2 ++ la ++ ra') _ _ l).  sfea.
 apply dersrecI_forall.  intros c incm.

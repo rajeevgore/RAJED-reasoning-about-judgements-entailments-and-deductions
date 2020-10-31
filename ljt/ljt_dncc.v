@@ -577,6 +577,20 @@ intros * ljpc. destruct ljpc. destruct r. apply gs_LJA_53. apply l. Qed.
 Check ImpL_inv_adm_lja.
 
 (* cut admissibility *)
+(* when trying to Load in 8.11 this seems to fail with message 
+File "/home/jeremy/coq/lnt/tense-logic-in-Coq/ljt/ljt_dncc.v",
+line 581, characters 56-71:
+Error: Anomaly "Uncaught exception Not_found."
+Please report at http://coq.inria.fr/bugs/.
+
 Definition lja_lrlsR_rrlsL V fml la lc rc D psl psr :=
   @gen_lrlsR_rrlsL V LJAncrules fml la lc rc D psl psr (@lctr_adm_lja V).
+  *)
+
+Definition lja_lrlsR_rrlsL V fml la lc rc G1 G2 D psl psr :=
+  @gen_lrlsR_rrlsL V LJAncrules fml la lc rc G1 G2 D psl psr (@lctr_adm_lja V).
+Definition lja_lrlsR_rrlsLe V fml lc rc G1 G2 D psl psr :=
+  @gen_lrlsR_rrlsL V LJAncrules fml [] lc rc G1 G2 D psl psr (@lctr_adm_lja V).
+
+
 
