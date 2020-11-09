@@ -58,6 +58,11 @@ Proof. induction A ; apply AccT_intro ; intros A' isf ;
 
 Axiom AccT_dnsubfml : forall V (A : PropF V), AccT dnsubfml A.
 
+Lemma isub_dnsub V : rsub (@isubfml V) dnsubfml.
+Proof. intros u v isf. destruct isf.
+apply dnsub_ImpL.  apply dnsub_ImpR.  apply dnsub_AndL.
+apply dnsub_AndR.  apply dnsub_OrL.  apply dnsub_OrR. Qed.
+
 (* singleton-on-the-right sequent *)
 Definition srseq A := prod (list A) A.
 
@@ -97,6 +102,9 @@ Inductive ImpLrule {V} : rlsT (srseq (PropF V)) :=
 Inductive ImpLrule_p {V} : rlsT (srseq (PropF V)) :=
   | ImpLrule_p_I : forall p B G, ImpLrule_p
     [pair [Imp (Var p) B] (Var p) ; pair [B] G] (pair [Imp (Var p) B] G).
+
+Lemma ImpLrule_p_rsub {V} : rsub (@ImpLrule_p V) ImpLrule.
+Proof. intros ps c ip. destruct ip. apply ImpLrule_I. Qed.
 
 (* special ImpL rules in Dyckhoff's LJT system *)
 

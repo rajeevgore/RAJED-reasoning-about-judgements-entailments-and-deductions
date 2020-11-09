@@ -78,7 +78,8 @@ Definition gs2_AilL_lja V fml any drsa drsb G psl psr cl cr :=
   @gs2_lrlsL_gen (PropF V) fml any LJAncrules LJAilrules
   drsa drsb G psl psr cl cr il_anc'.
 
-(* ImpL rule on left premise *)
+(* ImpL rule on left premise, similarly ImpL_p,
+  TODO generalize the following three *)
 Lemma gs2_ImpLL V fml any drsb psl psr cl cr :
   fst_ext_rls (@ImpLrule V) psl cl -> 
   gen_step2 (cedc LJrules) fml any (derrec LJrules emptyT) drsb psl cl psr cr.
@@ -93,6 +94,42 @@ destruct X.  clear c.  destruct X1.  clear d0.  destruct c.
 specialize (d0 _ _ _ _ eq_refl eq_refl).
 eapply derI. eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
 apply ImpL_nc'.  sfea.
+apply dlCons.  pose (fer_der ra ra' d).  apply (eq_rect _ _ d1). sfea.
+apply dersrec_singleI. apply (eq_rect _ _ d0). sfea.
+Qed.
+
+Lemma gs2_ImpL_pL V fml any drsb psl psr cl cr :
+  fst_ext_rls (@ImpLrule_p V) psl cl -> 
+  gen_step2 (cedc LJArules) fml any (derrec LJArules emptyT) drsb psl cl psr cr.
+Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
+clear sub fpr. destruct fmrr. destruct r.  destruct i.
+simpl in cle.  unfold fmlsext in cle.  simpl in cle.
+inversion cle. clear cle. subst.
+unfold LJArules.
+inversion fpl. clear fpl.
+inversion X0. clear X2 X0. subst.
+destruct X.  clear c.  destruct X1.  clear d0.  destruct c.
+specialize (d0 _ _ _ _ eq_refl eq_refl).
+eapply derI. eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
+apply ImpL_anc'.  sfea.
+apply dlCons.  pose (fer_der ra ra' d).  apply (eq_rect _ _ d1). sfea.
+apply dersrec_singleI. apply (eq_rect _ _ d0). sfea.
+Qed.
+
+Lemma gs2_ImpL_ImpL V fml any drsb psl psr cl cr :
+  fst_ext_rls (@ImpL_Imp_rule V) psl cl -> 
+  gen_step2 (cedc LJArules) fml any (derrec LJArules emptyT) drsb psl cl psr cr.
+Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
+clear sub fpr. destruct fmrr. destruct r.  destruct i.
+simpl in cle.  unfold fmlsext in cle.  simpl in cle.
+inversion cle. clear cle. subst.
+unfold LJArules.
+inversion fpl. clear fpl.
+inversion X0. clear X2 X0. subst.
+destruct X.  clear c.  destruct X1.  clear d0.  destruct c.
+specialize (d0 _ _ _ _ eq_refl eq_refl).
+eapply derI. eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
+apply Imp_anc'.  sfea.
 apply dlCons.  pose (fer_der ra ra' d).  apply (eq_rect _ _ d1). sfea.
 apply dersrec_singleI. apply (eq_rect _ _ d0). sfea.
 Qed.
@@ -229,11 +266,18 @@ Definition gs2_sr_princ U rules subf fml la lc rc Γ1 Γ2 (D : U) psl psr :=
           (map (apfst (fmlsext lc rc)) psr)) ->
   derrec (fst_ext_rls rules) emptyT (lc ++ (Γ1 ++ la ++ Γ2) ++ rc, D).
 
+Lemma gs2_sr_princ_sub_mono U rules sub1 sub2 fml la lc rc Γ1 Γ2 D psl psr :
+  rsub sub1 sub2 -> gs2_sr_princ rules sub1 fml la lc rc Γ1 Γ2 D psl psr ->
+  @gs2_sr_princ U rules sub2 fml la lc rc Γ1 Γ2 D psl psr.
+Proof. unfold gs2_sr_princ. intros rs gs1 sub.  apply gs1.
+intros A' s1.  exact (sub A' (rsubD rs _ _ s1)). Qed.
+
 Ltac lctr_tac lctr_adm d1 lc := eapply lctr_adm in d1 ;
   unfold can_rel in d1 ;  erequire d1 ;  require d1 ; [
   eapply (@asa_ser_lsctr _ _ lc) ;  solve_asa | ] ;
   simpl in d1 ;  rewrite ?app_nil_r in d1.
 
+(* TODO - generalize this and lja_ImpR_ImpL *)
 (* note the form of these lemmas, which is to ensure that the
   left rule on the right premise is principal *)
 Lemma lj_ImpR_ImpL V fml la lc rc Γ1 Γ2 D psl psr :

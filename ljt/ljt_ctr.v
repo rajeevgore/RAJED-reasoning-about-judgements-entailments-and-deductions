@@ -750,7 +750,7 @@ Lemma ser_appc W Y R (c : W) L2 L2' (G : Y) :
 Proof. intro ser. inversion ser. rewrite !app_comm_cons.
 apply srs_ext_relI.  exact X. Qed.
 
-(* for contraction on A , X is can_rel ... *)
+(* for contraction on A, X is can_rel ... *)
 Ltac sersctrtac X A := 
 unfold can_rel in X ; erequire X ; require X ; [
 apply srs_ext_relI_alt ; apply fst_relI ; ertac A ;

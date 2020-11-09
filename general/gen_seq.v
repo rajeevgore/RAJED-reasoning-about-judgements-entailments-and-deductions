@@ -21,6 +21,8 @@ Proof. intros. subst. apply rmI ; assumption. Qed.
 
 Definition rmI_eqc U W f rls ps c mc rpc :=
   @rmI_eq U W f rls ps c _ mc rpc eq_refl.
+Definition rmI_eqp U W f rls ps c mps rpc pseq :=
+  @rmI_eq U W f rls ps c mps _ rpc pseq eq_refl.
 
 Inductive relmap U W (f : U -> W) (rel : relationT U) : relationT W :=
   | rlI : forall p c, rel p c -> relmap f rel (f p) (f c).

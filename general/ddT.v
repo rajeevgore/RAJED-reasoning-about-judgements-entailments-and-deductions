@@ -71,6 +71,9 @@ Definition derrec_dersrec_rect_mut X rules prems P P0 dp der dln dlc :=
 
 Ltac solve_dersrec := repeat (apply dlCons || apply dlNil || assumption).
 
+Definition derI' x rules prems ps concl rpc drs :=
+  @derI x rules prems ps concl drs rpc.
+
 (* this should be a more useful induction principle for derrec *)
 Definition dim_all X rules prems Q := 
   @derrec_ind_mut X rules prems (fun y => fun _ => Q y) 

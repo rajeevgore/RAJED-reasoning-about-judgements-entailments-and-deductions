@@ -1,5 +1,5 @@
 
-(* LJA logic, using lists of formulae - contraction (and maybe cut) *)
+(* LJA logic, using lists of formulae - contraction *)
 (* lemmas in Roy Dyckhoff and Sara Negri,
 Admissibility of Structural Rules for Contraction-Free Systems of
 Intuitionistic Logic, JSL 65 (2000), 1499-1518 *)
@@ -586,11 +586,4 @@ Please report at http://coq.inria.fr/bugs/.
 Definition lja_lrlsR_rrlsL V fml la lc rc D psl psr :=
   @gen_lrlsR_rrlsL V LJAncrules fml la lc rc D psl psr (@lctr_adm_lja V).
   *)
-
-Definition lja_lrlsR_rrlsL V fml la lc rc G1 G2 D psl psr :=
-  @gen_lrlsR_rrlsL V LJAncrules fml la lc rc G1 G2 D psl psr (@lctr_adm_lja V).
-Definition lja_lrlsR_rrlsLe V fml lc rc G1 G2 D psl psr :=
-  @gen_lrlsR_rrlsL V LJAncrules fml [] lc rc G1 G2 D psl psr (@lctr_adm_lja V).
-
-
 
