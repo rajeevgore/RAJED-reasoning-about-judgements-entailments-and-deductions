@@ -26,30 +26,8 @@ Definition lja_lrlsR_rrlsL V fml la lc rc G1 G2 D psl psr :=
 Definition lja_lrlsR_rrlsLe V fml lc rc G1 G2 D psl psr :=
   @gen_lrlsR_rrlsL V LJAncrules fml [] lc rc G1 G2 D psl psr (@lctr_adm_lja V).
 
-Lemma lja_ImpR_ImpL V fml la lc rc Γ1 Γ2 D psl psr :
-  @ImpLrule V psr ([fml], D) -> ImpRrule psl (la, fml) ->
-  gs2_sr_princ LJAncrules isubfml fml la lc rc Γ1 Γ2 D psl psr.
-Proof. intros ir il sub fpl fpr.
-inversion ir. inversion il. subst.
-inversion H5.  subst. clear ir il H5.
-(* first, use IH to cut A -> B from first premise of right premise *)
-inversion fpr. subst. clear fpr.
-destruct (snd X). clear X.
-specialize (d _ _ _ _ eq_refl eq_refl).
-(* now cut on A with premise of left premise *)
-inversion fpl. subst. clear fpl X1.
-pose (sub _ (isub_ImpL _ _) _ d _ (fst X)).
-destruct c.  specialize (d0 _ _ _ _ eq_refl eq_refl).
-(* now cut on B with second premise of right premise *)
-inversion X0. clear X0 X2. subst.
-specialize (sub _ (isub_ImpR _ _) _ d0 _ (fst X1)).
-destruct sub.  specialize (d1 _ _ _ _ eq_refl eq_refl).
-(* now lots of contraction *)
-clear d X d0 X1.
-lctr_tac lctr_adm_lja d1 lc.  lctr_tac lctr_adm_lja d1 Γ1.
-lctr_tac lctr_adm_lja d1 Γ2.  lctr_tac lctr_adm_lja d1 rc.
-
-apply (eq_rect _ _ d1). list_eq_assoc. Qed.
+Definition lja_ImpR_ImpL V fml la lc rc Γ1 Γ2 D psl psr :=
+  @ljg_ImpR_ImpL V LJAncrules fml la lc rc Γ1 Γ2 D psl psr (@lctr_adm_lja V).
 
 About lja_ImpR_ImpL.
 

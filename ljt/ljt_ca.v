@@ -265,9 +265,12 @@ Ltac lctr_tac lctr_adm d1 lc := eapply lctr_adm in d1 ;
 (* TODO - generalize this and lja_ImpR_ImpL *)
 (* note the form of these lemmas, which is to ensure that the
   left rule on the right premise is principal *)
-Lemma lj_ImpR_ImpL V fml la lc rc Γ1 Γ2 D psl psr :
+Lemma ljg_ImpR_ImpL V rules fml la lc rc Γ1 Γ2 D psl psr 
+  (lctr_adm_ljg : forall fmls seq, derrec (fst_ext_rls rules) emptyT seq ->
+     can_rel (fst_ext_rls rules)
+       (fun fmls' => srs_ext_rel (lsctr_rel fmls')) fmls seq) :
   @ImpLrule V psr ([fml], D) -> ImpRrule psl (la, fml) ->
-  gs2_sr_princ LJncrules isubfml fml la lc rc Γ1 Γ2 D psl psr.
+  gs2_sr_princ rules isubfml fml la lc rc Γ1 Γ2 D psl psr.
 Proof. intros ir il sub fpl fpr.
 inversion ir. inversion il. subst.
 inversion H5.  subst. clear ir il H5.
@@ -285,10 +288,13 @@ specialize (sub _ (isub_ImpR _ _) _ d0 _ (fst X1)).
 destruct sub.  specialize (d1 _ _ _ _ eq_refl eq_refl).
 (* now lots of contraction *)
 clear d X d0 X1.
-lctr_tac lctr_adm_lj d1 lc.  lctr_tac lctr_adm_lj d1 Γ1.
-lctr_tac lctr_adm_lj d1 Γ2.  lctr_tac lctr_adm_lj d1 rc.
+lctr_tac lctr_adm_ljg d1 lc.  lctr_tac lctr_adm_ljg d1 Γ1.
+lctr_tac lctr_adm_ljg d1 Γ2.  lctr_tac lctr_adm_ljg d1 rc.
 
 apply (eq_rect _ _ d1). list_eq_assoc. Qed.
+
+Definition lj_ImpR_ImpL V fml la lc rc Γ1 Γ2 D psl psr :=
+  @ljg_ImpR_ImpL V LJncrules fml la lc rc Γ1 Γ2 D psl psr (@lctr_adm_lj V).
 
 About lj_ImpR_ImpL.
 
