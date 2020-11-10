@@ -491,7 +491,6 @@ simpl in *. unfold fmlsext in *.  rewrite app_nil_r.
 inversion r.  destruct c.  inversion H2. subst. clear H2 r.
 apply (lj_gs2_rp _ _ _ _ X l dl dr sub fpl fpr).
 
-
 - clear sub fpl. 
 eapply derI.  eapply (fextI_eqc' _ Γ0 (cre2 ++ la ++ ra') _ _ l).  sfea.
 apply dersrecI_forall.  intros c incm.
