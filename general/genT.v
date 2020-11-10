@@ -12,6 +12,9 @@ Require Import gen.
 
 Polymorphic Definition rlsT W := list W -> W -> Type.
 
+(* the set of rules consisting of a single given premises/conclusion *)
+Inductive rlsT_of W ps c : rlsT W := rlsT_ofI : rlsT_of ps c ps c.
+
 (* how to express the empty set *)
 Inductive emptyT {X : Type} : X -> Type := .
 

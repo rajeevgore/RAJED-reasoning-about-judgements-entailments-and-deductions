@@ -78,61 +78,46 @@ Definition gs2_AilL_lja V fml any drsa drsb G psl psr cl cr :=
   @gs2_lrlsL_gen (PropF V) fml any LJAncrules LJAilrules
   drsa drsb G psl psr cl cr il_anc'.
 
-(* ImpL rule on left premise, similarly ImpL_p,
-  TODO generalize the following three *)
-Lemma gs2_ImpLL V fml any drsb psl psr cl cr :
-  fst_ext_rls (@ImpLrule V) psl cl -> 
-  gen_step2 (cedc LJrules) fml any (derrec LJrules emptyT) drsb psl cl psr cr.
+Lemma gs2_ImpLL_gen U rules fml any Xa Xs Ya Za Zs drsb psl psr cl cr 
+  (ImpL_gnc' : forall D, rules [(Xa, Xs) ; (Ya, D)] (Za, D)) :
+  @fst_ext_rls U U (rlsT_of [(Xa, Xs) ; (Ya, Zs)] (Za, Zs)) psl cl ->
+  gen_step2 (cedc (fst_ext_rls rules)) fml any
+    (derrec (fst_ext_rls rules) emptyT) drsb psl cl psr cr.
 Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
-clear sub fpr. destruct fmrr. destruct r.  destruct i.
-simpl in cle.  unfold fmlsext in cle.  simpl in cle.
+clear sub fpr. destruct fmrr. destruct r.  destruct r.
 inversion cle. clear cle. subst.
-unfold LJrules.
 inversion fpl. clear fpl.
 inversion X0. clear X2 X0. subst.
 destruct X.  clear c.  destruct X1.  clear d0.  destruct c.
 specialize (d0 _ _ _ _ eq_refl eq_refl).
 eapply derI. eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
-apply ImpL_nc'.  sfea.
+apply (ImpL_gnc' D).  sfea.
 apply dlCons.  pose (fer_der ra ra' d).  apply (eq_rect _ _ d1). sfea.
 apply dersrec_singleI. apply (eq_rect _ _ d0). sfea.
 Qed.
+
+(* ImpL rule on left premise, similarly ImpL_p,
+  the following three use gs2_ImpLL_gen *)
+Lemma gs2_ImpLL V fml any drsb psl psr cl cr :
+  fst_ext_rls (@ImpLrule V) psl cl -> 
+  gen_step2 (cedc LJrules) fml any (derrec LJrules emptyT) drsb psl cl psr cr.
+Proof. intro fmrr.  destruct fmrr. destruct r.  destruct i.
+eapply gs2_ImpLL_gen.  intro.  apply ImpL_nc'.
+eapply fextI.  apply rmI.  apply rlsT_ofI. Qed.
 
 Lemma gs2_ImpL_pL V fml any drsb psl psr cl cr :
   fst_ext_rls (@ImpLrule_p V) psl cl -> 
   gen_step2 (cedc LJArules) fml any (derrec LJArules emptyT) drsb psl cl psr cr.
-Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
-clear sub fpr. destruct fmrr. destruct r.  destruct i.
-simpl in cle.  unfold fmlsext in cle.  simpl in cle.
-inversion cle. clear cle. subst.
-unfold LJArules.
-inversion fpl. clear fpl.
-inversion X0. clear X2 X0. subst.
-destruct X.  clear c.  destruct X1.  clear d0.  destruct c.
-specialize (d0 _ _ _ _ eq_refl eq_refl).
-eapply derI. eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
-apply ImpL_anc'.  sfea.
-apply dlCons.  pose (fer_der ra ra' d).  apply (eq_rect _ _ d1). sfea.
-apply dersrec_singleI. apply (eq_rect _ _ d0). sfea.
-Qed.
+Proof. intro fmrr.  destruct fmrr. destruct r.  destruct i.
+eapply gs2_ImpLL_gen.  intro.  apply ImpL_anc'.
+eapply fextI.  apply rmI.  apply rlsT_ofI. Qed.
 
 Lemma gs2_ImpL_ImpL V fml any drsb psl psr cl cr :
   fst_ext_rls (@ImpL_Imp_rule V) psl cl -> 
   gen_step2 (cedc LJArules) fml any (derrec LJArules emptyT) drsb psl cl psr cr.
-Proof. intros fmrr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
-clear sub fpr. destruct fmrr. destruct r.  destruct i.
-simpl in cle.  unfold fmlsext in cle.  simpl in cle.
-inversion cle. clear cle. subst.
-unfold LJArules.
-inversion fpl. clear fpl.
-inversion X0. clear X2 X0. subst.
-destruct X.  clear c.  destruct X1.  clear d0.  destruct c.
-specialize (d0 _ _ _ _ eq_refl eq_refl).
-eapply derI. eapply (fextI_eqc' _ (ra ++ Γ1) (Γ2 ++ ra')).
-apply Imp_anc'.  sfea.
-apply dlCons.  pose (fer_der ra ra' d).  apply (eq_rect _ _ d1). sfea.
-apply dersrec_singleI. apply (eq_rect _ _ d0). sfea.
-Qed.
+Proof. intro fmrr.  destruct fmrr. destruct r.  destruct i.
+eapply gs2_ImpLL_gen.  intro.  apply Imp_anc'.
+eapply fextI.  apply rmI.  apply rlsT_ofI. Qed.
 
 (* right rule on right premise *)
 Lemma gs2_rrlsR_gen fty (fml : fty) any rules rrules drsa drsb psl psr cl cr 
