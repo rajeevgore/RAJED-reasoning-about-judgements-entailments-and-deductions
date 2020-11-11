@@ -139,7 +139,7 @@ Qed.
   
 (* lemma for right principal cases, lc and rc are left and right context
   of the right premise of the cut and the last rule on the right *)
-Lemma lja_gs2_rp V fml la lc rc G1 G2 (D : PropF V) psl psr 
+Lemma lja_gs2_rp {V} fml la lc rc G1 G2 (D : PropF V) psl psr 
   (ljl : LJAncrules psl (la, fml))
   (ljr : LJAncrules psr ([fml], D))
   (dl : derrec (fst_ext_rls LJAncrules) emptyT (G1 ++ la ++ G2, fml))
@@ -255,18 +255,24 @@ Qed.
 
 About lja_gs2_rp.
 
-(* TODO - generalize this and lj_gs2 *)
-Lemma lja_gs2 V fml psl psr cl cr:
-  @LJArules V psl cl -> @LJArules V psr cr ->
-  gen_step2 (cedc LJArules) fml dnsubfml (derrec LJArules emptyT)
-        (derrec LJArules emptyT) psl cl psr cr.
-Proof. unfold LJArules. intros ljl ljr.  destruct ljl.  destruct ljr.
+Lemma ljg_gs2 U rules subf fml psl psr cl cr
+  (r_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl)
+  (ljg_gs2_rp : forall fml la lc rc G1 G2 D psl psr,
+    rules psl (la, fml) -> rules psr ([fml : U], D) ->
+     derrec (fst_ext_rls rules) emptyT (G1 ++ la ++ G2, fml) ->
+     derrec (fst_ext_rls rules) emptyT (lc ++ fml :: rc, D) ->
+     gs2_sr_princ rules subf fml la lc rc G1 G2 D psl psr) :
+  (fst_ext_rls rules) psl cl -> (fst_ext_rls rules) psr cr ->
+  gen_step2 (cedc (fst_ext_rls rules)) fml subf
+    (derrec (fst_ext_rls rules) emptyT)
+    (derrec (fst_ext_rls rules) emptyT) psl cl psr cr.
+Proof. intros ljl ljr.  destruct ljl.  destruct ljr.
 intros sub fpl fpr dl dr. apply cedcI. intros * cle cre.
 destruct r0. destruct c0 as [cra crs].
-simpl in cre. unfold fmlsext in cre. simpl in cre.
+inversion cre. unfold fmlsext in H0. subst. clear cre.
 acacD'T2 ; subst.
 - clear sub fpl ; 
-eapply derI ; [ eapply (fextI_eqc' _ ra (la ++ ra') _ _ l) ; sfea | ] ;
+eapply derI ; [ eapply (fextI_eqc' _ ra (la ++ ra') _ _ r0) ; sfea | ] ;
 apply dersrecI_forall ;  intros c incm ;
 apply InT_mapE in incm ; cD ;
 inversion incm0 ; clear incm0 ; subst ;
@@ -275,26 +281,26 @@ destruct (ForallTD_forall fpr (InT_map _ incm1)) ;
 clear d ; destruct c ;
 specialize (d _ (ra ++ incm) ra' c0 eq_refl) ;
 require d ; [ sfea | apply (eq_rect _ _ d) ; list_eq_assoc ].
-- pose (LJAnc_seL l). inversion s. subst. simpl.
+
+- pose (r_seL _ _ _ r0). inversion s. subst. simpl.
 simpl in *. unfold fmlsext in fpl. unfold fmlsext in dr.
 rewrite app_nil_r in fpl.  rewrite app_nil_r in fpr. rewrite app_nil_r in dr.
-
 inversion r.  destruct c.  inversion H1. subst. clear H1 r.
-apply (lja_gs2_rp _ _ _ _ X l dl dr sub fpl fpr).
+apply (ljg_gs2_rp _ _ _ _ _ _ _ _ _ X r0 dl dr sub fpl fpr).
 
 - clear sub fpl. 
-eapply derI.  eapply (fextI_eqc' _ (ra ++ la ++ cre2) Γ3 _ _ l). sfea.
+eapply derI.  eapply (fextI_eqc' _ (ra ++ la ++ H2) Γ3 _ _ r0). sfea.
 apply dersrecI_forall.  intros c incm.
 apply InT_mapE in incm. cD.
 inversion incm0. clear incm0. subst.
 unfold fmlsext. simpl.
 eapply ForallTD_forall in fpr.  2: apply (InT_map _ incm1).
 destruct fpr. clear d. destruct c.
-specialize (d _ ra (cre2 ++ incm ++ Γ3) c0 eq_refl).
-require d.  sfea.
-apply (eq_rect _ _ d). list_eq_assoc.
+specialize (d _ ra (H2 ++ incm ++ Γ3) c0 eq_refl).
+require d.  sfea.  apply (eq_rect _ _ d). list_eq_assoc.
+
 - clear sub fpl. 
-eapply derI.  eapply (fextI_eqc' _ Γ0 (la ++ ra') _ _ l).  sfea.
+eapply derI.  eapply (fextI_eqc' _ Γ0 (la ++ ra') _ _ r0).  sfea.
 apply dersrecI_forall.  intros c incm.
 apply InT_mapE in incm. cD.
 inversion incm0. clear incm0. subst.
@@ -302,27 +308,28 @@ unfold fmlsext. simpl.
 eapply ForallTD_forall in fpr.  2: apply (InT_map _ incm1).
 destruct fpr. clear d. destruct c.
 specialize (d _ (Γ0 ++ incm) ra' c0 eq_refl).
-require d.  sfea.
-apply (eq_rect _ _ d). list_eq_assoc.
-- pose (LJAnc_seL l). inversion s. list_eq_ncT. inversion H0.
-list_eq_ncT. sD ; inversion H1. subst.
-simpl in *. unfold fmlsext in *.  rewrite app_nil_r.
+require d.  sfea.  apply (eq_rect _ _ d). list_eq_assoc.
 
-inversion r.  destruct c.  inversion H2. subst. clear H2 r.
-apply (lja_gs2_rp _ _ _ _ X l dl dr sub fpl fpr).
+- pose (r_seL _ _ _ r0). inversion s. list_eq_ncT. inversion H1.
+list_eq_ncT. sD ; inversion H2. subst.
+simpl in *. unfold fmlsext in *.  rewrite app_nil_r.
+inversion r.  destruct c.  inversion H1. subst. clear H1 r.
+apply (ljg_gs2_rp _ _ _ _ _ _ _ _ _ X r0 dl dr sub fpl fpr).
 
 - clear sub fpl. 
-eapply derI.  eapply (fextI_eqc' _ Γ0 (cre2 ++ la ++ ra') _ _ l).  sfea.
+eapply derI.  eapply (fextI_eqc' _ Γ0 (H2 ++ la ++ ra') _ _ r0).  sfea.
 apply dersrecI_forall.  intros c incm.
 apply InT_mapE in incm. cD.
 inversion incm0. clear incm0. subst.
 unfold fmlsext. simpl.
 eapply ForallTD_forall in fpr.  2: apply (InT_map _ incm1).
 destruct fpr. clear d. destruct c.
-specialize (d _ (Γ0 ++ incm ++ cre2) ra' c0 eq_refl).
-require d.  sfea.
-apply (eq_rect _ _ d). list_eq_assoc.
+specialize (d _ (Γ0 ++ incm ++ H2) ra' c0 eq_refl).
+require d.  sfea.  apply (eq_rect _ _ d). list_eq_assoc.
 Qed.
+
+Definition lja_gs2 V fml psl psr cl cr :=
+  @ljg_gs2 _ LJAncrules dnsubfml fml psl psr cl cr (@LJAnc_seL V) lja_gs2_rp.
 
 Theorem lja_cut_adm V fml cl cr: derrec (@LJArules V) emptyT cl ->  
   derrec LJArules emptyT cr -> cedc LJArules fml cl cr.
