@@ -319,6 +319,24 @@ eapply ctr_adm_lja in X.
 (* contract Imp A B *) sersctrtac X (Imp A B). 
 apply (eq_rect _ _ X). list_eq_assoc. Qed.
 
+(* at this point we have that LJA is complete wrt LJ *)
+Lemma der_lj_lja V :
+  (forall c (d : derrec (@LJrules V) emptyT c), derrec LJArules emptyT c) *
+  (forall cs (ds : dersrec (@LJrules V) emptyT cs), dersrec LJArules emptyT cs).
+Proof. apply derrec_dersrec_rect_mut.
+- intros. destruct p.
+- intros.  clear d. destruct r. destruct r. destruct l.
++ apply derrec_adm.
+apply (derI' _ (dersrec_rmono (rsub_adm _) X)).
+apply lj_ImpL_adm_lja. eapply fextI. apply rmI. apply i.
++ apply (derI' _ X). eapply fextI. apply rmI. apply (ImpR_anc i).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (Id_anc i).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (lrls_anc r).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (rrls_anc r).
+- apply dlNil.
+- intros. apply dlCons ; assumption.
+Qed.
+
 (* Proposition 5.3 of Dyckhoff & Negri JSL 2000 *)
 (* relevant property of sequent to be proved by induction *)
 Definition l53prop {V} (AB : PropF V) seq :=
