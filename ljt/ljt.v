@@ -324,45 +324,7 @@ Lemma InT_der_LJ V A ant : InT A ant -> derrec (@LJrules V) emptyT (ant, A).
 Proof. intro ia.  apply InT_split in ia.  cD. subst.
   exact (fer_der _ _ (idrule_der_lj A)). Qed.
 
-(* to prove Ail rules in LJ
-  note LJ_ImpL_And_inv, LJ_ImpL_Or_inv are the wrong way round *)
-Lemma LJ_ImpL_Or_inv V B C D :
-  derrec (@LJrules V) emptyT ([Imp C B; Imp D B], Imp (Or C D) B).
-Proof.  eapply derI.  eapply (@fextI _ _ _ []).
-eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
-apply dersrec_singleI.
-eapply derI.  eapply (@fextI _ _ _ []).
-eapply rmI_eqc.  apply lrls_nc'. apply OrL_sl. apply OrLrule_I.  reflexivity.
-apply dlCons. simpl.
-eapply derI. eapply (@fextI _ _ _ [C]).  eapply rmI_eqc.
-eapply ImpL_nc'.  reflexivity.
-apply dlCons.  simpl.  apply InT_der_LJ. solve_InT.
-apply dersrec_singleI.  simpl.  apply InT_der_LJ. solve_InT.
-apply dersrec_singleI.
-eapply derI. eapply (@fextI _ _ _ [_ ; _] []).  eapply rmI_eqc.
-eapply ImpL_nc'.  reflexivity.
-apply dlCons.  simpl.  apply InT_der_LJ. solve_InT.
-apply dersrec_singleI.  simpl.  apply InT_der_LJ. solve_InT.
-Qed.
-
-Lemma LJ_ImpL_And_inv V B C D :
-  derrec (@LJrules V) emptyT ([Imp C (Imp D B)], Imp (And C D) B).
-Proof.  eapply derI.  eapply (@fextI _ _ _ []).
-eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
-apply dersrec_singleI.
-eapply derI.  eapply (@fextI _ _ _ []).
-eapply rmI_eqc.  apply lrls_nc'. apply AndL_sl. apply AndLrule_I.  reflexivity.
-simpl.  apply dersrec_singleI.
-eapply derI. eapply (@fextI _ _ _ [C; D] []).  eapply rmI_eqc.
-eapply ImpL_nc'.  reflexivity.
-simpl. apply dlCons. apply InT_der_LJ. solve_InT.
-apply dersrec_singleI.
-eapply derI. eapply (@fextI _ _ _ [C; D] []).  eapply rmI_eqc.
-eapply ImpL_nc'.  reflexivity.
-simpl. apply dlCons. apply InT_der_LJ. solve_InT.
-apply dersrec_singleI. apply InT_der_LJ. solve_InT.
-Qed.
-
+(* to prove Ail rules in LJ *)
 Lemma LJ_ImpL_Or1 V B C D :
   derrec (@LJrules V) emptyT ([Imp (Or C D) B], Imp C B).
 Proof.  eapply derI.  eapply (@fextI _ _ _ []).
