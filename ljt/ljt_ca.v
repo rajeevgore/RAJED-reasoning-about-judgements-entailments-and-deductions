@@ -203,10 +203,6 @@ Proof. intros rsir ia.  apply InT_split in ia.  cD. subst.
 eapply derI. apply (@fextI _ _ _ ia ia0).
 eapply rmI_eqc. apply rsir. apply Idrule_I. reflexivity. apply dlNil. Qed.
 
-Lemma InT_der_LJ V A ant : InT A ant -> derrec (@LJrules V) emptyT (ant, A).
-Proof. intro ia.  apply InT_split in ia.  cD. subst.
-  exact (fer_der _ _ (idrule_der_lj A)). Qed.
-
 (* Id rule on right premise - general version, for Var _ only *)
 Lemma gs2_idR_gen V rules p fml any drsb psl psr cl cr : 
   rsub (Idrule (Var p)) rules -> fst_ext_rls (@Idrule V (Var p)) psr cr ->
@@ -535,4 +531,45 @@ destruct l.
 *)
 About lj_gs2. 
 About lj_cut_adm. 
+
+Lemma der_lja_lj V :
+  (forall c (d : derrec (@LJArules V) emptyT c), derrec LJrules emptyT c) *
+  (forall cs (ds : dersrec (@LJArules V) emptyT cs), dersrec LJrules emptyT cs).
+Proof. apply derrec_dersrec_rect_mut.
+- intros. destruct p.
+- intros.  clear d. destruct r. destruct r. destruct l.
++ destruct r. destruct l ; destruct i ; inversion X ; clear X X1 ; subst.
+(* cut with LJ_ImpL_And, LJ_ImpL_Or *)
+++ apply (lj_cut_adm (Imp C (Imp D B)) (LJ_ImpL_And B C D) X0).
+reflexivity.  reflexivity.
+++ pose (lj_cut_adm (Imp C B) (LJ_ImpL_Or1 B C D) X0).
+destruct c.  specialize (d _ Γ1 (Imp D B :: Γ2) G eq_refl eq_refl).
+pose (lj_cut_adm (Imp D B) (LJ_ImpL_Or2 B C D) d).
+destruct c.  specialize (d0 _ (Γ1 ++ [Imp (Or C D) B]) Γ2 G eq_refl).
+require d0. list_eq_assoc.
+eapply ctr_adm_lj in d0.  sersctrtac d0 (Imp (Or C D) B).
+apply (eq_rect _ _ d0). list_eq_assoc.
+
++ destruct i. inversion X. inversion X1. clear X X1 X3. subst.
+pose (lj_cut_adm (Imp D B) (LJ_II B C D) X0).
+destruct c.  specialize (d _ Γ1 (C :: Γ2) D eq_refl eq_refl).
+simpl in d.  clear X0.  eapply ctr_adm_lj in d.  sersctrtac d C.
+eapply derI. eapply (@fextI _ _ _ Γ1 Γ2).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+simpl. apply dlCons.
+eapply derI.  eapply (@fextI _ _ _ (Γ1 ++ [Imp (Imp C D) B]) Γ2).
+eapply rmI_eqc.  apply ImpR_nc'.
+simpl. unfold fmlsext. list_eq_assoc.
+apply dersrec_singleI.  apply (eq_rect _ _ d).
+simpl. unfold fmlsext. list_eq_assoc.
+apply dersrec_singleI. apply X2.
+
++ apply (derI' _ X). eapply fextI. apply rmI. destruct i. apply ImpL_nc'.
++ apply (derI' _ X). eapply fextI. apply rmI. apply (ImpR_nc i).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (Id_nc i).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (lrls_nc r).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (rrls_nc r).
+- apply dlNil.
+- intros. apply dlCons ; assumption.
+Qed.
 

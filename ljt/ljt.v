@@ -269,30 +269,27 @@ Proof. induction A.
 - eapply derI. apply rsub_fer.
 eapply Id_nc. apply Idrule_I. apply dlNil.
 - eapply derI. apply rsub_fer.
-eapply lrls_nc. eapply rmI_eq.  apply Bot_sl.
-apply Botrule_I.  reflexivity.  reflexivity.  apply dlNil.
+eapply lrls_nc. eapply rmI_eqc.  apply Bot_sl.
+apply Botrule_I.  reflexivity.  apply dlNil.
 
 - (* Imp *) eapply derI.
-+ eapply (@fextI _ _ _ [_] []).  eapply rmI_eq.
-apply ImpR_nc.  apply ImpRrule_I.
-reflexivity.  simpl.  unfold fmlsext.  reflexivity.
-+ simpl.  unfold fmlsext.  simpl.
-apply dersrec_singleI.  eapply derI.
-++ eapply (@fextI _ _ _ [] [A1]).  eapply rmI_eq.
-eapply ImpL_nc.  apply ImpLrule_I.
-reflexivity.  simpl.  unfold fmlsext.  reflexivity.
-++ simpl.  unfold fmlsext.  simpl.  apply dlCons.
++ eapply (@fextI _ _ _ [_] []).  eapply rmI_eqc.
+apply ImpR_nc'.  reflexivity.
++ apply dersrec_singleI.  eapply derI.
+++ eapply (@fextI _ _ _ [] [A1]).  eapply rmI_eqc.
+eapply ImpL_nc'. reflexivity.
+++ apply dlCons.
 +++ apply (fer_der [Imp A1 A2] []) in IHA1.
 rewrite app_nil_r in IHA1. exact IHA1.
 +++ apply dersrec_singleI. apply (fer_der [] [A1] IHA2).
 
 - (* And *) eapply derI. 
-+ apply rsub_fer.  eapply lrls_nc.  eapply rmI_eq.
-apply AndL_sl.  apply AndLrule_I.  reflexivity.  reflexivity.
++ apply rsub_fer.  eapply lrls_nc.  eapply rmI_eqc.
+apply AndL_sl.  apply AndLrule_I.  reflexivity.  
 + simpl.  apply dersrec_singleI. eapply derI.
-++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eq.
+++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eqc.
 eapply rrls_nc.  apply rmI.
-apply AndR_sr.  apply AndRrule_I.  reflexivity.  reflexivity.
+apply AndR_sr.  apply AndRrule_I.  reflexivity.  
 ++ simpl. unfold fmlsext. simpl.  apply dlCons.
 +++ apply (fer_der [] [A2] IHA1).
 +++ apply dersrec_singleI.
@@ -322,6 +319,113 @@ Print Implicit idrule_der_lj.
 Lemma fer_Id V A ant : InT A ant -> fst_ext_rls (@Idrule V A) [] (ant, A).
 Proof. intro ia. apply InT_split in ia.  cD. subst.
 eapply fextI_eq'. apply Idrule_I. reflexivity. reflexivity. Qed.
+
+Lemma InT_der_LJ V A ant : InT A ant -> derrec (@LJrules V) emptyT (ant, A).
+Proof. intro ia.  apply InT_split in ia.  cD. subst.
+  exact (fer_der _ _ (idrule_der_lj A)). Qed.
+
+(* to prove Ail rules in LJ
+  note LJ_ImpL_And_inv, LJ_ImpL_Or_inv are the wrong way round *)
+Lemma LJ_ImpL_Or_inv V B C D :
+  derrec (@LJrules V) emptyT ([Imp C B; Imp D B], Imp (Or C D) B).
+Proof.  eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
+apply dersrec_singleI.
+eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply lrls_nc'. apply OrL_sl. apply OrLrule_I.  reflexivity.
+apply dlCons. simpl.
+eapply derI. eapply (@fextI _ _ _ [C]).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+apply dlCons.  simpl.  apply InT_der_LJ. solve_InT.
+apply dersrec_singleI.  simpl.  apply InT_der_LJ. solve_InT.
+apply dersrec_singleI.
+eapply derI. eapply (@fextI _ _ _ [_ ; _] []).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+apply dlCons.  simpl.  apply InT_der_LJ. solve_InT.
+apply dersrec_singleI.  simpl.  apply InT_der_LJ. solve_InT.
+Qed.
+
+Lemma LJ_ImpL_And_inv V B C D :
+  derrec (@LJrules V) emptyT ([Imp C (Imp D B)], Imp (And C D) B).
+Proof.  eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
+apply dersrec_singleI.
+eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply lrls_nc'. apply AndL_sl. apply AndLrule_I.  reflexivity.
+simpl.  apply dersrec_singleI.
+eapply derI. eapply (@fextI _ _ _ [C; D] []).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+simpl. apply dlCons. apply InT_der_LJ. solve_InT.
+apply dersrec_singleI.
+eapply derI. eapply (@fextI _ _ _ [C; D] []).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+simpl. apply dlCons. apply InT_der_LJ. solve_InT.
+apply dersrec_singleI. apply InT_der_LJ. solve_InT.
+Qed.
+
+Lemma LJ_ImpL_Or1 V B C D :
+  derrec (@LJrules V) emptyT ([Imp (Or C D) B], Imp C B).
+Proof.  eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
+apply dersrec_singleI.  simpl.
+eapply derI. eapply (@fextI _ _ _ [C] []).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+simpl. apply dlCons.
+eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply rrls_nc'. apply OrR1_sr. apply OrR1rule_I.
+simpl. unfold fmlsext. simpl.  reflexivity.
+apply dersrec_singleI. apply InT_der_LJ. solve_InT.
+apply dersrec_singleI. apply InT_der_LJ. solve_InT.
+Qed.
+
+Lemma LJ_ImpL_Or2 V B C D :
+  derrec (@LJrules V) emptyT ([Imp (Or C D) B], Imp D B).
+Proof.  eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
+apply dersrec_singleI.  simpl.
+eapply derI. eapply (@fextI _ _ _ [D] []).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+simpl. apply dlCons.
+eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply rrls_nc'. apply OrR2_sr. apply OrR2rule_I.
+simpl. unfold fmlsext. simpl.  reflexivity.
+apply dersrec_singleI. apply InT_der_LJ. solve_InT.
+apply dersrec_singleI. apply InT_der_LJ. solve_InT.
+Qed.
+
+Lemma LJ_ImpL_And V B C D :
+  derrec (@LJrules V) emptyT ([Imp (And C D) B], Imp C (Imp D B)).
+Proof.  eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
+apply dersrec_singleI.  simpl.
+eapply derI.  eapply (@fextI _ _ _ []). 
+eapply rmI_eqc.  apply ImpR_nc'.
+simpl. unfold fmlsext. simpl.  reflexivity.
+apply dersrec_singleI.  unfold fmlsext. simpl.
+eapply derI. eapply (@fextI _ _ _ [D; C] []).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+simpl. apply dlCons.
+eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply rrls_nc'. apply AndR_sr. apply AndRrule_I.
+simpl. unfold fmlsext. simpl.  reflexivity.
+simpl. apply dlCons.  apply InT_der_LJ. solve_InT.
+apply dersrec_singleI.  apply InT_der_LJ. solve_InT.
+apply dersrec_singleI.  apply InT_der_LJ. solve_InT.
+Qed.
+
+Lemma LJ_II V B C D :
+  derrec (@LJrules V) emptyT ([Imp (Imp C D) B ; C], Imp D B).
+Proof.  eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
+apply dersrec_singleI.  simpl.
+eapply derI. eapply (@fextI _ _ _ [D] [C]).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+simpl. unfold fmlsext. simpl. apply dlCons.
+eapply derI.  eapply (@fextI _ _ _ []).
+eapply rmI_eqc.  apply ImpR_nc'.  reflexivity.
+simpl. apply dersrec_singleI.  apply InT_der_LJ. solve_InT.
+apply dersrec_singleI.  apply InT_der_LJ. solve_InT.
+Qed.
 
 (** exchange - largely copied from ../modal/k4_exch.v **)
 (* properties can exchange adjacent sublists, and resulting sequent
