@@ -417,3 +417,14 @@ Print Implicit exchL_lja.
 Definition insL_lj V cl cr mid G := @gen_insL _ _ _ cl cr mid G (@LJnc_seL V).
 Definition insL_lja V cl cr mid G := @gen_insL _ _ _ cl cr mid G (@LJAnc_seL V).
 
+(* atom rule derivable in LJ *)
+Lemma lj_der_atom V ps c G : 
+  rlsmap (flip pair G) (@ImpL_atom_rule V) ps c -> derl LJrules ps c.
+Proof. intro r. destruct r. destruct i. simpl.
+eapply dtderI.  eapply (@fextI _ _ _ [] [_]).  eapply rmI_eqc.
+eapply ImpL_nc'.  reflexivity.
+simpl. unfold fmlsext. simpl.  eapply (@dtCons _ _ []).
+apply derrec_nil_derl.  apply InT_der_LJ. solve_InT.
+eapply (@dtCons _ _ [_]). apply asmI. apply dtNil.
+Qed.
+  

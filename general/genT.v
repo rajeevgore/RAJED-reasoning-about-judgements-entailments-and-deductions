@@ -542,3 +542,14 @@ subst. exact (inr (leT_n _)).  exact (inr (leT_S l)). Qed.
 Lemma leT_ex_plus k n : leT k n -> { m : nat & Nat.add m k = n }.
 Proof. intro lkn. induction lkn. exists 0. simpl. reflexivity.
 cD. subst. exists (S IHlkn). simpl. reflexivity. Qed.
+
+Lemma add_leT_mono n m p q : leT n m -> leT p q -> leT (n + p) (m + q).
+Proof. intros lnm lpq. induction lnm.
+induction n ; simpl. exact lpq.  apply (leT_n_S IHn).
+simpl. exact (leT_S IHlnm). Qed.
+
+Lemma add_S n m : (m + S n)%nat = S (m + n).
+Proof. induction m ; simpl. reflexivity.
+rewrite IHm. reflexivity. Qed.
+
+

@@ -578,6 +578,21 @@ Qed.
 
 Print Implicit idrule_der_lja.
 
+Lemma InT_der_LJA V A ant : InT A ant -> derrec (@LJArules V) emptyT (ant, A).
+Proof. intro ia.  apply InT_split in ia.  cD. subst.
+  exact (fer_der _ _ (idrule_der_lja A)). Qed.
+
+(* atom rule derivable in LJA *)
+Lemma lja_der_atom V ps c G : 
+  rlsmap (flip pair G) (@ImpL_atom_rule V) ps c -> derl LJArules ps c.
+Proof. intro r. destruct r. destruct i. simpl.
+eapply dtderI.  eapply (@fextI _ _ _ [] [_]).  eapply rmI_eqc.
+eapply ImpL_anc'.  reflexivity.
+simpl. unfold fmlsext. simpl.  eapply (@dtCons _ _ []).
+apply derrec_nil_derl.  apply InT_der_LJA. solve_InT.
+eapply (@dtCons _ _ [_]). apply asmI. apply dtNil.
+Qed.
+  
 (* Lemma 4.2 of Dyckhoff & Negri *)
 Lemma LJA_dn42_princ V ps B C D E :
   LJAncrules ps ([Imp (Imp C D) B], E) ->
