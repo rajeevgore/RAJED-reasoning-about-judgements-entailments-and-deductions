@@ -5,6 +5,7 @@ Set Implicit Arguments.
 Require Import List.
 Import ListNotations.
 Require Import existsT.
+Require Import PeanoNat. (* for Nat *)
 
 Require Export Coq.Classes.CRelationClasses.
 
@@ -79,6 +80,22 @@ Inductive AccT (A : Type) (R : A -> A -> Type) (x : A) : Type :=
 
 Definition well_foundedT (A : Type) (R : A -> A -> Type) :=
   forall a : A, AccT R a.
+
+Definition measure {U} f (dtn dt : U) := f dtn < f dt.
+
+Lemma AccT_measure' U f n : forall dt : U, f dt < n -> AccT (measure f) dt.
+Proof.  induction n.
+- intros.  apply Nat.nlt_0_r in H.  contradiction H.
+- intros.  apply AccT_intro.  intros.  unfold measure in H0.  apply IHn.
+apply Lt.lt_n_Sm_le in H.  eapply Lt.lt_le_trans ; eassumption.  Qed.
+
+Definition AccT_measure U f dt := 
+  @AccT_measure' U f _ dt (Nat.lt_succ_diag_r _).
+
+Lemma rsub_AccT U R S x : @rsub U U R S -> AccT S x -> AccT R x.
+Proof. intros rsa acs. induction acs.
+apply AccT_intro. intros y ryx.
+exact (X _ (rsa _ _ ryx)). Qed.
 
 Inductive ForallT (A : Type) (P : A -> Type) : list A -> Type :=
     ForallT_nil : ForallT P []

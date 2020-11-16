@@ -17,6 +17,7 @@ Require Import List_lemmasT gen_tacs swappedT.
 Require Import gen_seq.
 Require Import Coq.Program.Basics.
 Require Import Coq.Logic.FunctionalExtensionality.
+Require Import PeanoNat.
 
 Inductive PropF (V : Set): Type :=
  | Var : V -> PropF V
@@ -50,13 +51,27 @@ Inductive dnsubfml {V} : PropF V -> PropF V -> Type :=
   | dnsub_OrL : forall C D, dnsubfml C (Or C D)
   | dnsub_OrR : forall C D, dnsubfml D (Or C D).
 
-(*
-Lemma AccT_dnsubfml {V} (A : PropF V) : AccT dnsubfml A.
-Proof. induction A ; apply AccT_intro ; intros A' isf ;
-  inversion isf ; subst ; assumption. Qed.
-  *)
+(* formula weight per Dyckhoff and Negri, 2000 *)
+Fixpoint dnfw {V} fml :=
+  match (fml : PropF V) with
+    | Bot _ => 0
+    | Var _ => 1
+    | Imp A B => S (dnfw A + dnfw B)
+    | And A B => S (S (dnfw A + dnfw B))
+    | Or A B => S (S (S (dnfw A + dnfw B)))
+  end.
 
-Axiom AccT_dnsubfml : forall V (A : PropF V), AccT dnsubfml A.
+Lemma dnsub_fw V : rsub (@dnsubfml V) (measure dnfw).
+Proof. intros u v dn. destruct dn ; unfold measure ; simpl ; 
+rewrite ?add_S ; apply Lt.le_lt_n_Sm ; repeat (apply Le.le_n_S) ;
+repeat (apply le_S) ; try (apply Plus.le_plus_l) ; 
+try (apply Plus.le_plus_r) ; try (apply Le.le_refl) ;
+rewrite - ?Nat.add_assoc ; try (apply Plus.le_plus_l) ; 
+try (apply Plus.le_plus_r) ; try (apply Le.le_refl).
+apply Plus.plus_le_compat_l. apply Plus.le_plus_r. Qed.
+
+Lemma AccT_dnsubfml : forall V (A : PropF V), AccT dnsubfml A.
+Proof. intros *. eapply rsub_AccT. apply dnsub_fw. apply AccT_measure. Qed.
 
 Lemma isub_dnsub V : rsub (@isubfml V) dnsubfml.
 Proof. intros u v isf. destruct isf.
