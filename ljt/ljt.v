@@ -54,8 +54,9 @@ Inductive dnsubfml {V} : PropF V -> PropF V -> Type :=
 (* formula weight per Dyckhoff and Negri, 2000 *)
 Fixpoint dnfw {V} fml :=
   match (fml : PropF V) with
-    | Bot _ => 0
-    | Var _ => 1
+    (* note, next two lines swap 1 and 0 from Dyckhoff *)
+    | Bot _ => 1
+    | Var _ => 0
     | Imp A B => S (dnfw A + dnfw B)
     | And A B => S (S (dnfw A + dnfw B))
     | Or A B => S (S (S (dnfw A + dnfw B)))
