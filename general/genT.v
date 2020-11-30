@@ -348,6 +348,11 @@ intro. inversion X0 ; subst. eexists. apply InT_eq. assumption.
 apply IHX in X1. destruct X1. eexists. eapply InT_cons. eassumption.
 assumption. Qed.
 
+Lemma ForallT_exists A B (R : A -> B -> Type) xs :
+  ForallT (fun x => sigT (R x)) xs -> sigT (fun ys => Forall2T R xs ys).
+Proof. intro fxs. induction fxs. exists []. apply Forall2T_nil.
+cD. exists (p :: IHfxs). apply Forall2T_cons ; assumption. Qed.
+
 Lemma ForallT_forall: forall (A : Type) (P : A -> Type) (l : list A),
   iffT (ForallT P l) (forall x : A, InT x l -> P x).
 Proof. intros.  induction l ; unfold iffT ; split ; intros.
