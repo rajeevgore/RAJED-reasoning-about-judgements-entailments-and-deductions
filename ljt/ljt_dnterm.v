@@ -12,11 +12,12 @@ Test Printing Universes.
 From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
-Require Import gen genT ddT dd_fc gen_seq swappedT rtcT.
+Require Import gen genT ddT dd_fc gen_seq swappedT rtcT List_lemmasT.
 Require Import ljt.
 Require Import Coq.Program.Basics.
+Require Import Coq.Program.Equality.
 
-(* multiset ordering, but on lists - allowing swap (hopefully 1 swap not rtc *) 
+(* multiset ordering, but on lists *) 
 Inductive ms_ord {U} R : relationT (list U) :=
     ms_ordI : forall G1 G2 ps c, (forall p : U, InT p ps -> R p c) ->
     ms_ord R (G1 ++ ps ++ G2) (G1 ++ c :: G2).
@@ -30,6 +31,12 @@ Lemma ms_ordI_eq {U} R G1 G2 ps c Gsw G1c2 :
   (forall p : U, InT p ps -> R p c) -> Gsw = G1 ++ ps ++ G2 ->
     G1c2 = (G1 ++ c :: G2) -> ms_ord R Gsw G1c2.
 Proof. intros. subst. eapply ms_ordI ; eassumption. Qed.
+
+(* multiset ordering on lists - allowing swap *) 
+Inductive ms_ord_sw {U} R : relationT (list U) :=
+    ms_ord_swI : forall Gp Gc Gcsw Gpsw, ms_ord R Gp Gc ->
+    clos_transT (@swapped _) Gp Gpsw -> clos_transT (@swapped _) Gc Gcsw ->
+    ms_ord_sw R Gpsw Gcsw.
 
 (* multiset ordering, transitive (if R is) *)
 (*
@@ -218,4 +225,147 @@ Lemma lja_prems_dn V ps cl cr pl pr :
     ms_ord (measure dnfw) (pr :: pl) (cr :: cl).
 *)
 
+(* the property we need of a derivation tree -
+  no repeated entries of the same "size" *)
+Definition no_rpt_same U R rules prems (c0 : U) (d0 : derrec rules prems c0) :=
+  forall c1 c2 (d1 : derrec rules prems c1) (d2 : derrec rules prems c2),
+    in_nextup d1 d0 -> in_nextup d2 d1 -> clos_transT R c2 c0.
 
+Definition no_rpt_same_fc U R rules prems (d0 : @derrec_fc U rules prems) :=
+  forall (d1 : derrec_fc rules prems) (d2 : derrec_fc rules prems),
+    in_nextup_fc d1 d0 -> in_nextup_fc d2 d1 -> 
+    clos_transT R (derrec_fc_concl d2) (derrec_fc_concl d0).
+
+(* original one, wrong, doesn't allow changing Var p for Var q 
+Inductive seq_ord {V} : relationT (srseq (PropF V)) :=
+  | seq_ordI : forall pl pr cl cr, 
+    ms_ord (measure (@dnfw V)) (pr :: pl) (cr :: cl) ->
+    seq_ord (pl, pr) (cl, cr).
+*)
+Inductive seq_ord {V} : relationT (srseq (PropF V)) :=
+  | seq_ordI : forall pl pr cl cr, 
+    ms_ord_sw lt (map dnfw (pr :: pl)) (map dnfw (cr :: cl)) ->
+    seq_ord (pl, pr) (cl, cr).
+
+Inductive seq_ord_eq {V} : relationT (srseq (PropF V)) :=
+  | seq_ord_eqI : forall pl pr cl cr, 
+    map dnfw (pr :: pl) = map dnfw (cr :: cl) ->
+    seq_ord_eq (pl, pr) (cl, cr).
+
+Lemma seq_ord_comp_eq {V} p q c : seq_ord_eq q p ->
+  @seq_ord V p c -> seq_ord q c. 
+Proof. intros se so.  inversion se.  inversion so. subst.
+inversion H2. subst.
+apply seq_ordI. rewrite H. exact X. Qed.
+
+Lemma seq_ord_eq_comp {V} p q c: seq_ord q p ->
+  @seq_ord_eq V p c -> seq_ord q c. 
+Proof. intros se so.  inversion se.  inversion so. subst.
+inversion H2. subst.
+apply seq_ordI. rewrite <- H1. exact X. Qed.
+
+Lemma rsub_ms_ord U R1 R2 : rsub R1 R2 -> rsub (ms_ord R1) (@ms_ord U R2).
+Proof. intros rs12 u v ms1. destruct ms1.
+apply ms_ordI. intros p inp.
+exact (rs12 p c (r p inp)). Qed.
+
+Lemma rsub_ms_ord_sw U R1 R2 : 
+  rsub R1 R2 -> rsub (ms_ord_sw R1) (@ms_ord_sw U R2).
+Proof. intros rs12 u v ms1. destruct ms1.
+exact (ms_ord_swI (rsub_ms_ord rs12 m) c c0). Qed.
+
+Lemma mso_meas_map U f (xs ys : list U):
+  ms_ord (measure f) xs ys -> ms_ord lt (map f xs) (map f ys).
+Proof. intro mm. destruct mm. rewrite !map_app. simpl.
+apply ms_ordI. intros p inpm.
+apply InT_mapE in inpm. cD. subst.
+exact (m _ inpm1). Qed.
+
+Lemma mso_sw_meas_map U f (xs ys : list U):
+  ms_ord_sw (measure f) xs ys -> ms_ord_sw lt (map f xs) (map f ys).
+Proof. intro mm. destruct mm. 
+apply (ms_ord_swI (mso_meas_map m)).
+clear m. induction c. apply tT_step. apply (swapped_map _ r).
+exact (tT_trans IHc1 IHc2).
+clear m. induction c0. apply tT_step. apply (swapped_map _ r).
+exact (tT_trans IHc0_1 IHc0_2). Qed.
+
+Lemma ms_ord_cons_fe U f (p0 c1 : U) inp c0 Γ1 Γ2:
+  ms_ord f (p0 :: inp) (c1 :: c0) ->
+  ms_ord_sw f (p0 :: fmlsext Γ1 Γ2 inp) (c1 :: fmlsext Γ1 Γ2 c0).
+Proof. intro mso.
+inversion mso.
+pose (ms_ordI f (Γ1 ++ G1) (G2 ++ Γ2) c X).
+assert (ms_ord f (Γ1 ++ (G1 ++ ps ++ G2) ++ Γ2) (Γ1 ++ (G1 ++ c :: G2) ++ Γ2)).
+repeat (rewrite <- !app_assoc in m || rewrite <- !app_comm_cons in m).
+list_assoc_r. exact m.
+rewrite H0 in X0.  rewrite H in X0. clear m H0 H X.
+unfold fmlsext.
+apply (ms_ord_swI X0) ; apply tT_step ; swap_tac_Rc.
+Qed.
+
+(*
+Lemma lja_seq_ord' V concl ps (rls : @LJArules V ps concl) p :
+  InT p ps -> (seq_ord p concl + seq_ord_eq p concl).
+Proof. intro inp. destruct rls. inversion r. clear r.  destruct X ; subst.
+- (* LJAilrules *)
+left.
+apply InT_mapE in inp. cD.
+eapply ail_prems_dn in r. 2: apply inp1.
+apply seq_ordI.
+inversion inp0. subst. clear inp0.
+apply mso_sw_meas_map.
+apply (rsub_ms_ord_sw dnsub_fw).
+apply (ms_ord_cons_fe _ _ r).
+
+Admitted.
+
+  
+
+
+
+Lemma all_nrs {V} prems ps concl (ds : dersrec LJArules prems ps)
+  (ljpc : LJArules ps concl) :
+  ForallT (fun p => @seq_ord V p concl) ps ->  
+  allPder (@no_rpt_same _ seq_ord _ _) ds ->  
+  allDT (@no_rpt_same _ seq_ord _ _) (derI concl ljpc ds).
+Proof. intros fp apd. simpl. split. 2: apply apd.
+intros c1 * ind1 ind2.
+apply in_nextup_concl_in in ind1.
+apply (ForallTD_forall fp) in ind1.
+destruct d1. inversion ind2. inversion X.
+apply in_nextup_concl_in in ind2.
+pose (lja_seq_ord l ind2). sD.
+eapply tT_trans ; apply tT_step ; eassumption.
+apply tT_step.  exact (seq_ord_comp_eq s ind1).
+Qed.
+
+Lemma lja_dd_ord V prems : forall concl, 
+  derrec (@LJArules V) prems concl -> {d : derrec LJArules prems concl &
+  allDT (@no_rpt_same _ seq_ord _ _) d}.
+Proof. eapply derrec_all_rect.
+- intros concl pc.
+exists (dpI _ _ _ pc). simpl.
+unfold no_rpt_same. 
+intros * ind1 ind2.  destruct ind2.
+dependent induction ind1.  inversion i.
+- intros * ljpc ds fps.
+assert {dsr : (dersrec LJArules prems ps) & 
+  allPder (@no_rpt_same _ seq_ord LJArules prems) dsr}.
+{ clear ljpc ds.
+induction ps.  eexists. apply allPder_Nil.
+inversion fps. subst.  apply IHps in X0. cD.
+exists (dlCons X X0).  apply allPder_Cons.
+exact (allDTD1 _ _  X2). exact X1. }
+cD. clear ds fps.
+inversion ljpc. subst. destruct X1. destruct l.
++ (* LJAilrules *)
+
+exists (derI _ ljpc X).  destruct c.
+
+eapply ail_prems_dn in r.
+    
+want the following lemma
+all_nrs
+
+*)

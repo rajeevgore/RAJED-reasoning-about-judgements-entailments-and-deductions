@@ -62,7 +62,7 @@ Fixpoint dnfw {V} fml :=
     | Or A B => S (S (S (dnfw A + dnfw B)))
   end.
 
-Lemma dnsub_fw V : rsub (@dnsubfml V) (measure dnfw).
+Lemma dnsub_fw {V} : rsub (@dnsubfml V) (measure dnfw).
 Proof. intros u v dn. destruct dn ; unfold measure ; simpl ; 
 rewrite ?add_S ; apply Lt.le_lt_n_Sm ; repeat (apply Le.le_n_S) ;
 repeat (apply le_S) ; try (apply Plus.le_plus_l) ; 
