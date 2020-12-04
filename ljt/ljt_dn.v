@@ -266,16 +266,16 @@ simpl in ceq. unfold fmlsext in ceq.
 inversion ceq. subst. clear ceq.
 acacD'T2 ; subst.
 
-- inv_gl_tac (@il_anc) LJA_inv_ail c0 H fp dbe cin1.
+- inv_gl_tac (@il_anc) LJA_inv_ail c0 X fp dbe cin1.
 
-- pose (LJAil_sing_empty H). apply sing_empty_app in s.  sD ; subst.
-+ simpl in H.  rewrite ?app_nil_r.
+- pose (LJAil_sing_empty X). apply sing_empty_app in s.  sD ; subst.
++ simpl in X.  rewrite ?app_nil_r.
 rewrite ?app_nil_r in dbe.  rewrite ?app_nil_r in dc.
-inv_gl_tac (@il_anc) LJA_inv_ail H2 H fp dbe cin1.
-+ rewrite ?app_nil_r in H.  simpl in dc.  simpl in dbe.
-inv_gl_tac (@il_anc) LJA_inv_ail H1 H fp dbe cin1.
+inv_gl_tac (@il_anc) LJA_inv_ail H2 X fp dbe cin1.
++ rewrite ?app_nil_r in X.  simpl in dc.  simpl in dbe.
+inv_gl_tac (@il_anc) LJA_inv_ail H0 X fp dbe cin1.
 
-- inv_gl_tac (@il_anc) LJA_inv_ail c0 H fp dbe cin1.
+- inv_gl_tac (@il_anc) LJA_inv_ail c0 X fp dbe cin1.
 Qed.
 
 Check gs_LJA_ImpL_Ail.
@@ -371,33 +371,33 @@ Proof. unfold gen_step. intros sad fp dc.
 unfold l41prop. intros * ceq * dbe.
 inversion r. subst. clear r. 
 inversion ceq. subst. clear ceq. 
-destruct H.
+destruct X.
 - destruct a.  simpl in fp.  inversion fp.
 inversion X0. clear fp X0 X2. subst.
-rewrite H1 in X.  rewrite H1 in X1.
+rewrite H0 in X.  rewrite H0 in X1.
 pose (sad _ (isub_AndR _ _) _ (fst X1)).
 specialize (l _ _ eq_refl _ _ dbe).
 specialize (sad _ (isub_AndL _ _) _ (fst X)).
 specialize (sad _ _ eq_refl _ _ l).
-clear dc dbe H1 X X1 l.
+clear dc dbe H0 X X1 l.
 eapply derI. eapply fextI. apply rmI.
 apply il_anc'. apply And_ail'.
 exact (dersrec_singleI sad).
 - destruct o.  simpl in fp.  inversion fp.  clear fp X0. subst.
-rewrite H1 in X.
+rewrite H0 in X.
 specialize (sad _ (isub_OrL _ _) _ (fst X)).
 specialize (sad _ _ eq_refl _ _ dbe).
-clear dc dbe H1 X.
+clear dc dbe H0 X.
 eapply derI. eapply fextI. apply rmI.
 apply il_anc'. apply Or_ail'. simpl. simpl in sad.
 pose (insL_lja (G1 ++ [Imp A B]) G2 [Imp B0 B]).
 rewrite <- !app_assoc in d.
 apply d in sad.  unfold fmlsext.  exact (dersrec_singleI sad).
 - destruct o.  simpl in fp.  inversion fp.  clear fp X0. subst.
-rewrite H1 in X.
+rewrite H0 in X.
 specialize (sad _ (isub_OrR _ _) _ (fst X)).
 specialize (sad _ _ eq_refl _ _ dbe).
-clear dc dbe H1 X.
+clear dc dbe H0 X.
 eapply derI. eapply fextI. apply rmI.
 apply il_anc'. apply Or_ail'. simpl. simpl in sad.
 pose (insL_lja G1 (Imp B0 B :: G2) [Imp A B]).
@@ -600,9 +600,9 @@ Lemma LJA_dn42_princ V ps B C D E :
   adm (fst_ext_rls LJAncrules) (map (apfst (fmlsext Γ1 Γ2)) ps)
     (fmlsext Γ1 Γ2 [Imp D B ; Imp D B ; C], E).
 Proof. intro ljpc. inversion ljpc ; subst ; clear ljpc.
-- inversion X.  inversion H1 ; inversion H3.
+- inversion X.  inversion X0 ; inversion X1.
 
-- (* the non-trivial case *) inversion H. subst. clear H. 
+- (* the non-trivial case *) inversion X. subst. clear X. 
 simpl. unfold fmlsext. simpl.
 intros *. apply admI. intro drs.
 inversion drs. subst. clear drs.
@@ -614,11 +614,10 @@ apply (eq_rect _ _ d). list_eq_assoc.
 (* now need exchange *)
 clear X X0.  simpl in d.  unfold fmlsext in d.  exact d.
 
-- inversion H. 
-- inversion H.
+- inversion X. 
 - inversion X.
-- inversion X.  inversion X0.
-+ inversion H0.  + inversion H0.  + inversion X1.
+- inversion X.
+- inversion X.  inversion X0 ; inversion X1.
 - inversion X. 
 Qed.
 
@@ -643,4 +642,3 @@ derrec LJArules emptyT seq ->
   can_rel LJArules (srs_ext_rel (Y:=PropF V)) dn42inv seq.
 Proof. unfold can_rel.
 apply der_trf_rc_adm.  exact can_trf_dn42inv_lja.  Qed.
-

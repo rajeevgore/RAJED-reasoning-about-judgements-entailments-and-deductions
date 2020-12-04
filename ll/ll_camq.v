@@ -194,13 +194,14 @@ simpl in IHxs. exact (IHxs H1). Qed.
 
 Print Implicit merge_paramL_ngl_QT.
 
+(*
 Lemma plusL_wth_q V (A : LLfml V) rules ys zs drsa drsb psa psb ca cb :
   fmlsrule [] ys PlusLrule psa ca -> 
   fmlsrule [] zs Wthrule psb cb -> 
   gen_step2 (osscamq dual rules) A isubfml drsa drsb psa ca psb cb.
 Proof. intros psca pscb. apply gs_osscamq_lem.  intros * caes cbes.
 inversion psca. subst.  inversion pscb. subst.
-destruct H. destruct H0.
+destruct X. destruct X0.
 unfold fmlsext in caes. unfold fmlsext in cbes.
 simpl in caes. simpl in cbes.
 apply gs_osscam_q_lem.
@@ -216,7 +217,7 @@ Lemma plusR_wth_q V (A : LLfml V) rules ys zs drsa drsb psa psb ca cb :
   gen_step2 (osscamq dual rules) A isubfml drsa drsb psa ca psb cb.
 Proof. intros psca pscb. apply gs_osscamq_lem.  intros * caes cbes.
 inversion psca. subst.  inversion pscb. subst.
-destruct H. destruct H0.
+destruct X. destruct X0.
 unfold fmlsext in caes. unfold fmlsext in cbes.
 simpl in caes. simpl in cbes.
 apply gs_osscam_q_lem.
@@ -243,8 +244,8 @@ Lemma tens_par_q V (A : LLfml V) rules ys zs drsa psa psb ca cb :
   gen_step2 (osscamq dual rules) A isubfml drsa
          (derrec rules emptyT) psa ca psb cb.
 Proof. intros psca pscb. apply gs_osscamq_lem.  intros * caes cbes.
-inversion psca. subst.  inversion pscb. subst.
-destruct H. destruct H2.
+inversion psca. subst.  inversion pscb. subst. clear psca pscb.
+inversion X. destruct X0. inversion H. subst. clear X H.
 unfold fmlsext in cbes.
 simpl in caes. simpl in cbes.
 apply gs_osscam_q_lem.
@@ -1340,3 +1341,4 @@ apply (hs2_maell_Q adm_exch_maell (get_botrule _) (get_botrule _)
 
 Print Implicit cut_adm_maell_Q.
 
+*)

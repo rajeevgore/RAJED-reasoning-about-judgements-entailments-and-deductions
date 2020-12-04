@@ -316,17 +316,16 @@ intros sub fpl fpr dl dr. clear dl dr.
 apply osscamI. intros. subst.
 inversion psca. subst. clear psca. 
 inversion pscb. subst. clear pscb. 
-destruct H2. destruct H4.
-unfold fmlsext in H. unfold fmlsext in H0.
-simpl in H. simpl in H0.
-injection H as. injection H0 as.
-subst. simpl in H0. injection H0 as. subst.
+destruct X. destruct X0.
+unfold fmlsext in H2. unfold fmlsext in H3.
+simpl in H2. simpl in H3.
+injection H2 as. injection H3 as.
+subst. simpl in H2. injection H2 as. subst.
 simpl in fpl. simpl in fpr.
 unfold fmlsext in fpl. unfold fmlsext in fpr.
 simpl in fpl. simpl in fpr.
-inversion fpl. inversion fpr. clear X0 X2 fpl fpr.
-cD. clear X0 X2. subst.
-specialize (sub A0 (isub_plusL _ _) _ X _ X1).
+inversion fpl. inversion fpr. clear fpl fpr. subst.
+specialize (sub A0 (isub_plusL _ _) _ (fst X) _ (fst X1)).
 destruct sub.  exact (d _ _ _ eq_refl eq_refl H1).  Qed.
 
 Lemma plusR_wth V (A : LLfml V) rules ys zs drsa drsb psa psb ca cb :
@@ -338,17 +337,16 @@ intros sub fpl fpr dl dr. clear dl dr.
 apply osscamI. intros. subst.
 inversion psca. subst. clear psca. 
 inversion pscb. subst. clear pscb. 
-destruct H2. destruct H4.
-unfold fmlsext in H. unfold fmlsext in H0.
-simpl in H. simpl in H0.
-injection H as. injection H0 as.
-subst. simpl in H0. injection H0 as. subst.
+destruct X. destruct X0.
+unfold fmlsext in H2. unfold fmlsext in H3.
+simpl in H2. simpl in H3.
+injection H2 as. injection H3 as.
+subst. simpl in H2. injection H2 as. subst.
 simpl in fpl. simpl in fpr.
 unfold fmlsext in fpl. unfold fmlsext in fpr.
 simpl in fpl. simpl in fpr.
-inversion fpl. inversion fpr. inversion X2. clear X0 X2 X4 fpl fpr.
-cD. clear X0 X2. subst.
-specialize (sub B (isub_plusR _ _) _ X _ X3).
+inversion fpl. inversion fpr. inversion X2. clear fpl fpr X2. subst.
+specialize (sub B (isub_plusR _ _) _ (fst X) _ (fst X3)).
 destruct sub.  exact (d _ _ _ eq_refl eq_refl H1).  Qed.
 
 Check plusL_wth.  Check plusR_wth.
@@ -372,13 +370,12 @@ intros sub fpl fpr dl dr. clear dl dr.
 apply osscamI. intros. subst.
 inversion psca. subst. clear psca. 
 inversion pscb. subst. clear pscb. 
-inversion H2. subst.
-inversion H0. inversion H6. clear H2 H0 H6. subst.
+inversion X. subst. 
+inversion H0. inversion H. clear X H0 H. subst.
 simpl in fpl. simpl in fpr.
-unfold fmlsext in fpr.  unfold fmlsext in H3.  simpl in fpr.  simpl in H3.
-simpl in H. injection H as . injection H3 as . subst.
-simpl in H2. injection H2 as . subst.
-pose (merge_assoc H1 (merge_sym H4)). cD. clear H1 H4.
+unfold fmlsext in fpr.  unfold fmlsext in H5.  simpl in fpr.
+destruct X0.  simpl in H5. inversion H5. clear H5. subst.
+pose (merge_assoc H1 (merge_sym H3)). cD. clear H1 H3.
 inversion fpl. inversion fpr. subst. cD. clear fpl fpr X2 X3 X4.
 pose (sub A0 (isub_tensL _ _) _ X _ X1). 
 destruct o. specialize (d _ _ _ eq_refl eq_refl (mergeRI _ s1)).
@@ -594,4 +591,3 @@ apply (gs_mall adm_exch) ; apply bot_is_rule. Qed.
 Print Implicit gs2c_gs2tr. Print Implicit gs2_gs2c.
 Print Implicit height_step2_tr_lem.
 *)
-

@@ -298,8 +298,8 @@ About lj_ImpR_ImpL.
 Lemma gen_AilR_rrlsL V fml psl psr :
   @LJAilrules V psr [fml] -> LJsrrules psl fml -> False.
 Proof. intros ir il.  inversion ir ; clear ir ; 
-((inversion X ; clear X) || (inversion H ; clear H)) ; subst ; 
-inversion il ; clear il ; inversion H ; clear H ; subst. Qed.
+((inversion X ; clear X) || (inversion X ; clear X)) ; subst ; 
+inversion il ; clear il ; inversion X ; clear X ; subst. Qed.
 
 Lemma gen_lrlsR_rrlsL V rules fml la lc rc G1 G2 D psl psr 
   (lctr_adm : forall fmls seq, derrec (fst_ext_rls rules) emptyT seq ->
@@ -310,8 +310,8 @@ Lemma gen_lrlsR_rrlsL V rules fml la lc rc G1 G2 D psl psr
     (map (pair la) psl) (map (flip pair D) psr).
 Proof. intros ir il sub fpl fpr.
 inversion ir ; clear ir ; 
-((inversion X ; clear X) || (inversion H ; clear H)) ; subst ; 
-inversion il ; clear il ; inversion H ; clear H ; subst ;
+((inversion X ; clear X) || (inversion X ; clear X)) ; subst ; 
+inversion il ; clear il ; inversion X ; clear X ; subst ;
 simpl in fpr ; simpl in fpl.
 - (* And on both sides *)
 inversion fpr. clear fpr X0. destruct X. clear c. subst.
@@ -378,22 +378,22 @@ Proof. inversion ljr ; subst.
 inversion ljl ; subst.  
 + (* ImpL on the left *)
 eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  apply gs2_ImpLL.
-eapply fextI. apply (rmI_eqc _ _ _ _ H0). reflexivity.
+eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 + (* ImpR on the left *)
 eapply lj_ImpR_ImpL ; eassumption.
 + (* Id on the left *)
 eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_idL_lj.
-eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
+eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 + (* left rules on the left *)
 eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_lrlsL_lj.
-eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
+eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 + (* right rules on the left - formulae different *)
 clear dl dr.
-inversion X. inversion H. subst. clear H X.
-inversion H2 ; subst ; inversion H.
+inversion X. inversion X0. subst. clear X0 X.
+inversion X1 ; subst ; inversion X.
 - (* ImpR on the right *)
 eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_ImpRR_lj.
-eapply fextI. apply (rmI_eqc _ _ _ _ H). reflexivity.
+eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
 - (* Id on the right *)
 eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_idR_lj.
 eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
@@ -401,11 +401,11 @@ eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
 inversion ljl ; subst.
 + (* ImpL on the left *)
 eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_ImpLL.
-eapply fextI. apply (rmI_eqc _ _ _ _ H). reflexivity.
+eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 + (* ImpR on the left - formulae different *)
 clear dl dr.
-inversion X. inversion H. subst. clear X H.
-inversion X0.  inversion H.  inversion H.  inversion X.
+inversion X. inversion X0. subst. clear X X0.
+inversion X1 ; inversion X.
 + (* Id on the left *)
 eapply (gs2_rp _ _ _ _ _ _ _ dl dr).  eapply gs2_idL_lj.
 eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.

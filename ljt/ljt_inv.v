@@ -133,81 +133,72 @@ Definition rr_ext_relI_eqc W Y R ant G G' Φ1 Φ2 seq2 rga :=
 Lemma LJAIAE V ps B C D G :
   LJAncrules ps ([@Imp V (And C D) B], G) -> ps = [([Imp C (Imp D B)], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion X.  inversion H3 ; inversion H5. reflexivity.
-- inversion H. - inversion H.  - inversion H.  - inversion X. 
-- inversion X.  inversion X0. 
-+ inversion H2. + inversion H2.  + inversion X1.  
+- inversion X.  inversion X0 ; inversion X1. reflexivity.
+- inversion X. - inversion X.  - inversion X.  - inversion X. 
+- inversion X.  inversion X0 ; inversion X1. 
 - inversion X.  Qed.
 
 Lemma LJAIOE V ps B C D G :
   LJAncrules ps ([@Imp V (Or C D) B], G) -> ps = [([Imp C B; Imp D B], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion X.  inversion H3 ; inversion H5. reflexivity.
-- inversion H. - inversion H.  - inversion H.  - inversion X. 
-- inversion X.  inversion X0. 
-+ inversion H2. + inversion H2.  + inversion X1.  
+- inversion X.  inversion X0 ; inversion X1. reflexivity.
+- inversion X. - inversion X.  - inversion X.  - inversion X. 
+- inversion X.  inversion X0 ; inversion X1. 
 - inversion X.  Qed.
 
 Lemma LJAIIE V ps B C D G :
   LJAncrules ps ([@Imp V (Imp C D) B], G) -> ps = [([Imp D B; C], D); ([B], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion X.  inversion H3 ; inversion H5. 
-- inversion H. reflexivity.
-- inversion H.  - inversion H.  - inversion X. 
-- inversion X.  inversion X0. 
-+ inversion H2. + inversion H2.  + inversion X1.  
+- inversion X.  inversion X0 ; inversion X1.
+- inversion X. reflexivity.
+- inversion X.  - inversion X.  - inversion X. 
+- inversion X.  inversion X0 ; inversion X1. 
 - inversion X.  Qed.
 
 Lemma LJAIpE V ps B p G : LJAncrules ps ([@Imp V (Var p) B], G) ->
   ps = [([Imp (Var p) B], Var p); ([B], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion X.  inversion H3 ; inversion H5. 
-- inversion H.  - inversion H. reflexivity.
-- inversion H.  - inversion X. 
-- inversion X.  inversion X0. 
-+ inversion H2. + inversion H2.  + inversion X1.  
+- inversion X.  inversion X0 ; inversion X1.
+- inversion X.  - inversion X. reflexivity.
+- inversion X.  - inversion X. 
+- inversion X.  inversion X0 ; inversion X1.  
 - inversion X.  Qed.
 
 Lemma LJIE V ps A B G :
   LJncrules ps ([@Imp V A B], G) -> ps = [([Imp A B], A); ([B], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion H. reflexivity.  - inversion H.  - inversion X.
-- inversion X.  inversion X0.
-+ inversion H2.  + inversion H2.  + inversion X1.
+- inversion X. reflexivity.  - inversion X.  - inversion X.
+- inversion X.  inversion X0 ; inversion X1.
 - inversion X. Qed.
 
 Lemma LJAE V ps A B G :
   LJncrules ps ([@And V A B], G) -> ps = [([A ; B], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion H. - inversion H.  - inversion X.
-- inversion X.  inversion X0.
-+ inversion H2.  reflexivity.  + inversion H2. + inversion X1.
+- inversion X. - inversion X.  - inversion X.
+- inversion X.  inversion X0 ; inversion X1.  reflexivity. 
 - inversion X. Qed.
 
 Lemma LJAAE V ps A B G :
   LJAncrules ps ([@And V A B], G) -> ps = [([A ; B], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion X.  inversion H3 ; inversion H5.
-- inversion H. - inversion H.  - inversion H.  - inversion X. 
-- inversion X.  inversion X0. 
-+ inversion H2.  reflexivity.  + inversion H2.  + inversion X1.  
+- inversion X.  inversion X0 ; inversion X1.
+- inversion X. - inversion X.  - inversion X.  - inversion X. 
+- inversion X.  inversion X0 ; inversion X1.  reflexivity. 
 - inversion X.  Qed.
 
 Lemma LJOE V ps A B G :
   LJncrules ps ([@Or V A B], G) -> ps = [([A], G); ([B], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion H. - inversion H.  - inversion X.
-- inversion X.  inversion X0.
-+ inversion H2.  + inversion H2. reflexivity.  + inversion X1.
+- inversion X. - inversion X.  - inversion X.
+- inversion X.  inversion X0 ; inversion X1. reflexivity.
 - inversion X. Qed.
 
 Lemma LJAOE V ps A B G :
   LJAncrules ps ([@Or V A B], G) -> ps = [([A], G); ([B], G)].
 Proof. intro ljnc. inversion ljnc.
-- inversion X.  inversion H3 ; inversion H5.
-- inversion H. - inversion H.  - inversion H.  - inversion X. 
-- inversion X.  inversion X0. 
-+ inversion H2.  + inversion H2.  reflexivity.  + inversion X1.  
+- inversion X.  inversion X0 ; inversion X1.
+- inversion X. - inversion X.  - inversion X.  - inversion X. 
+- inversion X.  inversion X0 ; inversion X1. reflexivity.
 - inversion X.  Qed.
 
 (* for use when the last rule is the rule being inverted *)
@@ -680,12 +671,13 @@ pose (LJAnc_seL X).  inversion X ; subst.
 inversion X0. subst.
 acacD'T2 ; subst.
 apply sing_empty_app in s. sD ; subst.
-+ simpl in H2.  assoc_mid H4.  ljailtac H2 H0.
-+ rewrite ?app_nil_r in H2.  assoc_mid H3.  ljailtac H2 H0.
-+ assoc_mid l.  ljailtac H2 H0.
-+ assoc_mid l.  ljailtac H2 H0.
++ simpl in X1.  assoc_mid H2.  ljailtac X1 H0.
++ rewrite ?app_nil_r in X1.  assoc_mid H3.  ljailtac X1 H0.
++ assoc_mid l.  ljailtac X1 H0.
++ assoc_mid l.  ljailtac X1 H0.
+
 - (* ImpL_Imp_rule *)
-inversion H. inversion H0. subst. clear H H0 s.
+inversion X0. inversion H0. subst. clear X0 H0 s.
 acacD'T2 ; subst.
 + eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_r.
@@ -713,7 +705,7 @@ eexists [ _ ; _ ]. split. all: cycle 1.
 +++ drstac [C0] ([] : list (PropF V)) X0 X2.
 
 - (* ImpLrule_p *)
-inversion H. inversion H0. subst. clear H H0 s.
+inversion X0. inversion H0. subst. clear X0 H0 s.
 acacD'T2 ; subst.
 + eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_r.
@@ -741,7 +733,7 @@ eexists [ _ ; _ ]. split. all: cycle 1.
 +++ drstac [C] ([] : list (PropF V)) X0 X2.
 
 - (* ImpRrule *)
-inversion H. inversion H0. subst.  inversion H2. subst. clear H2 H0 H.
+inversion X0. inversion H0. subst.  inversion H1. subst. clear H1 H0 X0.
 eexists. split. all: cycle 1.
 apply ForallT_singleI.  eexists. split.  apply InT_eq.  apply rT_refl.
 simpl in H3.  simpl. unfold fmlsext. 
@@ -760,7 +752,7 @@ apply sing_empty_app in s. sD ; subst.
 + assoc_mid l.  ljsltac X1 H0.
 - (* LJsrrules - different formulae *)
 inversion H0.  inversion X0. subst. clear X0 H0.
-inversion H6 ; inversion H.
+inversion X1 ; inversion X0.
 Qed.
 
 Lemma LJA_rel_adm_ImpR V : rel_adm LJArules (rr_ext_rel (@ImpRinv V)).
@@ -780,11 +772,11 @@ inversion X ; subst.
 - (* LJAilrules *)
 inversion X1. subst. clear X1.
 eexists. split. apply in_adm. eapply fextI. eapply rmI_eqc.
-eapply il_anc. apply rmI. exact H1. reflexivity.
+eapply il_anc. apply rmI. exact X2. reflexivity.
 apply fcr2. intro. apply rT_step. simpl.
 apply ant_relI. exact X0.
 - (* ImpL_Imp_rule *)
-inversion H. subst. clear H.
+inversion X1. subst. clear X1.
 eexists [_ ; _]. split. all: cycle 1.
 apply ForallT_cons. eexists. split. apply InT_eq. apply rT_refl.
 apply ForallT_singleI.
@@ -794,7 +786,7 @@ apply in_adm. simpl.
 eapply fextI. eapply rmI_eq. apply Imp_anc'.
 reflexivity.  reflexivity.
 - (* ImpLrule_p *)
-inversion H. subst. clear H.
+inversion X1. subst. clear X1.
 eexists [_ ; _]. split. all: cycle 1.
 apply ForallT_cons. eexists. split. apply InT_eq. apply rT_refl.
 apply ForallT_singleI.
@@ -804,7 +796,7 @@ apply in_adm. simpl.
 eapply fextI. eapply rmI_eq. apply ImpL_anc'.
 reflexivity.  reflexivity.
 - (* ImpRrule *)
-inversion H. subst. destruct (not_Imp _ _ _ X0).
+inversion X1. subst. destruct (not_Imp _ _ _ X0).
 - (* Idrule (Var - so n/a) *)
 inversion X1. subst.  destruct (not_Var _ _ X0).
 - (* LJslrules *)
@@ -834,11 +826,10 @@ Lemma can_trf_AndRinv1_lja {V} ps c : @LJArules V ps c ->
 Proof. apply can_trf_genRinv_lja.
 - intros * auw ljar.  destruct auw.
 inversion ljar ; subst.
-+ inversion X. simpl. subst. inversion H1 ; subst ; inversion H.
-+ inversion H.  + inversion H.  + inversion H.  + inversion X.
-+ inversion X. inversion X0 ; subst.
-++ inversion H0.  ++ inversion H0.  ++ inversion X1.
-+ inversion X. inversion H1 ; subst ; inversion H2 ; solve_InT.
++ inversion X. simpl. subst. inversion X0 ; subst ; inversion X1.
++ inversion X.  + inversion X.  + inversion X.  + inversion X.
++ inversion X. inversion X0 ; subst ; inversion X1.
++ inversion X. inversion X0 ; subst ; inversion X1 ; solve_InT.
 - intros * ari. inversion ari.
 - intros * ari. inversion ari.
 Qed.
@@ -850,11 +841,10 @@ Lemma can_trf_AndRinv2_lja {V} ps c : @LJArules V ps c ->
 Proof. apply can_trf_genRinv_lja.
 - intros * auw ljar.  destruct auw.
 inversion ljar ; subst.
-+ inversion X. simpl. subst. inversion H1 ; subst ; inversion H.
-+ inversion H.  + inversion H.  + inversion H.  + inversion X.
-+ inversion X. inversion X0 ; subst.
-++ inversion H0.  ++ inversion H0.  ++ inversion X1.
-+ inversion X. inversion H1 ; subst ; inversion H2 ; solve_InT.
++ inversion X. simpl. subst. inversion X0 ; subst ; inversion X1.
++ inversion X.  + inversion X.  + inversion X.  + inversion X.
++ inversion X. inversion X0 ; subst ; inversion X1.
++ inversion X. inversion X0 ; subst ; inversion X1 ; solve_InT.
 - intros * ari. inversion ari.
 - intros * ari. inversion ari.
 Qed.
@@ -865,11 +855,10 @@ Lemma can_trf_BotRinv_lja {V} ps c : @LJArules V ps c ->
 Proof. apply can_trf_genRinv_lja.
 - intros * auw ljar.  destruct auw.
 inversion ljar ; subst.
-+ inversion X. simpl. subst. inversion H1 ; subst ; inversion H.
-+ inversion H.  + inversion H.  + inversion H.  + inversion X.
-+ inversion X. inversion X0 ; subst.
-++ inversion H0.  ++ inversion H0.  ++ inversion X1.
-+ inversion X. inversion H1 ; subst ; inversion H2 ; solve_InT.
++ inversion X. simpl. subst. inversion X0 ; subst ; inversion X1.
++ inversion X.  + inversion X.  + inversion X.  + inversion X.
++ inversion X. inversion X0 ; subst ; inversion X1.
++ inversion X. inversion X0 ; subst ; inversion X1 ; solve_InT.
 - intros * ari. inversion ari.
 - intros * ari. inversion ari.
 Qed.

@@ -69,12 +69,13 @@ induction xs ; simpl.  reflexivity.
 rewrite IHxs. apply Nat.add_assoc. Qed.
 
 (* this ordering won't do for ImpL, need lemmas for individual rules *)
+(*
 Lemma ail_prems_dn V G ps cl cr pl pr :
   rlsmap (flip pair G) (@LJAilrules V) ps (cl, cr) ->
   InT (pl, pr) ps -> ms_ord dnsubfml (pr :: pl) (cr :: cl).
 Proof. intros ljpc inp.
 inversion ljpc ; subst ; clear ljpc.
-destruct H1 ; destruct i ; inversion inp ; subst ; clear inp ;
+destruct X ; destruct i ; inversion inp ; subst ; clear inp ;
 unfold flip in H0 ; inversion H0 ; clear H0 ; subst.
 + eapply (@ms_ordI _ _ [pr] [] [_]).
 intros p inp. inversion inp. subst. apply dnsub_Imp_AndL.
@@ -368,4 +369,5 @@ eapply ail_prems_dn in r.
 want the following lemma
 all_nrs
 
+*)
 *)

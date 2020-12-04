@@ -11,7 +11,7 @@ Require Export Coq.Classes.CRelationClasses.
 
 Require Import gen.
 
-Polymorphic Definition rlsT W := list W -> W -> Type.
+(* Polymorphic *) Definition rlsT W := list W -> W -> Type.
 
 (* the set of rules consisting of a single given premises/conclusion *)
 Inductive rlsT_of W ps c : rlsT W := rlsT_ofI : rlsT_of ps c ps c.

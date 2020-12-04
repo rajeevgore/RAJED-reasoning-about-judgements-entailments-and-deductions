@@ -121,9 +121,9 @@ Lemma lja_ctr_il {V} ps s (l : @LJAilrules V ps [s])
     can_rel LJArules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml')) A' x) :
   rel_adm LJArules (srs_ext_rel (sctr_rel s)).
 Proof. inversion l ; subst ; clear l.
-+ inversion H. subst. clear H.  apply lja_ra_ImpL_And.
++ inversion X. subst. clear X.  apply lja_ra_ImpL_And.
 apply crd_ra.  exact (sub _ (dnsub_Imp_AndL _ _ _)).
-+ inversion H. subst. clear H.  apply lja_ra_ImpL_Or.
++ inversion X. subst. clear X.  apply lja_ra_ImpL_Or.
 apply crd_ra.  exact (sub _ (dnsub_Imp_OrL1 _ _ _)).
 apply crd_ra.  exact (sub _ (dnsub_Imp_OrL2 _ _ _)).
 Qed.
@@ -306,7 +306,7 @@ Definition lctr_adm_lja V fmls :=
 (* Proposition 5.2, admissibility of LJ in LJA *)
 Lemma lj_ImpL_adm_lja {V} : rsub (fst_ext_rls ImpLrule) (adm (@LJArules V)).
 Proof. split. destruct X.
-inversion r. subst. clear r. destruct H.
+inversion r. subst. clear r. destruct X.
 simpl. unfold fmlsext. intro drs.
 inversion drs. inversion X0. subst. clear drs X0 X2.
 (* weaken second premise *) apply (insL_lja _ _ [Imp A B]) in X1.
@@ -396,12 +396,12 @@ Lemma gs_LJA_53_Ail V (D : PropF V) ps c Γ1 Γ2 G
 Proof. unfold gen_step. intros sad fp dc. 
 unfold l53prop. intros * deq * ceq. subst.
 inversion r. subst. clear r. 
-inversion ceq. subst. clear ceq. unfold fmlsext in H1.
+inversion ceq. subst. clear ceq. unfold fmlsext in H0.
 acacD'T2 ; subst. (* 6 subgoals *)
 
-- apply LJAil_sing in H. cD. inversion H0.
+- apply LJAil_sing in X. cD. inversion X0.
 
-- clear dc. inversion H ; subst ; inversion H0 ; subst ; clear H H0 ;
+- clear dc. inversion X ; subst ; inversion X0 ; subst ; clear X X0 ;
 inversion fp ; subst ; clear fp X0 ; apply fst in X.
 + (* Imp_AndL *) pose (sad _ (tT_step _ _ _ (dnsub_Imp_AndL _ _ _)) _ X).
 specialize (l _ _ eq_refl G1 Γ2 E).
@@ -420,14 +420,14 @@ require sad. unfold fmlsext. list_eq_assoc. clear l.
 eapply ctr_adm_lja in sad.  sersctrtac sad B.
 apply (eq_rect _ _ sad). list_eq_assoc.
 
-- clear sad. assoc_mid c0.  inv53tac H B fp dl @il_anc.
+- clear sad. assoc_mid c0.  inv53tac X B fp dl @il_anc.
 
-- rewrite ?app_nil_r in H. assoc_mid H1. inv53tac H B fp dl @il_anc.
+- rewrite ?app_nil_r in X. assoc_mid H0. inv53tac X B fp dl @il_anc.
 
-- pose (LJAil_sing H). cD. list_eq_ncT. sD.
+- pose (LJAil_sing X). cD. list_eq_ncT. sD.
 + inversion s1. subst. clear s1.
-simpl in H.  clear dc.
-inversion H ; subst ; inversion H0 ; subst ; clear H H0 ;
+simpl in X.  clear dc.
+inversion X ; subst ; inversion X0 ; subst ; clear X X0 ;
 inversion fp ; subst ; clear fp X0 ; apply fst in X.
 ++ (* Imp_AndL *) pose (sad _ (tT_step _ _ _ (dnsub_Imp_AndL _ _ _)) _ X).
 specialize (l _ _ eq_refl Γ1 Γ2 E).
@@ -449,7 +449,7 @@ apply (eq_rect _ _ sad). list_eq_assoc.
 
 + inversion s1.
 
-- clear sad. assoc_mid c0.  inv53tac H B fp dl @il_anc.
+- clear sad. assoc_mid c0.  inv53tac X B fp dl @il_anc.
 
 Qed.
 
@@ -533,11 +533,11 @@ inversion r. subst. clear r.
 inversion ceq. subst. clear ceq. 
 assert (map (apfst (fmlsext Γ1 Γ2)) (map (pair []) ps0) =
   map (pair (G1 ++ Imp A B :: G2)) ps0).
-{ clear H fp.  induction ps0 ; simpl.
-reflexivity. rewrite IHps0. rewrite H1. reflexivity. }
-rewrite H0 in fp.
+{ clear X fp.  induction ps0 ; simpl.
+reflexivity. rewrite IHps0. rewrite H0. reflexivity. }
+rewrite H in fp.
 eapply derI.  eapply fextI.  eapply rmI_eqc.
-apply rrls_anc.  apply rmI.  exact H.
+apply rrls_anc.  apply rmI.  exact X.
 simpl. unfold fmlsext. reflexivity.
 eapply (usefm12 _ _ _ _ fp). clear fp.
 intro ; simpl ; intro dl ; apply snd in dl ;
@@ -612,4 +612,3 @@ Please report at http://coq.inria.fr/bugs/.
 Definition lja_lrlsR_rrlsL V fml la lc rc D psl psr :=
   @gen_lrlsR_rrlsL V LJAncrules fml la lc rc D psl psr (@lctr_adm_lja V).
   *)
-

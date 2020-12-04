@@ -370,10 +370,10 @@ Lemma lj_ctr_lrls {V} ps s (l : @LJslrules V ps [s])
     can_rel LJrules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml')) A' x) :
   rel_adm LJrules (srs_ext_rel (sctr_rel s)).
 Proof. inversion l ; subst ; clear l.
-+ inversion H. subst. clear H.  apply lj_ra_And.
++ inversion X. subst. clear X.  apply lj_ra_And.
 apply crd_ra.  exact (sub A (isub_AndL _ _)).
 apply crd_ra.  exact (sub B (isub_AndR _ _)).
-+ inversion H. subst. clear H.  apply lj_ra_Or.
++ inversion X. subst. clear X.  apply lj_ra_Or.
 apply crd_ra.  exact (sub A (isub_OrL _ _)).
 apply crd_ra.  exact (sub B (isub_OrR _ _)).
 + (* Botrule *) clear sub.  inversion X. repeat split.
@@ -386,10 +386,10 @@ Lemma lja_ctr_lrls {V} ps s (l : @LJslrules V ps [s])
     can_rel LJArules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml')) A' x) :
   rel_adm LJArules (srs_ext_rel (sctr_rel s)).
 Proof. inversion l ; subst ; clear l.
-+ inversion H. subst. clear H.  apply lja_ra_And.
++ inversion X. subst. clear X.  apply lja_ra_And.
 apply crd_ra.  exact (sub A (dnsub_AndL _ _)).
 apply crd_ra.  exact (sub B (dnsub_AndR _ _)).
-+ inversion H. subst. clear H.  apply lja_ra_Or.
++ inversion X. subst. clear X.  apply lja_ra_Or.
 apply crd_ra.  exact (sub A (dnsub_OrL _ _)).
 apply crd_ra.  exact (sub B (dnsub_OrR _ _)).
 + (* Botrule *) clear sub.  inversion X. repeat split.

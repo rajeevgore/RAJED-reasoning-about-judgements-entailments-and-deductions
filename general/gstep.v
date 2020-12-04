@@ -334,7 +334,7 @@ destruct X7. apply X in r. apply rT_step. exact r.
 apply rT_refl. Qed.
 
 (* union of two relations *)
-Polymorphic Inductive runion U V ra rb (ps : U) (c : V) : Type :=
+Inductive runion U V ra rb (ps : U) (c : V) : Type :=
   | run_l : ra ps c -> @runion U V ra rb ps c
   | run_r : rb ps c -> @runion U V ra rb ps c.
 

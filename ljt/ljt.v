@@ -199,7 +199,7 @@ Proof. intro ljsl.  destruct ljsl ; rename_last r ;
 destruct r ; subst ; eexists ; reflexivity. Qed.
 
 Lemma LJAil_single {V} ps c : LJAilrules ps c -> {c' : PropF V & c = [c']}.
-Proof. intro. destruct H ; destruct i ; eexists ; reflexivity. Qed.
+Proof. intro. destruct X ; destruct i ; eexists ; reflexivity. Qed.
 
 (* all rules, without left context,
   note Idrule for propositions only, saves effort doing invertibility
@@ -248,8 +248,8 @@ Proof.  unfold LJArules. apply req_refl. Qed.
 
 Lemma LJnc_seL V ps cl cr : @LJncrules V ps (cl, cr) -> sing_empty cl.
 Proof. intro ljnc. inversion ljnc ; subst ; clear ljnc.
-- inversion H. apply se_single.
-- inversion H. apply se_empty.
+- inversion X. apply se_single.
+- inversion X. apply se_empty.
 - inversion X. apply se_single.
 - inversion X. destruct X0. + destruct a.  apply se_single.
   + destruct o.  apply se_single.  + destruct b.  apply se_single.
@@ -261,10 +261,10 @@ Lemma LJTnc_seL V ps cl cr : @LJTncrules V ps (cl, cr) -> sing_empty cl.
 
 Lemma LJAnc_seL V ps cl cr : @LJAncrules V ps (cl, cr) -> sing_empty cl.
 Proof. intro ljnc. inversion ljnc ; subst ; clear ljnc.
-- inversion X. destruct H1 ; destruct i ; apply se_single.
-- inversion H. apply se_single.
-- inversion H. apply se_single.
-- inversion H. apply se_empty.
+- inversion X. destruct X0 ; destruct i ; apply se_single.
+- inversion X. apply se_single.
+- inversion X. apply se_single.
+- inversion X. apply se_empty.
 - inversion X. apply se_single.
 - inversion X. destruct X0. + destruct a.  apply se_single.
   + destruct o.  apply se_single.  + destruct b.  apply se_single.
@@ -407,7 +407,7 @@ Qed.
 
 (** exchange - largely copied from ../modal/k4_exch.v **)
 (* properties can exchange adjacent sublists, and resulting sequent
-  is derivable (not conditional on unexchanged version being derivable *)
+  is derivable (not conditional on unexchanged version being derivable) *)
 
 Print Implicit exchL_std_rule.
 
@@ -443,4 +443,3 @@ simpl. unfold fmlsext. simpl.  eapply (@dtCons _ _ []).
 apply derrec_nil_derl.  apply InT_der_LJ. solve_InT.
 eapply (@dtCons _ _ [_]). apply asmI. apply dtNil.
 Qed.
-  

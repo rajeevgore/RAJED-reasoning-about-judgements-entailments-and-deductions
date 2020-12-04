@@ -118,11 +118,11 @@ intros sub fpl fpr dl dr. clear dl dr.
 apply osscaI. intros. subst.
 inversion psca. subst. clear psca. 
 inversion pscb. subst. clear pscb. 
-destruct H1. destruct H3.
-unfold fmlsext in H. unfold fmlsext in H0.
-simpl in H. simpl in H0.
-injection H as. injection H0 as.
-subst. simpl in H0. injection H0 as. subst.
+destruct X. destruct X0.
+unfold fmlsext in H1. unfold fmlsext in H2.
+simpl in H1. simpl in H2.
+injection H1 as. injection H2 as.
+subst. simpl in H1. injection H1 as. subst.
 simpl in fpl. simpl in fpr.
 unfold fmlsext in fpl. unfold fmlsext in fpr.
 simpl in fpl. simpl in fpr.
@@ -141,11 +141,11 @@ intros sub fpl fpr dl dr. clear dl dr.
 apply osscaI. intros. subst.
 inversion psca. subst. clear psca. 
 inversion pscb. subst. clear pscb. 
-destruct H1. destruct H3.
-unfold fmlsext in H. unfold fmlsext in H0.
-simpl in H. simpl in H0.
-injection H as. injection H0 as.
-subst. simpl in H0. injection H0 as. subst.
+destruct X. destruct X0.
+unfold fmlsext in H1. unfold fmlsext in H2.
+simpl in H1. simpl in H2.
+injection H1 as. injection H2 as.
+subst. simpl in H1. injection H1 as. subst.
 simpl in fpl. simpl in fpr.
 unfold fmlsext in fpl. unfold fmlsext in fpr.
 simpl in fpl. simpl in fpr.
@@ -157,7 +157,7 @@ destruct sub.  exact (d _ _ eq_refl eq_refl).  Qed.
 Check plusL_wth.  Check plusR_wth.
 
 (* won't work because of conclusion changes from
-  derrec rules emptyT (ls ++ rs)) to derrec rules emptyT (rs ++ ls)))
+  derrec rules emptyT (ls ++ rs) to derrec rules emptyT (rs ++ ls)
 how about a version of cut where any merge of the contexts is derivable?
 Lemma gs2_ossca_dual V (A : LLfml V) rules sub psa ca psb cb :
   gen_step2 (ossca dual rules) A sub (derrec rules emptyT)
@@ -176,11 +176,11 @@ intros sub fpl fpr dl dr. clear dl dr.
 apply osscaI. intros. subst.
 inversion psca. subst. clear psca. 
 inversion pscb. subst. clear pscb. 
-destruct H1. destruct H3.
-unfold fmlsext in H. unfold fmlsext in H0.
-simpl in H. simpl in H0.
-injection H as. injection H0 as.
-subst. simpl in H0. injection H0 as. subst.
+destruct X. destruct X0.
+unfold fmlsext in H1. unfold fmlsext in H2.
+simpl in H1. simpl in H2.
+injection H1 as. injection H2 as.
+subst. simpl in H1. injection H1 as. subst.
 simpl in fpl. simpl in fpr.
 unfold fmlsext in fpl. unfold fmlsext in fpr.
 simpl in fpl. simpl in fpr.
@@ -199,11 +199,11 @@ intros sub fpl fpr dl dr. clear dl dr.
 apply osscaI. intros. subst.
 inversion psca. subst. clear psca. 
 inversion pscb. subst. clear pscb. 
-destruct H1. destruct H3.
-unfold fmlsext in H. unfold fmlsext in H0.
-simpl in H. simpl in H0.
-injection H as. injection H0 as.
-subst. simpl in H0. injection H0 as. subst.
+destruct X. destruct X0.
+unfold fmlsext in H1. unfold fmlsext in H2.
+simpl in H1. simpl in H2.
+injection H1 as. injection H2 as.
+subst. simpl in H1. injection H1 as. subst.
 simpl in fpl. simpl in fpr.
 unfold fmlsext in fpl. unfold fmlsext in fpr.
 simpl in fpl. simpl in fpr.
