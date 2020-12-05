@@ -1,0 +1,24 @@
+
+re Polymorphic, had it used for the definitions of
+
+general/genT.v:Polymorphic Definition rlsT W 
+general/genT.v:Polymorphic Definition relationT (A : Type) 
+general/gstep.v:Polymorphic Inductive runion 
+general/gstep.v:Polymorphic Inductive rUnion 
+
+deleting Polymorphic in runion and rUnion gave
+File "./k4.v", line 326, characters 38-49: Error:
+
+deleting Polymorphic in runion worked
+
+then deleting Polymorphic in rlsT gives 
+File "./ll_cam.v", line 319, characters 22-24:
+Error: The reference H4 was not found in the current environment.
+
+fixed that, then lots of similar errors
+
+then deleting Polymorphic in relationT gives 
+a few similar errors, like
+File "./k4_inv.v", line 196, characters 38-39:
+Error: The reference H was not found in the current environment.
+
