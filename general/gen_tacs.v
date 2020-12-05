@@ -159,7 +159,7 @@ Theorem app_eq_unitT :
     forall {A : Type } (x y:list A) (a:A),
       x ++ y = [a] -> (x = [] /\ y = [a]) + (x = [a] /\ y = []).
 Proof.
-  intros until 0; intros H; destruct x; auto.
+  intros *; intros H; destruct x; auto.
   simpl in H; inversion H as [[H1 H2]]; subst.
   apply app_eq_nil in H2. destruct H2. subst. auto.
 Qed.
@@ -168,7 +168,7 @@ Theorem unit_eq_appT :
     forall {A : Type } (x y:list A) (a:A),
       [a] = x ++ y -> (x = [] /\ y = [a]) + (x = [a] /\ y = []).
 Proof.
-  intros until 0; intros H. 
+  intros *; intros H. 
   apply app_eq_unitT. auto.
 Qed.
 

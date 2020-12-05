@@ -29,7 +29,7 @@ Require Import k4.
 Lemma gen_ext_swap: forall T (l le : list T),
   gen_ext l le -> forall les, swapped le les -> 
   sigT (fun ls => prod (swapped l ls) (gen_ext ls les)).
-Proof. intros until 0. intro ge. induction ge.
+Proof. intros *. intro ge. induction ge.
 { intros. exists []. split. apply swapped_same.
 apply gen_ext_nil_any.  }
 { intros. inversion X. subst.

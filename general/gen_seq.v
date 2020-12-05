@@ -61,7 +61,7 @@ Lemma Sctxt_e: forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 �
   pr ps (U, V) ->
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof.
-  intros until 0. intros H. rewrite <- seqext_def.
+  intros *. intros H. rewrite <- seqext_def.
   apply Sctxt. exact H.
 Qed.
 
@@ -150,7 +150,7 @@ Check (Sctxt' _ _ (Sctxt_s _ _ _ _ _ _)).
 Lemma Sctxt_alt : forall (W : Type) (pr : rlsT (rel (list W))) ps c Φ1 Φ2 Ψ1 Ψ2,
     pr ps c -> seqrule' pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 Proof.
-  intros until 0. intros H.
+  intros *. intros H.
   eapply Sctxt'. exact H. apply Sctxt_s.
 Qed.
 
@@ -158,7 +158,7 @@ Lemma Sctxt_e': forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 
   pr ps (U, V) ->
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) ((Φ1 ++ U) ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof.
-  intros until 0. intros H.
+  intros *. intros H.
   rewrite <- app_assoc. apply Sctxt_e. exact H.
 Qed.  
 
@@ -181,7 +181,7 @@ Definition seqrule_mono' X rulesa rulesb rs :=
 Lemma Sctxt_nil: forall (W : Type) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Type) ->
   @seqrule W pr [] (seqext Γ1 Γ2 Δ1 Δ2 c).
 Proof.
-  intros until 0.  intros H. eapply Sctxt in H.
+  intros *.  intros H. eapply Sctxt in H.
   simpl in H. exact H.
 Qed.
 

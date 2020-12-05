@@ -87,7 +87,7 @@ Lemma gen_step_lem_psT: forall (sty fty : Type) (P : fty -> sty -> Type)
       gen_step P A sub (derrec rules prems) ps concl) -> 
     (forall A prem, prems prem -> P A prem) -> 
     (forall seq, derrec rules prems seq -> P A seq).
-Proof. intros until 0. intros acc gs prs. induction acc.
+Proof. intros *. intros acc gs prs. induction acc.
 intros.  eapply derrec_all_rect. apply prs.
 intros. unfold gen_step in gs. eapply gs. exact X1. exact X.
 apply ForallTI_forall. intros. split. 
@@ -101,7 +101,7 @@ Lemma gen_step_lem_ps: forall (sty fty : Type) (P : fty -> sty -> Type)
       gen_step P A sub (derrec rules prems) ps concl) -> 
     (forall A prem, prems prem -> P A prem) -> 
     (forall seq, derrec rules prems seq -> P A seq).
-Proof. intros until 0. intros acc gs prs. induction acc.
+Proof. intros *. intros acc gs prs. induction acc.
 intros.  eapply derrec_all_rect. apply prs.
 intros. unfold gen_step in gs. eapply gs. exact X1. exact X.
 apply ForallTI_forall. intros. split. 
@@ -131,7 +131,7 @@ Lemma gen_step2_lem_ps: forall (stya styb fty : Type) P (A : fty) sub
  (forall A pb, premsb pb -> forall ca, derrec rlsa premsa ca -> P A ca pb) -> 
   forall seqa, derrec rlsa premsa seqa ->
   forall seqb, derrec rlsb premsb seqb -> P A seqa seqb.
-Proof. intros until 0. intros acc gs prsa prsb. induction acc.
+Proof. intros *. intros acc gs prsa prsb. induction acc.
 eapply derrec_all_rect2.
 intros. eapply prsa in X0. exact X0. exact X1.
 intros. eapply prsb in X0. exact X0. exact X1.
@@ -153,7 +153,7 @@ Lemma gen_step2_lem_psT: forall (stya styb fty : Type) P (A : fty) sub
  (forall A pb, premsb pb -> forall ca, derrec rlsa premsa ca -> P A ca pb) -> 
   forall seqa, derrec rlsa premsa seqa ->
   forall seqb, derrec rlsb premsb seqb -> P A seqa seqb.
-Proof. intros until 0. intros acc gs prsa prsb. induction acc.
+Proof. intros *. intros acc gs prsa prsb. induction acc.
 eapply derrec_all_rect2.
 intros. eapply prsa in X0. exact X0. exact X1.
 intros. eapply prsb in X0. exact X0. exact X1.
@@ -197,7 +197,7 @@ Lemma gen_steps_lem_ps (sty : Type) (P : sty -> Type) rules prems:
       gen_steps P (derrec rules prems) ps concl) -> 
     (forall prem, prems prem -> P prem) -> 
     (forall seq, derrec rules prems seq -> P seq).
-Proof. intros until 0. intros gs prs. 
+Proof. intros *. intros gs prs. 
 intros.  eapply derrec_all_rect. apply prs.
 intros. unfold gen_steps in gs. eapply gs. exact X0.
 apply ForallTI_forall. intros. split. 
@@ -216,7 +216,7 @@ Lemma gen_step2s_lem_ps: forall (stya styb : Type) P
  (forall pb, premsb pb -> forall ca, derrec rlsa premsa ca -> P ca pb) -> 
   forall seqa, derrec rlsa premsa seqa ->
   forall seqb, derrec rlsb premsb seqb -> P seqa seqb.
-Proof. intros until 0. intros gs prsa prsb. 
+Proof. intros *. intros gs prsa prsb. 
 eapply derrec_all_rect2.
 - intros px ppx cy db. eapply prsa in db ; eassumption.
 - intros py ppy cx da. eapply prsb in da ; eassumption.
@@ -377,7 +377,7 @@ Lemma der_trf_rc_adm: forall (sty : Type) R rules,
   (forall ps c, rules ps c -> can_trf_rules_rc R (adm rules) ps c) ->
   forall concl, derrec rules (@emptyT sty) concl -> 
     forall concl', R concl concl' -> derrec rules (@emptyT sty) concl'.
-Proof. intros until 0. intro. 
+Proof. intros *. intro. 
 eapply (derrec_all_rect (Q := (fun concl => forall concl' : sty,
   R concl concl' -> derrec rules (emptyT (X:=sty)) concl'))).
 intros. destruct H.
@@ -422,7 +422,7 @@ Lemma der_trf_derl: forall (sty : Type) R rules,
   (forall ps c, rules ps c -> can_trf_rules R (derl rules) ps c) ->
   forall concl, derrec rules (@emptyT sty) concl -> 
     forall concl', R concl concl' -> derrec rules (@emptyT sty) concl'.
-Proof. intros until 0. intro. 
+Proof. intros *. intro. 
 apply der_trf_rc_derl. intros. apply can_trf_rules_imp_rc.
 exact (X ps c X0). Qed.
 
@@ -443,7 +443,7 @@ Lemma der_trf: forall (sty : Type) R rules,
   (forall ps c, rules ps c -> can_trf_rules R rules ps c) ->
   forall concl, derrec rules (@emptyT sty) concl -> 
     forall concl', R concl concl' -> derrec rules (@emptyT sty) concl'.
-Proof. intros until 0. intro rct. apply der_trf_derl.
+Proof. intros *. intro rct. apply der_trf_derl.
 intros. apply can_trf_derl. apply rct. assumption. Qed.
 
 Check der_trf.  
@@ -508,14 +508,14 @@ Check trf_rules_rtc_derl.
 Lemma trf_rules_derl: forall (sty : Type) R (rules : rlsT sty), 
   (forall ps c, rules ps c -> can_trf_rules R (derl rules) ps c) ->
   (forall ps c, derl rules ps c -> can_trf_rules R (derl rules) ps c).
-Proof. intros until 0.  intro rctd.
+Proof. intros *.  intro rctd.
 eapply derl_all_rect.
 { intro. unfold can_trf_rules. intros. exists [c'].
 split. apply asmI. apply ForallTI_forall. intros.
 exists p. split. apply InT_eq. inversion X0 ; subst. assumption.
 eapply InT_nilE in X1. eassumption. }
 
-{ intros until 0. intros rpc drsl fcd qcp.
+{ intros *. intros rpc drsl fcd qcp.
 apply rctd in rpc.  subst. clear rctd.
 unfold can_trf_rules. intros c' Rcc.
 unfold can_trf_rules in rpc. apply rpc in Rcc. cD. clear rpc. 
@@ -549,7 +549,7 @@ Lemma der_trf_rtc: forall (sty : Type) R rules,
     forall concl', clos_refl_transT_n1 R concl concl' -> 
     derrec rules (@emptyT sty) concl'.
 Proof. intros until 1.  apply der_trf.
-intros until 0. apply trf_rules_rtc.
+intros *. apply trf_rules_rtc.
 intros until 1. apply X. Qed.
 
 Check der_trf_rtc.
@@ -568,7 +568,7 @@ Lemma der_trf_ht: forall (sty : Type) R rules,
     forall concl', R concl concl' -> 
     sigT (fun D' : derrec rules (@emptyT sty) concl' => 
       derrec_height D' <= derrec_height D).
-Proof. intros until 0. intros ctr.
+Proof. intros *. intros ctr.
 eapply (derrec_rect_mut_all (Q := (fun concl D => forall concl' : sty,
   R concl concl' -> {D' : derrec rules (emptyT (X:=sty)) concl' &
   derrec_height D' <= derrec_height D}))).

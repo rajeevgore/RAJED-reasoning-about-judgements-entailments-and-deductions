@@ -121,7 +121,7 @@ Lemma derrec_all_indT:
      (forall (ps : list X) (concl : X),
       rules ps concl -> dersrec rules prems ps -> ForallT Q ps -> Q concl) ->
      forall y : X, derrec rules prems y -> Q y.
-Proof.  intros until 0. intros H H0.
+Proof.  intros *. intros H H0.
 eapply dim_allT. exact H. exact H0.
 apply ForallT_nil.
 intros.  apply ForallT_cons. assumption.  assumption.
@@ -474,7 +474,7 @@ apply derl_dersl_rect_mut.
 - intros.  inversion X0. assumption.
 - intros. eapply derI. eassumption. tauto.
 - tauto.
-- intros until 0. intros dc dsdc dscs dspc dspps.
+- intros *. intros dc dsdc dscs dspc dspps.
 apply dersrecD_all in dspps.  apply dlCons.
 + apply dsdc.  apply ForallT_appendD1 in dspps.
 apply dersrecI_all. exact dspps.  
@@ -547,10 +547,10 @@ Proof.  intros.
 apply derl_dersl_rect_mut.
 - intros. inversion_clear X0. inversion_clear X2.
 rewrite app_nil_r.  assumption.
-- intros until 0. intros rps dsl dsds pss0 ds0. apply dsds in ds0.
+- intros *. intros rps dsl dsds pss0 ds0. apply dsds in ds0.
 eapply dtderI. eassumption. assumption.
 - intros. assumption.
-- intros until 0. intros d dsd dsl dsds pss0 dspps.
+- intros *. intros d dsd dsl dsds pss0 dspps.
 apply dersl_app_eq in dspps. cD. subst. apply dtCons.
 apply dsd. assumption. apply dsds. assumption. Qed.
 

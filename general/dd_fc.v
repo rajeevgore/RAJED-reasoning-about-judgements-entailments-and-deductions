@@ -602,7 +602,7 @@ Lemma dersrec_derrec_height : forall n {X : Type} {rules prems G}
     existsT2 (D1 : derrec rules prems G),
       @derrec_height X _ _ _ D1 = n.
 Proof.
-  intros until 0.
+  intros *.
   intros Ht.
   remember D2 as D2'.
   remember [G] as GG.
@@ -622,7 +622,7 @@ Lemma dersrec_derrec2_height : forall n {X : Type} {rules prems G1 G2}
     existsT2 (D1a : derrec rules prems G1) (D1b : derrec rules prems G2),
      n = max (@derrec_height X _ _ _ D1a) (@derrec_height X _ _ _ D1b).
 Proof.
-  intros until 0.
+  intros *.
   intros Ht.
   remember D2 as D2'.
   remember [G1;G2] as GG.
