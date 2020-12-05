@@ -193,11 +193,11 @@ Lemma can_trf_geninv_wk W invrel ps c:
 *)
 
 Lemma from_one_ImpLinv1 V: rsub (@ImpLinv1 V) (@from_one_fml _).
-Proof.  unfold rsub. intros. destruct H. apply fofI. apply singL. Qed.
+Proof.  unfold rsub. intros. destruct X. apply fofI. apply singL. Qed.
 Lemma from_one_ImpLinv2 V: rsub (@ImpLinv2 V) (@from_one_fml _).
-Proof.  unfold rsub. intros. destruct H. apply fofI. apply singL. Qed.
+Proof.  unfold rsub. intros. destruct X. apply fofI. apply singL. Qed.
 Lemma from_one_ImpRinv V: rsub (@ImpRinv V) (@from_one_fml _).
-Proof.  unfold rsub. intros. destruct H. apply fofI. apply singR. Qed.
+Proof.  unfold rsub. intros. destruct X. apply fofI. apply singR. Qed.
 
 Lemma can_trf_geninv_wk W invrel ps (c : Seql W): 
   rsub invrel (@from_one_fml _) -> cgerule (@trivrule _) ps c ->

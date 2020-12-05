@@ -27,7 +27,7 @@ Proof. intros. induction H. Qed.
 
 (* compare 
   https://coq.inria.fr/stdlib/Coq.Relations.Relation_Definitions.html *)
-Polymorphic Definition relationT (A : Type) := A -> A -> Type.
+(* Polymorphic *) Definition relationT (A : Type) := A -> A -> Type.
 Inductive empty_relT {A B : Type} : A -> B -> Type := .
 
 Lemma rsub_emptyT {A B} r : @rsub A B empty_relT r.
