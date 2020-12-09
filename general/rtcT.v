@@ -159,6 +159,16 @@ Lemma clos_t_tn1_iffT : forall A R (x y : A),
   clos_transT R x y <-> clos_transT_n1 R x y.
 *)
 
+Lemma clos_transT_mono U R S : 
+  @rsub U U R S -> rsub (clos_transT R) (clos_transT S).
+Proof. intros rs u v ctr. induction ctr.
+- apply tT_step.  exact (rs x y r).
+- eapply tT_trans ; eassumption. Qed.
+
+Lemma clos_transT_measure U f : rsub (clos_transT (measure f)) (@measure U f).
+Proof. intros u v ctm. induction ctm. exact r.
+exact (Lt.lt_trans _ _ _ IHctm1 IHctm2). Qed.
+
 (* AccT for Transitive_Closure *)
 Lemma AccT_tc_n1 A R (x : A) : AccT R x -> AccT (clos_transT_n1 R) x.
 Proof. intro a. induction a.

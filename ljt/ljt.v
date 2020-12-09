@@ -11,7 +11,7 @@ From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
 Add LoadPath "../modal".
-Require Import gen genT ddT.
+Require Import gen genT ddT rtcT.
 Require Import gstep.
 Require Import List_lemmasT gen_tacs swappedT.
 Require Import gen_seq.
@@ -70,6 +70,10 @@ try (apply Plus.le_plus_r) ; try (apply Le.le_refl) ;
 rewrite - ?Nat.add_assoc ; try (apply Plus.le_plus_l) ; 
 try (apply Plus.le_plus_r) ; try (apply Le.le_refl).
 apply Plus.plus_le_compat_l. apply Plus.le_plus_r. Qed.
+
+Lemma tc_dnsub_fw {V} : rsub (clos_transT (@dnsubfml V)) (measure dnfw).
+Proof. eapply rsub_trans.  apply (clos_transT_mono dnsub_fw).
+apply clos_transT_measure. Qed.
 
 Lemma AccT_dnsubfml : forall V (A : PropF V), AccT dnsubfml A.
 Proof. intros *. eapply rsub_AccT. apply dnsub_fw. apply AccT_measure. Qed.
