@@ -443,12 +443,45 @@ exact (allDTD1 _ _  X2). exact X1. }
 cD. clear ds fps.
 inversion ljpc. subst. destruct X1. destruct l.
 + (* LJAilrules *)
-
-exists (derI _ ljpc X).  destruct c.
-
-eapply ail_prems_dn in r.
+exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+apply solem.  exact (ail_prems_dn r inps1).  exact X0.
     
-want the following lemma
-all_nrs
++ (* ImpL_Imp_rule *)
+exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+eapply Imp_prems_dn in i. 2: apply inps1.
+apply seq_ordI. apply tc_mso_sw_meas_map.
+apply (clos_transT_mono (rsub_ms_ord_sw tc_dnsub_fw)).
+apply (tc_ms_ord_cons_fe _ _ i).  exact X0.
+
++ (* Imprule_p *)
+admit.
+
++ (* ImpRrule *)
+exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+apply solem.  exact (ImpR_prems_dn i inps1).  exact X0.
+
++ (* Idrule *)
+exists (derI _ ljpc X).  destruct c.  apply all_nrs.  
+inversion i. simpl. apply ForallT_nil. exact X0.
+
++ (* LJslrules *)
+exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+apply solem.   exact (lrls_prems_dn r inps1).  exact X0.
+
++ (* LJsrrules *)
+exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+apply solem.   exact (rrls_prems_dn r inps1).  exact X0.
+
+
+
+
+
+
++
 
 *)
