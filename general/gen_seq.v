@@ -19,6 +19,11 @@ Lemma rmI_eq U W (f : U -> W) (rls : rlsT U) ps c mps mc :
   rls ps c -> mps = map f ps -> mc = f c -> rlsmap f rls mps mc.
 Proof. intros. subst. apply rmI ; assumption. Qed.
 
+Definition rmI_eqc U W f rls ps c mc rpc :=
+  @rmI_eq U W f rls ps c _ mc rpc eq_refl.
+Definition rmI_eqp U W f rls ps c mps rpc pseq :=
+  @rmI_eq U W f rls ps c mps _ rpc pseq eq_refl.
+
 Inductive relmap U W (f : U -> W) (rel : relationT U) : relationT W :=
   | rlI : forall p c, rel p c -> relmap f rel (f p) (f c).
 
@@ -56,7 +61,7 @@ Lemma Sctxt_e: forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 �
   pr ps (U, V) ->
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (Φ1 ++ U ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof.
-  intros until 0. intros H. rewrite <- seqext_def.
+  intros *. intros H. rewrite <- seqext_def.
   apply Sctxt. exact H.
 Qed.
 
@@ -145,7 +150,7 @@ Check (Sctxt' _ _ (Sctxt_s _ _ _ _ _ _)).
 Lemma Sctxt_alt : forall (W : Type) (pr : rlsT (rel (list W))) ps c Φ1 Φ2 Ψ1 Ψ2,
     pr ps c -> seqrule' pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) (seqext Φ1 Φ2 Ψ1 Ψ2 c).
 Proof.
-  intros until 0. intros H.
+  intros *. intros H.
   eapply Sctxt'. exact H. apply Sctxt_s.
 Qed.
 
@@ -153,7 +158,7 @@ Lemma Sctxt_e': forall (W : Type) (pr : rlsT (rel (list W))) ps U V Φ1 Φ2 Ψ1 
   pr ps (U, V) ->
   seqrule pr (map (seqext Φ1 Φ2 Ψ1 Ψ2) ps) ((Φ1 ++ U) ++ Φ2, Ψ1 ++ V ++ Ψ2).
 Proof.
-  intros until 0. intros H.
+  intros *. intros H.
   rewrite <- app_assoc. apply Sctxt_e. exact H.
 Qed.  
 
@@ -176,7 +181,7 @@ Definition seqrule_mono' X rulesa rulesb rs :=
 Lemma Sctxt_nil: forall (W : Type) pr c Γ1 Γ2 Δ1 Δ2, (pr [] c : Type) ->
   @seqrule W pr [] (seqext Γ1 Γ2 Δ1 Δ2 c).
 Proof.
-  intros until 0.  intros H. eapply Sctxt in H.
+  intros *.  intros H. eapply Sctxt in H.
   simpl in H. exact H.
 Qed.
 
@@ -246,8 +251,77 @@ Lemma fmlsext_def : forall (W : Type) Φ1 Φ2 U,
       @fmlsext W Φ1 Φ2 U = (Φ1 ++ U ++ Φ2).
 Proof. reflexivity. Qed.
 
+(* applying a function to a pair *)
 Definition apfst U V W (f : U -> V) (p : U * W) := let (x, y) := p in (f x, y).
 Definition apsnd U V W (f : U -> V) (p : W * U) := let (x, y) := p in (x, f y).
+
+(* extend a relation to a pair *)
+Inductive relfst U V W (R : U -> V -> Type) : (U * W) -> (V * W) -> Type :=
+  | relfstI : forall (u : U) (v : V) (w : W), R u v -> relfst R (u, w) (v, w).
+Inductive relsnd U V W (R : U -> V -> Type) : (W * U) -> (W * V) -> Type :=
+  | relsndI : forall (u : U) (v : V) (w : W), R u v -> relsnd R (w, u) (w, v).
+
+(* extending a relation with context *)
+Inductive ext_rel W R : relationT (list W) :=
+  | ext_relI : forall ant ant' Φ1 Φ2, R ant ant' ->
+    ext_rel R (Φ1 ++ ant ++ Φ2) (Φ1 ++ ant' ++ Φ2).
+
+Lemma ext_relI_eq W R ant ant' (Φ1 Φ2 : list W) seq1 seq2: R ant ant' ->
+  seq1 = (Φ1 ++ ant ++ Φ2) -> seq2 = (Φ1 ++ ant' ++ Φ2) ->
+  ext_rel R seq1 seq2.
+Proof. intros. subst. apply ext_relI. exact X. Qed.
+
+Definition ext_relI_eqc W R ant ant' Φ1 Φ2 seq2 raa :=
+  @ext_relI_eq W R ant ant' Φ1 Φ2 _ seq2 raa eq_refl.
+
+Definition ext_relI_eqp W R ant ant' Φ1 Φ2 seq1 raa eq1 :=
+  @ext_relI_eq W R ant ant' Φ1 Φ2 seq1 _ raa eq1 eq_refl.
+
+Definition ext_relI_c1 W R a := @ext_relI W R [a].
+
+Lemma ext_relI_nil W R (ant ant' : list W) :
+  R ant ant' -> ext_rel R ant ant'.
+Proof. intro raa. pose (ext_relI R _ _ [] [] raa).
+rewrite -> !app_nil_r in e. exact e. Qed.
+
+(* lemmas for tactics to find extension of a relation *)
+Lemma er_appL W R L1 L2 L2' :
+  @ext_rel W R L2 L2' -> ext_rel R (L1 ++ L2) (L1 ++ L2').
+Proof. intro ser. inversion ser. eapply ext_relI_eq.
+exact X. list_assoc_l'. reflexivity.
+list_assoc_l'. reflexivity. Qed.
+
+Lemma er_appR W R L1 L1' L2 :
+  @ext_rel W R L1 L1' -> ext_rel R (L1 ++ L2) (L1' ++ L2).
+Proof. intro ser. inversion ser. list_assoc_r'.
+apply ext_relI.  exact X. Qed.
+
+Lemma er_appc W R (c : W) L2 L2' :
+  ext_rel R L2 L2' -> ext_rel R (c :: L2) (c :: L2').
+Proof. intro ser. inversion ser. rewrite !app_comm_cons.
+apply ext_relI.  exact X. Qed.
+
+(* tactic for ext_rel ... X Y where X is given,
+  where relation is (eg) contraction on or inversion of A,
+  strips off all before and after A in goal,
+  eg to solve (ie contracting Imp D B) ext_rel (sctr_rel (Imp C B))
+    (Φ1 ++ Imp C B :: Imp D B :: S ++ Imp C B :: Imp D B :: Φ2) ?Goal0 *)
+Ltac ertacR1 A := ((apply (er_appR (single A)) ; fail 1) ||
+  (apply er_appR)).
+(* for some reason we need eapply using er_appR *)
+Ltac ertacR1e A := ((eapply (er_appR (single A)) ; fail 1) ||
+  (apply er_appR)).
+Ltac ertacL1 A :=
+  (apply (er_appc A) ; fail 1) || (apply er_appL || apply er_appc).
+
+Ltac ertac A := rewrite ?(cons_app_single A) ;
+  list_assoc_l' ; rewrite ?(cons_app_single _ (single A)) ;
+  rewrite ?app_nil_r ; list_assoc_l' ; repeat (ertacR1e A) ;
+  rewrite - ?app_assoc ; repeat (ertacL1 A).
+
+(* for applying ertac to eg G1 ++ A0 :: Imp A B :: G2 = ?H *)
+Lemma eq_erI A x y : ext_rel eq x y -> @eq (list A) x y.
+Proof. intro er. destruct er. subst. reflexivity. Qed.
 
 (** fst_ext_rls - adding left- and right-context 
   to the antecedent of a sequent rule *)
@@ -305,6 +379,23 @@ Lemma rm_mono U W (f : U -> W) rlsa rlsb :
 Proof. intros rab ps c ra.
 destruct ra.   pose (rab _ _ r).
 apply rmI. apply r0. Qed.
+
+Lemma fe_nil_nil U (x : list U) : fmlsext [] [] x = x.
+Proof. unfold fmlsext. rewrite app_nil_r.  reflexivity. Qed.
+
+Lemma apfst_nil_nil U W (x : list U * W) : apfst (fmlsext [] []) x = x.
+Proof. destruct x. simpl. rewrite fe_nil_nil. reflexivity. Qed.
+
+Lemma map_apfst_nil_nil U W (xs : list (list U * W)) :
+  map (apfst (fmlsext [] [])) xs = xs.
+Proof. induction xs.  reflexivity.  simpl.  rewrite IHxs.
+rewrite apfst_nil_nil.  reflexivity. Qed.
+
+Lemma rsub_fer U W (rls : rlsT (list U * W)) : rsub rls (fst_ext_rls rls).
+Proof. intros u v ruv. apply (@fextI _ _ _ [] []).
+eapply rmI_eq. apply ruv.  clear ruv.
+rewrite map_apfst_nil_nil.  reflexivity.
+rewrite apfst_nil_nil.  reflexivity. Qed.
 
 Lemma fer_mono U W (rlsa rlsb : rlsT (list U * W)) :
   rsub rlsa rlsb -> rsub (fst_ext_rls rlsa) (fst_ext_rls rlsb).
@@ -403,6 +494,17 @@ unfold wkL_valid' in fwk.  unfold wkL_valid in fwk.  simpl in fwk.
 rewrite - fmlsext_fmlsext. apply fwk.  Qed.
 
 Print Implicit weakeningL.
+
+(* this is an alternative weakening result! *)
+Lemma fer_der U W rules cl cr ra ra' :
+  derrec (fst_ext_rls rules) emptyT (cl, cr) ->
+  derrec (fst_ext_rls rules) emptyT (ra ++ cl ++ ra' : list U, cr : W).
+Proof. intro d.
+apply derl_derrec_nil.
+apply fst_ext_rls_derl_fst_ext_rls'.
+eapply fextI.
+apply derrec_nil_derl in d.
+eapply rmI_eq. exact d. reflexivity. reflexivity. Qed.
 
 (** exchange **)
 (* properties can exchange adjacent sublists, and resulting sequent
@@ -563,6 +665,15 @@ fwr_tac H.
 Qed.
 
 Print Implicit exchR_std_rule.
+
+(* combining exchange and weakening to insert in the middle *)
+Lemma gen_insL U W rules cl cr mid G:
+  (forall ps (U0 : list U) (S : W), rules ps (U0, S) -> sing_empty U0) ->
+  derrec (fst_ext_rls rules) emptyT (cl ++ cr, G) ->
+  derrec (fst_ext_rls rules) emptyT (cl ++ mid ++ cr, G).
+Proof. intros ser dlr.
+apply (der_trf (exchL_std_rule ser) (fer_der [] mid dlr)).
+apply fst_relI. simpl. swap_tac. Qed.
 
 Definition rev_pair {U W} (p : U * W) := let (x, y) := p in (y, x).
 

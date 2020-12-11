@@ -220,9 +220,6 @@ Ltac conc_gen_ni' th :=
     [ eassumption | pr_arg_ant_mr | pr_arg_suc_mr | reflexivity ] |
   simpl ; rewrite ?app_nil_r ; forallgg th ].
 
-Definition derI' x rules prems ps concl rpc drs :=
-  @derI x rules prems ps concl drs rpc.
-
 (* doing contraction requires allowing for two copies of contraction formula
   C to be separated, because a rule such as ImpR for A -> B can
   put A between the two copies of C, in the premise;

@@ -77,17 +77,29 @@ Inductive in_nextup X (rules : rlsT X) prems (concln concl : X)
       is_nextup ds d -> in_dersrec dn ds -> in_nextup dn d
   .
 
-Lemma in_drs_concl_in W rules ps (cn : W) (drs : dersrec rules emptyT ps)
-  (dtn : derrec rules emptyT cn) : in_dersrec dtn drs -> InT cn ps.
+Lemma in_drs_concl_in W rules prems ps (cn : W) (drs : dersrec rules prems ps)
+  (dtn : derrec rules prems cn) : in_dersrec dtn drs -> InT cn ps.
 Proof. intro ind. induction ind. apply InT_eq.
 apply InT_cons. assumption. Qed.
 
+Lemma in_nextup_in_drs W rules prems ps (concl cn : W) rpc
+  (drs : dersrec rules prems ps) (dtn : derrec rules prems cn) :
+  in_nextup dtn (derI concl rpc drs) -> in_dersrec dtn drs.
+Proof. intro ind. inversion ind.  dependent induction X. exact X0. Qed.
+
+Lemma in_nextup_concl_in W rules prems ps (concl cn : W) rpc
+  (drs : dersrec rules prems ps) (dtn : derrec rules prems cn) :
+  in_nextup dtn (derI concl rpc drs) -> InT cn ps.
+Proof. intro ind. exact (in_drs_concl_in (in_nextup_in_drs ind)). Qed.
+
+(*
 Lemma in_nextup_concl_in W rules ps (concl cn : W) rpc
   (drs : dersrec rules emptyT ps) (dtn : derrec rules emptyT cn) :
   in_nextup dtn (derI concl rpc drs) -> InT cn ps.
 Proof. intro ind. inversion ind. inversion X. subst.
 dependent destruction H2. clear H1 rps0 ind X.
 exact (in_drs_concl_in X0). Qed.
+*)
 
 Lemma all_in_d_allP: forall X rules prems Q ps (dpss : dersrec rules prems ps),
   (forall (p : X) (d : derrec rules prems p), in_dersrec d dpss -> Q p d) -> 
@@ -128,6 +140,20 @@ exists x. apply in_dersrec_tl. assumption.  assumption. Qed.
 (*
 Check allPderD_in.
 *)
+
+(* a property holds throughout a proof tree *)
+Fixpoint allDT {X} rules prems concl P
+  (der : @derrec X rules prems concl) :=
+  match der with 
+    | dpI _ _ _ _ => P concl der
+    | derI _ _ ds => (P concl der * allPder P ds)%type
+  end.
+
+Lemma allDTD1 {X} rules prems concl P (der : @derrec X rules prems concl) :
+  allDT P der -> P concl der.
+Proof. intro apd.  destruct der ; simpl in apd.
+exact apd. exact (fst apd). Qed.
+
 Fixpoint derrec_height X rules prems concl 
   (der : @derrec X rules prems concl) :=
   match der with 
@@ -313,6 +339,29 @@ Inductive in_nextup_fc X (rules : rlsT X) prems :
     in_nextup dn d -> in_nextup_fc (fcI dn) (fcI d)
   .
 
+(* dealing with property argument of the form required for allDT, allPder
+  ie (forall x : ?U, derrec rules prems x -> Type) *)
+
+(* this doesn't work 
+Definition fcp {U} rules prems (dfc : derrec_fc rules prems) P :=
+  match dfc with 
+    | fcI d => P (derrec_concl d) d
+  end.
+  *)
+
+Inductive fcp {U} rules prems P : @derrec_fc U rules prems -> Type :=
+  | fcpI : forall concl (d : derrec rules prems concl), 
+      P concl d -> @fcp U rules prems P (fcI d)
+  .
+
+Definition ufcp {U W} rules prems Q concl (d : @derrec U rules prems concl) :=
+  Q (fcI d) : W.
+
+Definition allDT_fc {X} rules prems Q (dfc : @derrec_fc X rules prems) :=
+  match dfc with
+    | fcI d => allDT (ufcp Q) d
+  end.
+ 
 Lemma AccT_in_nextup_fc X rules prems dt: AccT (@in_nextup_fc X rules prems) dt.
 Proof. destruct dt. revert d. revert concl.
 eapply derrec_rect_mut_all.
@@ -553,7 +602,7 @@ Lemma dersrec_derrec_height : forall n {X : Type} {rules prems G}
     existsT2 (D1 : derrec rules prems G),
       @derrec_height X _ _ _ D1 = n.
 Proof.
-  intros until 0.
+  intros *.
   intros Ht.
   remember D2 as D2'.
   remember [G] as GG.
@@ -573,7 +622,7 @@ Lemma dersrec_derrec2_height : forall n {X : Type} {rules prems G1 G2}
     existsT2 (D1a : derrec rules prems G1) (D1b : derrec rules prems G2),
      n = max (@derrec_height X _ _ _ D1a) (@derrec_height X _ _ _ D1b).
 Proof.
-  intros until 0.
+  intros *.
   intros Ht.
   remember D2 as D2'.
   remember [G1;G2] as GG.

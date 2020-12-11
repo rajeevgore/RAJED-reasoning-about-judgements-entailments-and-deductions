@@ -178,7 +178,7 @@ Lemma partition_2_3 : forall {A : Type} (l1 l2 l3 l4 : list A) a b,
     (l3 = l1 ++ [a;b] /\ l4 = l2) \/
     (exists l5, l3 = l1 ++ [a;b] ++ l5 /\ l2 = l5 ++ l4).
 Proof.
-  induction l1; intros until 0; intros H.
+  induction l1; intros *; intros H.
   - destruct l3. left.  auto. 
     right.
     simpl in *. inversion H as [[H1 H2]]. subst.
@@ -449,7 +449,7 @@ Lemma app_eq_appT2: forall (A : Type) (w x y z : list A),
   w ++ x = y ++ z -> existsT2 (m : list A),
     ((w = y ++ m) * (z = m ++ x)) + ((y = w ++ m) * (x = m ++ z)).
 Proof.
-  induction w; intros until 0; intros H; simpl in *.
+  induction w; intros *; intros H; simpl in *.
   subst. exists y. right. tauto.
   apply cons_eq_appT2 in H. destruct H as [[H1 H2]| [l [? H3]]]; subst.
   exists (a :: w). tauto.
@@ -469,7 +469,7 @@ Lemma app_eq_unitT2 :
   forall {A : Type} (x y:list A) (a:A),
     x ++ y = [a] -> ((x = []) * (y = [a])) + ((x = [a]) * (y = [])).
 Proof.
-  intros until 0; intros H.
+  intros *; intros H.
   destruct x. auto.
   simpl in *. inversion H. subst. right.
   rewrite H2. apply app_eq_nilT in H2. destruct H2 as [H2a H2b].
@@ -721,7 +721,7 @@ Lemma list_insert1 : forall {T : Type} (Γ1 Γ2 Σ1 Σ2 : list T) A B,
                       (forall B, InT B Γ1 -> InT B Γ1') *
                       (forall B, InT B Γ2 -> InT B Γ2').
 Proof.
-  intros until 0; intros Heq.
+  intros *; intros Heq.
   destruct Σ2. rewrite app_nil_r.
   rewrite app_nil_r in Heq. subst.
   eexists. eexists.
@@ -794,7 +794,7 @@ Lemma InT_singleton_mid : forall {T : Type} (l1 l2 l3 l4 : list T) A B,
     l1 ++ [A] ++ l2 = l3 ++ [B] ++ l4 ->
     InT A l3 + InT A l4.
 Proof.
-  intros until 0. intros Hneq Heq.
+  intros *. intros Hneq Heq.
   pose proof (InT_mid l1 l2 A) as Hin.
   rewrite Heq in Hin.
   apply InT_appE in Hin.
@@ -818,7 +818,7 @@ Lemma partition_LNS_app_mid : forall {T1 T2 : Type} L1 L2 L3 (Γ Σ Σ' : list T
     L2 ++ (Σ',Π',fwd) :: L3 ->
     existsT2 L4, (L3 = L4 ++ [(Σ,Π,bac)]) * (L1 ++ [(Γ,Δ,d)] = L2 ++ [(Σ',Π',fwd)] ++ L4).
 Proof.
-  intros until 0; intros Heq.
+  intros *; intros Heq.
   rewrite app_cons_single in Heq.
   destruct (list_nil_or_tail_singleont L3) as [|[l2 [a Heq2]]];
   subst. eapply tail_inv_singleton in Heq.
@@ -847,7 +847,7 @@ Ltac list_assoc_r_single_arg H :=
 
 Lemma app_singleton_inversion : forall {T : Type} (l1 l2 : list T) a b,
     [a] ++ l1 = [b] ++ l2 -> (a = b) * (l1 = l2).
-Proof. intros until 0;  intros H; inversion H. firstorder. Qed.
+Proof. intros *;  intros H; inversion H. firstorder. Qed.
 
 Lemma app_singleton_tl_inversion : forall {T : Type} (l1 l2 : list T) a b,
     l1 ++ [a] = l2 ++ [b] -> (a = b) * (l1 = l2).
@@ -874,7 +874,7 @@ Ltac inv_app_tl :=
 Lemma app_hd_inversion : forall {T : Type} (l : list T) a b,
     [a] = [b] ++ l -> ( (a = b) * (l = []) ).
 Proof.
-  intros until 0; intros H.
+  intros *; intros H.
   inversion H. firstorder.
 Qed.
 
@@ -929,7 +929,7 @@ Lemma app_eq_appT2_nn: forall (A : Type) (w x y z : list A),
   w ++ x = y ++ z -> existsT2 (m : list A),
     ((w = y ++ m) * (z = m ++ x) * (m <> [])) + ((y = w ++ m) * (x = m ++ z)).
 Proof.
-  induction w; intros until 0; intros H; simpl in *.
+  induction w; intros *; intros H; simpl in *.
   subst. exists y. right. tauto.
   apply cons_eq_appT2 in H. destruct H as [[H1 H2]| [l [? H3]]]; subst.
   exists (a :: w). left. simpl. firstorder. 
@@ -949,7 +949,7 @@ Lemma app_eq_appT2_single_hdL : forall (A : Type) (x y z : list A) w,
     (existsT2 m : list A,  ((y = [w] ++ m) * (x = m ++ z)))
        + ((y = []) * (z = [w] ++ x)).
 Proof.
-  intros until 0.
+  intros *.
   intros H.
   destruct y. simpl in *.  subst.
   right. firstorder.
@@ -962,7 +962,7 @@ Lemma app_eq_appT2_single_hdR : forall (A : Type) (x z w : list A) y,
     (existsT2 m : list A, (w = [y] ++ m) * (z = m ++ x)) +
     ( (w = []) * (x = [y] ++ z)).
 Proof.
-  intros until 0.
+  intros *.
   intros H.
   symmetry in H.
   eapply app_eq_appT2_single_hdL.
@@ -974,7 +974,7 @@ Lemma app_eq_appT2_single_tlL : forall (A : Type) (x y z : list A) w,
     (existsT2 m : list A,  ((z = m ++ [w]) * (x = y ++ m)))
        + ((z = []) * (y = x ++ [w])).
 Proof.
-  intros until 0.
+  intros *.
   intros H.
   destruct (list_nil_or_tail_singleton z). subst.
  rewrite app_nil_r in H. subst.
@@ -990,7 +990,7 @@ Lemma app_eq_appT2_single_tlR : forall (A : Type) (x y z : list A) w,
     (existsT2 m : list A,  ((z = m ++ [w]) * (x = y ++ m)))
        + ((z = []) * (y = x ++ [w])).
 Proof.
-  intros until 0.
+  intros *.
   intros H.
   symmetry in H.
   eapply app_eq_appT2_single_tlL.

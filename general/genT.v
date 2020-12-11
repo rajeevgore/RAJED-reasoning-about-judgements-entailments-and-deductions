@@ -5,12 +5,16 @@ Set Implicit Arguments.
 Require Import List.
 Import ListNotations.
 Require Import existsT.
+Require Import PeanoNat. (* for Nat *)
 
 Require Export Coq.Classes.CRelationClasses.
 
 Require Import gen.
 
-Polymorphic Definition rlsT W := list W -> W -> Type.
+(* Polymorphic *) Definition rlsT W := list W -> W -> Type.
+
+(* the set of rules consisting of a single given premises/conclusion *)
+Inductive rlsT_of W ps c : rlsT W := rlsT_ofI : rlsT_of ps c ps c.
 
 (* how to express the empty set *)
 Inductive emptyT {X : Type} : X -> Type := .
@@ -23,7 +27,7 @@ Proof. intros. induction H. Qed.
 
 (* compare 
   https://coq.inria.fr/stdlib/Coq.Relations.Relation_Definitions.html *)
-Polymorphic Definition relationT (A : Type) := A -> A -> Type.
+(* Polymorphic *) Definition relationT (A : Type) := A -> A -> Type.
 Inductive empty_relT {A B : Type} : A -> B -> Type := .
 
 Lemma rsub_emptyT {A B} r : @rsub A B empty_relT r.
@@ -76,6 +80,22 @@ Inductive AccT (A : Type) (R : A -> A -> Type) (x : A) : Type :=
 
 Definition well_foundedT (A : Type) (R : A -> A -> Type) :=
   forall a : A, AccT R a.
+
+Definition measure {U} f (dtn dt : U) := f dtn < f dt.
+
+Lemma AccT_measure' U f n : forall dt : U, f dt < n -> AccT (measure f) dt.
+Proof.  induction n.
+- intros.  apply Nat.nlt_0_r in H.  contradiction H.
+- intros.  apply AccT_intro.  intros.  unfold measure in H0.  apply IHn.
+apply Lt.lt_n_Sm_le in H.  eapply Lt.lt_le_trans ; eassumption.  Qed.
+
+Definition AccT_measure U f dt := 
+  @AccT_measure' U f _ dt (Nat.lt_succ_diag_r _).
+
+Lemma rsub_AccT U R S x : @rsub U U R S -> AccT S x -> AccT R x.
+Proof. intros rsa acs. induction acs.
+apply AccT_intro. intros y ryx.
+exact (X _ (rsa _ _ ryx)). Qed.
 
 Inductive ForallT (A : Type) (P : A -> Type) : list A -> Type :=
     ForallT_nil : ForallT P []
@@ -258,7 +278,7 @@ Ltac solve_InT := apply InT_eq ||
 
 Lemma InT_appE': forall A a Z, InT (a : A) Z -> 
   forall X Y, Z = X ++ Y -> InT a X + InT a Y.
-Proof.  intros until 0.  intro.  induction X ; intros.
+Proof.  intros *.  intro.  induction X ; intros.
 destruct X ; simpl in H. subst. right. apply InT_eq.
 injection H. intros. subst. left. apply InT_eq.
 destruct X0 ; simpl in H. subst. right. apply InT_cons. assumption.
@@ -314,7 +334,7 @@ simpl. apply InT_appR. assumption. Qed.
 
 Lemma Forall2T_ex_l: forall A B (R : A -> B -> Type) xs ys x,
   Forall2T R xs ys -> InT x xs -> sigT2 (fun y => InT y ys) (fun y => R x y).
-Proof. intros until 0. intro. induction X.
+Proof. intros *. intro. induction X.
 intro. eapply InT_nilE in X. eassumption.
 intro. inversion X0 ; subst. eexists. apply InT_eq. assumption.
 apply IHX in X1. destruct X1. eexists. eapply InT_cons. eassumption.
@@ -322,11 +342,16 @@ assumption. Qed.
 
 Lemma Forall2T_ex_r: forall A B (R : A -> B -> Type) xs ys x,
   Forall2T R ys xs -> InT x xs -> sigT2 (fun y => InT y ys) (fun y => R y x).
-Proof. intros until 0. intro. induction X.
+Proof. intros *. intro. induction X.
 intro. eapply InT_nilE in X. eassumption.
 intro. inversion X0 ; subst. eexists. apply InT_eq. assumption.
 apply IHX in X1. destruct X1. eexists. eapply InT_cons. eassumption.
 assumption. Qed.
+
+Lemma ForallT_exists A B (R : A -> B -> Type) xs :
+  ForallT (fun x => sigT (R x)) xs -> sigT (fun ys => Forall2T R xs ys).
+Proof. intro fxs. induction fxs. exists []. apply Forall2T_nil.
+cD. exists (p :: IHfxs). apply Forall2T_cons ; assumption. Qed.
 
 Lemma ForallT_forall: forall (A : Type) (P : A -> Type) (l : list A),
   iffT (ForallT P l) (forall x : A, InT x l -> P x).
@@ -539,3 +564,14 @@ subst. exact (inr (leT_n _)).  exact (inr (leT_S l)). Qed.
 Lemma leT_ex_plus k n : leT k n -> { m : nat & Nat.add m k = n }.
 Proof. intro lkn. induction lkn. exists 0. simpl. reflexivity.
 cD. subst. exists (S IHlkn). simpl. reflexivity. Qed.
+
+Lemma add_leT_mono n m p q : leT n m -> leT p q -> leT (n + p) (m + q).
+Proof. intros lnm lpq. induction lnm.
+induction n ; simpl. exact lpq.  apply (leT_n_S IHn).
+simpl. exact (leT_S IHlnm). Qed.
+
+Lemma add_S n m : (m + S n)%nat = S (m + n).
+Proof. induction m ; simpl. reflexivity.
+rewrite IHm. reflexivity. Qed.
+
+

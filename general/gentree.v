@@ -37,10 +37,10 @@ Definition gf2_step_tr W fty (P : fty -> W -> Type) A sub dtsr dts :=
 (** results linking the conditions for inductive proofs for a tree **)
 
 Lemma gs_gsc W fty rules P A sub (c : W) (dt : derrec rules emptyT c):
-  iffT (@gen_step W fty P A sub (derrec rules emptyT) 
-    (map (@derrec_fc_concl _ _ _) (nextup (fcI dt))) c)
+  iffT (@gen_step W fty P A sub (derrec rules emptyT) (der_botr_ps dt) c)
   (@gen_step_c W rules fty P A sub c dt).
-Proof. unfold gen_step.  unfold gen_step_c. apply pair ; intros.
+Proof. unfold gen_step.  unfold gen_step_c.
+rewrite <- !der_botr_ps_eq. apply pair ; intros.
 - specialize (X X0). clear X0.
 apply X. clear X.
 apply ForallTI_forall.
@@ -129,6 +129,80 @@ unfold gf2_step_tr in gs. exact (gs _ _ X X0). Qed.
 Check gstep.gen_step_lemT. 
 Check gen_step_c_lem.  Check gen_step_tr_lem. Check gf2_step_tr_lem.
 
+Definition size_step_tr U fty rules P (A : fty) sub :=
+    gf2_step_tr P A sub (measure (@derrec_fc_size U rules emptyT)).
+
+Definition height_step_tr U fty rules P (A : fty) sub :=
+    gf2_step_tr P A sub (measure (@derrec_fc_height U rules emptyT)).
+
+Lemma size_step_tr_lem U fty (rules : rlsT U) 
+  (P : fty -> derrec_fc rules emptyT -> Type)
+  A sub dt: AccT sub A -> (forall A dt, size_step_tr P A sub dt) -> P A dt.
+Proof. unfold size_step_tr. intros acc fgf.
+apply (gf2_step_tr_lem fgf acc) ; apply AccT_measure. Qed.
+
+Lemma height_step_tr_lem U fty (rules : rlsT U) 
+  (P : fty -> derrec_fc rules emptyT -> Type)
+  A sub dt: AccT sub A -> (forall A dt, height_step_tr P A sub dt) -> P A dt.
+Proof. unfold height_step_tr. intros acc fgf.
+apply (gf2_step_tr_lem fgf acc) ; apply AccT_measure. Qed.
+
+Lemma nextup_size W rules prems (d dn : @derrec_fc W rules prems):
+  InT dn (nextup d) -> derrec_fc_size dn < derrec_fc_size d.
+Proof. destruct d. destruct dn.
+unfold derrec_fc_size. unfold nextup.
+destruct d. intro. inversion X.
+intro idt. apply in_trees_drs in idt.
+simpl. clear r. (* otherwise complicates induction *)
+induction idt ; simpl.
++ apply Lt.le_lt_n_Sm. apply Nat.le_add_r.
++ eapply Lt.lt_le_trans. apply IHidt. apply le_n_S. apply Plus.le_plus_r. Qed.
+
+Lemma nextup_height W rules prems (d dn : @derrec_fc W rules prems):
+  InT dn (nextup d) -> derrec_fc_height dn < derrec_fc_height d.
+Proof. destruct d. destruct dn.
+unfold derrec_fc_height. unfold nextup.
+destruct d. intro. inversion X.
+intro idt. apply in_trees_drs in idt.
+simpl. clear r. (* otherwise complicates induction *)
+induction idt ; simpl.
++ apply Lt.le_lt_n_Sm. apply Nat.le_max_l.
++ eapply Lt.lt_le_trans. apply IHidt. apply le_n_S. apply Nat.le_max_r. Qed.
+
+Definition in_nextup_size W rules prems d dn inn :=
+  @nextup_size W rules prems d dn (in_nextup_fc_nu inn).
+Definition in_nextup_height W rules prems d dn inn :=
+  @nextup_height W rules prems d dn (in_nextup_fc_nu inn).
+
+Lemma gs_tr_size U fty (rules : rlsT U) 
+  (P : fty -> derrec_fc rules emptyT -> Type) A sub dt: 
+  gen_step_tr P A sub dt -> size_step_tr P A sub dt.
+Proof. unfold size_step_tr. unfold gf2_step_tr.  unfold gen_step_tr.
+intros gs saa.
+specialize (gs (fun A' s a => saa A' s a (AccT_measure _ _))).
+clear saa. intros p. apply gs.
+intros. apply (p dtn). unfold measure.  apply (in_nextup_size X).  Qed.
+
+Lemma gs_tr_height U fty (rules : rlsT U) 
+  (P : fty -> derrec_fc rules emptyT -> Type) A sub dt: 
+  gen_step_tr P A sub dt -> height_step_tr P A sub dt.
+Proof. unfold height_step_tr. unfold gf2_step_tr.  unfold gen_step_tr.
+intros gs saa.
+specialize (gs (fun A' s a => saa A' s a (AccT_measure _ _))).
+clear saa. intros p. apply gs.
+intros. apply (p dtn). unfold measure.  apply (in_nextup_height X).  Qed.
+
+Definition dtfun fty U rls (P : fty -> U -> Type) (A : fty)
+  (dt : @derrec_fc U rls emptyT) := P A (derrec_fc_concl dt).
+
+Lemma gs_hs (U fty : Type) rls (P : fty -> U -> Type)
+  A sub c (dt : derrec rls emptyT c)
+  ps (br : botRule_fc (fcI dt) ps c):
+  gen_step P A sub (derrec rls emptyT) ps c ->
+  height_step_tr (dtfun P) A sub (fcI dt).
+Proof. intro gs. apply gs_tr_height.  apply gsc_gstr. apply gs_gsc.
+rewrite (snd (botRule_fc_prems br)).  exact gs. Qed.
+
 (** conditions for inductive proofs for two trees **)
 
 Definition dt2fun fty U W rlsa rlsb (P : fty -> U -> W -> Type) (A : fty)
@@ -166,7 +240,7 @@ Definition sum_step2_tr U W fty (P : fty -> U -> W -> Type)
   (forall dta' dtb', gsl dta' + gsr dtb' < gsl dta + gsr dtb ->
     P A dta' dtb') -> P A dta dtb.
 
-(** results linking the conditions for intudtive proofs for two trees **)
+(** results linking the conditions for inductive proofs for two trees **)
 Lemma gs2_gs2c U W rulesa rulesb fty P (A : fty) sub ca cb dta dtb:
   iffT (@gen_step2 U W fty P A sub 
     (derrec rulesa emptyT) (derrec rulesb emptyT) 
@@ -191,34 +265,6 @@ exists (fcI dtp). split. simpl. rewrite der_concl_eq. reflexivity.  exact inn.
 apply in_nextup_nu in inn.  apply InT_mapI.
 exists (fcI dtq). split. simpl. rewrite der_concl_eq. reflexivity.  exact inn.
 Qed.
-
-(*
-(** results linking the conditions for intudtive proofs for two trees **)
-Lemma gs2_gs2c U W rulesa rulesb fty P (A : fty) sub ca cb dta dtb:
-  iffT (@gen_step2 U W fty P A sub 
-    (derrec rulesa emptyT) (derrec rulesb emptyT) 
-    (map (@derrec_fc_concl _ _ _) (nextup (fcI dta))) ca
-    (map (@derrec_fc_concl _ _ _) (nextup (fcI dtb))) cb)
-  (@gen_step2_c U W rulesa rulesb fty P A sub ca cb dta dtb).
-Proof. unfold gen_step2.  unfold gen_step2_c. apply pair ; intros.
-- specialize (X X0). clear X0.
-apply (fun fa fb => X fa fb dta dtb) ; clear X ; apply ForallTI_forall ;
-intros x inmn ; apply InT_mapE in inmn ; cD ; subst ;  split ;
-try apply der_der_fc.
-+ destruct inmn.  apply nextup_in_nu in inmn1.
-simpl. rewrite der_concl_eq.  eapply X1 in inmn1. exact inmn1.
-+ destruct inmn.  apply nextup_in_nu in inmn1.
-simpl. rewrite der_concl_eq.  eapply X2 in inmn1. exact inmn1.
-- specialize (X X0). clear X0.
-apply X ; clear X ; intros * inn.
-+ eapply ForallTD_forall in X1. cD. exact X0.
-apply in_nextup_nu in inn.  apply InT_mapI.
-exists (fcI dtp). split. simpl. rewrite der_concl_eq. reflexivity.  exact inn.
-+ eapply ForallTD_forall in X2. cD. exact X0.
-apply in_nextup_nu in inn.  apply InT_mapI.
-exists (fcI dtq). split. simpl. rewrite der_concl_eq. reflexivity.  exact inn.
-Qed.
-*)
 
 Lemma gs2tr_gf2 U W rulesa rulesb fty P A sub dta dtb :
   iffT (@gen_step2_tr U W rulesa rulesb fty P A sub dta dtb)
@@ -312,17 +358,6 @@ Qed.
 
 Check gen_step2_c_lem.  Check gen_step2_tr_lem.  Check gf_step2_tr_lem.
 
-Definition measure {U} f (dtn dt : U) := f dtn < f dt.
-
-Lemma AccT_measure' U f n : forall dt : U, f dt < n -> AccT (measure f) dt.
-Proof.  induction n.
-- intros.  apply Nat.nlt_0_r in H.  contradiction H.
-- intros.  apply AccT_intro.  intros.  unfold measure in H0.  apply IHn.
-apply Lt.lt_n_Sm_le in H.  eapply Lt.lt_le_trans ; eassumption.  Qed.
-
-Definition AccT_measure U f dt := 
-  @AccT_measure' U f _ dt (Nat.lt_succ_diag_r _).
-
 Definition size_step2_tr U W fty rulesa rulesb P (A : fty) sub :=
     gf_step2_tr P A sub (measure (@derrec_fc_size U rulesa emptyT))
       (measure (@derrec_fc_size W rulesb emptyT)).
@@ -344,33 +379,6 @@ Lemma height_step2_tr_lem U W fty (rulesa : rlsT U) (rulesb : rlsT W)
   (forall A dta dtb, height_step2_tr P A sub dta dtb) -> P A dta dtb.
 Proof. unfold height_step2_tr. intros acc fgf.
 apply (gf_step2_tr_lem fgf acc) ; apply AccT_measure. Qed.
-
-Lemma nextup_size W rules prems (d dn : @derrec_fc W rules prems):
-  InT dn (nextup d) -> derrec_fc_size dn < derrec_fc_size d.
-Proof. destruct d. destruct dn.
-unfold derrec_fc_size. unfold nextup.
-destruct d. intro. inversion X.
-intro idt. apply in_trees_drs in idt.
-simpl. clear r. (* otherwise complicates induction *)
-induction idt ; simpl.
-+ apply Lt.le_lt_n_Sm. apply Nat.le_add_r.
-+ eapply Lt.lt_le_trans. apply IHidt. apply le_n_S. apply Plus.le_plus_r. Qed.
-
-Lemma nextup_height W rules prems (d dn : @derrec_fc W rules prems):
-  InT dn (nextup d) -> derrec_fc_height dn < derrec_fc_height d.
-Proof. destruct d. destruct dn.
-unfold derrec_fc_height. unfold nextup.
-destruct d. intro. inversion X.
-intro idt. apply in_trees_drs in idt.
-simpl. clear r. (* otherwise complicates induction *)
-induction idt ; simpl.
-+ apply Lt.le_lt_n_Sm. apply Nat.le_max_l.
-+ eapply Lt.lt_le_trans. apply IHidt. apply le_n_S. apply Nat.le_max_r. Qed.
-
-Definition in_nextup_size W rules prems d dn inn :=
-  @nextup_size W rules prems d dn (in_nextup_fc_nu inn).
-Definition in_nextup_height W rules prems d dn inn :=
-  @nextup_height W rules prems d dn (in_nextup_fc_nu inn).
 
 Lemma gs2_tr_size U W fty (rulesa : rlsT U) (rulesb : rlsT W)
   (P : fty -> derrec_fc rulesa emptyT -> derrec_fc rulesb emptyT -> Type)
