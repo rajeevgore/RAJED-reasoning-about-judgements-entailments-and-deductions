@@ -344,6 +344,11 @@ Proof. intros. subst. apply fextI'. exact X. Qed.
 Definition fextI_eqc' U W rls Γ1 Γ2 ps (c : list U * W) mc rpc :=
   @fextI_eq' U W rls Γ1 Γ2 ps (c : list U * W) _ mc rpc eq_refl.
 
+Lemma ferD U W rules ps c (fer : @fst_ext_rls U W rules ps c) : 
+  {Γ1 & {Γ2 & {ps' & {c' & rules ps' c' * (c = apfst (fmlsext Γ1 Γ2) c') *
+    (ps = map (apfst (fmlsext Γ1 Γ2)) ps')}}}}. 
+Proof. destruct fer. destruct r.  repeat esplit. exact r. Qed.
+  
 Lemma fst_snd_ext W (rls : rlsT (list W * list W)) :
   req (seqrule rls) (fst_ext_rls (snd_ext_rls rls)).
 Proof. split ; intros ps c.

@@ -12,7 +12,7 @@ Test Printing Universes.
 From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
-Require Import gen genT ddT dd_fc gen_seq swappedT rtcT List_lemmasT.
+Require Import gen genT ddT dd_fc gen_seq swappedT rtcT List_lemmasT gen_tacs.
 Require Import ljt.
 Require Import Coq.Program.Basics.
 Require Import Coq.Program.Equality.
@@ -340,57 +340,54 @@ apply (rsub_ms_ord_sw dnsub_fw).  apply (ms_ord_cons_fe _ _ mso). Qed.
 
 Lemma lja_seq_ord V concl ps (rls : @LJArules V ps concl) p :
   InT p ps -> (seq_ord p concl + seq_ord_eq p concl).
-Proof. intro inp. destruct rls. inversion r. clear r.  destruct X ; subst.
-- (* LJAilrules *) left.
+Proof. intro inp. destruct rls. inversion r. clear r. subst.
 apply InT_mapE in inp. cD.
-eapply ail_prems_dn in r. 2: apply inp1.
-inversion inp0. subst. clear inp0.
-exact (solem _ _ r). 
+inversion inp0 ; subst ; clear inp0.
+inversion X ; subst ; clear X.
+- (* LJAilrules *) left.
+eapply ail_prems_dn in X0. 2: apply inp1.  exact (solem _ _ X0). 
 
 - (* ImpL_Imp_rule *) left.
-apply InT_mapE in inp. cD. destruct c0.
-eapply Imp_prems_dn in i. 2: apply inp1.
-apply seq_ordI.  inversion inp0. subst. clear inp0.
-apply tc_mso_sw_meas_map.
+eapply Imp_prems_dn in X0. 2: apply inp1.
+apply seq_ordI.  apply tc_mso_sw_meas_map.
 apply (clos_transT_mono (rsub_ms_ord_sw tc_dnsub_fw)).
-apply (tc_ms_ord_cons_fe _ _ i).
+apply (tc_ms_ord_cons_fe _ _ X0).
 
 - (* ImpLrule_p *) 
-inversion i ; subst.
-inversion inp ; subst ; clear inp.
-+ eapply Imp_p_lprem_dn in i. destruct i.
+inversion X0 ; subst.
+inversion inp1 ; subst ; clear inp1.
+inversion H0 ; subst ; clear H0.
++ eapply Imp_p_lprem_dn in X0. destruct X0.
 ++ right. apply seq_ord_eqI.  simpl in e. inversion e.
 simpl. rewrite <- H0. reflexivity.
 ++ left. apply seq_ordI. apply tT_step.  apply mso_sw_meas_map.
 apply (ms_ord_cons_fe _ _ m).
 + inversion H0 ; subst. clear H0.
-eapply Imp_p_rprem_dn in i. left.  apply (solem _ _ i).
+inversion H1 ; subst. clear H1.
+eapply Imp_p_rprem_dn in X0. left.  apply (solem _ _ X0).
 inversion H1.
 
 - (* ImpRrule *) left.
-apply InT_mapE in inp. cD. destruct c0.
-eapply ImpR_prems_dn in i. 2: apply inp1.
-inversion inp0. subst. clear inp0.
-exact (solem _ _ i).
+eapply ImpR_prems_dn in X0. 2: apply inp1.  exact (solem _ _ X0).
 
 - (* Idrule *) left.
-apply InT_mapE in inp. cD. 
-destruct i.  inversion inp1.
+inversion X0. subst. inversion inp1.
 
 - (* LJslrules *) left.
-apply InT_mapE in inp. cD. 
-eapply lrls_prems_dn in r. 2: apply inp1.
-inversion inp0. subst. clear inp0.
-apply (solem _ _ r).
+eapply lrls_prems_dn in X0. 2: apply inp1.  apply (solem _ _ X0).
 
 - (* LJsrrules *) left.
-apply InT_mapE in inp. cD. 
-eapply rrls_prems_dn in r. 2: apply inp1.
-inversion inp0. subst. clear inp0.
-apply (solem _ _ r).
+eapply rrls_prems_dn in X0. 2: apply inp1.  apply (solem _ _ X0).
 
 Qed.
 
+Lemma nu_so V prems c1 c2 (d1 : derrec (@LJArules V) prems c1)
+  (d2 : derrec LJArules prems c2) (inu : in_nextup d2 d1) :
+  (seq_ord c2 c1) + (seq_ord_eq c2 c1).
+Proof.  destruct d1.
+- destruct (in_nextup_dpI inu). 
+- apply in_nextup_in_drs in inu.
+apply (lja_seq_ord l).  exact (in_drs_concl_in inu). Qed.
 
 Lemma all_nrs {V} prems ps concl (ds : dersrec LJArules prems ps)
   (ljpc : LJArules ps concl) :
@@ -408,9 +405,67 @@ eapply tT_trans ; apply tT_step ; eassumption.
 apply tT_step.  exact (seq_ord_comp_eq s ind1).
 Qed.
 
+Lemma no_rpt_same_dpI U rules prems c R pc :
+  no_rpt_same R (@dpI U rules prems c pc).
+Proof. unfold no_rpt_same. intros * inn1.
+inversion inn1. inversion X. Qed.
+ 
+Lemma lja_so_tl V ph pt c (rls : @LJArules V (ph :: pt) c) p :
+  InT p pt -> seq_ord p c.
+Proof. intro inp. inversion rls. inversion X.
+destruct ps0 ; inversion H2. clear H2 rls X. subst.
+apply InT_mapE in inp. cD.
+inversion inp0 ; subst ; clear inp0.
+inversion X0 ; subst ; clear X0.
+
+- (* LJAilrules *) 
+eapply ail_prems_dn in X. 2: apply (InT_cons _ inp1).  exact (solem _ _ X). 
+
+- (* ImpL_Imp_rule *) 
+eapply Imp_prems_dn in X. 2: apply (InT_cons _ inp1). 
+apply seq_ordI.  apply tc_mso_sw_meas_map.
+apply (clos_transT_mono (rsub_ms_ord_sw tc_dnsub_fw)).
+apply (tc_ms_ord_cons_fe _ _ X).
+
+- (* ImpLrule_p *) 
+inversion X ; subst.
+inversion inp1 ; subst ; clear inp1.
+inversion H0 ; subst ; clear H0.
+eapply Imp_p_rprem_dn in X. apply (solem _ _ X).
+inversion H0.
+
+- (* ImpRrule *) 
+eapply ImpR_prems_dn in X. 2: apply (InT_cons _ inp1).  exact (solem _ _ X).
+
+- (* Idrule *) inversion X.
+
+- (* LJslrules *) 
+eapply lrls_prems_dn in X. 2: apply (InT_cons _ inp1).  exact (solem _ _ X).
+
+- (* LJsrrules *) 
+eapply rrls_prems_dn in X.
+2: apply (InT_cons _ inp1).  exact (solem _ _ X).
+Qed.
+
+Lemma so_ant_nil V ps cr Γ0 Γ3 
+  (l : LJArules (map (apfst (fmlsext Γ0 Γ3)) ps) (Γ0 ++ Γ3, cr))
+  (rl : @LJAncrules V ps ([], cr)) :
+  forall p, InT p ps -> seq_ord (apfst (fmlsext Γ0 Γ3) p) (Γ0 ++ Γ3, cr).
+Proof. inversion rl ; subst ; clear rl.
+- inversion X. inversion X0 ; inversion X1.
+- inversion X.
+- inversion X.
+- intros p inp. destruct p.
+apply (ImpR_prems_dn X) in inp.
+eapply solem in inp. exact inp.
+- inversion X.
+- inversion X. inversion X0 ; inversion X1.
+- intros p inp. destruct p.
+apply (rrls_prems_dn X) in inp.
+eapply solem in inp. exact inp.
+Qed.
+
 (*
-
-
 Check Imp_prems_dn.
 Check ImpR_prems_dn.
 Check ail_prems_dn.
@@ -421,7 +476,131 @@ Print LJAncrules.
 Print ImpLrule_p.
 Check Imp_p_rprem_dn.
 Check Imp_p_lprem_dn.
+*)
 
+Lemma nrs_ant_nil V prems ps cr Γ0 Γ3 ds d
+  (l : LJArules (map (apfst (fmlsext Γ0 Γ3)) ps) (Γ0 ++ Γ3, cr))
+  (rl : LJAncrules ps ([], cr))
+  (deq : d = @derI _ (@LJArules V) prems _ _ l ds) :
+  no_rpt_same seq_ord d.
+Proof. unfold no_rpt_same. intros * inn inu.  subst.
+pose (so_ant_nil _ _ l rl). 
+apply in_nextup_in_drs in inn.  apply in_drs_concl_in in inn.
+apply nu_so in inu.  apply InT_mapE in inn. cD.
+apply s in inn1. clear s.  rewrite inn0 in inn1.  clear ds rl l.
+destruct inu.
+- eapply tT_trans ; apply tT_step ; eassumption.
+- apply tT_step. exact (seq_ord_comp_eq s inn1). Qed.
+
+(*
+Lemma lja_dd_ImpL_p V prems Γ1 Γ2 ps c
+  (ds : dersrec LJArules prems (map (apfst (fmlsext Γ1 Γ2)) ps))
+  (dsnrs : allPder (no_rpt_same seq_ord (prems:=prems)) ds)
+  (ljpc : LJArules (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c))
+  (i : @ImpLrule_p V ps c) :
+  {d : derrec LJArules prems (apfst (fmlsext Γ1 Γ2) c) &
+  allDT (no_rpt_same seq_ord (prems:=prems)) d}.
+Proof. inversion i. subst.
+revert dsnrs. dependent inversion ds. subst.
+pose d. revert d1. dependent inversion d.
+- subst. intros d1 dsnrs.  clear d ds.
+apply allPder_dlConsD in dsnrs. cD.
+epose (fextI (rmI _ _ _ _ (ImpL_anc i))).
+exists (derI _ f (dlCons d1 d0)).
+simpl. split.
++ clearbody f. clear dsnrs dsnrs0. unfold no_rpt_same.
+intros * inn innn.
+apply in_nextup_in_drs in inn.
+apply in_dersrecD in inn. sD.
+++ pose (fcI_inj_concl inn).
+clearbody e. subst. 
+apply fcI_inj in inn. subst. subst d1.
+inversion innn.  inversion X.
+++ clear d1 p0 f.  revert inn.
+dependent inversion d0. subst.
+intros inn.  apply in_dersrecD in inn. sD.
++++ pose (fcI_inj_concl inn).
+clearbody e. subst.
+apply fcI_inj in inn. subst. 
+clear d1.
+(* holds because concl of d smaller than concl in goal *)
+admit.
++++ revert inn. dependent inversion d1.
+intro inn. inversion inn.
++ clear f. apply allPder_Cons.
+++ subst d1. apply no_rpt_same_dpI.
+++ exact dsnrs0.
+
+- clear d ds. (* use d2, dlCons (d2 d0) instead *)
+subst. intros d2 apd. apply allPder_dlConsD in apd. cD.
+(* here, do we need to get that l uses the rule we find in LJAnc 
+revert dependent l. intro.  dependent inversion l.  error here ??? *)
+inversion l. inversion X. subst. destruct c0.
+pose (LJAnc_seL X0). destruct s.
++ (* rule has empty antecedent, therefore not ImpLrule_p,
+  therefore can use same tree *)
+exists (derI _ ljpc (dlCons d2 d0)). simpl. split.
+++ 
+
+
+unfold no_rpt_same. intros * inu inn.
+
+nrs_ant_nil not relevant, LJAncrules ps1 ([], p0) applies one level higher up
+eapply nrs_ant_nil. exact X0. fails
+
+eapply (nrs_ant_nil _ _ X0). fails
+
+Check nrs_ant_nil.
+
+all: cycle 1.
+apply allPder_Cons.
+
++ 
+
+
+
+simpl in H3. unfold fmlsext in H3. inversion H3. clear H3. subst. 
+pose (LJAnc_seL X0). destruct s.
++ simpl in H0.
+(* rule has empty antecedent, therefore not ImpLrule_p *)
+
+
+
+eexists.
+
+
+exists (dlCons d d0).
+
+
+
+
+acacD'T2 ; subst.
+
++ 
+
+
+
+
+eapply allPderD in dsnrs0. 2: apply InT_eq.
+clear d1. cD.
+
+we need the solution to be dlCons dsnrs0 dlNil
+not what we are given
+
+
+TBC 
+
+(* may need sth like this
+inversion inn. inversion_sigma.
+rewrite <- Eqdep.EqdepTheory.eq_rect_eq in H7.
+rewrite <- H6 in H8.  rewrite <- Eqdep.EqdepTheory.eq_rect_eq in H8. 
+subst. clear H H3 H2 H6 inn. inversion inn. inversion X1.
+
+inversion_sigma.
+rewrite <- Eqdep.EqdepTheory.eq_rect_eq in H4.
+rewrite <- Eqdep.EqdepTheory.eq_rect_eq in H6.
+subst. clear H2 H3 inn.
+*)
 
 Lemma lja_dd_ord V prems : forall concl, 
   derrec (@LJArules V) prems concl -> {d : derrec LJArules prems concl &

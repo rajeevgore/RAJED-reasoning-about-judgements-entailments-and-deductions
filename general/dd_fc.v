@@ -42,11 +42,20 @@ Lemma allPder_dlConsD: forall X rules prems Q seq seqs d ds,
   @allPder X rules prems Q (seq :: seqs) (dlCons d ds) ->
     Q seq d * allPder Q ds.
 Proof.
-intros. (* inversion X0 produces existT equalities *)
+intros. (* inversion X0 produces existT equalities, see below *)
 (* induction X0 produces trivial subgoal 2, unsolvable subgoal 1 *)
 (* dependent induction X0. OK, but irrelevant IHX0, trivial subgoal *)
 dependent destruction X0. 
 split ; assumption. Qed.
+
+(* proof using inversion and inversion_sigma *)
+Lemma allPder_dlConsD': forall X rules prems Q seq seqs d ds,
+  @allPder X rules prems Q (seq :: seqs) (dlCons d ds) ->
+    Q seq d * allPder Q ds.
+Proof. intros * add.  inversion add.  inversion_sigma.
+rewrite <- Eqdep.EqdepTheory.eq_rect_eq in H4.
+rewrite <- Eqdep.EqdepTheory.eq_rect_eq in H5.
+subst.  split ; assumption. Qed.
 
 Definition derrec_rect_mut_all X (rules : rlsT X) prems Q cl1 cl2 :=
   derrec_rect_mut Q (@allPder X rules prems Q) cl1 cl2 
@@ -82,10 +91,15 @@ Lemma in_drs_concl_in W rules prems ps (cn : W) (drs : dersrec rules prems ps)
 Proof. intro ind. induction ind. apply InT_eq.
 apply InT_cons. assumption. Qed.
 
+Lemma in_nextup_dpI U rules prems concl pc c (d : derrec rules prems c) :
+  in_nextup d (@dpI U rules prems concl pc) -> False.
+Proof. intro ind. inversion ind. inversion X. Qed.
+
 Lemma in_nextup_in_drs W rules prems ps (concl cn : W) rpc
   (drs : dersrec rules prems ps) (dtn : derrec rules prems cn) :
   in_nextup dtn (derI concl rpc drs) -> in_dersrec dtn drs.
 Proof. intro ind. inversion ind.  dependent induction X. exact X0. Qed.
+
 
 Lemma in_nextup_concl_in W rules prems ps (concl cn : W) rpc
   (drs : dersrec rules prems ps) (dtn : derrec rules prems cn) :
@@ -339,6 +353,13 @@ Inductive in_nextup_fc X (rules : rlsT X) prems :
     in_nextup dn d -> in_nextup_fc (fcI dn) (fcI d)
   .
 
+(* or a proof like for allPder_dlConsD' above *)
+Lemma in_dersrecD W rules prems (p : W) ps pi (di : derrec rules prems pi)
+  (d : derrec rules prems p) (ds : dersrec rules prems ps) :
+  in_dersrec di (dlCons d ds) -> sum (fcI di = fcI d) (in_dersrec di ds).
+Proof. intro ind.  dependent destruction ind.
+left. reflexivity. right. exact ind. Qed.
+
 (* dealing with property argument of the form required for allDT, allPder
   ie (forall x : ?U, derrec rules prems x -> Type) *)
 
@@ -557,10 +578,28 @@ Lemma nextup_height W rules prems dt dn: InT dn (nextup dt) ->
 Proof. intro inn.  destruct dt. destruct d ; simpl in inn. inversion inn.
 simpl.  exact (Lt.le_lt_n_Sm _ _ (drs_trees_height _ inn)). Qed.
 
+(* this may be required to make d1 = d2, in fcI_inj, well-typed *)
+Lemma fcI_inj_concl: forall X rules prems c1 c2 
+  (d1 : @derrec X rules prems c1) (d2 : @derrec X rules prems c2),
+  fcI d1 = fcI d2 -> c1 = c2.
+Proof. intros.  (* injection H gives existT equality *)
+  dependent destruction H. reflexivity. Qed.
+
 Lemma fcI_inj: forall X rules prems concl (d1 : @derrec X rules prems concl) d2,
   fcI d1 = fcI d2 -> d1 = d2.
 Proof. intros.  (* injection H gives existT equality *)
   dependent destruction H. reflexivity. Qed.
+
+Lemma fcI_JMinv X rules prems c1 c2 
+  (d1 : @derrec X rules prems c1) (d2 : @derrec X rules prems c2) :
+  fcI d1 = fcI d2 -> JMeq d1 d2.
+Proof. intros.  (* injection H gives existT equality *)
+  dependent destruction H. apply JMeq_refl. Qed.
+
+(* alternative proof of fcI_inj *)
+Lemma fcI_inj' X rules prems concl (d1 : @derrec X rules prems concl) d2 :
+  fcI d1 = fcI d2 -> d1 = d2.
+Proof. intros.  apply (JMeq_eq (fcI_JMinv H)).  Qed.
 
 (* this doesn't work - type of Q 
 Goal forall X rules prems Q cs (ds : @dersrec X rules prems cs),
