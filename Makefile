@@ -68,7 +68,7 @@ general/gen_tacs.vo: general/gen_tacs.v general/List_lemmasT.vo
 general/existsT.vo: general/existsT.v
 general/genT.vo: general/genT.v general/existsT.vo general/gen.vo
 general/ddT.vo: general/ddT.v general/genT.vo 
-general/dd_fc.vo: general/dd_fc.v general/ddT.vo
+general/dd_fc.vo: general/dd_fc.v general/ddT.vo general/gen_tacs.vo
 general/List_lemmasT.vo: general/List_lemmasT.v general/existsT.vo general/genT.vo general/gen.vo
 general/swappedT.vo: general/swappedT.v general/gen_tacs.vo general/List_lemmasT.vo
 general/gen_seq.vo: general/gen_seq.v general/gstep.vo general/swappedT.vo

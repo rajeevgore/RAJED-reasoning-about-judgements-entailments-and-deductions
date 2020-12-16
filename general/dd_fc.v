@@ -9,7 +9,7 @@ Export ListNotations.
 
 Require Import Coq.Program.Equality. (* for dependent induction/destruction *)
 
-Require Import genT gen ddT existsT.
+Require Import genT gen ddT existsT gen_tacs.
 Require Import PeanoNat.
 Require Import Lia.
 
@@ -100,7 +100,6 @@ Lemma in_nextup_in_drs W rules prems ps (concl cn : W) rpc
   in_nextup dtn (derI concl rpc drs) -> in_dersrec dtn drs.
 Proof. intro ind. inversion ind.  dependent induction X. exact X0. Qed.
 
-
 Lemma in_nextup_concl_in W rules prems ps (concl cn : W) rpc
   (drs : dersrec rules prems ps) (dtn : derrec rules prems cn) :
   in_nextup dtn (derI concl rpc drs) -> InT cn ps.
@@ -156,17 +155,23 @@ Check allPderD_in.
 *)
 
 (* a property holds throughout a proof tree *)
-Fixpoint allDT {X} rules prems concl P
-  (der : @derrec X rules prems concl) :=
-  match der with 
-    | dpI _ _ _ _ => P concl der
-    | derI _ _ ds => (P concl der * allPder P ds)%type
-  end.
+
+Inductive allDT {X} rules prems : 
+  trf (forall x : X, derrec rules prems x -> Type) :=
+  | adpI : forall P c pc, P c (dpI _ _ c pc) -> 
+    @allDT X rules prems P c (dpI _ _ c pc)
+  | aderI : forall P ps c rpc ds, P c (@derI _ _ _ ps c rpc ds) -> 
+    allPder (allDT P) ds -> 
+    @allDT X rules prems P c (@derI _ _ _ ps c rpc ds)
+  .
 
 Lemma allDTD1 {X} rules prems concl P (der : @derrec X rules prems concl) :
   allDT P der -> P concl der.
-Proof. intro apd.  destruct der ; simpl in apd.
-exact apd. exact (fst apd). Qed.
+Proof. intro apd.  destruct apd ; exact p. Qed.
+
+Lemma allDTD2 {X} rules prems ps (concl : X) P rpc ds :
+  allDT P (derI concl rpc ds) -> @allPder X rules prems (allDT P) ps ds.
+Proof. intros adp.  dependent destruction adp. exact a. Qed.
 
 Fixpoint derrec_height X rules prems concl 
   (der : @derrec X rules prems concl) :=

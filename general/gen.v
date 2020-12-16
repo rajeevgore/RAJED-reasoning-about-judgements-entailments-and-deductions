@@ -1,6 +1,10 @@
 Set Implicit Arguments.
 Require Import List.
 Import ListNotations.
+Require Import Coq.Logic.JMeq.
+
+Lemma JM_tyeq U W (a : U) (b : W) : JMeq a b -> U = W.
+Proof. intro ab. destruct ab. reflexivity. Qed.
 
 Definition rsub U V f g := forall (u : U) (v : V), f u v -> g u v.
 
@@ -45,6 +49,14 @@ Proof.  tauto.  Qed.
 Lemma gen_cong: forall T U f g, f = g -> 
   forall x y, x = y -> (f (x : U) : T) = g y.
 Proof. intros. subst. reflexivity. Qed.
+
+(*
+Lemma JM_gen_cong: forall T U W f g, f ~= g -> 
+  forall x y, x ~= y -> (f (x : U) : T) = g (y : W).
+Proof. intros. pose (JM_tyeq H).  pose (JM_tyeq H0).
+inversion e. (* doesn't split types *)
+subst. (* error *)
+*)
 
 Lemma fun_cong: forall T U f g, f = g -> 
   forall x, (f (x : U) : T) = g x.

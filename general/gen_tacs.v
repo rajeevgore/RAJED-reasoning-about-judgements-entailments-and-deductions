@@ -89,6 +89,9 @@ assoc_mid d. (* doesn't work *)
 assoc_mid e.
 *)
 
+Ltac FalseE := match goal with | [ H : False |- _ ] => inversion H end.
+Ltac clear_refl := repeat match goal with | [ H : ?x = ?x |- _ ] => clear H end.
+
 Ltac acacE :=
   repeat match goal with
     | [ H : _ |- _ ] => apply app_eq_app in H ; sE
