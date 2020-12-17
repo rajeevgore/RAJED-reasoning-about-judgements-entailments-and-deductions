@@ -251,6 +251,10 @@ Lemma fmlsext_def : forall (W : Type) Φ1 Φ2 U,
       @fmlsext W Φ1 Φ2 U = (Φ1 ++ U ++ Φ2).
 Proof. reflexivity. Qed.
 
+Lemma map_fmlsext U W (xs Γ1 Γ2 : list U) f : map f (fmlsext Γ1 Γ2 xs) = 
+  fmlsext (map f Γ1) (map f Γ2) (map f xs : list W).
+Proof. unfold fmlsext. rewrite !map_app. reflexivity. Qed.
+
 (* applying a function to a pair *)
 Definition apfst U V W (f : U -> V) (p : U * W) := let (x, y) := p in (f x, y).
 Definition apsnd U V W (f : U -> V) (p : W * U) := let (x, y) := p in (x, f y).

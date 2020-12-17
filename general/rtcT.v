@@ -7,7 +7,7 @@ Require Import List.
 Import ListNotations.
 
 Add LoadPath "../tense-lns".
-Require Import gen genT.
+Require Import gen genT swappedT.
 
 (* compare 
   https://coq.inria.fr/stdlib/Coq.Relations.Relation_Definitions.html
@@ -182,4 +182,15 @@ induction a. clear a.
 apply AccT_intro. intros y crxy.  apply X.
 apply clos_t_tn1T. exact crxy. Qed.
 
+Lemma ct_swL T (X Y Z : list T) : clos_transT (@swapped T) X Y ->
+  clos_transT (@swapped T) (Z ++ X) (Z ++ Y).
+Proof. intro cts. induction cts.
+apply tT_step.  apply (swapped_L _ r).
+exact (tT_trans IHcts1 IHcts2). Qed.
+
+Lemma ct_swR T (X Y Z : list T) : clos_transT (@swapped T) X Y ->
+  clos_transT (@swapped T) (X ++ Z) (Y ++ Z).
+Proof. intro cts. induction cts.
+apply tT_step.  apply (swapped_R _ r).
+exact (tT_trans IHcts1 IHcts2). Qed.
 

@@ -304,18 +304,37 @@ Proof. intro ctxy. induction ctxy.
 - apply tT_step. exact (mso_sw_meas_map r).
 - eapply tT_trans ; eassumption. Qed.
 
-Lemma ms_ord_cons_fel U f (p0 c1 : list U) inp c0 Γ1 Γ2:
-  ms_ord f (p0 ++ inp) (c1 ++ c0) ->
+Lemma ms_ord_sw_tcsw U R (Gp Gc Gcsw Gpsw : list U) : 
+  ms_ord_sw R Gp Gc -> clos_transT (swapped (T:=U)) Gp Gpsw ->
+  clos_transT (swapped (T:=U)) Gc Gcsw -> ms_ord_sw R Gpsw Gcsw.
+Proof. intros mso ctsp ctsc. destruct mso.
+exact (ms_ord_swI m (tT_trans c ctsp) (tT_trans c0 ctsc)). Qed.
+
+Lemma ms_ord_cons_fel' U f (p0 c1 : list U) inp c0 Γ1 Γ2:
+  ms_ord_sw f (p0 ++ inp) (c1 ++ c0) ->
   ms_ord_sw f (p0 ++ fmlsext Γ1 Γ2 inp) (c1 ++ fmlsext Γ1 Γ2 c0).
-Proof. intro mso.  inversion mso.
-pose (ms_ordI f (Γ1 ++ G1) (G2 ++ Γ2) c X).
+Proof. intro mso.  inversion mso. subst. clear mso.  destruct X. 
+pose (ms_ordI f (Γ1 ++ G1) (G2 ++ Γ2) c f0).
 assert (ms_ord f (Γ1 ++ (G1 ++ ps ++ G2) ++ Γ2) (Γ1 ++ (G1 ++ c :: G2) ++ Γ2)).
 repeat (rewrite <- !app_assoc in m || rewrite <- !app_comm_cons in m).
 list_assoc_r. exact m.
-rewrite H0 in X0.  rewrite H in X0. clear m H0 H X.
-unfold fmlsext.
-apply (ms_ord_swI X0) ; apply tT_step ; swap_tac_Rc.
-Qed.
+pose (ct_swL Γ1 (ct_swR Γ2 X0)).  pose (ct_swL Γ1 (ct_swR Γ2 X1)).
+pose (ms_ord_swI X c2 c3).
+unfold fmlsext. apply (ms_ord_sw_tcsw m0) ; apply tT_step ; swap_tac. Qed.
+
+Lemma mso_msw_sw U f (p c : list U) : ms_ord f p c -> ms_ord_sw f p c.
+Proof. intro mso. 
+apply (ms_ord_swI mso) ; apply tT_step ; apply swapped_same. Qed.
+
+Definition rsub_mso_sw U f := rsubI _ _ (@mso_msw_sw U f).
+
+Definition ms_ord_cons_fel U f (p0 c1 inp c0 Γ1 Γ2 : list U) mso :=
+  @ms_ord_cons_fel' U f p0 c1 inp c0 Γ1 Γ2 (mso_msw_sw mso).
+
+Lemma ms_ord_cons_fe' U f (p0 c1 : U) inp c0 Γ1 Γ2:
+  ms_ord_sw f (p0 :: inp) (c1 :: c0) ->
+  ms_ord_sw f (p0 :: fmlsext Γ1 Γ2 inp) (c1 :: fmlsext Γ1 Γ2 c0).
+Proof. intro mso.  apply (ms_ord_cons_fel' [p0] [c1]).  apply mso. Qed.
 
 Lemma ms_ord_cons_fe U f (p0 c1 : U) inp c0 Γ1 Γ2:
   ms_ord f (p0 :: inp) (c1 :: c0) ->
@@ -334,59 +353,95 @@ Proof. intro cto. induction cto.
 + eapply IHcto2 ; reflexivity.
 Qed.
 
+Lemma tc_ms_ord_cons_fel' U f xs ys Γ1 Γ2:
+  @clos_transT (list U) (ms_ord_sw f) xs ys ->
+  forall xs1 xs2 ys1 ys2, xs = xs1 ++ xs2 -> ys = ys1 ++ ys2 -> 
+  clos_transT (ms_ord_sw f) 
+    (xs1 ++ fmlsext Γ1 Γ2 xs2) (ys1 ++ fmlsext Γ1 Γ2 ys2).
+Proof. intro cto. induction cto.
+- intros * xe ye. subst. apply tT_step. apply ms_ord_cons_fel'. exact r. 
+- intros * xe ze. subst. eapply tT_trans.
++ eapply (IHcto1 _ _ [] _) ; reflexivity.
++ eapply IHcto2 ; reflexivity.
+Qed.
+
 Lemma tc_ms_ord_cons_fe U f (p0 c1 : U) inp c0 Γ1 Γ2:
   @clos_transT (list U) (ms_ord f) (p0 :: inp) (c1 :: c0) ->
   clos_transT (ms_ord_sw f) (p0 :: fmlsext Γ1 Γ2 inp) (c1 :: fmlsext Γ1 Γ2 c0).
 Proof. intro cto. 
 exact (tc_ms_ord_cons_fel Γ1 Γ2 cto [p0] inp [c1] c0 eq_refl eq_refl). Qed.
 
+Lemma tc_ms_ord_cons_fe' U f (p0 c1 : U) inp c0 Γ1 Γ2:
+  @clos_transT (list U) (ms_ord_sw f) (p0 :: inp) (c1 :: c0) ->
+  clos_transT (ms_ord_sw f) (p0 :: fmlsext Γ1 Γ2 inp) (c1 :: fmlsext Γ1 Γ2 c0).
+Proof. intro cto. 
+exact (tc_ms_ord_cons_fel' Γ1 Γ2 cto [p0] inp [c1] c0 eq_refl eq_refl). Qed.
+
+Lemma seq_ord_fe V p c Γ1 Γ2 : @seq_ord V p c ->
+  @seq_ord V (apfst (fmlsext Γ1 Γ2) p) (apfst (fmlsext Γ1 Γ2) c).
+Proof. intro sopc. destruct sopc.  apply seq_ordI.
+simpl in c. simpl.  rewrite !map_fmlsext.
+eapply tc_ms_ord_cons_fe' in c. exact c. Qed.
+
+Lemma solem1 V p0 c1 inp c0 : ms_ord dnsubfml (p0 :: inp) (c1 :: c0) ->
+  @seq_ord V (inp, p0) (c0, c1).
+Proof. intro mso.  apply seq_ordI. apply tT_step.  apply mso_sw_meas_map.
+apply (rsub_ms_ord_sw dnsub_fw).  apply (mso_msw_sw mso). Qed.
+
+(* see solem', may not be required *)
 Lemma solem V p0 c1 inp c0 Γ1 Γ2 : ms_ord dnsubfml (p0 :: inp) (c1 :: c0) ->
   @seq_ord V (fmlsext Γ1 Γ2 inp, p0) (apfst (fmlsext Γ1 Γ2) (c0, c1)).
 Proof. intro mso.  apply seq_ordI. apply tT_step.  apply mso_sw_meas_map.
 apply (rsub_ms_ord_sw dnsub_fw).  apply (ms_ord_cons_fe _ _ mso). Qed.
 
+Definition solem' V p0 c1 inp c0 Γ1 Γ2 mso :=
+  seq_ord_fe Γ1 Γ2 (@solem1 V p0 c1 inp c0 mso).
+
+Lemma lja_so_imp V concl ps (rls : @LJAncrules V ps concl) :
+  (forall p, InT p ps -> seq_ord p concl) + ImpLrule_p ps concl.
+Proof. destruct rls. 
+- (* LJAilrules *) left. intros p0 inp. destruct c. destruct p0.
+eapply ail_prems_dn in r. 2: exact inp.  exact (solem1 r). 
+
+- (* ImpL_Imp_rule *) left. intros p0 inp. destruct c. destruct p0.
+eapply Imp_prems_dn in i. 2: apply inp.
+apply seq_ordI.  apply tc_mso_sw_meas_map.
+apply (clos_transT_mono (rsub_ms_ord_sw tc_dnsub_fw)).
+exact (clos_transT_mono (@rsub_mso_sw _ _) i).
+
+- (* ImpLrule_p *) right. exact i.
+
+- (* ImpRrule *) left. intros p0 inp. destruct c. destruct p0.
+eapply ImpR_prems_dn in i. 2: apply inp.  exact (solem1 i).
+
+- (* Idrule *) left. intros p0 inp. 
+inversion i. subst.  inversion inp.
+
+- (* LJslrules *) left. intros p0 inp. destruct c. destruct p0.
+eapply lrls_prems_dn in r. 2: apply inp.  apply (solem1 r).
+
+- (* LJsrrules *) left. intros p0 inp. destruct c. destruct p0.
+eapply rrls_prems_dn in r. 2: apply inp.  apply (solem1 r).
+
+Qed.
+
 Lemma lja_seq_ord V concl ps (rls : @LJArules V ps concl) p :
   InT p ps -> (seq_ord p concl + seq_ord_eq p concl).
 Proof. intro inp. destruct rls. inversion r. clear r. subst.
-apply InT_mapE in inp. cD.
-inversion inp0 ; subst ; clear inp0.
-inversion X ; subst ; clear X.
-- (* LJAilrules *) left.
-eapply ail_prems_dn in X0. 2: apply inp1.  exact (solem _ _ X0). 
-
-- (* ImpL_Imp_rule *) left.
-eapply Imp_prems_dn in X0. 2: apply inp1.
-apply seq_ordI.  apply tc_mso_sw_meas_map.
-apply (clos_transT_mono (rsub_ms_ord_sw tc_dnsub_fw)).
-apply (tc_ms_ord_cons_fe _ _ X0).
-
+apply lja_so_imp in X. destruct X.
+- apply InT_mapE in inp. cD.
+pose (seq_ord_fe Γ1 Γ2 (s _ inp1)).
+rewrite -> inp0 in s0. left. exact s0.
 - (* ImpLrule_p *) 
-inversion X0 ; subst.
-inversion inp1 ; subst ; clear inp1.
-inversion H0 ; subst ; clear H0.
-+ eapply Imp_p_lprem_dn in X0. destruct X0.
+inversion i. subst. inversion inp ; subst ; clear inp.
++ eapply Imp_p_lprem_dn in i. destruct i.
 ++ right. apply seq_ord_eqI.  simpl in e. inversion e.
 simpl. rewrite <- H0. reflexivity.
 ++ left. apply seq_ordI. apply tT_step.  apply mso_sw_meas_map.
 apply (ms_ord_cons_fe _ _ m).
 + inversion H0 ; subst. clear H0.
-inversion H1 ; subst. clear H1.
-eapply Imp_p_rprem_dn in X0. left.  apply (solem _ _ X0).
-inversion H1.
-
-- (* ImpRrule *) left.
-eapply ImpR_prems_dn in X0. 2: apply inp1.  exact (solem _ _ X0).
-
-- (* Idrule *) left.
-inversion X0. subst. inversion inp1.
-
-- (* LJslrules *) left.
-eapply lrls_prems_dn in X0. 2: apply inp1.  apply (solem _ _ X0).
-
-- (* LJsrrules *) left.
-eapply rrls_prems_dn in X0. 2: apply inp1.  apply (solem _ _ X0).
-
-Qed.
+eapply Imp_p_rprem_dn in i. left.  apply (solem _ _ i).
+inversion H1. Qed.
 
 Lemma nu_so V prems c1 c2 (d1 : derrec (@LJArules V) prems c1)
   (d2 : derrec LJArules prems c2) (inu : in_nextup d2 d1) :
@@ -419,41 +474,22 @@ inversion inn1. inversion X. Qed.
  
 Lemma lja_so_tl V ph pt c (rls : @LJArules V (ph :: pt) c) p :
   InT p pt -> seq_ord p c.
-Proof. intro inp. inversion rls. inversion X.
-destruct ps0 ; inversion H2. clear H2 rls X. subst.
+Proof. intro inp. inversion rls. inversion X. clear X rls. subst.
+apply lja_so_imp in X0. destruct X0.
+
+- destruct ps0 ; inversion H2. subst. clear H2.
 apply InT_mapE in inp. cD.
-inversion inp0 ; subst ; clear inp0.
-inversion X0 ; subst ; clear X0.
-
-- (* LJAilrules *) 
-eapply ail_prems_dn in X. 2: apply (InT_cons _ inp1).  exact (solem _ _ X). 
-
-- (* ImpL_Imp_rule *) 
-eapply Imp_prems_dn in X. 2: apply (InT_cons _ inp1). 
-apply seq_ordI.  apply tc_mso_sw_meas_map.
-apply (clos_transT_mono (rsub_ms_ord_sw tc_dnsub_fw)).
-apply (tc_ms_ord_cons_fe _ _ X).
+specialize (s _ (InT_cons _ inp1)).
+rewrite - inp0.
+exact (seq_ord_fe Γ1 Γ2 s).
 
 - (* ImpLrule_p *) 
-inversion X ; subst.
-inversion inp1 ; subst ; clear inp1.
-inversion H0 ; subst ; clear H0.
-eapply Imp_p_rprem_dn in X. apply (solem _ _ X).
+inversion i. subst. inversion H2. subst.
+inversion inp ; subst ; clear inp H2.
+eapply Imp_p_rprem_dn in i. apply (solem _ _ i).
 inversion H0.
-
-- (* ImpRrule *) 
-eapply ImpR_prems_dn in X. 2: apply (InT_cons _ inp1).  exact (solem _ _ X).
-
-- (* Idrule *) inversion X.
-
-- (* LJslrules *) 
-eapply lrls_prems_dn in X. 2: apply (InT_cons _ inp1).  exact (solem _ _ X).
-
-- (* LJsrrules *) 
-eapply rrls_prems_dn in X.
-2: apply (InT_cons _ inp1).  exact (solem _ _ X).
 Qed.
-
+ 
 Lemma so_ant_nil V ps cr Γ0 Γ3 (rl : @LJAncrules V ps ([], cr)) :
   forall p, InT p ps -> seq_ord (apfst (fmlsext Γ0 Γ3) p) (Γ0 ++ Γ3, cr).
 Proof. inversion rl ; subst ; clear rl.
@@ -633,12 +669,25 @@ inversion H0.
 ++ (* subtrees *) subst d2. apply allPder_Cons ; assumption.
 
 + unfold fmlsext in H0.  simpl in H0.
-acacD'T2 ; subst ; repeat (list_eq_ncT ; sD ; subst) ; try FalseE. 
+acacD'T2.
 (* 4 subgoals - was 8 without simpl in H0. *)
+(* note the following weird procedure, must avoid subst of Γ0 = Γ1 ++ []
+because substitutes into d1 and l but won't allow rewriting in d1 and l
+see emails to coq-club@inria.fr 17/12/20 *)
 ++ (* rule is also for [Imp (Var p) B] *)
-want to use nrs_Imp_rpt here
+subst H0.  rewrite app_nil_r in H1. subst.
+eapply nrs_Imp_rpt ; try eassumption.
+
+++ admit.
+
+++ (* rule is also for [Imp (Var p) B] *)
+subst H0.  rewrite app_nil_r in H1. subst.
+eapply nrs_Imp_rpt ; try eassumption.
+
+++ subst.
+
+
 admit.
-++
 
 
 (* may need sth like this

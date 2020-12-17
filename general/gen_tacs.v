@@ -7,9 +7,6 @@ From Coq Require Import ssreflect.
 
 Require Import genT gen.
 Require Import List_lemmasT.
-(*
-Require Import swappedT.
-*)
 
 Definition rel (W : Type) : Type := prod W W.
 Definition trf (W : Type) : Type := W -> W.  

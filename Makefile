@@ -62,7 +62,7 @@ modal/k4.vo: modal/k4.v general/gstep.vo modal/gen_ext.vo general/List_lemmasT.v
 modal/gen_ext.vo: modal/gen_ext.v general/genT.vo general/gen_seq.vo
 general/gentree.vo: general/gentree.v general/gstep.vo
 general/gstep.vo: general/gstep.v general/dd_fc.vo general/rtcT.vo
-general/rtcT.vo: general/rtcT.v general/genT.vo
+general/rtcT.vo: general/rtcT.v general/swappedT.vo 
 general/gen.vo: general/gen.v
 general/gen_tacs.vo: general/gen_tacs.v general/List_lemmasT.vo
 general/existsT.vo: general/existsT.v
