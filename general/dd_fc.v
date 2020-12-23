@@ -139,20 +139,21 @@ intros. (* inversion X1 gives existT equalities *)
 dependent destruction X1. assumption.
 eapply IHps. eassumption. assumption. Qed.
 
-Lemma allPderD_in :
-  forall X rules prems Q ps (dpss : dersrec rules prems ps) p,
+Lemma allPderD_in X rules prems Q ps (dpss : dersrec rules prems ps) p :
     allPder Q dpss -> InT (p : X) ps ->
       {d : derrec rules prems p & in_dersrec d dpss & Q p d}.
 Proof. induction ps.
 intros. inversion X1.
-intros dpss p adp inp. dependent destruction adp.
+intros adp inp. dependent destruction adp.
 inversion inp ; subst.
 exists d.  apply in_dersrec_hd.  assumption.
-pose (IHps ds p adp X0). destruct s. (* cD doesn't work here - why?? *)
+pose (IHps ds adp X0). destruct s. (* cD doesn't work here - why?? *)
 exists x. apply in_dersrec_tl. assumption.  assumption. Qed.
-(*
-Check allPderD_in.
-*)
+
+Definition allPderD_in' X rules prems Q ps dpss apd p :=
+  @allPderD_in X rules prems Q ps dpss p apd.
+
+(* Check allPderD_in.  Check allPderD_in'.  *)
 
 (* a property holds throughout a proof tree *)
 
@@ -605,6 +606,24 @@ Proof. intros.  (* injection H gives existT equality *)
 Lemma fcI_inj' X rules prems concl (d1 : @derrec X rules prems concl) d2 :
   fcI d1 = fcI d2 -> d1 = d2.
 Proof. intros.  apply (JMeq_eq (fcI_JMinv H)).  Qed.
+
+Lemma fcI_inj_imp X rules prems c1 c2 P
+  (d1 : @derrec X rules prems c1) (d2 : @derrec X rules prems c2) :
+  fcI d1 = fcI d2 -> P c1 d1 -> P c2 d2. 
+Proof. intros feq p1.  dependent destruction feq. exact p1. Qed.
+
+Definition in_nextup_fcI_eq X rules prems c1 c2 cn 
+  (dn : derrec rules prems cn) := @fcI_inj_imp X rules prems c1 c2 
+    (fun c (d : derrec rules prems c) => in_nextup dn d).
+
+(* a commonly used complication *)
+Lemma in_nextup_in_drs_fcI_eq W rules prems ps (concl cn c : W) rpc
+  (drs : dersrec rules prems ps) (dtn : derrec rules prems cn)
+  (dt : derrec rules prems c) : in_nextup dtn dt ->
+  fcI dt = fcI (derI concl rpc drs) -> in_dersrec dtn drs.
+Proof. intros ind feq.
+eapply (in_nextup_fcI_eq feq) in ind.
+exact (in_nextup_in_drs ind). Qed.
 
 (* this doesn't work - type of Q 
 Goal forall X rules prems Q cs (ds : @dersrec X rules prems cs),

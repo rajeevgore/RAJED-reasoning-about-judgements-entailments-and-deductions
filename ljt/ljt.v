@@ -75,6 +75,25 @@ Lemma tc_dnsub_fw {V} : rsub (clos_transT (@dnsubfml V)) (measure dnfw).
 Proof. eapply rsub_trans.  apply (clos_transT_mono dnsub_fw).
 apply clos_transT_measure. Qed.
 
+Definition dnlw {V} fmls := fold_right Nat.add 0 (map (@dnfw V) fmls).
+
+(* dnsw : sequent weight - note that ImpL_Imp_rule can have premise with
+  larger sequent weight than conclusion *)
+Definition dnsw {V} seq :=
+  match seq with
+    | (X, A) => fold_right Nat.add (@dnfw V A) (map (@dnfw V) X)
+  end.
+
+Lemma dnlw_app {V} xs ys : @dnlw V (xs ++ ys) = (dnlw xs + dnlw ys)%nat.
+Proof. unfold dnlw.
+induction xs ; simpl.  reflexivity.
+rewrite IHxs. apply Nat.add_assoc. Qed.
+
+Lemma dnsw_alt {V} xs A : @dnsw V (xs, A) = (dnlw xs + dnfw A)%nat.
+Proof. unfold dnsw.  unfold dnlw.
+induction xs ; simpl.  reflexivity.
+rewrite IHxs. apply Nat.add_assoc. Qed.
+
 Lemma AccT_dnsubfml : forall V (A : PropF V), AccT dnsubfml A.
 Proof. intros *. eapply rsub_AccT. apply dnsub_fw. apply AccT_measure. Qed.
 

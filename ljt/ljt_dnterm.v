@@ -13,7 +13,7 @@ From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
 Require Import gen genT ddT dd_fc gen_seq swappedT rtcT List_lemmasT gen_tacs.
-Require Import ljt.
+Require Import ljt ljt_dncc.
 Require Import Coq.Program.Basics.
 Require Import Coq.Program.Equality.
 
@@ -50,23 +50,6 @@ Axiom wfT_ms_ord : forall U R, @well_foundedT U R -> well_foundedT (ms_ord R).
 Axiom wfT_ms_ord_tc :
   forall U R, @well_foundedT U R -> well_foundedT (ms_ord_tc R).
 *)
-
-Definition dnlw {V} fmls := fold_right Nat.add 0 (map (@dnfw V) fmls).
-
-Definition dnsw {V} seq :=
-  match seq with
-    | (X, A) => fold_right Nat.add (@dnfw V A) (map (@dnfw V) X)
-  end.
-
-Lemma dnlw_app {V} xs ys : @dnlw V (xs ++ ys) = (dnlw xs + dnlw ys)%nat.
-Proof. unfold dnlw.
-induction xs ; simpl.  reflexivity.
-rewrite IHxs. apply Nat.add_assoc. Qed.
-
-Lemma dnsw_alt {V} xs A : @dnsw V (xs, A) = (dnlw xs + dnfw A)%nat.
-Proof. unfold dnsw.  unfold dnlw.
-induction xs ; simpl.  reflexivity.
-rewrite IHxs. apply Nat.add_assoc. Qed.
 
 (* this ordering won't do for ImpL, need lemmas for individual rules *)
 Lemma ail_prems_dn V G ps cl cr pl pr :
@@ -263,6 +246,9 @@ Lemma seq_ord_eq_comp {V} p q c: seq_ord q p ->
 Proof. intros se so.  inversion se.  inversion so. subst.
 inversion H2. subst.
 apply seq_ordI. rewrite <- H1. exact X. Qed.
+
+Definition can_nsp V prems concl (d : derrec (@LJArules V) prems concl) :=
+  {d' : derrec LJArules prems concl & allDT (@no_rpt_same _ seq_ord _ _) d'}.
 
 Lemma ctso_soe V c2 c1 c0 : @seq_ord V c1 c0 + seq_ord_eq c1 c0 ->  
   clos_transT seq_ord c2 c1 -> clos_transT seq_ord c2 c0.
@@ -514,7 +500,16 @@ eapply (lja_seq_ord rps) in i0.  intro so1. sD.
 - eapply tT_trans ; apply tT_step ; eassumption.
 - apply tT_step. exact (seq_ord_comp_eq i0 so1). Qed.
 
-(* where bottom rule (alll premises) satisfy seq_ord,  
+(* where next rule (all premises) satisfy seq_ord,  
+  then whole tree satisfies no_rpt_same seq_ord *)
+Lemma nrso_ctso V ps c0 c1 c2 (ljpc : @LJArules V ps c0)
+  (in1 : InT c1 ps) : seq_ord c2 c1 -> clos_transT seq_ord c2 c0.
+Proof. intro so21.
+destruct (lja_seq_ord ljpc in1).
+- eapply tT_trans ; apply tT_step ; eassumption.
+- apply tT_step. exact (seq_ord_eq_comp so21 s). Qed.
+
+(* where bottom rule (all premises) satisfy seq_ord,  
   then whole tree satisfies no_rpt_same seq_ord *)
 Lemma brso_nrs V prems ps c (l : @LJArules V ps c)
   (ds : dersrec LJArules prems ps) 
@@ -581,43 +576,126 @@ unfold no_rpt_same. intros * inn inu.
 apply in_nextup_in_drs in inn.
 apply in_dersrecD in inn. sD.
 ++ (* left premise *) clear d0 apd0 d1.
-pose (fcI_inj_concl inn).  clearbody e. subst.
-apply fcI_inj in inn. subst.  
+apply (in_nextup_fcI_eq inn) in inu. clear inn.
 apply allDTD1 in apd.  unfold no_rpt_same in apd.  specialize (apd _ _ d d4).
 require apd.  eapply in_nextupI.  apply is_nextupI.  apply in_dersrec_hd.
 specialize (apd inu).
 eapply lja_seq_ord in ljpc. 2: apply InT_eq.
 exact (ctso_soe ljpc apd).
 ++ (* right premise *) clear l apd d d1 apd0.
-apply nu_so in inu.
-apply in_drs_concl_in in inn.  inversion inn. subst. clear inn.
-eapply lja_so_tl in ljpc. 2: apply InT_eq.
-destruct inu.
-eapply tT_trans ; apply tT_step ; eassumption.
-apply tT_step. eapply seq_ord_comp_eq ; eassumption.
-inversion H0.
+apply (bso_ctso inu).
+apply (lja_so_tl ljpc).
+exact (in_drs_concl_in inn).
 
 - (* subtrees *)
 apply allPder_Cons.  apply allDTD2 in apd.  apply allPder_dlConsD in apd.
 exact (fst apd). exact apd0.
 Qed.
 
+Lemma pqlem1 V Γ0 Γ1 Γ2 B C G p q :
+  seq_ord (Γ0 ++ Imp (@Var V p) B :: Γ1 ++ C :: Γ2, G)
+    (Γ0 ++ Imp (Var p) B :: Γ1 ++ Imp (Var q) C :: Γ2, G).
+Proof. epose (Imp_p_rprem_dn (ImpLrule_p_I _ _ _)).
+epose (solem (Γ0 ++ Imp (Var p) B :: Γ1) Γ2 m).
+clearbody s. revert s. simpl.
+unfold fmlsext. simpl. list_assoc_r'.
+intro. exact s. Qed.
+
+Lemma so_Var V ca G p : 
+  seq_ord (ca, @Var V p) (ca, G) + seq_ord_eq (ca, Var p) (ca, G).
+Proof. destruct G.
+right. apply seq_ord_eqI. simpl. reflexivity.
+all: left ; apply seq_ordI ; simpl ; apply tT_step ;
+apply mso_msw_sw ; apply (@ms_ordI _ _ [] (map dnfw ca) [_]) ;
+intros p0 inp ; inversion inp ; [ subst ; apply Nat.lt_0_succ | inversion H0 ].
+Qed.
+
+(* construction involving two successive uses of ImpLrule_p 
+  which may be on the same or different formula *)
+Lemma nrs_Imp_rpt_diff V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc dab
+  (ljpc : @LJArules V [(cpbqc, Var p); (cbqc, G)] (cpbqc, G))
+  (ljupp : LJArules [(cpbqc, Var q); (cpbc, Var p)] (cpbqc, Var p))
+  (ljupG : LJArules [(cpbqc, Var q); (cpbc, G)] (cpbqc, G))
+  (ljc : LJArules [(cpbc, Var p); (Γ0 ++ B :: Γ1 ++ C :: Γ2, G)] (cpbc, G))
+  (dsc : dersrec LJArules emptyT [(cbqc, G)])
+  (apd : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) dab)
+  (apdd : no_rpt_same seq_ord (prems:=emptyT) 
+    (derI (cpbqc, Var p) ljupp dab)) 
+  (cansm : forall seq (dsm : derrec LJArules emptyT seq),
+    seq_ord seq (cpbqc, G) -> can_nsp dsm) 
+  (cpbqc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ Imp (Var q) C :: Γ2 = cpbqc)
+  (cbqc_eq : Γ0 ++ B :: Γ1 ++ Imp (Var q) C :: Γ2 = cbqc)
+  (cpbc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ C :: Γ2 = cpbc) :
+  can_nsp (derI (cpbqc, G) ljpc (dlCons (derI _ ljupp dab) dsc)).
+Proof. pose (allPderD_in' apd).  pose (s _ (InT_eq _ _)).
+pose (s _ (InT_cons _ (InT_eq _ _))).
+destruct s0 as [da ida nda].  destruct s1 as [db idb ndb]. clear s.
+inversion dsc. rename X into dc. subst seq seqs. clear X0.
+unfold can_nsp. clear dsc apd idb.
+(* apply Prop 5.3 *)
+eapply ImpL_inv_adm_lja in dc.
+unfold l53prop in dc.
+specialize (dc (Var q) C eq_refl (Γ0 ++ B :: Γ1) Γ2 G).
+require dc. subst cbqc. list_eq_assoc.
+(* make derivation from db and dc *)
+pose (dlCons db (dlCons dc (dlNil _ _))) as dbc.
+pose (derI' (cpbc, G) dbc) as dd'.
+require dd'.  list_assoc_r. exact ljc.
+(* use inductive hyp (on seq_ord) on dd' *)
+specialize (cansm _ dd').
+require cansm. subst. apply pqlem1.
+unfold can_nsp in cansm.
+destruct cansm as [ddn addn].
+(* make derivation from da and ddn *)
+pose (dlCons da (dlCons ddn (dlNil _ _))) as dadn.
+pose (derI (cpbqc, G) ljupG dadn) as de'.
+exists de'. subst de'.  apply aderI.
+- 
+unfold no_rpt_same. intros * in1 in2.
+apply in_nextup_in_drs in in1. subst dadn.
+apply in_dersrecD in in1. destruct in1.
+-- 
+pose (in_nextup_fcI_eq e in2).  simpl in i.
+(* original tree (d) satisfies nrs *)
+unfold no_rpt_same in apdd.
+specialize (apdd _ _ da d2).
+require apdd.
+eapply in_nextupI. apply is_nextupI. exact ida.
+exact (ctso_soe (so_Var _ _ _) (apdd i)).
+-- 
+apply in_dersrecD in i. sD.
++ pose (in_nextup_fcI_eq i in2). simpl in i0.
+apply (bso_ctso i0). 
+exact (lja_so_tl ljupG (InT_eq _ _)).
++ inversion i.
+
+- subst dadn.  apply (allPder_Cons _ nda).
+apply (allPder_Cons _ addn).  apply allPder_Nil.
+Qed.
+
+Check nrs_Imp_rpt_diff.
+
+Lemma nrs_rule_indep W rules prems R (c : W) ps 
+  (ds : dersrec rules prems ps) l l0 :
+  no_rpt_same R (derI c l ds) -> no_rpt_same R (derI c l0 ds).
+Proof. unfold no_rpt_same.  intros nrs * in1 in2.
+eapply nrs.  apply in_nextup_in_drs in in1.
+eapply in_nextupI.  eapply is_nextupI.  exact in1.  exact in2. Qed.
+
 (*
-now after change to allDT, have changed at lja_dd_ord 
-now need to do following
 
 NEXT TO DO 
 
 
-
-
-Lemma lja_dd_ImpL_p V prems Γ1 Γ2 ps c
-  (ds : dersrec LJArules prems (map (apfst (fmlsext Γ1 Γ2)) ps))
-  (dsnrs : allPder (allDT (no_rpt_same seq_ord (prems:=prems))) ds)
+Lemma lja_dd_ImpL_p V Γ1 Γ2 ps c
+  (ds : dersrec LJArules emptyT (map (apfst (fmlsext Γ1 Γ2)) ps))
+  (dsnrs : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) ds)
   (ljpc : LJArules (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c))
+  (cansm : forall seq (dsm : derrec LJArules emptyT seq),
+        seq_ord seq (apfst (fmlsext Γ1 Γ2) c) -> can_nsp dsm)
   (i : @ImpLrule_p V ps c) :
-  {d : derrec LJArules prems (apfst (fmlsext Γ1 Γ2) c) &
-  allDT (no_rpt_same seq_ord (prems:=prems)) d}.
+  {d : derrec LJArules emptyT (apfst (fmlsext Γ1 Γ2) c) &
+  allDT (no_rpt_same seq_ord (prems:=emptyT)) d}.
 Proof. inversion i. subst.
 revert dsnrs. dependent inversion ds. subst.
 pose d. revert d1. dependent inversion d.
@@ -631,9 +709,8 @@ intros * inn innn.
 apply in_nextup_in_drs in inn. clear f.
 apply in_dersrecD in inn. sD.
 + (* looking at left premise, which is dpI *)
-pose (fcI_inj_concl inn).  clearbody e. subst. 
-apply fcI_inj in inn. subst. subst d1.
-inversion innn.  inversion X.
+pose (in_nextup_fcI_eq inn innn). simpl in i0.  subst d1.
+inversion i0.  inversion X.
 + (* looking at right premise, which is itself smaller *)
 clear d1 p0 f.  eapply (bso_ctso innn).
 apply in_drs_concl_in in inn.
@@ -655,17 +732,13 @@ exists (derI _ ljpc (dlCons d2 d0)). apply aderI.
 unfold no_rpt_same. intros * inu inn.
 apply in_nextup_in_drs in inu.
 apply in_dersrecD in inu. sD.
-++ (* left premise *)
-pose (fcI_inj_concl inu).  clearbody e. subst.
-apply fcI_inj in inu. subst.  subst d2.
-apply in_nextup_in_drs in inn.
-apply in_drs_concl_in in inn.
-apply InT_mapE in inn. cD. subst.
-eapply (so_ant_nil Γ0 Γ3 X0) in inn1.
-simpl in ljpc.  rewrite <- H0 in ljpc. simpl. rewrite <- H0.
-eapply lja_seq_ord in ljpc. 2: apply InT_eq. sD.
-eapply tT_trans ; apply tT_step ; eassumption.
-apply tT_step. eapply seq_ord_eq_comp ; eassumption.
+++ (* left premise *) subst d2.
+apply (in_nextup_in_drs_fcI_eq inn) in inu.
+apply in_drs_concl_in in inu.
+apply InT_mapE in inu. cD. subst.
+eapply (so_ant_nil Γ0 Γ3 X0) in inu1.
+apply (nrso_ctso ljpc (@InT_eq _ _ _)).
+simpl. rewrite <- H0. exact inu1.
 ++ (* right premise *) clear d2 X0 apd apd0 l H0 d1 X.
 eapply (bso_ctso inn).
 apply in_drs_concl_in in inu. 
@@ -682,7 +755,174 @@ see emails to coq-club@inria.fr 17/12/20 *)
 subst H0.  rewrite app_nil_r in H1. subst.
 eapply nrs_Imp_rpt ; try eassumption.
 
---- admit.
+--- subst.
+apply lja_so_imp in X0. sD.
++ (* next rule on left is not ImpLrule_p, same tree *)
+exists (derI _ ljpc (dlCons d2 d0)). apply aderI.
+++ 
+unfold no_rpt_same.  intros * in1 in2.
+apply in_nextup_in_drs in in1.
+apply in_dersrecD in in1. sD.
++++ (* left premise *) subst d2.
+(* can we generalize this - similar proof just above *)
+apply (in_nextup_in_drs_fcI_eq in2) in in1.
+apply in_drs_concl_in in in1.
+apply InT_mapE in in1. cD. subst.
+specialize (X0 _ in3).
+apply (nrso_ctso ljpc (@InT_eq _ _ _)).
+eapply seq_ord_fe in X0.
+apply (eq_rect _ _ X0).
+simpl. unfold fmlsext. list_eq_assoc.
++++ (* right premise *)
+apply (bso_ctso in2).
+apply (lja_so_tl ljpc).
+exact (in_drs_concl_in in1).
+
+++ apply allPder_Cons.  +++ subst d2. exact apd.  +++ exact apd0.
+
++ (* next rule on left is ImpLrule_p *)
+inversion X0. subst.
+
+(* note, tried a version of nrs_Imp_rpt_diff with separate ljupp and ljupp',
+  this doesn't help *)
+Check nrs_Imp_rpt_diff.
+pose (fun ljpc ljupp ljupG ljc => 
+  @nrs_Imp_rpt_diff V Γ1 H2 Γ3 B B0 G p p0 _ _ _ d1 ljpc ljupp ljupG
+  ljc d0 (allDTD2 apd)).
+
+remember (map (apfst (fmlsext Γ1 (H2 ++ Imp (Var p0) B0 :: Γ3)))
+       [([Imp (Var p) B], Var p); ([B], G)]) as ljpcpst.
+
+remember (apfst (fmlsext Γ1 (H2 ++ Imp (Var p0) B0 :: Γ3)) ([Imp (Var p) B], G)) as ljpcct.
+
+assert ([(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0],
+                  Var p); (fmlsext Γ1 (H2 ++ Imp (Var p0) B0 :: Γ3) [B], G)]
+		  = ljpcpst).
+subst. clear.  simpl. unfold fmlsext. simpl. list_eq_assoc.
+clear Heqljpcpst.  subst ljpcpst.
+
+assert ((fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], G) = ljpcct).
+subst. clear.  simpl. unfold fmlsext. simpl. list_eq_assoc.
+clear Heqljpcct.  subst ljpcct.
+
+specialize (c ljpc). (* now succeeds *)
+
+(* at this point it allows derI .. ljupp d1 (recognising that the two
+  expressions for ps are the same, but the remember tactic doesn't 
+  recognise this *)
+Check (derI _ l d1).
+(* especialize (c ?[ljupp]). especialize doesn't exist *)
+epose (c ?[ljupp]).
+Check (derI _ ?ljupp d1).
+Fail Check (?ljupp = l).
+Fail assert (?ljupp = l).
+Fail instantiate (ljupp := l). (* not well-typed in the environment of ?ljupp *)
+clear c0.
+
+assert ([(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p0);
+                  (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [B0], Var p)] =
+		  (map (apfst (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3))
+           [([Imp (Var p0) B0], Var p0); ([B0], Var p)])).
+clear.  simpl. unfold fmlsext. simpl. list_eq_assoc.
+Fail rewrite H in c. (* The 7th term has type ...
+  which should be coercible to "dersrec LJArules emptyT _pattern_value_".  *)
+clear H.
+
+Fail remember
+  [(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p0);
+  (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [B0], Var p)] as lpst'.
+  (* Error: Hypothesis c depends on the bodies of Heqlpst' lpst' *)
+
+remember (map (apfst (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3))
+   [([Imp (Var p0) B0], Var p0); ([B0], Var p)]) as lpst.
+remember (fmlsext Γ1 (H2 ++ Imp (Var p0) B0 :: Γ3) [Imp (Var p) B], Var p)
+  as lct.
+
+assert ([(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p0);
+  (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [B0], Var p)] = lpst).
+
+Fail subst.
+rewrite Heqlpst.
+clear.  simpl. unfold fmlsext. simpl. list_eq_assoc.
+
+assert ((fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p) =
+  lct).
+Fail subst. (* clear c.  subst. as before, or *) subst lct.
+clear.  simpl. unfold fmlsext. simpl. list_eq_assoc.
+clear Heqlpst.  Fail subst lpst.
+Check (derI lct l d1).
+Fail rewrite <- H in l. (* Cannot change l, it is used in hypothesis d2 *)
+(* do we need d2 ? *)
+clear d2.
+Fail rewrite <- H in l. (* Cannot change l, it is used in hypothesis apd *)
+pose l.
+rewrite <- H in l0.
+
+clear Heqlct.  subst lct.
+
+specialize (c l0). (* this succeeds *)
+
+(* oddity below is apparent here *)
+Check l0.
+Check d1.
+Check (derI _ l0 d1). (* fails *) (* but this is part of c !! *)
+
+(* two instances of ImpLrule_p with context *)
+require c. admit.
+require c. admit.
+
+  pose (allDTD1 apd).
+  Fail specialize (c n). (* because l is not l0 *)
+require c.  Fail apply nrs_rule_indep.
+eapply (nrs_rule_indep (l0 := ?[xxx])) in n.
+Show Existentials.
+Set Printing All.
+Unset Printing All.
+
+Fail instantiate (xxx := l0).
+(* Instance is not well-typed in the environment of ?xxx.  *)
+Check ?xxx.  Check l. Check l0. 
+(* pose ?xxx. *)
+pose l.
+Check l. Check l0. Check l1.
+
+(* oddity here *)
+Check (no_rpt_same seq_ord (derI _ l0 d1)). (* fails *)
+(* but this is the goal !! *)
+assert (no_rpt_same seq_ord (derI _ l0 d1)). (* fails *)
+match goal with | [ |- ?G ] => assert G end. (* this works! *)
+Undo.
+match goal with | [ |- ?NO_RPT_SAME ?SEQ_ORD (?DERi ?CC ?L0 ?D1) ] =>
+   assert (NO_RPT_SAME SEQ_ORD (DERi CC L0 D1)) end. (* this fails! *)
+match goal with | [ |- ?NO_RPT_SAME ?SEQ_ORD ?DERi ] =>
+   assert (NO_RPT_SAME SEQ_ORD DERi) end. (* this works! *)
+Undo.
+Check (@derI _ _ _ _ _ l0 d1). (* fails *)
+Check (@derI _ _ _ lpst _ l0 d1). (* fails *)
+Check (@derI _ _ _ [(fmlsext _ Γ3 [Imp (Var p0) B0], Var p0);
+      (fmlsext _ Γ3 [B0], Var p)] _ l0 d1). (* fails *)
+Check (@derI _ _ _ _ _ l d1). (* OK *)
+Check (@derI _ _ _ lpst _ l d1). (* OK *)
+
+Fail subst lpst.
+Fail rewrite <- H in l1. (* Cannot change l1, it is used in hypothesis H0. *)
+subst l1.
+Check (l0 = l1).
+Check (?xxx = l1).
+
+rewrite H in l1.
+Check (?xxx = l1). (* OK *)
+Fail instantiate (xxx := l1). (* why?? *)
+Check ?xxx.  Check l1.
+
+(*
+?xxx : LJArules lpst
+         (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p)
+l1 : LJArules lpst
+         (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p)
+*)
+
+Check nrs_Imp_rpt_diff.
 
 --- (* rule is also for [Imp (Var p) B] *)
 subst H0.  rewrite app_nil_r in H1. subst.
@@ -696,22 +936,14 @@ exists (derI _ ljpc (dlCons d2 d0)). apply aderI.
 unfold no_rpt_same. intros * inu inn.
 apply in_nextup_in_drs in inu.
 apply in_dersrecD in inu. sD.
-+++ 
-pose (fcI_inj_concl inu). clearbody e. subst.
-apply fcI_inj in inu. subst. subst d2.
-apply in_nextup_in_drs in inn.
-apply in_drs_concl_in in inn.
-apply InT_mapE in inn. cD. 
-apply s in inn1. subst.
-eapply seq_ord_fe in inn1.
-eapply lja_seq_ord in ljpc. 2: apply InT_eq. sD.
-++++ eapply tT_trans ; apply tT_step. apply inn1.
-simpl in ljpc. unfold fmlsext in ljpc.  simpl. unfold fmlsext.
-apply (arg1_cong_imp' _ _ ljpc).  simpl. list_eq_assoc.
-++++ apply tT_step. eapply seq_ord_eq_comp. apply inn1.
-simpl in ljpc. unfold fmlsext in ljpc.  simpl. unfold fmlsext.
-apply (arg1_cong_imp' _ _ ljpc).  simpl. list_eq_assoc.
-
++++ subst d2.
+apply (in_nextup_in_drs_fcI_eq inn) in inu.
+apply in_drs_concl_in in inu.
+apply InT_mapE in inu. cD. 
+apply s in inu1. subst.
+apply (nrso_ctso ljpc (@InT_eq _ _ _)).
+apply (eq_rect _ _ (seq_ord_fe _ _ inu1)).
+simpl. unfold fmlsext. list_eq_assoc.
 +++ eapply (bso_ctso inn).
 apply in_drs_concl_in in inu.
 exact (lja_so_tl ljpc inu).
