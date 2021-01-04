@@ -219,6 +219,26 @@ Definition no_rpt_same_fc U R rules prems (d0 : @derrec_fc U rules prems) :=
     in_nextup_fc d1 d0 -> in_nextup_fc d2 d1 -> 
     clos_transT R (derrec_fc_concl d2) (derrec_fc_concl d0).
 
+Definition no_rpt_same_nu U R rules prems (c0 : U) ps 
+  (dnu : dersrec rules prems ps) :=
+  forall c1 c2 (d1 : derrec rules prems c1) (d2 : derrec rules prems c2),
+    in_dersrec d1 dnu -> in_nextup d2 d1 -> clos_transT R c2 c0.
+  
+Print Implicit no_rpt_same_nu.
+
+Lemma nrs_imp_nu U R rules prems (c0 : U) 
+  ps (ds : dersrec rules prems ps) (l : rules ps c0) :
+  no_rpt_same R (derI c0 l ds) -> no_rpt_same_nu R c0 ds. 
+Proof. unfold no_rpt_same.  unfold no_rpt_same_nu. 
+intros nrs * ind. apply nrs. eapply in_nextupI.
+apply is_nextupI. exact ind. Qed.
+
+Lemma nrs_nu_imp U R rules prems (c0 : U) (d0 : derrec rules prems c0)
+  ps (ds : dersrec rules prems ps) (l : rules ps c0) :
+  no_rpt_same_nu R c0 ds -> no_rpt_same R (derI c0 l ds). 
+Proof. unfold no_rpt_same.  unfold no_rpt_same_nu.
+intros nrs * ind. apply nrs. exact (in_nextup_in_drs ind). Qed.
+
 (* original one, wrong, doesn't allow changing Var p for Var q 
 Inductive seq_ord {V} : relationT (srseq (PropF V)) :=
   | seq_ordI : forall pl pr cl cr, 
@@ -249,6 +269,20 @@ apply seq_ordI. rewrite <- H1. exact X. Qed.
 
 Definition can_nsp V prems concl (d : derrec (@LJArules V) prems concl) :=
   {d' : derrec LJArules prems concl & allDT (@no_rpt_same _ seq_ord _ _) d'}.
+
+Definition can_nspc V prems concl :=
+  {d : derrec (@LJArules V) prems concl & allDT (@no_rpt_same _ seq_ord _ _) d}.
+
+Lemma can_nsp_c' V prems concl (d : derrec (@LJArules V) prems concl) :
+  can_nspc prems concl -> can_nsp d.
+Proof. intro. destruct X. unfold can_nsp. exists x. exact a. Qed.
+  
+Lemma can_nsp_c V prems concl (d : derrec (@LJArules V) prems concl) :
+  can_nsp d -> can_nspc prems concl.
+Proof. intro. destruct X. unfold can_nspc. exists x. exact a. Qed.
+  
+Print Implicit can_nsp.
+Print Implicit can_nspc.
 
 Lemma ctso_soe V c2 c1 c0 : @seq_ord V c1 c0 + seq_ord_eq c1 c0 ->  
   clos_transT seq_ord c2 c1 -> clos_transT seq_ord c2 c0.
@@ -675,6 +709,46 @@ Qed.
 
 Check nrs_Imp_rpt_diff.
 
+Lemma nrs_Imp_rpt_diff' V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc dab
+  (ljpc : @LJArules V [(cpbqc, Var p); (cbqc, G)] (cpbqc, G))
+  (ljupp : LJArules [(cpbqc, Var q); (cpbc, Var p)] (cpbqc, Var p))
+  (ljupG : LJArules [(cpbqc, Var q); (cpbc, G)] (cpbqc, G))
+  (ljc : LJArules [(cpbc, Var p); (Γ0 ++ B :: Γ1 ++ C :: Γ2, G)] (cpbc, G))
+  (dsc : dersrec LJArules emptyT [(cbqc, G)])
+  (apd : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) dab)
+  (apdd : no_rpt_same seq_ord (prems:=emptyT) (derI (cpbqc, Var p) ljupp dab)) 
+  (cansm : forall seq (dsm : derrec LJArules emptyT seq),
+    seq_ord seq (cpbqc, G) -> can_nsp dsm) 
+  (cpbqc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ Imp (Var q) C :: Γ2 = cpbqc)
+  (cbqc_eq : Γ0 ++ B :: Γ1 ++ Imp (Var q) C :: Γ2 = cbqc)
+  (cpbc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ C :: Γ2 = cpbc) :
+  can_nspc emptyT (cpbqc, G).
+Proof. eapply can_nsp_c.
+eapply nrs_Imp_rpt_diff ; eassumption.
+Unshelve. assumption.  assumption. Qed.
+
+Lemma nrs_Imp_rpt_diff'' V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc 
+  (dab : dersrec LJArules emptyT [(cpbqc, Var q); (cpbc, Var p)])
+  (ljpc : @LJArules V [(cpbqc, Var p); (cbqc, G)] (cpbqc, G))
+  (ljupp : LJArules [(cpbqc, Var q); (cpbc, Var p)] (cpbqc, Var p))
+  (ljupG : LJArules [(cpbqc, Var q); (cpbc, G)] (cpbqc, G))
+  (ljc : LJArules [(cpbc, Var p); (Γ0 ++ B :: Γ1 ++ C :: Γ2, G)] (cpbc, G))
+  (dsc : dersrec LJArules emptyT [(cbqc, G)])
+  (dvp : derrec LJArules emptyT (cpbqc, Var p))
+  (apd : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) dab)
+  (apdd : no_rpt_same_nu seq_ord (prems:=emptyT) (cpbqc, Var p) dab) 
+  (cansm : forall seq (dsm : derrec LJArules emptyT seq),
+    seq_ord seq (cpbqc, G) -> can_nsp dsm) 
+  (cpbqc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ Imp (Var q) C :: Γ2 = cpbqc)
+  (cbqc_eq : Γ0 ++ B :: Γ1 ++ Imp (Var q) C :: Γ2 = cbqc)
+  (cpbc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ C :: Γ2 = cpbc) :
+  can_nspc emptyT (cpbqc, G).
+Proof.  eapply nrs_Imp_rpt_diff'. 5: eassumption.  all: try eassumption.
+apply nrs_nu_imp. exact dvp. exact apdd.
+Unshelve. assumption.  Qed.
+
+Print Implicit nrs_Imp_rpt_diff''.
+
 Lemma nrs_rule_indep W rules prems R (c : W) ps 
   (ds : dersrec rules prems ps) l l0 :
   no_rpt_same R (derI c l ds) -> no_rpt_same R (derI c l0 ds).
@@ -685,6 +759,30 @@ eapply in_nextupI.  eapply is_nextupI.  exact in1.  exact in2. Qed.
 (*
 
 NEXT TO DO 
+
+this approach doesn't help, as soon as we do derI_by_eq
+we get the requirement for ps and ps' to be the same.
+
+We need to define a derivation tree where the premises need not match,
+as in Isabelle.
+
+Inductive derrecJM X (rules : rlsT X) (prems : X -> Type) : X -> Type :=
+  derJMI : forall ps ps' concl, ps = ps' -> rules ps' concl ->
+    dersrec rules prems ps -> derrecJM rules prems concl.
+
+Lemma djm_d X (rules : rlsT X) (prems : X -> Type) concl :
+  derrecJM rules prems concl -> derrec rules prems concl.
+Proof. intro. destruct X0. subst. eapply derI ; eassumption. Qed.
+
+Print Implicit djm_d.
+Print Implicit derrecJM.
+Print Implicit derI.
+Print Implicit derJMI.
+
+Definition derI_by_eq X rules prems ps concl rpc ds := 
+  djm_d (@derJMI X rules prems ps ps concl eq_refl rpc ds).
+
+Print Implicit derI_by_eq.
 
 
 Lemma lja_dd_ImpL_p V Γ1 Γ2 ps c
@@ -783,38 +881,32 @@ exact (in_drs_concl_in in1).
 + (* next rule on left is ImpLrule_p *)
 inversion X0. subst.
 
+Print Implicit nrs_imp_nu.
+
 (* note, tried a version of nrs_Imp_rpt_diff with separate ljupp and ljupp',
   this doesn't help *)
-Check nrs_Imp_rpt_diff.
-pose (fun ljpc ljupp ljupG ljc => 
-  @nrs_Imp_rpt_diff V Γ1 H2 Γ3 B B0 G p p0 _ _ _ d1 ljpc ljupp ljupG
-  ljc d0 (allDTD2 apd)).
+Print Implicit nrs_Imp_rpt_diff''.
+(*
+pose (allDTD1 apd).
+pose (nrs_imp_nu n).
+*)
+pose (fun ljpc ljupp ljupG ljc db => 
+  @nrs_Imp_rpt_diff'' V Γ1 H2 Γ3 B B0 G p p0 _ _ _ d1 ljpc ljupp ljupG
+  ljc d0 db (allDTD2 apd)).
 
-remember (map (apfst (fmlsext Γ1 (H2 ++ Imp (Var p0) B0 :: Γ3)))
-       [([Imp (Var p) B], Var p); ([B], G)]) as ljpcpst.
+require c. revert ljpc. clear. 
+simpl. unfold fmlsext. simpl. list_assoc_r. tauto.
 
-remember (apfst (fmlsext Γ1 (H2 ++ Imp (Var p0) B0 :: Γ3)) ([Imp (Var p) B], G)) as ljpcct.
-
-assert ([(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0],
-                  Var p); (fmlsext Γ1 (H2 ++ Imp (Var p0) B0 :: Γ3) [B], G)]
-		  = ljpcpst).
-subst. clear.  simpl. unfold fmlsext. simpl. list_eq_assoc.
-clear Heqljpcpst.  subst ljpcpst.
-
-assert ((fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], G) = ljpcct).
-subst. clear.  simpl. unfold fmlsext. simpl. list_eq_assoc.
-clear Heqljpcct.  subst ljpcct.
-
-specialize (c ljpc). (* now succeeds *)
 
 (* at this point it allows derI .. ljupp d1 (recognising that the two
   expressions for ps are the same, but the remember tactic doesn't 
   recognise this *)
-Check (derI _ l d1).
+Check l.  Check d1.  Check (derI _ l d1).
 (* especialize (c ?[ljupp]). especialize doesn't exist *)
 epose (c ?[ljupp]).
-Check (derI _ ?ljupp d1).
-Fail Check (?ljupp = l).
+Check (?ljupp).  Check d1. (* types equal, not the same *)
+Check (derI _ ?ljupp d1). (* OK *)
+Fail Check (?ljupp = l). (* fails because of type of conclusion *)
 Fail assert (?ljupp = l).
 Fail instantiate (ljupp := l). (* not well-typed in the environment of ?ljupp *)
 clear c0.
@@ -833,10 +925,70 @@ Fail remember
   (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [B0], Var p)] as lpst'.
   (* Error: Hypothesis c depends on the bodies of Heqlpst' lpst' *)
 
+assert (1 = 2).
+
+require c. admit.
+require c. admit.
+require c. admit.
+require c. admit.
+require c. clear c ljpc X cansm.
+Set Printing All.
+{
+Show. (* copy part of conclusion *)
+Unset Printing All.
+(* Check (paste that part of conclusion)
+[(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p0);
+(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [B0], Var p)]
+*)
+Check d1.
+(* involves (map (apfst (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3))
+            [([Imp (Var p0) B0], Var p0); ([B0], Var p)]) *)
+
 remember (map (apfst (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3))
    [([Imp (Var p0) B0], Var p0); ([B0], Var p)]) as lpst.
+
+Set Printing All.
+Show. (* copy part of conclusion *)
+Unset Printing All.
+(* Check (paste that part of conclusion) - unchanged *)
+Check (d1 : dersrec LJArules emptyT lpst).
+Check Heqlpst.
+Fail rewrite Heqlpst. (* Error: The LHS of Heqlpst
+    lpst does not match any subterm of the goal *)
+clear apd d2.
+Fail rewrite Heqlpst in d1. (* d1 is used in hypothesis _the_hidden_goal_.  *)
+Fail subst lpst.
+
+Set Printing All.
+Show. (* copy conclusion *)
+(* Check (and paste) - error *)
+Unset Printing All.
+
+(* the above seems to show the problem, as does what follows *)
+admit.  }
+admit.
+clear H.
+
+remember (map (apfst (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3))
+   [([Imp (Var p0) B0], Var p0); ([B0], Var p)]) as lpst.
+
+(* remember as lpst above changes type of d1 without changing type 
+  of implicit arg of no_rpt_same_nu about half way down c,
+  before this, Check as below is OK, although type of d1 involves
+  (map (apfst (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3))
+            [([Imp (Var p0) B0], Var p0); ([B0], Var p)])
+  and type of hidden arg of no_rpt_same_nu is
+  [(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p0);
+  (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [B0], Var p)] *)
+
 remember (fmlsext Γ1 (H2 ++ Imp (Var p0) B0 :: Γ3) [Imp (Var p) B], Var p)
   as lct.
+
+Check (d1 : dersrec LJArules emptyT lpst).
+Set Printing All.
+Check c.
+(* Check (copy and paste @no_rpt_same_nu ... d1). FAILS *)
+Unset Printing All.
 
 assert ([(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p0);
   (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [B0], Var p)] = lpst).
@@ -860,19 +1012,61 @@ rewrite <- H in l0.
 
 clear Heqlct.  subst lct.
 
-specialize (c l0). (* this succeeds *)
+specialize (c l0).
 
 (* oddity below is apparent here *)
 Check l0.
 Check d1.
-Check (derI _ l0 d1). (* fails *) (* but this is part of c !! *)
+Check (derI _ l0 d1). (* fails *)
 
 (* two instances of ImpLrule_p with context *)
 require c. admit.
 require c. admit.
 
-  pose (allDTD1 apd).
-  Fail specialize (c n). (* because l is not l0 *)
+(* the new derrec condition *)
+specialize (c (derI _ l d1)).
+
+pose (nrs_imp_nu (allDTD1 apd)).
+clear ljpc cansm.
+Fail rewrite H.
+Fail rewrite <- H in n.
+Fail eapply nrs_imp_nu.
+
+Print Implicit no_rpt_same_nu.
+
+Set Printing All.
+Unset Printing All.
+require c.
+Fail exact n. 
+
+unfold no_rpt_same_nu.  unfold no_rpt_same_nu in n.
+intros * ind2 inn3.
+Fail specialize (n _ _ d2 d3 ind2 inn3).
+specialize (n _ _ d2 d3).
+Fail specialize (n ind2).
+require n. Fail exact ind2.
+{
+clear n l0 c X X0.
+Print Implicit in_dersrec.
+Check (d1 : dersrec LJArules emptyT lpst).
+Set Printing All.
+Unset Printing All.
+(* here we have hyp ind2 is as follows (Check of it fails)
+Check @in_dersrec (srseq (PropF V)) (@LJArules V)
+   (@emptyT (srseq (PropF V))) c1 d2
+   [(fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [Imp (Var p0) B0], Var p0);
+  (fmlsext (Γ1 ++ Imp (Var p) B :: H2) Γ3 [B0], Var p)] d1.
+(and Check of the full version printed using Set Printing All. also fails)
+conclusion is 
+@in_dersrec (srseq (PropF V)) (@LJArules V) (@emptyT (srseq (PropF V))) c1
+    d2 lpst d1
+
+admit.
+}
+
+(*
+pose (allDTD1 apd).
+Fail specialize (c n). (* because l is not l0 *)
 require c.  Fail apply nrs_rule_indep.
 eapply (nrs_rule_indep (l0 := ?[xxx])) in n.
 Show Existentials.
@@ -883,8 +1077,8 @@ Fail instantiate (xxx := l0).
 (* Instance is not well-typed in the environment of ?xxx.  *)
 Check ?xxx.  Check l. Check l0. 
 (* pose ?xxx. *)
-pose l.
-Check l. Check l0. Check l1.
+Check l. Check l0.
+*)
 
 (* oddity here *)
 Check (no_rpt_same seq_ord (derI _ l0 d1)). (* fails *)
@@ -905,15 +1099,32 @@ Check (@derI _ _ _ _ _ l d1). (* OK *)
 Check (@derI _ _ _ lpst _ l d1). (* OK *)
 
 Fail subst lpst.
-Fail rewrite <- H in l1. (* Cannot change l1, it is used in hypothesis H0. *)
-subst l1.
-Check (l0 = l1).
-Check (?xxx = l1).
+Check (?xxx = l0).
 
-rewrite H in l1.
-Check (?xxx = l1). (* OK *)
-Fail instantiate (xxx := l1). (* why?? *)
-Check ?xxx.  Check l1.
+Fail rewrite H in l0. (* l0 is used in hypothesis c.  *)
+pose l0.
+Fail rewrite H in l1. (* error message about l0 *)
+
+Check l. Check l0. Check l1. Check ?xxx.
+Check (?xxx = l). (* OK *)
+Fail instantiate (xxx := l0). 
+
+instantiate (xxx := l).
+Check l. Check l0. Check d1.
+
+clear c l1 apd cansm ljpc.
+unfold no_rpt_same.
+unfold no_rpt_same in n.
+intros *.
+specialize (n c1 c2 d2 d3).
+intro ind.
+eapply n.
+clear n.
+Fail apply in_nextup_in_drs in ind.
+Fail pose (in_nextup_in_drs ind).
+inversion ind.
+Fail inversion X1.
+Fail eapply is_nextup_derI in X1.
 
 (*
 ?xxx : LJArules lpst
@@ -1032,4 +1243,5 @@ Admitted.
 
 
 
+*)
 *)

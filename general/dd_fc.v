@@ -86,6 +86,11 @@ Inductive in_nextup X (rules : rlsT X) prems (concln concl : X)
       is_nextup ds d -> in_dersrec dn ds -> in_nextup dn d
   .
 
+Lemma is_nextup_derI W rules prems concl ps rpc ps' 
+  (ds : dersrec rules prems ps) (ds' : @dersrec W rules prems ps') :
+  is_nextup ds' (derI concl rpc ds) -> JMeq ds ds' * (ps = ps').
+Proof. intro. dependent destruction X. tauto. Qed.
+
 Lemma in_drs_concl_in W rules prems ps (cn : W) (drs : dersrec rules prems ps)
   (dtn : derrec rules prems cn) : in_dersrec dtn drs -> InT cn ps.
 Proof. intro ind. induction ind. apply InT_eq.
