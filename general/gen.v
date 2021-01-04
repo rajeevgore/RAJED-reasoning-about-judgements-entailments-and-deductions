@@ -79,6 +79,14 @@ Proof. intros. subst. assumption. Qed.
 Lemma arg1_cong_imp': forall U V f x y z, f (x : U) (z : V) -> x = y -> f y z.
 Proof. intros. subst. assumption. Qed.
 
+Lemma arg2_cong_imp U V W f x y z w : 
+  x = y -> f (x : U) (z : V) (w : W) -> f y z w.
+Proof. intros. subst. assumption. Qed.
+
+Lemma arg2_cong_imp' U V W f x y z w :
+  f (x : U) (z : V) (w : W) -> x = y -> f y z w.
+Proof. intros. subst. assumption. Qed.
+
 (* iffD1, iffD2 for Type *)
 Lemma iffD1: forall x y, (x = y) -> x -> y.
 Proof. intros.  subst.  assumption. Qed.
