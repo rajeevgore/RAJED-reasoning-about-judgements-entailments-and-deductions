@@ -13,6 +13,7 @@ From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
 Require Import gen genT ddT dd_fc gen_seq swappedT rtcT List_lemmasT gen_tacs.
+Require Import gstep.
 Require Import ljt ljt_dncc.
 Require Import Coq.Program.Basics.
 Require Import Coq.Program.Equality.
@@ -267,21 +268,16 @@ Proof. intros se so.  inversion se.  inversion so. subst.
 inversion H2. subst.
 apply seq_ordI. rewrite <- H1. exact X. Qed.
 
-Definition can_nsp V prems concl (d : derrec (@LJArules V) prems concl) :=
-  {d' : derrec LJArules prems concl & allDT (@no_rpt_same _ seq_ord _ _) d'}.
-
 Definition can_nspc V prems concl :=
   {d : derrec (@LJArules V) prems concl & allDT (@no_rpt_same _ seq_ord _ _) d}.
 
-Lemma can_nsp_c' V prems concl (d : derrec (@LJArules V) prems concl) :
-  can_nspc prems concl -> can_nsp d.
-Proof. intro. destruct X. unfold can_nsp. exists x. exact a. Qed.
-  
-Lemma can_nsp_c V prems concl (d : derrec (@LJArules V) prems concl) :
-  can_nsp d -> can_nspc prems concl.
-Proof. intro. destruct X. unfold can_nspc. exists x. exact a. Qed.
-  
-Print Implicit can_nsp.
+(* can_nsp_gs for gen_step *)
+Definition can_nsp_gs' V prems cp concl :=
+  seq_ord_eq cp concl -> @can_nspc V prems concl.
+
+Definition can_nsp_gs V prems cp :=
+  forall concl, seq_ord_eq concl cp -> @can_nspc V prems concl.
+
 Print Implicit can_nspc.
 
 Lemma ctso_soe V c2 c1 c0 : @seq_ord V c1 c0 + seq_ord_eq c1 c0 ->  
@@ -656,6 +652,8 @@ Qed.
 (* construction involving two successive uses of ImpLrule_p 
   which may be on the same or different formula *)
 
+Print Implicit can_nspc.
+
 Lemma nrs_Imp_rpt_diff V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc 
   (dab : dersrec LJArules emptyT [(cpbqc, Var q); (cpbc, Var p)])
   (ljpc : @LJArules V [(cpbqc, Var p); (cbqc, G)] (cpbqc, G))
@@ -666,8 +664,7 @@ Lemma nrs_Imp_rpt_diff V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc
   (dvp : derrec LJArules emptyT (cpbqc, Var p))
   (apd : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) dab)
   (apdd : no_rpt_same_nu seq_ord (prems:=emptyT) (cpbqc, Var p) dab) 
-  (cansm : forall seq (dsm : derrec LJArules emptyT seq),
-    seq_ord seq (cpbqc, G) -> can_nsp dsm) 
+  (cansm : forall seq, seq_ord seq (cpbqc, G) -> can_nspc emptyT seq) 
   (cpbqc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ Imp (Var q) C :: Γ2 = cpbqc)
   (cbqc_eq : Γ0 ++ B :: Γ1 ++ Imp (Var q) C :: Γ2 = cbqc)
   (cpbc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ C :: Γ2 = cpbc) :
@@ -687,9 +684,9 @@ pose (dlCons db (dlCons dc (dlNil _ _))) as dbc.
 pose (derI' (cpbc, G) dbc) as dd'.
 require dd'.  list_assoc_r. exact ljc.
 (* use inductive hyp (on seq_ord) on dd' *)
-specialize (cansm _ dd').
+specialize (cansm (cpbc, G)).
 require cansm. subst. apply pqlem1.
-unfold can_nsp in cansm.
+unfold can_nspc in cansm.
 destruct cansm as [ddn addn].
 (* make derivation from da and ddn *)
 pose (dlCons da (dlCons ddn (dlNil _ _))) as dadn.
@@ -727,8 +724,7 @@ Lemma nrs_Imp_rpt_diff' V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc
   (dvp : derrec LJArules emptyT (cpbqc, Var p))
   (apd : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) dab)
   (apdd : no_rpt_same_nu seq_ord (prems:=emptyT) (cpbqc, Var p) dab) 
-  (cansm : forall seq (dsm : derrec LJArules emptyT seq),
-    seq_ord seq (cpbqc, G) -> can_nsp dsm) 
+  (cansm : forall seq, seq_ord seq (cpbqc, G) -> can_nspc emptyT seq) 
   (cpbqc_eq : Γ0 ++ Imp (Var q) C :: Γ1 ++ Imp (Var p) B :: Γ2 = cpbqc)
   (cbqc_eq : Γ0 ++ Imp (Var q) C :: Γ1 ++ B :: Γ2 = cbqc)
   (cpbc_eq : Γ0 ++ C :: Γ1 ++ Imp (Var p) B :: Γ2 = cpbc) :
@@ -748,9 +744,9 @@ pose (dlCons db (dlCons dc (dlNil _ _))) as dbc.
 pose (derI' (cpbc, G) dbc) as dd'.
 require dd'.  list_assoc_r. exact ljc.
 (* use inductive hyp (on seq_ord) on dd' *)
-specialize (cansm _ dd').
+specialize (cansm (cpbc, G)).
 require cansm. subst.  apply pqlem1'.
-unfold can_nsp in cansm.
+unfold can_nspc in cansm.
 destruct cansm as [ddn addn].
 (* make derivation from da and ddn *)
 pose (dlCons da (dlCons ddn (dlNil _ _))) as dadn.
@@ -796,8 +792,8 @@ Lemma lja_dd_ImpL_p V Γ1 Γ2 ps c
   (ds : dersrec LJArules emptyT (map (apfst (fmlsext Γ1 Γ2)) ps))
   (dsnrs : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) ds)
   (ljpc : LJArules (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c))
-  (cansm : forall seq (dsm : derrec LJArules emptyT seq),
-        seq_ord seq (apfst (fmlsext Γ1 Γ2) c) -> can_nsp dsm)
+  (cansm : forall seq,
+    seq_ord seq (apfst (fmlsext Γ1 Γ2) c) -> can_nspc emptyT seq)
   (i : @ImpLrule_p V ps c) :
   {d : derrec LJArules emptyT (apfst (fmlsext Γ1 Γ2) c) &
   allDT (no_rpt_same seq_ord (prems:=emptyT)) d}.
@@ -915,7 +911,7 @@ tauto.
 
 require c. clear c.
 intros * so.
-apply (cansm seq dsm).
+apply (cansm seq).
 apply (eq_rect _ _ so).
 simpl. unfold fmlsext. simpl. list_eq_assoc.
 
@@ -981,7 +977,7 @@ tauto.
 
 require c. clear c.
 intros * so.
-apply (cansm seq dsm).
+apply (cansm seq).
 apply (eq_rect _ _ so).
 simpl. unfold fmlsext. simpl. list_eq_assoc.
 
@@ -997,10 +993,94 @@ Qed.
 
 Print Implicit lja_dd_ImpL_p.
 
+
+Lemma lja_dd_so V prems ps concl (ds : dersrec LJArules prems ps) 
+  (ljpc : @LJArules V ps concl)
+  (apd : allPder (allDT (no_rpt_same seq_ord (prems:=prems))) ds) :
+  can_nspc prems concl + fst_ext_rls ImpLrule_p ps concl.
+inversion ljpc. subst. destruct X. destruct l.
++ (* LJAilrules *) left. 
+exists (derI _ ljpc ds).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+apply solem.  exact (ail_prems_dn r inps1).  exact apd.
+    
++ (* ImpL_Imp_rule *) left.
+exists (derI _ ljpc ds).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+eapply Imp_prems_dn in i. 2: apply inps1.
+apply seq_ordI. apply tc_mso_sw_meas_map.
+apply (clos_transT_mono (rsub_ms_ord_sw tc_dnsub_fw)).
+apply (tc_ms_ord_cons_fe _ _ i).  exact apd.
+
++ (* Imprule_p *) right.  eapply fextI. apply rmI. exact i.
+
++ (* ImpRrule *) left.
+exists (derI _ ljpc ds).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+apply solem.  exact (ImpR_prems_dn i inps1).  exact apd.
+
++ (* Idrule *) left.
+exists (derI _ ljpc ds).  destruct c.  apply all_nrs.  
+inversion i. simpl. apply ForallT_nil. exact apd.
+
++ (* LJslrules *) left.
+exists (derI _ ljpc ds).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+apply solem.   exact (lrls_prems_dn r inps1).  exact apd.
+
++ (* LJsrrules *) left.
+exists (derI _ ljpc ds).  destruct c.  apply all_nrs.  apply ForallTI_forall.
+intros q inps.  apply InT_mapE in inps. cD. subst.
+apply solem.   exact (rrls_prems_dn r inps1).  exact apd.
+
+Qed.
+
+Print Implicit lja_dd_so.
+
 (*
+
+following just for reference
+Lemma gs_LJA_ImpL_Ail V (D : PropF V) ps c Γ1 Γ2 G
+  (r : rlsmap (flip pair G) LJAilrules ps c) :
+  gen_step l41prop D isubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+
+Lemma gs_sctr_lj_And V A B ps c : gen_step
+    (can_rel LJrules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml')))
+    (@And V A B) isubfml (derrec LJrules emptyT) ps c.
+
+Print Implicit can_nsp_gs.
+Print can_nsp_gs.
+
+Lemma lja_dd_gs V : forall ps c, @LJArules V ps c ->  
+  gen_step (can_nsp_gs' emptyT) c seq_ord (derrec LJArules emptyT) ps c.
+Proof. intros * ljpc.
+unfold gen_step. intros soa fps dc scc.
+assert (ForallT (can_nspc emptyT) ps).
+{ pose (lja_seq_ord ljpc). clearbody s. clear ljpc.
+induction ps. apply ForallT_nil.  apply ForallT_cons.
+- clear IHps. specialize (s a (InT_eq a ps)). sD.
++ apply (soa _ s). (* needs to be derivable - hyp missing here *)
+admit.
++ apply seq_ord_eqI. reflexivity.
++ inversion fps. subst. apply (snd X).
+admit. (* need seq_ord_eq_sym *)
+
+- inversion fps. subst.
+exact (IHps X0 (fun p inp => s p (InT_cons a inp))).
+- exact X. }
+
+unfold can_nspc.
+
+eapply lja_dd_so in ljpc. 
+need to have constructed ds satisfying sg 2 here, ie
+ allPder (allDT (no_rpt_same seq_ord (prems:=?prems))) ?ds
+and ?ds needs to be a proof of ps, see lja_dd_so.
+
+
 Lemma lja_dd_ord V prems : forall concl, 
-  derrec (@LJArules V) prems concl -> {d : derrec LJArules prems concl &
-  allDT (@no_rpt_same _ seq_ord _ _) d}.
+  derrec (@LJArules V) prems concl -> can_nspc prems concl.
+
 Proof. eapply derrec_all_rect.
 - intros concl pc.  exists (dpI _ _ _ pc).  apply adpI.  apply no_rpt_same_dpI.
 - intros * ljpc ds fps.
@@ -1009,45 +1089,12 @@ assert {dsr : (dersrec LJArules prems ps) &
 { clear ljpc ds.
 induction ps.  eexists. apply allPder_Nil.
 inversion fps. subst.  apply IHps in X0. cD.
+unfold can_nspc in X. cD.
 exists (dlCons X X0).  apply allPder_Cons ; assumption. }
 cD. clear ds fps. 
-inversion ljpc. subst. destruct X1. destruct l.
-+ (* LJAilrules *)
-exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
-intros q inps.  apply InT_mapE in inps. cD. subst.
-apply solem.  exact (ail_prems_dn r inps1).  exact X0.
-    
-+ (* ImpL_Imp_rule *)
-exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
-intros q inps.  apply InT_mapE in inps. cD. subst.
-eapply Imp_prems_dn in i. 2: apply inps1.
-apply seq_ordI. apply tc_mso_sw_meas_map.
-apply (clos_transT_mono (rsub_ms_ord_sw tc_dnsub_fw)).
-apply (tc_ms_ord_cons_fe _ _ i).  exact X0.
 
-+ (* Imprule_p *)
-admit.
 
-+ (* ImpRrule *)
-exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
-intros q inps.  apply InT_mapE in inps. cD. subst.
-apply solem.  exact (ImpR_prems_dn i inps1).  exact X0.
 
-+ (* Idrule *)
-exists (derI _ ljpc X).  destruct c.  apply all_nrs.  
-inversion i. simpl. apply ForallT_nil. exact X0.
-
-+ (* LJslrules *)
-exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
-intros q inps.  apply InT_mapE in inps. cD. subst.
-apply solem.   exact (lrls_prems_dn r inps1).  exact X0.
-
-+ (* LJsrrules *)
-exists (derI _ ljpc X).  destruct c.  apply all_nrs.  apply ForallTI_forall.
-intros q inps.  apply InT_mapE in inps. cD. subst.
-apply solem.   exact (rrls_prems_dn r inps1).  exact X0.
-
-Admitted.
 
 
 
