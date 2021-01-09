@@ -97,6 +97,26 @@ Proof. intros rsa acs. induction acs.
 apply AccT_intro. intros y ryx.
 exact (X _ (rsa _ _ ryx)). Qed.
 
+Definition inv_image U V W f R (a b : U) := R (f a : V) (f b) : W.
+
+Lemma AccT_inv_image' U V f R (fx : V) : 
+  AccT R (fx : V) -> forall x : U, fx = f x ->  AccT (inv_image f R) x.
+Proof. intro afx.  induction afx.
+intros x0 xeq. apply AccT_intro. intros y ii.
+subst. exact (X _ ii _ eq_refl). Qed.
+
+Definition AccT_inv_image U V f R x afx :=
+  @AccT_inv_image' U V f R (f x) afx x eq_refl.
+
+Print Implicit AccT_inv_image.
+
+Lemma wfT_inv_image U V (f : U -> V) R : 
+  well_foundedT R -> well_foundedT (inv_image f R).
+Proof. intros wfr x.  exact (AccT_inv_image _ _ (wfr (f x))). Qed.
+
+Lemma wfT_rsub U R R' : @well_foundedT U R -> rsub R' R -> well_foundedT R'.
+Proof. intros wfr rs x.  exact (rsub_AccT rs (wfr x)). Qed.
+
 Inductive ForallT (A : Type) (P : A -> Type) : list A -> Type :=
     ForallT_nil : ForallT P []
   | ForallT_cons : forall (x : A) (l : list A),

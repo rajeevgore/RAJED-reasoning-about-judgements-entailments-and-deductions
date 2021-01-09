@@ -47,6 +47,16 @@ Definition ms_ord_tc {U} (R : relationT U) G H :=
 *)
 
 Axiom wfT_ms_ord : forall U R, @well_foundedT U R -> well_foundedT (ms_ord R).
+Axiom wfT_ms_ord_sw : 
+  forall U R, @well_foundedT U R -> well_foundedT (ms_ord_sw R).
+
+Lemma wfT_lt : well_foundedT lt.
+Proof. intro. induction (Wf_nat.well_founded_ltof nat id a).
+apply AccT_intro.  intros y yx.  apply (H0 y).
+unfold Wf_nat.ltof. unfold id. exact yx. Qed.
+
+Lemma wfT_ctmso : well_foundedT (clos_transT (ms_ord_sw lt)).
+Proof. intro x. exact (AccT_tc (wfT_ms_ord_sw wfT_lt x)). Qed.
 
 (*
 Axiom wfT_ms_ord_tc :
@@ -252,7 +262,12 @@ Inductive seq_ord {V} : relationT (srseq (PropF V)) :=
     clos_transT (ms_ord_sw lt) (map dnfw (pr :: pl)) (map dnfw (cr :: cl)) ->
     seq_ord (pl, pr) (cl, cr).
 
-Axiom AccT_seq_ord : forall V c, AccT (@seq_ord V) c.
+Lemma wfT_seq_ord V : well_foundedT (@seq_ord V).
+pose (wfT_inv_image (fun x => map (@dnfw V) (snd x :: fst x)) wfT_ctmso).
+apply (wfT_rsub w). clear w.  unfold inv_image.  intros u v suv.
+destruct suv. exact c. Qed.
+
+Definition AccT_seq_ord V x := @wfT_seq_ord V x.
 
 Inductive seq_ord_eq {V} : relationT (srseq (PropF V)) :=
   | seq_ord_eqI : forall pl pr cl cr, 
@@ -1120,4 +1135,4 @@ Theorem can_nsp V c : derrec (@LJArules V) emptyT c ->
 Proof. intro d.  exact (can_nspg d (seq_ord_eq_refl _)). Qed.
 
 Print Implicit can_nsp.
-
+Print Assumptions can_nsp.
