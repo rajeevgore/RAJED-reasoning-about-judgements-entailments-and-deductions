@@ -47,6 +47,7 @@ Definition ms_ord_tc {U} (R : relationT U) G H :=
 *)
 
 Axiom wfT_ms_ord : forall U R, @well_foundedT U R -> well_foundedT (ms_ord R).
+
 (*
 Axiom wfT_ms_ord_tc :
   forall U R, @well_foundedT U R -> well_foundedT (ms_ord_tc R).
@@ -251,6 +252,8 @@ Inductive seq_ord {V} : relationT (srseq (PropF V)) :=
     clos_transT (ms_ord_sw lt) (map dnfw (pr :: pl)) (map dnfw (cr :: cl)) ->
     seq_ord (pl, pr) (cl, cr).
 
+Axiom AccT_seq_ord : forall V c, AccT (@seq_ord V) c.
+
 Inductive seq_ord_eq {V} : relationT (srseq (PropF V)) :=
   | seq_ord_eqI : forall pl pr cl cr, 
     map dnfw (pr :: pl) = map dnfw (cr :: cl) ->
@@ -263,6 +266,12 @@ Lemma seq_ord_eq_sym {V} p q : @seq_ord_eq V p q -> seq_ord_eq q p.
 Proof. destruct p. destruct q. 
 intro soe. inversion soe. subst.
 apply seq_ord_eqI. exact (eq_sym H0). Qed.
+
+Lemma seq_ord_eq_trans {V} p q r :
+  @seq_ord_eq V p q -> seq_ord_eq q r -> seq_ord_eq p r.
+Proof. destruct p. destruct q. destruct r.
+intros sopq soqr. inversion sopq. inversion soqr. subst.
+apply seq_ord_eqI.  exact (eq_trans H0 H5). Qed.
 
 Lemma seq_ord_comp_eq {V} p q c : seq_ord_eq q p ->
   @seq_ord V p c -> seq_ord q c. 
@@ -1082,30 +1091,33 @@ exact (soa _ sosc _ dq (seq_ord_eq_refl _)).
 exact X3.
 Qed.
 
-(*
+Lemma soe_cgs V prems c c' p (socc : @seq_ord_eq V c c') :
+  can_nsp_gs' prems c p -> can_nsp_gs' prems c' p.
+Proof. unfold can_nsp_gs'.  intros sc socp.
+exact (sc (seq_ord_eq_trans socc socp)). Qed.
 
+Lemma lja_dd_gs' V : forall c' ps c, @LJArules V ps c ->  
+  gen_step (can_nsp_gs' emptyT) c' seq_ord (derrec LJArules emptyT) ps c.
+Proof. intros * ljpc.  pose (lja_dd_gs ljpc).
+unfold gen_step.  unfold gen_step in g.
+intros so fps dc scc.  unfold can_nspc.
+require g.  intros A' soac.
+exact (so _ (seq_ord_eq_comp soac (seq_ord_eq_sym scc))).
+require g.  clear g so ljpc. induction ps.  apply ForallT_nil.
+{ apply ForallT_cons.
+inversion fps. subst. cD. clear IHps fps X0.
+apply (pair X).
+apply (soe_cgs scc X1).
+inversion fps. exact (IHps X0). }
+exact (g dc (seq_ord_eq_refl _)). Qed.
 
-Lemma lja_dd_ord V prems : forall concl, 
-  derrec (@LJArules V) prems concl -> can_nspc prems concl.
+Lemma can_nspg V cp : 
+  forall seq, derrec LJArules emptyT seq -> @can_nsp_gs' V emptyT cp seq.
+Proof. eapply gen_step_lemT. apply AccT_seq_ord. apply lja_dd_gs'. Qed.
 
-Proof. eapply derrec_all_rect.
-- intros concl pc.  exists (dpI _ _ _ pc).  apply adpI.  apply no_rpt_same_dpI.
-- intros * ljpc ds fps.
-assert {dsr : (dersrec LJArules prems ps) & 
-  allPder (allDT (@no_rpt_same _ seq_ord LJArules prems)) dsr}.
-{ clear ljpc ds.
-induction ps.  eexists. apply allPder_Nil.
-inversion fps. subst.  apply IHps in X0. cD.
-unfold can_nspc in X. cD.
-exists (dlCons X X0).  apply allPder_Cons ; assumption. }
-cD. clear ds fps. 
+Theorem can_nsp V c : derrec (@LJArules V) emptyT c ->
+  {d : derrec LJArules emptyT c & allDT (@no_rpt_same _ seq_ord _ emptyT) d}.
+Proof. intro d.  exact (can_nspg d (seq_ord_eq_refl _)). Qed.
 
+Print Implicit can_nsp.
 
-
-
-
-
-
-
-
-*)
