@@ -256,6 +256,14 @@ Inductive seq_ord_eq {V} : relationT (srseq (PropF V)) :=
     map dnfw (pr :: pl) = map dnfw (cr :: cl) ->
     seq_ord_eq (pl, pr) (cl, cr).
 
+Lemma seq_ord_eq_refl {V} p : @seq_ord_eq V p p.
+Proof. destruct p.  apply seq_ord_eqI. reflexivity. Qed.
+
+Lemma seq_ord_eq_sym {V} p q : @seq_ord_eq V p q -> seq_ord_eq q p.
+Proof. destruct p. destruct q. 
+intro soe. inversion soe. subst.
+apply seq_ord_eqI. exact (eq_sym H0). Qed.
+
 Lemma seq_ord_comp_eq {V} p q c : seq_ord_eq q p ->
   @seq_ord V p c -> seq_ord q c. 
 Proof. intros se so.  inversion se.  inversion so. subst.
@@ -654,6 +662,7 @@ Qed.
 
 Print Implicit can_nspc.
 
+(* wrong - in cansm, require seq to be derivable *)
 Lemma nrs_Imp_rpt_diff V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc 
   (dab : dersrec LJArules emptyT [(cpbqc, Var q); (cpbc, Var p)])
   (ljpc : @LJArules V [(cpbqc, Var p); (cbqc, G)] (cpbqc, G))
@@ -664,7 +673,8 @@ Lemma nrs_Imp_rpt_diff V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc
   (dvp : derrec LJArules emptyT (cpbqc, Var p))
   (apd : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) dab)
   (apdd : no_rpt_same_nu seq_ord (prems:=emptyT) (cpbqc, Var p) dab) 
-  (cansm : forall seq, seq_ord seq (cpbqc, G) -> can_nspc emptyT seq) 
+  (cansm : forall seq (d : derrec LJArules emptyT seq),
+    seq_ord seq (cpbqc, G) -> can_nspc emptyT seq) 
   (cpbqc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ Imp (Var q) C :: Γ2 = cpbqc)
   (cbqc_eq : Γ0 ++ B :: Γ1 ++ Imp (Var q) C :: Γ2 = cbqc)
   (cpbc_eq : Γ0 ++ Imp (Var p) B :: Γ1 ++ C :: Γ2 = cpbc) :
@@ -684,7 +694,7 @@ pose (dlCons db (dlCons dc (dlNil _ _))) as dbc.
 pose (derI' (cpbc, G) dbc) as dd'.
 require dd'.  list_assoc_r. exact ljc.
 (* use inductive hyp (on seq_ord) on dd' *)
-specialize (cansm (cpbc, G)).
+specialize (cansm (cpbc, G) dd').
 require cansm. subst. apply pqlem1.
 unfold can_nspc in cansm.
 destruct cansm as [ddn addn].
@@ -724,7 +734,8 @@ Lemma nrs_Imp_rpt_diff' V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc
   (dvp : derrec LJArules emptyT (cpbqc, Var p))
   (apd : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) dab)
   (apdd : no_rpt_same_nu seq_ord (prems:=emptyT) (cpbqc, Var p) dab) 
-  (cansm : forall seq, seq_ord seq (cpbqc, G) -> can_nspc emptyT seq) 
+  (cansm : forall seq (d : derrec LJArules emptyT seq),
+    seq_ord seq (cpbqc, G) -> can_nspc emptyT seq) 
   (cpbqc_eq : Γ0 ++ Imp (Var q) C :: Γ1 ++ Imp (Var p) B :: Γ2 = cpbqc)
   (cbqc_eq : Γ0 ++ Imp (Var q) C :: Γ1 ++ B :: Γ2 = cbqc)
   (cpbc_eq : Γ0 ++ C :: Γ1 ++ Imp (Var p) B :: Γ2 = cpbc) :
@@ -744,7 +755,7 @@ pose (dlCons db (dlCons dc (dlNil _ _))) as dbc.
 pose (derI' (cpbc, G) dbc) as dd'.
 require dd'.  list_assoc_r. exact ljc.
 (* use inductive hyp (on seq_ord) on dd' *)
-specialize (cansm (cpbc, G)).
+specialize (cansm (cpbc, G) dd').
 require cansm. subst.  apply pqlem1'.
 unfold can_nspc in cansm.
 destruct cansm as [ddn addn].
@@ -792,7 +803,7 @@ Lemma lja_dd_ImpL_p V Γ1 Γ2 ps c
   (ds : dersrec LJArules emptyT (map (apfst (fmlsext Γ1 Γ2)) ps))
   (dsnrs : allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) ds)
   (ljpc : LJArules (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c))
-  (cansm : forall seq,
+  (cansm : forall seq (d : derrec LJArules emptyT seq),
     seq_ord seq (apfst (fmlsext Γ1 Γ2) c) -> can_nspc emptyT seq)
   (i : @ImpLrule_p V ps c) :
   {d : derrec LJArules emptyT (apfst (fmlsext Γ1 Γ2) c) &
@@ -910,8 +921,8 @@ list_assoc_r. (* no effect *) list_assoc_l. (* works *)
 tauto. 
 
 require c. clear c.
-intros * so.
-apply (cansm seq).
+intros * dq so.
+apply (cansm seq dq).
 apply (eq_rect _ _ so).
 simpl. unfold fmlsext. simpl. list_eq_assoc.
 
@@ -976,8 +987,8 @@ list_assoc_l. (* no effect *) list_assoc_r. (* works *)
 tauto. 
 
 require c. clear c.
-intros * so.
-apply (cansm seq).
+intros * dq so.
+apply (cansm seq dq).
 apply (eq_rect _ _ so).
 simpl. unfold fmlsext. simpl. list_eq_assoc.
 
@@ -1037,20 +1048,8 @@ Qed.
 
 Print Implicit lja_dd_so.
 
-(*
-
-following just for reference
-Lemma gs_LJA_ImpL_Ail V (D : PropF V) ps c Γ1 Γ2 G
-  (r : rlsmap (flip pair G) LJAilrules ps c) :
-  gen_step l41prop D isubfml (derrec LJArules emptyT)
-    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
-
-Lemma gs_sctr_lj_And V A B ps c : gen_step
-    (can_rel LJrules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml')))
-    (@And V A B) isubfml (derrec LJrules emptyT) ps c.
-
 Print Implicit can_nsp_gs.
-Print can_nsp_gs.
+Print Implicit lja_dd_ImpL_p.
 
 Lemma lja_dd_gs V : forall ps c, @LJArules V ps c ->  
   gen_step (can_nsp_gs' emptyT) c seq_ord (derrec LJArules emptyT) ps c.
@@ -1060,22 +1059,30 @@ assert (ForallT (can_nspc emptyT) ps).
 { pose (lja_seq_ord ljpc). clearbody s. clear ljpc.
 induction ps. apply ForallT_nil.  apply ForallT_cons.
 - clear IHps. specialize (s a (InT_eq a ps)). sD.
-+ apply (soa _ s). (* needs to be derivable - hyp missing here *)
-admit.
-+ apply seq_ord_eqI. reflexivity.
++ inversion fps. subst.  apply (soa _ s _ (fst X)). 
+apply seq_ord_eq_refl.
 + inversion fps. subst. apply (snd X).
-admit. (* need seq_ord_eq_sym *)
-
+exact (seq_ord_eq_sym s).
 - inversion fps. subst.
-exact (IHps X0 (fun p inp => s p (InT_cons a inp))).
-- exact X. }
+exact (IHps X0 (fun p inp => s p (InT_cons a inp))).  }
+assert {ds : dersrec LJArules emptyT ps &
+  allPder (allDT (no_rpt_same seq_ord (prems:=emptyT))) ds}. 
+{ revert X. clear.
+(* make this a separate lemma *)
+intro. induction ps.
+exists (dlNil _ _). apply allPder_Nil.
+inversion X. subst. destruct (IHps X1). destruct X0.
+exists (dlCons x0 x).  exact (allPder_Cons _ a1 a0). }
+cD.  pose (lja_dd_so ljpc X1).  destruct s. exact c1.
+inversion f. inversion X2. subst.
+eapply (lja_dd_ImpL_p _ _ X1).
+rewrite H3. exact ljpc.
+rewrite H3. intros seq dq sosc.
+exact (soa _ sosc _ dq (seq_ord_eq_refl _)).
+exact X3.
+Qed.
 
-unfold can_nspc.
-
-eapply lja_dd_so in ljpc. 
-need to have constructed ds satisfying sg 2 here, ie
- allPder (allDT (no_rpt_same seq_ord (prems:=?prems))) ?ds
-and ?ds needs to be a proof of ps, see lja_dd_so.
+(*
 
 
 Lemma lja_dd_ord V prems : forall concl, 
