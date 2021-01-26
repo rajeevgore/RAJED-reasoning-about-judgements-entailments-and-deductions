@@ -8,6 +8,7 @@ ljt/ljt_dn.vo \
 ljt/ljt_dncc.vo \
 ljt/ljt_dnca.vo \
 ljt/ljt_dnterm.vo 
+ljt/ljt_fp.vo \
 ll: \
 ll/ll_camq.vo \
 ll/ll_cam.vo \
@@ -39,6 +40,7 @@ general/swappedT.vo \
 general/gen_seq.vo 
 
 ljt/ljt.vo: ljt/ljt.v general/swappedT.vo general/gstep.vo general/gen_seq.vo 
+ljt/ljt_fp.vo: ljt/ljt_fp.v ljt/ljt.vo
 ljt/ljt_inv.vo: ljt/ljt_inv.v ljt/ljt.vo
 ljt/ljt_ctr.vo: ljt/ljt_ctr.v ljt/ljt_inv.vo 
 ljt/ljt_ca.vo: ljt/ljt_ca.v ljt/ljt_ctr.vo

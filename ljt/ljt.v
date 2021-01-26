@@ -10,7 +10,6 @@ Set Implicit Arguments.
 From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
-Add LoadPath "../modal".
 Require Import gen genT ddT rtcT.
 Require Import gstep.
 Require Import List_lemmasT gen_tacs swappedT.
