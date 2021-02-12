@@ -205,6 +205,13 @@ with dersrec_size X rules prems concls
     | dlCons d ds => (derrec_size d) + (dersrec_size ds)
   end.
 
+(* why not use this instead of derrec_concl below ? *)
+Definition derrec_concl' X rules prems concl 
+  (der : @derrec X rules prems concl) := concl.
+
+Definition dersrec_concls' X rules prems concls 
+  (ders : @dersrec X rules prems concls) := concls.
+
 Fixpoint derrec_concl X rules prems concl 
   (der : @derrec X rules prems concl) :=
   match der with 

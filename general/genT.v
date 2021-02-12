@@ -81,6 +81,13 @@ Inductive AccT (A : Type) (R : A -> A -> Type) (x : A) : Type :=
 Definition well_foundedT (A : Type) (R : A -> A -> Type) :=
   forall a : A, AccT R a.
 
+Lemma well_foundedT_induction (A : Type) (R : A -> A -> Type) P (a : A) :
+  AccT R a -> (forall b, (forall c, R c b -> P c) -> P b) -> P a.
+Proof. intros ar ph. induction ar.  exact (ph x X).  Qed.
+
+Definition well_foundedT_induction' A R P her a ara :=
+  @well_foundedT_induction A R P a ara her.
+
 Definition measure {U} f (dtn dt : U) := f dtn < f dt.
 
 Lemma AccT_measure' U f n : forall dt : U, f dt < n -> AccT (measure f) dt.
