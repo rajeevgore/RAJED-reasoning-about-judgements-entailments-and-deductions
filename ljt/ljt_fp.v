@@ -316,6 +316,29 @@ Definition use_wf_ldo V B C DAg DACg Hb :=
   @well_foundedT_induction _ _ (cancut_gc C DAg) DACg
   (@AccT_lift_der_ord V B Hb DACg).
 
+(* problems doing proof of cut by induction on the derivation 
+  cancut : conc A -> (hyp A -> conc C) -> Type 
+  OK for left drivation, we have an ordering der_ord, on conc_gc
+  (where conc_gc is conc without specifying the type of conclusion)
+  but right derivation is of type (hyp A -> conc C),
+  how to get suitable well founded ordering - see attempts above 
+  what ordering do we need? look at steps in cut elimination
+  eg andRRC, on the right derivation (for left premise) need
+  E1 < (fun Ha => andR (E1 Ha) (E2 Ha))
+  where forall Ha, we have E1 Ha < (fun Ha => andR (E1 Ha) (E2 Ha)) Ha
+  for impRRC, need (fun Ha => E1 Ha H1) < (fun Ha => impR (E1 Ha))
+  where, forall Ha, we have E1 Ha H1 < impR (E1 Ha)
+  for andLRC, need (fun Ha => E' Ha H1 H2) < (fun Ha => andL (E' Ha) Hp)
+  where, forall Ha, we have E' Ha H1 H2 < andL (E' Ha) Hp)
+  for impLRC, need (fun Ha => E2 Ha Hb) < (fun Ha => impL (E1 Ha) (E2 Ha) Hi)
+  where, forall Ha, we have E2 Ha Hb < impL (E1 Ha) (E2 Ha) Hi
+
+  thus if we have an ordering such that if forall Ha, X Ha < Y Ha then X < Y
+  this would be fine - and we have defined lift_all,
+  but clearly AccT_lift_all_der_ord isn't true 
+  (eg when the forall _ : _ is forall of an empty type)
+  *)
+
 (*
 Lemma cut_adm V : forall A C DA DAC, @cancut V A C DA DAC.
 Proof. intro A.
