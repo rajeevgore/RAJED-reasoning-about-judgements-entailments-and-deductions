@@ -191,7 +191,12 @@ Inductive LJAilrules {V} : rlsT (list (PropF V)) :=
 Definition And_ail' V A B C := And_ail (@ImpL_And_rule_I V A B C).
 Definition Or_ail' V A B C := Or_ail (@ImpL_Or_rule_I V A B C).
 
-(* all rules of LJT, without context *)
+(* exchange rule, without context, avoiding trivial instances *)
+Inductive exch_rule {W} : rlsT (list W) :=
+  | exchI : forall x y X Y,
+    exch_rule [(x :: X) ++ (y :: Y)] ((y :: Y) ++ (x :: X)).
+
+(* all rules of LJT, without context - requires exchange rule *)
 Inductive LJTncrules {V} : rlsT (srseq (PropF V)) :=
   | il_tnc : forall G ps c, 
     rlsmap (flip pair G) LJTilrules ps c -> LJTncrules ps c
@@ -201,6 +206,8 @@ Inductive LJTncrules {V} : rlsT (srseq (PropF V)) :=
   | lrls_tnc : forall G ps c,
     rlsmap (flip pair G) LJslrules ps c -> LJTncrules ps c
   | rrls_tnc : forall ps c, rlsmap (pair []) LJsrrules ps c -> LJTncrules ps c
+  | exch_tnc : forall G ps c, 
+    rlsmap (flip pair G) exch_rule ps c -> LJTncrules ps c
   .
 
 (* all rules of LJA, without context *)

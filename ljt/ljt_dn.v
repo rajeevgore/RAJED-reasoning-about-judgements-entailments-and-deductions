@@ -519,7 +519,7 @@ Qed.
 
 Check gs_LJA_ImpL_adm.
 
-(* Lemma 4.1 of Dyckhoff & Negri *)
+(* Lemma 4.1 of Dyckhoff & Negri JSL 2000 *)
 Lemma LJA_ImpL_adm V D : forall seq, derrec LJArules emptyT seq -> 
   @l41prop V D seq.
 Proof.  eapply gen_step_lemT. apply AccT_isubfml.
@@ -593,7 +593,7 @@ apply derrec_nil_derl.  apply InT_der_LJA. solve_InT.
 eapply (@dtCons _ _ [_]). apply asmI. apply dtNil.
 Qed.
   
-(* Lemma 4.2 of Dyckhoff & Negri *)
+(* Lemma 4.2 of Dyckhoff & Negri JSL 2000 *)
 Lemma LJA_dn42_princ V ps B C D E :
   LJAncrules ps ([Imp (Imp C D) B], E) ->
   forall Γ1 Γ2 : list (PropF V),

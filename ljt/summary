@@ -1,0 +1,34 @@
+
+summary of main results
+
+relative soundness and completeness of systems
+
+ljt_ca.der_lja_lj (derivable in LJA -> derivable in LJ)
+ljt_dncc.der_lj_lja (derivable in LJ -> derivable in LJA)
+ljt_dn.lja_der_atom (ImpL_atom_rule of LJT derivable in LJA)
+
+general identity rule derivable
+ljt_dn.idrule_der_lja 
+ljt.idrule_der_lj
+
+Lemmas in Roy Dyckhoff and Sara Negri,
+Admissibility of Structural Rules for Contraction-Free Systems of
+Intuitionistic Logic, JSL 65 (2000), 1499-1518
+
+ljt_dn.LJA_der_id (* Lemma 3.2(1) of Dyckhoff & Negri JSL 2000 *)
+ljt_dn.LJA_der_mp (* Lemma 3.2(2) of Dyckhoff & Negri JSL 2000 *)
+ljt_dn.LJA_ImpL_adm (* Lemma 4.1 of Dyckhoff & Negri JSL 2000 *)
+ljt_dn.LJA_dn42_princ (* Lemma 4.2 of Dyckhoff & Negri JSL 2000 *)
+ljt_dncc.ctr_adm_lja (* Proposition 5.1, contraction admissibility for LJA *)
+ljt_dncc.lj_ImpL_adm_lja (* Proposition 5.2, admissibility of LJ in LJA *)
+ljt_dncc.ImpL_inv_adm_lja (* Proposition 5.3 of Dyckhoff & Negri JSL 2000 *)
+
+contraction admissibility
+ljt_ctr.ctr_adm_lj 
+
+cut admissibility
+
+ljt_ca.lj_cut_adm
+ljt_dnca.lja_cut_adm
+ljt_dncc.lja_cut_adm_alt (via equivalence to LJ)
+

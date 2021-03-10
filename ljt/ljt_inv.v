@@ -138,6 +138,15 @@ Proof. intro ljnc. inversion ljnc.
 - inversion X.  inversion X0 ; inversion X1. 
 - inversion X.  Qed.
 
+Lemma LJTIAE V ps B C D G :
+  LJTncrules ps ([@Imp V (And C D) B], G) -> ps = [([Imp C (Imp D B)], G)].
+Proof. intro ljnc. inversion ljnc.
+- inversion X.  inversion X0 ; inversion X1. reflexivity.
+- inversion X. - inversion X.  - inversion X. 
+- inversion X.  inversion X0 ; inversion X1. 
+- inversion X.
+- inversion X.  inversion X0. list_eq_ncT. tauto.  Qed.
+
 Lemma LJAIOE V ps B C D G :
   LJAncrules ps ([@Imp V (Or C D) B], G) -> ps = [([Imp C B; Imp D B], G)].
 Proof. intro ljnc. inversion ljnc.
@@ -367,7 +376,85 @@ Ltac aprre := repeat (apply rrer || apply rrel || apply rrelc) ;
 
 Print Implicit der_trf_rc_derl.
 
-(* more general version of can_trf_genLinv_gen *)
+Lemma fcrd W Y rules any (p q : list W * Y) ps Γ1 Φ2 (ips : InT p ps) :
+  apfst (fmlsext Γ1 Φ2) p = q -> 
+  {ps' & derl (fst_ext_rls rules) ps' q *
+  ForallT (fun p' => {p & InT p (map (apfst (fmlsext Γ1 Φ2)) ps) *
+     clos_reflT (srs_ext_rel (fslr any)) p p'}) ps'}.
+Proof. intro pq. eexists.  split.  apply asmI.
+apply ForallT_singleI.  eexists. split.  2: apply rT_refl.
+subst.  exact (InT_map _ ips). Qed. 
+  
+(* try to get a version for where rule may have a list of principal formulae *)
+Lemma can_trf_genLinv_genl W Y rules genLinv ps c
+  (rls_unique : forall ps u w X Y G,
+    genLinv u w -> rules ps (X ++ [u] ++ Y, G) -> InT (X ++ w ++ Y, G) ps) :
+  fst_ext_rls rules ps c ->
+  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv))
+    (derl (fst_ext_rls rules)) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
+unfold can_trf_rules_rc. intros c' ser.
+inversion ser. clear ser. destruct c0. simpl in H0.
+unfold fmlsext in H0. inversion H0. clear H0. subst.
+destruct X0.  
+acacD'T2 ; subst.
+- rewrite ?app_nil_r in X. 
+assoc_mid H2.  eexists. split.  apply ncdgen. apply X.
+apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
+- list_eq_ncT. cD. subst. simpl. 
+specialize (rls_unique ps0 _ _ H2 [] y g). 
+rewrite ?app_nil_r in rls_unique.  specialize (rls_unique X).
+eapply fcrd. exact rls_unique.  simpl. unfold fmlsext. list_eq_assoc.
+- specialize (rls_unique ps0 _ _ _ _ _ g X).
+eapply fcrd. exact rls_unique.  simpl. unfold fmlsext. list_eq_assoc.
+- eexists. split. assoc_mid l. apply ncdgen. apply X.
+apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
+- specialize (rls_unique ps0 _ _ [] H4 y g X). 
+eapply fcrd. exact rls_unique.  simpl. unfold fmlsext. list_eq_assoc.
+- list_eq_ncT. cD. subst. simpl in X.
+eexists. split. assoc_mid H4. apply ncdgen. apply X.
+apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
+- list_eq_ncT. sD ; subst.
++ eexists. split.  apply ncdgene. apply X.
+apply fcr. intro. destruct q. 
+rewrite ?app_nil_r.
+apserx. apply fslr_I. exact g.
++ simpl. rewrite ?app_nil_r.  
+specialize (rls_unique ps0 _ _ [] [] y g X). 
+eapply fcrd. exact rls_unique.  simpl. unfold fmlsext. list_eq_assoc.
+- list_eq_ncT. cD.  list_eq_ncT. cD. subst. (* simpl. NO! *) list_assoc_l'.
+eexists. split. apply ncdgene. apply X.
+apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
+- eexists. split. assoc_mid l. apply ncdgen. apply X.
+apply fcr. intro. destruct q. 
+list_assoc_r'. simpl.  
+apserx. apply fslr_I. exact g.
+Qed.
+
+Check can_trf_genLinv_genl.
+
+Lemma geni_lem W Y rules genLinv 
+  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
+  (rls_unique : forall ps (u : W) w G, 
+    genLinv u w -> rules ps ([u], G : Y) -> InT (w, G) ps) :
+  forall ps u w X U G, genLinv u w ->
+    rules ps (X ++ [u : W] ++ U, G : Y) -> InT (X ++ w ++ U, G) ps.
+Proof. intros * guw rps.
+specialize (nc_seL _ _ _ rps).
+inversion nc_seL ; list_eq_ncT. inversion H0.
+sD ; inversion H1. subst.
+specialize (rls_unique _ _ _ _ guw rps).
+rewrite ?app_nil_r. exact rls_unique. Qed.
+
+(* as can_trf_genLinv_genl, but applying geni_lem to hyp *)
+Definition can_trf_genLinv_geni W Y rules genLinv ps c nc_seL rls_unique :=
+  @can_trf_genLinv_genl W Y rules genLinv ps c 
+    (@geni_lem W Y rules genLinv nc_seL rls_unique).
+
+(* formerly proved can_trf_genLinv_geni same as for can_trf_genLinv_geng,
+  except changing lr_genia to lr_geni and ncagen.. to ncdgen.. *)
+
+(* do we need this one? *)
 Lemma can_trf_genLinv_geng W Y rules genLinv ps c
   (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
   (rls_unique : forall ps u w G, genLinv u w -> rules ps ([u], G) -> 
@@ -422,43 +509,18 @@ Qed.
 
 Print Implicit can_trf_genLinv_geng.
 
-Lemma can_trf_genLinv_genia W Y rules genLinv ps c
-  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
-  (rls_unique : forall ps u w G, 
-    genLinv u w -> rules ps ([u], G) -> InT (w, G) ps) :
-  fst_ext_rls rules ps c ->
-  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) 
-    (adm (fst_ext_rls rules)) ps c.
-Proof. apply can_trf_genLinv_geng. exact nc_seL.
-intros * gluw rps *.
-specialize (rls_unique ps0 u w G gluw rps).
-apply admI. intro drs. eapply dersrecD_forall in drs.  exact drs.
-apply (InT_map (apfst (fmlsext Γ1 Γ2))) in rls_unique. exact rls_unique. Qed.
+Lemma eq_single_in X (wg : X) ps : ps = [wg] -> InT wg ps.
+Proof. intro. subst. apply InT_eq. Qed.
 
-Lemma can_trf_genLinv_gena W Y rules genLinv ps c
-  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
-  (rls_unique : forall ps u w G, 
-    genLinv u w -> rules ps ([u], G) -> ps = [(w, G)]) :
-  fst_ext_rls rules ps c ->
-  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) 
-    (adm (fst_ext_rls rules)) ps c.
-Proof. apply can_trf_genLinv_genia. exact nc_seL.
-intros * guw rpg. rewrite (rls_unique _ _ _ _ guw rpg). apply InT_eq. Qed.
+(* as can_trf_genLinv_geni but adm in place of derl *)
+Definition can_trf_genLinv_genia W Y rules genLinv ps c nc_seL ru fer :=
+  (can_trf_rules_rc_mono (@rsub_derl_adm _ _) 
+    (@can_trf_genLinv_geni W Y rules genLinv ps c nc_seL ru fer)).
 
-(* deleted proof of this because doesn't seem to be needed,
-  but can prove using same proof as can_trf_genLinv_geng
-  except changing lr_genia to lr_geni and ncagen.. to ncdgen,
-  find proof in commit 625a47d23f24d19ba98e1a7ed1cc40350914e731
-  similarly can_trf_genLinv_gen from can_trf_genLinv_geni
-  just like can_trf_genLinv_gena from can_trf_genLinv_genia 
-Lemma can_trf_genLinv_geni W Y rules genLinv ps c
-  (nc_seL : forall ps cl cr, rules ps (cl, cr) -> sing_empty cl) 
-  (rls_unique : forall ps u w G, 
-    genLinv u w -> rules ps ([u], G) -> InT (w, G) ps) :
-  fst_ext_rls rules ps c ->
-  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) 
-    (derl (fst_ext_rls rules)) ps c.
-    *)
+(* as can_trf_genLinv_genia, but in rls_unique, ps = [(w, G)] *)
+Definition can_trf_genLinv_gena W Y rules genLinv ps c nc_seL rls_unique :=
+  @can_trf_genLinv_genia W Y rules genLinv ps c nc_seL 
+  (fun ps u w G gl rps => eq_single_in (rls_unique ps u w G gl rps)).
 
 (** admissibility of inversion for LJ **)
 Lemma can_trf_AndLinv_lj {V} ps c: @LJrules V ps c ->
@@ -863,3 +925,93 @@ inversion ljar ; subst.
 - intros * ari. inversion ari.
 Qed.
 
+(* following is copies of lines 518 to 605 *)
+(** admissibility of inversion for LJT **)
+(* 
+this doesn't work since LJT counterpart of LJAnc_seL doesn't hold
+Lemma can_trf_AndLinv_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel AndLinv) (adm LJTrules) ps c.
+Proof. apply can_trf_genLinv_gena.  apply LJTnc_seL.
+intros * auv.  destruct auv.  apply LJTAE.  Qed.
+
+Lemma can_trf_OrLinv1_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel OrLinv1) (adm LJTrules) ps c.
+Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJTOE in rocd. subst. solve_InT.  Qed.
+
+Lemma can_trf_OrLinv2_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel OrLinv2) (adm LJTrules) ps c.
+Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJTOE in rocd. subst. solve_InT.  Qed.
+
+Lemma can_trf_ImpL_Or_inv_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_Or_inv) (adm LJTrules) ps c.
+Proof. apply can_trf_genLinv_gena.  apply LJTnc_seL.
+intros * auv.  destruct auv.  apply LJTIOE. Qed.
+
+Lemma can_trf_ImpL_And_inv_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_And_inv) (adm LJTrules) ps c.
+Proof. apply can_trf_genLinv_gena.  apply LJTnc_seL.
+intros * auv.  destruct auv.  apply LJTIAE. Qed.
+
+Lemma can_trf_ImpL_Imp_inv2_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_Imp_inv2) (adm LJTrules) ps c.
+Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJTIIE in rocd. subst. solve_InT.  Qed.
+
+Lemma can_trf_ImpL_Var_inv2_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_Var_inv2) (adm LJTrules) ps c.
+Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+apply LJTIpE in rocd. subst. solve_InT.  Qed.
+
+(* now inversion results in terms of can_rel *)
+Lemma LJT_can_rel_AndLinv {V} seq :
+  derrec LJTrules emptyT seq ->
+  can_rel LJTrules (@srs_ext_rel _ _) (@AndLinv V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact (@can_trf_AndLinv_ljt V).  Qed.
+
+Lemma LJT_can_rel_OrLinv1 {V} seq :
+  derrec LJTrules emptyT seq ->
+  can_rel LJTrules (@srs_ext_rel _ _) (@OrLinv1 V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact (@can_trf_OrLinv1_ljt V).  Qed.
+
+Lemma LJT_can_rel_OrLinv2 {V} seq :
+  derrec LJTrules emptyT seq ->
+  can_rel LJTrules (@srs_ext_rel _ _) (@OrLinv2 V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact (@can_trf_OrLinv2_ljt V).  Qed.
+
+Definition LJT_rel_adm_AndLinv V := snd (crd_ra _ _ _) (@LJT_can_rel_AndLinv V).
+Definition LJT_rel_adm_OrLinv1 V := snd (crd_ra _ _ _) (@LJT_can_rel_OrLinv1 V).
+Definition LJT_rel_adm_OrLinv2 V := snd (crd_ra _ _ _) (@LJT_can_rel_OrLinv2 V).
+
+Lemma LJT_can_rel_ImpL_And_inv {V} seq :
+  derrec LJTrules emptyT seq ->
+  can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_And_inv V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact (@can_trf_ImpL_And_inv_ljt V).  Qed.
+
+Lemma LJT_can_rel_ImpL_Or_inv {V} seq :
+  derrec LJTrules emptyT seq ->
+  can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_Or_inv V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact (@can_trf_ImpL_Or_inv_ljt V).  Qed.
+
+Lemma LJT_can_rel_ImpL_Var_inv2 {V} seq :
+  derrec LJTrules emptyT seq ->
+  can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_Var_inv2 V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact (@can_trf_ImpL_Var_inv2_ljt V).  Qed.
+
+Lemma LJT_can_rel_ImpL_Imp_inv2 {V} seq :
+  derrec LJTrules emptyT seq ->
+  can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_Imp_inv2 V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact (@can_trf_ImpL_Imp_inv2_ljt V).  Qed.
+*)

@@ -1,5 +1,5 @@
 
-(* LJ logic, using lists of formulae, termination of LJT *)
+(* LJ logic, using lists of formulae, termination of LJA *)
 
 Require Export List.
 Export ListNotations.  
