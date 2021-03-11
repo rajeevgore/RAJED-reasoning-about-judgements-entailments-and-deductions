@@ -197,15 +197,22 @@ Inductive exch_rule {W} : rlsT (list W) :=
     exch_rule [(x :: X) ++ (y :: Y)] ((y :: Y) ++ (x :: X)).
 
 (* all rules of LJT, without context - requires exchange rule *)
+(* separate out rules with single principal formula *)
+Inductive LJTSncrules {V} : rlsT (srseq (PropF V)) :=
+  | il_tsnc : forall G ps c, 
+    rlsmap (flip pair G) LJAilrules ps c -> LJTSncrules ps c
+  | Imp_tsnc : forall ps c, ImpL_Imp_rule ps c -> LJTSncrules ps c
+  | ImpR_tsnc : forall ps c, ImpRrule ps c -> LJTSncrules ps c
+  | Id_tsnc : forall (A : V) ps c, Idrule (Var A) ps c -> LJTSncrules ps c
+  | lrls_tsnc : forall G ps c,
+    rlsmap (flip pair G) LJslrules ps c -> LJTSncrules ps c
+  | rrls_tsnc : forall ps c, rlsmap (pair []) LJsrrules ps c -> LJTSncrules ps c
+  .
+
 Inductive LJTncrules {V} : rlsT (srseq (PropF V)) :=
-  | il_tnc : forall G ps c, 
-    rlsmap (flip pair G) LJTilrules ps c -> LJTncrules ps c
-  | Imp_tnc : forall ps c, ImpL_Imp_rule ps c -> LJTncrules ps c
-  | ImpR_tnc : forall ps c, ImpRrule ps c -> LJTncrules ps c
-  | Id_tnc : forall (A : V) ps c, Idrule (Var A) ps c -> LJTncrules ps c
-  | lrls_tnc : forall G ps c,
-    rlsmap (flip pair G) LJslrules ps c -> LJTncrules ps c
-  | rrls_tnc : forall ps c, rlsmap (pair []) LJsrrules ps c -> LJTncrules ps c
+  | sing_tnc : forall ps c, LJTSncrules ps c -> LJTncrules ps c
+  | atom_tnc : forall G ps c, 
+    rlsmap (flip pair G) ImpL_atom_rule ps c -> LJTncrules ps c
   | exch_tnc : forall G ps c, 
     rlsmap (flip pair G) exch_rule ps c -> LJTncrules ps c
   .
@@ -246,11 +253,19 @@ Inductive LJncrules {V} : rlsT (srseq (PropF V)) :=
 Definition LJrules {V} := fst_ext_rls (@LJncrules V).
 Definition LJTrules {V} := fst_ext_rls (@LJTncrules V).
 Definition LJArules {V} := fst_ext_rls (@LJAncrules V).
+Definition LJTSrules {V} := fst_ext_rls (@LJTSncrules V).
 
 Definition rrls_nc' {V} ps c rpc := @rrls_nc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_nc' {V} G ps c rpc := @lrls_nc V G _ _ (rmI _ _ ps c rpc).
 Definition ImpR_nc' {V} A B := ImpR_nc (@ImpRrule_I V A B).
 Definition ImpL_nc' {V} A B G := ImpL_nc (@ImpLrule_I V A B G).
+
+Definition rrls_tnc {V} ps c rpc := @sing_tnc V ps c (@rrls_tsnc V ps c rpc).
+Definition lrls_tnc {V} G ps c rpc := 
+  @sing_tnc V ps c (@lrls_tsnc V G ps c rpc).
+Definition il_tnc {V} G ps c rpc := @sing_tnc V ps c (@il_tsnc V G ps c rpc).
+Definition ImpR_tnc {V} ps c rpc := @sing_tnc V ps c (@ImpR_tsnc V ps c rpc).
+Definition Imp_tnc {V} ps c rpc := @sing_tnc V ps c (@Imp_tsnc V ps c rpc).
 
 Definition rrls_tnc' {V} ps c rpc := @rrls_tnc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_tnc' {V} G ps c rpc := @lrls_tnc V G _ _ (rmI _ _ ps c rpc).
@@ -275,6 +290,18 @@ Proof.  unfold LJTrules. apply req_refl. Qed.
 Lemma LJArules_req V : req (@LJArules V) (fst_ext_rls LJAncrules).
 Proof.  unfold LJArules. apply req_refl. Qed.
 
+Lemma sing_anc V ps c : LJTSncrules ps c -> @LJAncrules V ps c.
+Proof. intro. destruct X.
+exact (il_anc r).  exact (Imp_anc i).  exact (ImpR_anc i).
+exact (Id_anc i).  exact (lrls_anc r).  exact (rrls_anc r). Qed.
+
+Lemma LJAncrules_ljts V ps c : 
+  @LJAncrules V ps c -> LJTSncrules ps c + ImpLrule_p ps c.
+Proof. intro. destruct X.
+- exact (inl (il_tsnc r)).  - exact (inl (Imp_tsnc i)).  - exact (inr i).
+- exact (inl (ImpR_tsnc i)).  - exact (inl (Id_tsnc i)).
+- exact (inl (lrls_tsnc r)).  - exact (inl (rrls_tsnc r)). Qed.
+
 Lemma LJnc_seL V ps cl cr : @LJncrules V ps (cl, cr) -> sing_empty cl.
 Proof. intro ljnc. inversion ljnc ; subst ; clear ljnc.
 - inversion X. apply se_single.
@@ -284,20 +311,21 @@ Proof. intro ljnc. inversion ljnc ; subst ; clear ljnc.
   + destruct o.  apply se_single.  + destruct b.  apply se_single.
 - inversion X.  apply se_empty. Qed.
 
-(* doesn't hold for atomic rule 
-Lemma LJTnc_seL V ps cl cr : @LJTncrules V ps (cl, cr) -> sing_empty cl.
-*)
-
-Lemma LJAnc_seL V ps cl cr : @LJAncrules V ps (cl, cr) -> sing_empty cl.
+(* doesn't hold for atom and exchange rules *) 
+Lemma LJTSnc_seL V ps cl cr : @LJTSncrules V ps (cl, cr) -> sing_empty cl.
 Proof. intro ljnc. inversion ljnc ; subst ; clear ljnc.
 - inversion X. destruct X0 ; destruct i ; apply se_single.
-- inversion X. apply se_single.
 - inversion X. apply se_single.
 - inversion X. apply se_empty.
 - inversion X. apply se_single.
 - inversion X. destruct X0. + destruct a.  apply se_single.
   + destruct o.  apply se_single.  + destruct b.  apply se_single.
 - inversion X.  apply se_empty. Qed.
+
+Lemma LJAnc_seL V ps cl cr : @LJAncrules V ps (cl, cr) -> sing_empty cl.
+Proof. intro ljnc. apply LJAncrules_ljts in ljnc. destruct ljnc.
+eapply LJTSnc_seL. eassumption.
+inversion i. apply se_single.  Qed.
 
 Definition LJweakening V seq :=
   can_wkL_req (req_sym (LJrules_req V)) (@weakeningL _ _ seq _).

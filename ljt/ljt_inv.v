@@ -138,15 +138,6 @@ Proof. intro ljnc. inversion ljnc.
 - inversion X.  inversion X0 ; inversion X1. 
 - inversion X.  Qed.
 
-Lemma LJTIAE V ps B C D G :
-  LJTncrules ps ([@Imp V (And C D) B], G) -> ps = [([Imp C (Imp D B)], G)].
-Proof. intro ljnc. inversion ljnc.
-- inversion X.  inversion X0 ; inversion X1. reflexivity.
-- inversion X. - inversion X.  - inversion X. 
-- inversion X.  inversion X0 ; inversion X1. 
-- inversion X.
-- inversion X.  inversion X0. list_eq_ncT. tauto.  Qed.
-
 Lemma LJAIOE V ps B C D G :
   LJAncrules ps ([@Imp V (Or C D) B], G) -> ps = [([Imp C B; Imp D B], G)].
 Proof. intro ljnc. inversion ljnc.
@@ -386,6 +377,47 @@ apply ForallT_singleI.  eexists. split.  2: apply rT_refl.
 subst.  exact (InT_map _ ips). Qed. 
   
 (* try to get a version for where rule may have a list of principal formulae *)
+Lemma can_trf_genLinv_lem W Y rules genLinv ps cl cr Γ1 Γ2 :
+  (forall u w, genLinv u w -> InT u cl -> False) -> rules ps (cl, cr) ->
+  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) (derl (fst_ext_rls rules)) 
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (Γ1 ++ cl ++ Γ2, cr).
+Proof. intros clnl rpc. 
+unfold can_trf_rules_rc. intros c' ser.
+inversion ser. subst. clear ser.
+destruct X.
+acacD'T2 ; subst.
+- rewrite ?app_nil_r in rpc.
+assoc_mid H0.  eexists. split.  apply ncdgen. apply rpc.
+apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
+- list_eq_ncT. cD. subst. simpl. 
+require (clnl _ _ g). solve_InT. destruct clnl.
+- require (clnl _ _ g). solve_InT. destruct clnl.
+- eexists. split. assoc_mid cl. apply ncdgen. apply rpc.
+apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
+- require (clnl _ _ g). solve_InT. destruct clnl.
+- list_eq_ncT. cD. subst. simpl in rpc.
+eexists. split. assoc_mid H4. apply ncdgen. apply rpc.
+apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
+- list_eq_ncT. sD ; subst.
++ eexists. split.  apply ncdgene. apply rpc.
+apply fcr. intro. destruct q. 
+rewrite ?app_nil_r.
+apserx. apply fslr_I. exact g.
++ simpl. rewrite ?app_nil_r.  
+require (clnl _ _ g). solve_InT. destruct clnl.
+- list_eq_ncT. cD.  list_eq_ncT. cD. subst. (* simpl. NO! *) list_assoc_l'.
+eexists. split. apply ncdgene. apply rpc.
+apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
+- eexists. split. assoc_mid cl. apply ncdgen. apply rpc.
+apply fcr. intro. destruct q. 
+list_assoc_r'. simpl.  
+apserx. apply fslr_I. exact g.
+Qed.
+
+Check can_trf_genLinv_lem.
+
+(* TODO  can can_trf_genLinv_lem be used to prove can_trf_genLinv_genl,
+  where some rule can't match genLinv? *)
 Lemma can_trf_genLinv_genl W Y rules genLinv ps c
   (rls_unique : forall ps u w X Y G,
     genLinv u w -> rules ps (X ++ [u] ++ Y, G) -> InT (X ++ w ++ Y, G) ps) :
@@ -520,6 +552,11 @@ Definition can_trf_genLinv_genia W Y rules genLinv ps c nc_seL ru fer :=
 (* as can_trf_genLinv_genia, but in rls_unique, ps = [(w, G)] *)
 Definition can_trf_genLinv_gena W Y rules genLinv ps c nc_seL rls_unique :=
   @can_trf_genLinv_genia W Y rules genLinv ps c nc_seL 
+  (fun ps u w G gl rps => eq_single_in (rls_unique ps u w G gl rps)).
+
+(* as can_trf_genLinv_geni, but in rls_unique, ps = [(w, G)] *)
+Definition can_trf_genLinv_gen W Y rules genLinv ps c nc_seL rls_unique :=
+  @can_trf_genLinv_geni W Y rules genLinv ps c nc_seL 
   (fun ps u w G gl rps => eq_single_in (rls_unique ps u w G gl rps)).
 
 (** admissibility of inversion for LJ **)
@@ -927,12 +964,37 @@ Qed.
 
 (* following is copies of lines 518 to 605 *)
 (** admissibility of inversion for LJT **)
-(* 
-this doesn't work since LJT counterpart of LJAnc_seL doesn't hold
+(* doesn't work for LJT counterpart of LJAnc_seL doesn't hold *)
+Lemma can_trf_AndLinv_ljts {V} ps c: @LJTSrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel AndLinv) (derl LJTSrules) ps c.
+Proof. apply can_trf_genLinv_gen.  apply LJTSnc_seL.
+intros * auv.  destruct auv.  
+intro ljts. exact (LJAAE (sing_anc ljts)).  Qed.
+
+(*
 Lemma can_trf_AndLinv_ljt {V} ps c: @LJTrules V ps c ->
-  can_trf_rules_rc (srs_ext_rel AndLinv) (adm LJTrules) ps c.
-Proof. apply can_trf_genLinv_gena.  apply LJTnc_seL.
-intros * auv.  destruct auv.  apply LJTAE.  Qed.
+  can_trf_rules_rc (srs_ext_rel AndLinv) (derl LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
+eapply can_trf_rules_rc_mono.
+apply derl_mono.
+apply fer_mono.
+apply rsubI.
+apply sing_tnc.
+apply can_trf_AndLinv_ljts.
+eapply fextI.
+apply rmI.
+exact l.
+
+inversion r. subst. clear r. destruct X.
+need lemma for situation where unextended relation doesn't 
+match unextended conclusion of rule
+would be part of proof of can_trf_genLinv_gen
+can we use can_trf_genLinv_lem?
+unfold can_trf_rules_rc. intros.
+
+
+
+Check sing_tnc.
 
 Lemma can_trf_OrLinv1_ljt {V} ps c: @LJTrules V ps c ->
   can_trf_rules_rc (srs_ext_rel OrLinv1) (adm LJTrules) ps c.
