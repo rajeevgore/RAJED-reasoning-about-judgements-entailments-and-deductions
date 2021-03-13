@@ -319,6 +319,15 @@ Ltac apser' := list_assoc_l' ; repeat (apply serr) ;
 
 Ltac apserx := apply rT_step ; simpl ; unfold fmlsext ;  apser.
 
+(* for when last arg is unspecified *)
+Lemma sercfr U W R u w Z Y : 
+  R u w -> @srs_ext_rel U W (fslr R) (u :: Z, Y) (w ++ Z, Y).
+Proof. intro ruw.  pose (fslr_I _ _ _ ruw).
+exact (srs_ext_relI _ _ _ _ [] Z f). Qed.
+
+Ltac apser2u ruw := apply rT_step ; unfold fmlsext ; list_assoc_r' ; 
+  repeat (apply (sercfr _ _ _ _ _ ruw) || apply serlc || apply serl).
+
 (* similar to above for rr_ext_rel *)
 
 Lemma rrel U W R G H J p q : rr_ext_rel R (H, p) (J : list U, q : W) -> 
@@ -376,6 +385,67 @@ Proof. intro pq. eexists.  split.  apply asmI.
 apply ForallT_singleI.  eexists. split.  2: apply rT_refl.
 subst.  exact (InT_map _ ips). Qed. 
   
+Lemma exch_derl_swap W Y (G : Y) rules A B :
+  rsub (rlsmap (Basics.flip pair G) exch_rule) rules -> 
+  @swapped W A B -> derl (fst_ext_rls rules) [(A, G)] (B, G).
+Proof. intros rs sw.  destruct sw.
+destruct B. subst. apply asmI.
+destruct C. subst. apply asmI.
+eapply dtderI.  2: apply asmsI.
+subst. eapply fer_mono. exact rs.
+apply (@fextI _ _ _ A D).  eapply rmI_eq.
+apply rmI.  apply (exchI w w0 B C).
+simpl. unfold fmlsext. list_eq_assoc.
+simpl. unfold fmlsext. list_eq_assoc. Qed.
+
+Lemma ctrcl1 W Y ferr seq wy sfg ps :
+  clos_reflT sfg wy ps -> derl ferr [ps] seq -> 
+  {ps' : list (list W * Y) & derl ferr ps' seq *
+  ForallT (fun p' => {p & InT p [wy] * clos_reflT sfg p p'}) ps'}.
+Proof. eexists. split. all: cycle 1. apply ForallT_singleI.
+eexists. split. apply InT_eq. exact X. exact X0. Qed.
+
+Lemma can_trf_genLinv_exch W Y rules genLinv ps c G Γ1 Γ2 :
+  rsub (rlsmap (Basics.flip pair G) exch_rule) rules -> 
+  rlsmap (Basics.flip pair G) exch_rule ps c ->
+  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) (derl (fst_ext_rls rules))
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. intros rs epc c' ser. destruct c.
+inversion ser. subst. clear ser.  destruct X.
+unfold fmlsext in H0. simpl in H0.
+inversion epc. destruct X. subst. clear epc.
+simpl. 
+acacD'T2 ; subst. (* 12 subgoals *)
+- list_eq_ncT. inversion H4.
+- list_eq_ncT. inversion H4.
+- inversion H7. subst. clear H7. 
+eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I Γ1 (x :: X) (w ++ Y0) Γ2) ; list_eq_assoc.
+- acacD'T2 ; subst.
++ eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I Γ1 (w ++ H4) (y0 :: H5) Γ2) ; list_eq_assoc.
++ eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I Γ1 (x :: X) (y0 :: H5 ++ w ++ H7) Γ2) ; list_eq_assoc.
+
+- inversion H4.
+- eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I Γ1 (x :: H6) (y0 :: Y0) (w ++ Φ2)) ; list_eq_assoc.
+- inversion H7. subst.
+eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I Γ1 (w ++ H4) (y0 :: Y0) Γ2) ; list_eq_assoc.
+- eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I Γ1 (x :: H6 ++ w ++ H4) (y0 :: Y0) Γ2) ; list_eq_assoc.
+- eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I Γ1 (x :: X) (y0 :: Y0) (H2 ++ w ++ Φ2)) ; list_eq_assoc.
+- list_eq_ncT. inversion H3.
+- eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I Φ1 (x :: X) (w ++ H4) Γ2) ; list_eq_assoc.
+- eapply ctrcl1.  apser2u g. apply (exch_derl_swap rs).
+apply (swapped_I (Φ1 ++ w ++ H2) (x :: X) (y0 :: Y0) Γ2) ; list_eq_assoc.
+Qed.
+
+Check can_trf_genLinv_exch.
+
 (* try to get a version for where rule may have a list of principal formulae *)
 Lemma can_trf_genLinv_lem W Y rules genLinv ps cl cr Γ1 Γ2 :
   (forall u w, genLinv u w -> InT u cl -> False) -> rules ps (cl, cr) ->
@@ -383,8 +453,7 @@ Lemma can_trf_genLinv_lem W Y rules genLinv ps cl cr Γ1 Γ2 :
     (map (apfst (fmlsext Γ1 Γ2)) ps) (Γ1 ++ cl ++ Γ2, cr).
 Proof. intros clnl rpc. 
 unfold can_trf_rules_rc. intros c' ser.
-inversion ser. subst. clear ser.
-destruct X.
+inversion ser. subst. clear ser.  destruct X.
 acacD'T2 ; subst.
 - rewrite ?app_nil_r in rpc.
 assoc_mid H0.  eexists. split.  apply ncdgen. apply rpc.
@@ -971,31 +1040,29 @@ Proof. apply can_trf_genLinv_gen.  apply LJTSnc_seL.
 intros * auv.  destruct auv.  
 intro ljts. exact (LJAAE (sing_anc ljts)).  Qed.
 
-(*
+Definition ctrc_d_f_mono V R := @can_trf_rules_rc_mono _ R _ _ 
+  (derl_mono (fer_mono (rsubI _ _ (@sing_tnc V)))).
+  
 Lemma can_trf_AndLinv_ljt {V} ps c: @LJTrules V ps c ->
   can_trf_rules_rc (srs_ext_rel AndLinv) (derl LJTrules) ps c.
 Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
-eapply can_trf_rules_rc_mono.
-apply derl_mono.
-apply fer_mono.
-apply rsubI.
-apply sing_tnc.
+(* note, now, ps and c are the skeleton of the final rule *)
+- (* LJTSncrules *)
+eapply ctrc_d_f_mono.
 apply can_trf_AndLinv_ljts.
-eapply fextI.
-apply rmI.
-exact l.
-
+eapply fextI.  apply rmI.  exact l.
+- (* ImpL_atom_rule *)
+unfold AndLinv. destruct c. 
+apply can_trf_genLinv_lem.
 inversion r. subst. clear r. destruct X.
-need lemma for situation where unextended relation doesn't 
-match unextended conclusion of rule
-would be part of proof of can_trf_genLinv_gen
-can we use can_trf_genLinv_lem?
-unfold can_trf_rules_rc. intros.
+intros * auw. destruct auw.
+intro ia.  inversion ia. inversion H0.
+inversion H0. inversion H3.  inversion H3.
+exact (atom_tnc r).
+- (* exch_rule *) unfold AndLinv.
+eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
-
-
-Check sing_tnc.
-
+(*
 Lemma can_trf_OrLinv1_ljt {V} ps c: @LJTrules V ps c ->
   can_trf_rules_rc (srs_ext_rel OrLinv1) (adm LJTrules) ps c.
 Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
