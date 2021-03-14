@@ -287,6 +287,12 @@ Inductive InT A (a : A) : list A -> Type :=
   | InT_eq' : forall b l, b = a -> @InT A a (b :: l)
   | InT_cons : forall b l, @InT A a l -> @InT A a (b :: l).
 
+(* not sure whether these any use *)
+Derive Inversion InTinv with (forall W (a b : W) l, InT a (b :: l)) Sort Type.
+Derive Inversion_clear InTinvcl
+  with (forall W (a b : W) l, InT a (b :: l)) Sort Type.
+Check InTinv.  Check InTinvcl.
+
 Lemma InT_eq: forall A a l, @InT A a (a :: l).
 Proof.  intros. apply InT_eq'. reflexivity. Qed.
 

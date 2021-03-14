@@ -1033,12 +1033,40 @@ Qed.
 
 (* following is copies of lines 518 to 605 *)
 (** admissibility of inversion for LJT **)
-(* doesn't work for LJT counterpart of LJAnc_seL doesn't hold *)
+(* doesn't work for LJT as counterpart of LJAnc_seL doesn't hold *)
 Lemma can_trf_AndLinv_ljts {V} ps c: @LJTSrules V ps c ->
   can_trf_rules_rc (srs_ext_rel AndLinv) (derl LJTSrules) ps c.
 Proof. apply can_trf_genLinv_gen.  apply LJTSnc_seL.
 intros * auv.  destruct auv.  
 intro ljts. exact (LJAAE (sing_anc ljts)).  Qed.
+
+Lemma can_trf_OrLinv1_ljts {V} ps c: @LJTSrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel OrLinv1) (derl LJTSrules) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJTSnc_seL.
+intros * auv.  destruct auv.  intro rocd.
+pose (LJAOE (sing_anc rocd)). clearbody e. subst. solve_InT.  Qed.
+
+Lemma can_trf_OrLinv2_ljts {V} ps c: @LJTSrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel OrLinv2) (derl LJTSrules) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJTSnc_seL.
+intros * auv.  destruct auv.  intro rocd.
+pose (LJAOE (sing_anc rocd)). clearbody e. subst. solve_InT.  Qed.
+
+Lemma can_trf_ImpL_Or_inv_ljts {V} ps c: @LJTSrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_Or_inv) (derl LJTSrules) ps c.
+Proof. apply can_trf_genLinv_gen.  apply LJTSnc_seL.
+intros * auv.  destruct auv.  intro ljts. exact (LJAIOE (sing_anc ljts)). Qed.
+
+Lemma can_trf_ImpL_And_inv_ljts {V} ps c: @LJTSrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_And_inv) (derl LJTSrules) ps c.
+Proof. apply can_trf_genLinv_gen.  apply LJTSnc_seL.
+intros * auv.  destruct auv.  intro ljts. exact (LJAIAE (sing_anc ljts)). Qed.
+
+Lemma can_trf_ImpL_Imp_inv2_ljts {V} ps c: @LJTSrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_Imp_inv2) (derl LJTSrules) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJTSnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+pose (LJAIIE (sing_anc rocd)). clearbody e. subst. solve_InT.  Qed.
 
 Definition ctrc_d_f_mono V R := @can_trf_rules_rc_mono _ R _ _ 
   (derl_mono (fer_mono (rsubI _ _ (@sing_tnc V)))).
@@ -1062,41 +1090,97 @@ exact (atom_tnc r).
 - (* exch_rule *) unfold AndLinv.
 eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
-(*
 Lemma can_trf_OrLinv1_ljt {V} ps c: @LJTrules V ps c ->
-  can_trf_rules_rc (srs_ext_rel OrLinv1) (adm LJTrules) ps c.
-Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
-intros * auv.  destruct auv. intro rocd.  
-apply LJTOE in rocd. subst. solve_InT.  Qed.
+  can_trf_rules_rc (srs_ext_rel OrLinv1) (derl LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
+- (* LJTSncrules *)
+eapply ctrc_d_f_mono.
+apply can_trf_OrLinv1_ljts.
+eapply fextI.  apply rmI.  exact l.
+- (* ImpL_atom_rule *)
+unfold OrLinv1. destruct c. 
+apply can_trf_genLinv_lem.
+inversion r. subst. clear r. destruct X.
+intros * auw. destruct auw.
+intro ia.  inversion ia. inversion H0.
+inversion H0. inversion H3.  inversion H3.
+exact (atom_tnc r).
+- (* exch_rule *) unfold OrLinv1.
+eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
 Lemma can_trf_OrLinv2_ljt {V} ps c: @LJTrules V ps c ->
-  can_trf_rules_rc (srs_ext_rel OrLinv2) (adm LJTrules) ps c.
-Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
-intros * auv.  destruct auv. intro rocd.  
-apply LJTOE in rocd. subst. solve_InT.  Qed.
+  can_trf_rules_rc (srs_ext_rel OrLinv2) (derl LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
+- (* LJTSncrules *)
+eapply ctrc_d_f_mono.
+apply can_trf_OrLinv2_ljts.
+eapply fextI.  apply rmI.  exact l.
+- (* ImpL_atom_rule *)
+unfold OrLinv2. destruct c. 
+apply can_trf_genLinv_lem.
+inversion r. subst. clear r. destruct X.
+intros * auw. destruct auw.
+intro ia.  inversion ia. inversion H0.
+inversion H0. inversion H3.  inversion H3.
+exact (atom_tnc r).
+- (* exch_rule *) unfold OrLinv2.
+eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
 Lemma can_trf_ImpL_Or_inv_ljt {V} ps c: @LJTrules V ps c ->
-  can_trf_rules_rc (srs_ext_rel ImpL_Or_inv) (adm LJTrules) ps c.
-Proof. apply can_trf_genLinv_gena.  apply LJTnc_seL.
-intros * auv.  destruct auv.  apply LJTIOE. Qed.
+  can_trf_rules_rc (srs_ext_rel ImpL_Or_inv) (derl LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
+- (* LJTSncrules *)
+eapply ctrc_d_f_mono.
+apply can_trf_ImpL_Or_inv_ljts.
+eapply fextI.  apply rmI.  exact l.
+- (* ImpL_atom_rule *)
+unfold ImpL_Or_inv. destruct c. 
+apply can_trf_genLinv_lem.
+inversion r. subst. clear r. destruct X.
+intros * auw. destruct auw.
+intro ia.  inversion ia. inversion H0.
+inversion H0. inversion H3.  inversion H3.
+exact (atom_tnc r).
+- (* exch_rule *) unfold ImpL_Or_inv.
+eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
 Lemma can_trf_ImpL_And_inv_ljt {V} ps c: @LJTrules V ps c ->
-  can_trf_rules_rc (srs_ext_rel ImpL_And_inv) (adm LJTrules) ps c.
-Proof. apply can_trf_genLinv_gena.  apply LJTnc_seL.
-intros * auv.  destruct auv.  apply LJTIAE. Qed.
+  can_trf_rules_rc (srs_ext_rel ImpL_And_inv) (derl LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
+- (* LJTSncrules *)
+eapply ctrc_d_f_mono.
+apply can_trf_ImpL_And_inv_ljts.
+eapply fextI.  apply rmI.  exact l.
+- (* ImpL_atom_rule *)
+unfold ImpL_And_inv. destruct c. 
+apply can_trf_genLinv_lem.
+inversion r. subst. clear r. destruct X.
+intros * auw. destruct auw.
+intro ia.  inversion ia. inversion H0.
+inversion H0. inversion H3.  inversion H3.
+exact (atom_tnc r).
+- (* exch_rule *) unfold ImpL_And_inv.
+eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
 Lemma can_trf_ImpL_Imp_inv2_ljt {V} ps c: @LJTrules V ps c ->
-  can_trf_rules_rc (srs_ext_rel ImpL_Imp_inv2) (adm LJTrules) ps c.
-Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
-intros * auv.  destruct auv. intro rocd.  
-apply LJTIIE in rocd. subst. solve_InT.  Qed.
+  can_trf_rules_rc (srs_ext_rel ImpL_Imp_inv2) (derl LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
+- (* LJTSncrules *)
+eapply ctrc_d_f_mono.
+apply can_trf_ImpL_Imp_inv2_ljts.
+eapply fextI.  apply rmI.  exact l.
+- (* ImpL_atom_rule *)
+unfold ImpL_Imp_inv2. destruct c. 
+apply can_trf_genLinv_lem.
+inversion r. subst. clear r. destruct X.
+intros * auw. destruct auw.
+intro ia.  inversion ia. inversion H0.
+inversion H0. inversion H3.  inversion H3.
+exact (atom_tnc r).
+- (* exch_rule *) unfold ImpL_Imp_inv2.
+eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
-Lemma can_trf_ImpL_Var_inv2_ljt {V} ps c: @LJTrules V ps c ->
-  can_trf_rules_rc (srs_ext_rel ImpL_Var_inv2) (adm LJTrules) ps c.
-Proof. apply can_trf_genLinv_genia.  apply LJTnc_seL.
-intros * auv.  destruct auv. intro rocd.  
-apply LJTIpE in rocd. subst. solve_InT.  Qed.
-
+(*
 (* now inversion results in terms of can_rel *)
 Lemma LJT_can_rel_AndLinv {V} seq :
   derrec LJTrules emptyT seq ->
