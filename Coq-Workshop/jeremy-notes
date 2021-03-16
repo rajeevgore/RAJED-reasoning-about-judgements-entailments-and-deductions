@@ -1,0 +1,59 @@
+
+notes for possible Coq Workshop paper
+
+(1) derl, derrec, etc
+
+Inductive derrec X (rules : list X -> X -> Type) (prems : X -> Type) :
+  X -> Type :=
+  | dpI : forall concl,
+    prems concl -> derrec rules prems concl
+  | derI : forall ps concl,
+    rules ps concl -> dersrec rules prems ps -> derrec rules prems concl
+with dersrec X (rules : list X -> X -> Type) (prems : X -> Type) :
+  list X -> Type :=
+  | dlNil : dersrec rules prems []
+  | dlCons : forall seq seqs,
+    derrec rules prems seq -> dersrec rules prems seqs ->
+    dersrec rules prems (seq :: seqs)
+    .
+
+Inductive derl X (rules : list X -> X -> Type) : list X -> X -> Type :=
+  | asmI : forall p, derl rules [p] p
+  | dtderI : forall pss ps concl, rules ps concl ->
+    dersl rules pss ps -> derl rules pss concl
+with dersl X (rules : list X -> X -> Type) : list X -> list X -> Type :=
+  | dtNil : dersl rules [] []
+  | dtCons : forall ps c pss cs,
+    derl rules ps c -> dersl rules pss cs -> dersl rules (ps ++ pss) (c :: cs)
+  .
+
+These are discussed (in the Isabelle context) in our LPAR 2010 paper.
+Briefly, 
+derrec rules prems concl means that concl is derivable from 
+the set prems of premises, using the set rules of rules,
+and derl rules prems concl means that prems/concl is a derived rule of the
+system (here prems is a list, and it means that there is a derivation tree
+with unproved leaves prems and conclusion concl).
+
+Thus the neat lemmas we can prove include
+derrec rules prems = derrec rules (derrec rules prems) 
+derl rules = derl (derl rules) 
+derrec rules = derrec (derl rules) 
+ 
+In Isabelle this definition was pretty much the same, 
+but we needed a derivation tree "object" for which we could
+define properties such as the (max-)height or size.
+
+So in Isabelle we defined a datatype dertree
+datatype 'seq dertree = Der 'seq ('seq psc) ('seq dertree list)
+                | Unf 'seq (* unfinished, sequent remains unproved *)
+
+We had to define a predicate stating that each step in the tree
+was in fact genuinely an application of a rule of the system.
+
+We then had to prove that a sequent concl satisfies derl rules prems 
+if and only if there exists a derivation tree object with leaves prems
+and conclusion concl. 
+
+
+
