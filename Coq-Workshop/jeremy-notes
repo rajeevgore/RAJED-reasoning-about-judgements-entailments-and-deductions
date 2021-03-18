@@ -28,8 +28,7 @@ with dersl X (rules : list X -> X -> Type) : list X -> list X -> Type :=
   .
 
 These are discussed (in the Isabelle context) in our LPAR 2010 paper.
-Briefly, 
-derrec rules prems concl means that concl is derivable from 
+Briefly, derrec rules prems concl means that concl is derivable from 
 the set prems of premises, using the set rules of rules,
 and derl rules prems concl means that prems/concl is a derived rule of the
 system (here prems is a list, and it means that there is a derivation tree
@@ -44,8 +43,14 @@ In Isabelle this definition was pretty much the same,
 but we needed a derivation tree "object" for which we could
 define properties such as the (max-)height or size.
 
-So in Isabelle we defined a datatype dertree
-datatype 'seq dertree = Der 'seq ('seq psc) ('seq dertree list)
+This was because for some proofs of admissibility of some rule, 
+the proof needs to assume, as inductive hypothesis, that the result holds
+for for derivations of lesser height.  (Whereas in other cases
+the proof requires, as inductive hypothesis, only that the result
+holds for subtrees of the given derivation tree.
+
+So in Isabelle we could define a datatype dertree
+datatype 'seq dertree = Der 'seq ('seq dertree list)
                 | Unf 'seq (* unfinished, sequent remains unproved *)
 
 We had to define a predicate stating that each step in the tree
@@ -55,5 +60,83 @@ We then had to prove that a sequent concl satisfies derl rules prems
 if and only if there exists a derivation tree object with leaves prems
 and conclusion concl. 
 
+In Coq, on the other hand, the statement that a sequent is derivable
+contains the proof of this fact, so that we can define its properties
+such as height, size.
 
+This seemed like a significant convenience, compared with Isabelle/HOL or
+HOL4. However there are some flies in the ointment.
+
+Firstly, generally we had to use Type rather than Prop in our definitions
+(thus derrec rules prems concl : Type).  The necessity of this would tend
+to cascade through proofs, so that 
+where the Standard Library of Coq defines Forall, In, le,
+we had to define ForallT, InT,leT, and to reprove all the relevant
+lemmas about these.
+
+Secondly, to actually define functions, and generally to deal with the
+derivation tree "objects" as we would in Isabelle, we were confronted by
+problems such as the following.
+
+In Isabelle the object Der concl [subtree1, subtree2]
+contains a conclusion and a list of subtrees,
+where the last rule used has premises (concl_of subtree1) and
+(concl_of subtree2).
+
+In Coq the subtrees do not form a list as they do not have the same type,
+their types being derrec rules prems (concl_of subtree1)
+and derrec rules prems (concl_of subtree2).
+(There is an object representing the "list" of subtrees, whose type is
+dersrec rules prems concls, whose constructors are dlCons and dlNil).
+But we also can't write a function to obtain this object because its type
+involves the list of conclusions of the subtrees.
+
+We encountered numerous problems of this general nature, and
+it took quite some trial and error to find out what was possible 
+and what was not.
+
+We found it was possible to define a version of derrec which does 
+not contain the conclusion as part of its type, thus
+
+Inductive derrec_fc X rules (prems : X -> Type) : Type :=
+  | fcI : forall concl, derrec rules prems concl -> derrec_fc rules prems.
+
+This gives us a function fcI:
+
+fcI : forall X rules prems (concl : X),
+  derrec rules prems concl -> derrec_fc rules prems.
+
+But we cannot define the inverse of this function:
+
+(* this fails, d has type "derrec rules prems x", but x not in scope
+Fixpoint derrec_of_fc X rules prems
+  (der : @derrec_fc X rules prems) :=
+  match der with | fcI d => d end.  *)
+
+But we can invert fcI and apply a function to it
+whose result type doesn't involve the conclusion
+
+Fixpoint derrec_fc_size X rules prems
+  (der : @derrec_fc X rules prems) :=
+  match der with
+    | fcI d => derrec_size d
+  end.
+
+Given the definition of fcI, one imagines that it would be injective,
+that is, fcI d1 = fcI d2 -> d1 = d2.
+We proved that this is s if d1 and d2 have been declared to have the same
+conclusion, ie (d1 d2 : derrec rules prems concl) (lemma fcI_inj).
+And we proved that if d1 and d2 have conclusions c1 and c2, then
+fcI d1 = fcI d2 -> c1 = c2 (lemma fcI_inj_concl).
+
+Thus when one declares d1 and d2 to have conclusions c1 and c2,
+one might hope to be able to prove fcI d1 = fcI d2 -> d1 = d2,
+but one can't (at least, we couldn't) because to merely express
+this goal produces a type error.
+We can prove fcI d1 = fcI d2 -> d1 ~= d2 
+(~= is JMeq, equality of differently typed terms).
+
+The proof of fcI_inj involves using the dependent destruction
+tactic (alternatively, using inversion, then inversion_sigma,
+then a rewrite).
 
