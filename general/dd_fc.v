@@ -600,19 +600,30 @@ simpl.  exact (Lt.le_lt_n_Sm _ _ (drs_trees_height _ inn)). Qed.
 Lemma fcI_inj_concl: forall X rules prems c1 c2 
   (d1 : @derrec X rules prems c1) (d2 : @derrec X rules prems c2),
   fcI d1 = fcI d2 -> c1 = c2.
-Proof. intros.  (* injection H gives existT equality *)
-  dependent destruction H. reflexivity. Qed.
+Proof. intros.  inversion H. (* gives existT equality - can ignore it *)
+  reflexivity. Qed.
 
 Lemma fcI_inj: forall X rules prems concl (d1 : @derrec X rules prems concl) d2,
   fcI d1 = fcI d2 -> d1 = d2.
-Proof. intros.  (* injection H gives existT equality *)
-  dependent destruction H. reflexivity. Qed.
+Proof. intros.  dependent destruction H. reflexivity. Qed.
+(* or, this proof gives existT equality
+Proof. intros.
+inversion H. inversion_sigma.
+rewrite <- Eqdep.EqdepTheory.eq_rect_eq in H2. exact H2. Qed.
+gives a theorem depending on just Eqdep.Eq_rect_eq.eq_rect_eq *)
+
+Print Assumptions fcI_inj.
+(* (fcI_JMinv the same)
+Eqdep.Eq_rect_eq.eq_rect_eq : forall (U : Type) (p : U) (Q : U -> Type) 
+  (x : Q p) (h : p = p), x = eq_rect p Q x p h
+JMeq_eq : forall (A : Type) (x y : A), x ~= y -> x = y
+*)
 
 Lemma fcI_JMinv X rules prems c1 c2 
   (d1 : @derrec X rules prems c1) (d2 : @derrec X rules prems c2) :
   fcI d1 = fcI d2 -> JMeq d1 d2.
-Proof. intros.  (* injection H gives existT equality *)
-  dependent destruction H. apply JMeq_refl. Qed.
+Proof. intros.  inversion H. (* gives existT equality - can ignore it *)
+  apply JMeq_refl. Qed.
 
 (* alternative proof of fcI_inj *)
 Lemma fcI_inj' X rules prems concl (d1 : @derrec X rules prems concl) d2 :
