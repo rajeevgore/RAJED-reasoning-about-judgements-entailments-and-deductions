@@ -43,15 +43,15 @@ In Isabelle this definition was pretty much the same,
 but we needed a derivation tree "object" for which we could
 define properties such as the (max-)height or size.
 
+So in Isabelle we defined a datatype dertree
+datatype 'seq dertree = Der 'seq ('seq psc) ('seq dertree list)
+                | Unf 'seq (* unfinished, sequent remains unproved *)
+
 This was because for some proofs of admissibility of some rule, 
 the proof needs to assume, as inductive hypothesis, that the result holds
 for for derivations of lesser height.  (Whereas in other cases
 the proof requires, as inductive hypothesis, only that the result
 holds for subtrees of the given derivation tree.
-
-So in Isabelle we could define a datatype dertree
-datatype 'seq dertree = Der 'seq ('seq dertree list)
-                | Unf 'seq (* unfinished, sequent remains unproved *)
 
 We had to define a predicate stating that each step in the tree
 was in fact genuinely an application of a rule of the system.
@@ -124,7 +124,7 @@ Fixpoint derrec_fc_size X rules prems
 
 Given the definition of fcI, one imagines that it would be injective,
 that is, fcI d1 = fcI d2 -> d1 = d2.
-We proved that this is s if d1 and d2 have been declared to have the same
+We proved that this is so if d1 and d2 have been declared to have the same
 conclusion, ie (d1 d2 : derrec rules prems concl) (lemma fcI_inj).
 And we proved that if d1 and d2 have conclusions c1 and c2, then
 fcI d1 = fcI d2 -> c1 = c2 (lemma fcI_inj_concl).
@@ -133,10 +133,47 @@ Thus when one declares d1 and d2 to have conclusions c1 and c2,
 one might hope to be able to prove fcI d1 = fcI d2 -> d1 = d2,
 but one can't (at least, we couldn't) because to merely express
 this goal produces a type error.
-We can prove fcI d1 = fcI d2 -> d1 ~= d2 
-(~= is JMeq, equality of differently typed terms).
+(We can prove fcI d1 = fcI d2 -> d1 ~= d2, where
+~= is JMeq, equality of differently typed terms,
+and the library contains the lemma
+JM_tyeq: forall (U W : Type) (a : U) (b : W), a ~= b -> U = W)
 
-The proof of fcI_inj involves using the dependent destruction
-tactic (alternatively, using inversion, then inversion_sigma,
-then a rewrite).
+The proof of fcI_inj involves using the dependent destruction tactic.
+Alternatively we could prove it by first using inversion.
+This produces the hypothesis
+H1 : existT (fun concl : X => derrec rules prems concl) concl d1 =
+       existT (fun concl : X => derrec rules prems concl) concl d2
+
+The tactic inversion_sigma turns this into 
+H2 : eq_rect concl (fun a : X => derrec rules prems a) d1 concl H0 = d2
+Then rewrite <- Eqdep.EqdepTheory.eq_rect_eq in H2.
+gives H2 : d1 = d2
+
+notes of subsequent difficulties:
+
+where dt : derrec rules prems concl
+and dealing with the object dt
+(1) if dt is in the goal, need to use dependent inversion, not inversion
+(2) can't rewrite the body of dt (sometimes - when?)
+see email from Clément Pit-Claudel <cpitclaudel@gmail.com>
+"So what you need to do is rewrite in both hypotheses at once,
+so that there's no ill-typed intermediate stage.
+You can do this with [remember] and [subst] ... or with revert:
+The key is that you can't rewrite an hypothesis' type 
+if that leads other hypotheses to being ill-typed."
+(3) but sometimes you can rewrite the body of dt (when? is this a bug?),
+it can cause type errors elsewhere
+(eg in dt = dt') which needn't become apparent immediately,
+and are impossible to correct because of (2) above
+see emails 5/1/21, 14/1/21,
+Re: [Coq-Club] [Coq] [Using Coq] avoiding type error
+and 17/12/20 and 29/12/20 and following,
+Re: [Coq-Club] how to rewrite, needed to match goal
+see file type-error-info
+
+other issues
+tactics vs list_tactics, semantics of Ltac
+_CoqProject, Add LoadPath 
+(emails 28/4//20 & foll, 20/1/21 & foll, 12/2/21 & foll)
+documentation
 
