@@ -266,6 +266,7 @@ Definition lrls_tnc {V} G ps c rpc :=
 Definition il_tnc {V} G ps c rpc := @sing_tnc V ps c (@il_tsnc V G ps c rpc).
 Definition ImpR_tnc {V} ps c rpc := @sing_tnc V ps c (@ImpR_tsnc V ps c rpc).
 Definition Imp_tnc {V} ps c rpc := @sing_tnc V ps c (@Imp_tsnc V ps c rpc).
+Definition Id_tnc {V} A ps c rpc := @sing_tnc V ps c (@Id_tsnc V A ps c rpc).
 
 Definition rrls_tnc' {V} ps c rpc := @rrls_tnc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_tnc' {V} G ps c rpc := @lrls_tnc V G _ _ (rmI _ _ ps c rpc).

@@ -63,6 +63,16 @@ intros ps' c' ra.  eapply il_anc.
 epose (rsubD (rm_mono (rsubI _ _ And_ail))).  exact (r _ _ ra).
 exact X. Qed.
 
+Lemma ljt_ra_ImpL_And V B C D : 
+  rel_adm LJTrules (srs_ext_rel (sctr_rel (Imp C (Imp D B)))) ->
+  rel_adm LJTrules (srs_ext_rel (sctr_rel (@Imp V (And C D) B))).
+Proof. intros. apply gen_sctrL_ImpL_And.
+apply crd_ra.  apply LJT_can_rel_ImpL_And_inv.
+unfold LJTrules. intro. apply fer_mono.
+intros ps' c' ra.  eapply il_tnc.
+epose (rsubD (rm_mono (rsubI _ _ And_ail))).  exact (r _ _ ra).
+exact X. Qed.
+
 Print Implicit lja_ra_ImpL_And.
 
 (* left contraction of Imp (Or C D) B by induction on the formula *)
@@ -114,6 +124,17 @@ intros ps' c' ra.  eapply il_anc.
 epose (rsubD (rm_mono (rsubI _ _ Or_ail))).  exact (r _ _ ra).
 exact X. exact X0. Qed.
 
+Lemma ljt_ra_ImpL_Or V B C D : 
+  rel_adm LJTrules (srs_ext_rel (sctr_rel (Imp C B))) ->
+  rel_adm LJTrules (srs_ext_rel (sctr_rel (Imp D B))) ->
+  rel_adm LJTrules (srs_ext_rel (sctr_rel (@Imp V (Or C D) B))).
+Proof. intros. apply gen_sctrL_ImpL_Or.
+apply crd_ra.  apply LJT_can_rel_ImpL_Or_inv.
+unfold LJTrules. intro. apply fer_mono.
+intros ps' c' ra.  eapply il_tnc.
+epose (rsubD (rm_mono (rsubI _ _ Or_ail))).  exact (r _ _ ra).
+exact X. exact X0. Qed.
+
 Print Implicit lja_ra_ImpL_Or.
 
 Lemma lja_ctr_il {V} ps s (l : @LJAilrules V ps [s])
@@ -128,6 +149,20 @@ apply crd_ra.  exact (sub _ (dnsub_Imp_OrL1 _ _ _)).
 apply crd_ra.  exact (sub _ (dnsub_Imp_OrL2 _ _ _)).
 Qed.
 
+Lemma ljt_ctr_il {V} ps s (l : @LJAilrules V ps [s])
+  (sub : forall A', dnsubfml A' s -> forall x, derrec LJTrules emptyT x ->
+    can_rel LJTrules (fun fml' : PropF V => srs_ext_rel (sctr_rel fml')) A' x) :
+  rel_adm LJTrules (srs_ext_rel (sctr_rel s)).
+Proof. inversion l ; subst ; clear l.
++ inversion X. subst. clear X.  apply ljt_ra_ImpL_And.
+apply crd_ra.  exact (sub _ (dnsub_Imp_AndL _ _ _)).
++ inversion X. subst. clear X.  apply ljt_ra_ImpL_Or.
+apply crd_ra.  exact (sub _ (dnsub_Imp_OrL1 _ _ _)).
+apply crd_ra.  exact (sub _ (dnsub_Imp_OrL2 _ _ _)).
+Qed.
+
+Definition gs_ljt_ilrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
+  A _ _ _ Γ1 Γ2 G ps c LJAil_single il_tnc' ljt_ctr_il.
 Definition gs_lja_ilrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
   A _ _ _ Γ1 Γ2 G ps c LJAil_single il_anc' lja_ctr_il.
 

@@ -1180,25 +1180,24 @@ exact (atom_tnc r).
 - (* exch_rule *) unfold ImpL_Imp_inv2.
 eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
-(*
 (* now inversion results in terms of can_rel *)
 Lemma LJT_can_rel_AndLinv {V} seq :
   derrec LJTrules emptyT seq ->
   can_rel LJTrules (@srs_ext_rel _ _) (@AndLinv V) seq.
 Proof. unfold can_rel.
-apply der_trf_rc_adm.  exact (@can_trf_AndLinv_ljt V).  Qed.
+apply der_trf_rc_derl.  exact (@can_trf_AndLinv_ljt V).  Qed.
 
 Lemma LJT_can_rel_OrLinv1 {V} seq :
   derrec LJTrules emptyT seq ->
   can_rel LJTrules (@srs_ext_rel _ _) (@OrLinv1 V) seq.
 Proof. unfold can_rel.
-apply der_trf_rc_adm.  exact (@can_trf_OrLinv1_ljt V).  Qed.
+apply der_trf_rc_derl.  exact (@can_trf_OrLinv1_ljt V).  Qed.
 
 Lemma LJT_can_rel_OrLinv2 {V} seq :
   derrec LJTrules emptyT seq ->
   can_rel LJTrules (@srs_ext_rel _ _) (@OrLinv2 V) seq.
 Proof. unfold can_rel.
-apply der_trf_rc_adm.  exact (@can_trf_OrLinv2_ljt V).  Qed.
+apply der_trf_rc_derl.  exact (@can_trf_OrLinv2_ljt V).  Qed.
 
 Definition LJT_rel_adm_AndLinv V := snd (crd_ra _ _ _) (@LJT_can_rel_AndLinv V).
 Definition LJT_rel_adm_OrLinv1 V := snd (crd_ra _ _ _) (@LJT_can_rel_OrLinv1 V).
@@ -1208,23 +1207,17 @@ Lemma LJT_can_rel_ImpL_And_inv {V} seq :
   derrec LJTrules emptyT seq ->
   can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_And_inv V) seq.
 Proof. unfold can_rel.
-apply der_trf_rc_adm.  exact (@can_trf_ImpL_And_inv_ljt V).  Qed.
+apply der_trf_rc_derl.  exact (@can_trf_ImpL_And_inv_ljt V).  Qed.
 
 Lemma LJT_can_rel_ImpL_Or_inv {V} seq :
   derrec LJTrules emptyT seq ->
   can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_Or_inv V) seq.
 Proof. unfold can_rel.
-apply der_trf_rc_adm.  exact (@can_trf_ImpL_Or_inv_ljt V).  Qed.
-
-Lemma LJT_can_rel_ImpL_Var_inv2 {V} seq :
-  derrec LJTrules emptyT seq ->
-  can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_Var_inv2 V) seq.
-Proof. unfold can_rel.
-apply der_trf_rc_adm.  exact (@can_trf_ImpL_Var_inv2_ljt V).  Qed.
+apply der_trf_rc_derl.  exact (@can_trf_ImpL_Or_inv_ljt V).  Qed.
 
 Lemma LJT_can_rel_ImpL_Imp_inv2 {V} seq :
   derrec LJTrules emptyT seq ->
   can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_Imp_inv2 V) seq.
 Proof. unfold can_rel.
-apply der_trf_rc_adm.  exact (@can_trf_ImpL_Imp_inv2_ljt V).  Qed.
-*)
+apply der_trf_rc_derl.  exact (@can_trf_ImpL_Imp_inv2_ljt V).  Qed.
+
