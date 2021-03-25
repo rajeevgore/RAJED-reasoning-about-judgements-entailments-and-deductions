@@ -40,19 +40,18 @@ reflexivity. apply dlNil.
 eapply derI. eapply (@fextI _ _ _ [_] G).
 eapply rmI_eqc. apply ImpR_tnc'. reflexivity.
 apply dersrec_singleI.  destruct A1.
-+ eapply derI. eapply (@fextI _ _ _ [] (Var v :: G)).
-
-need ImpL_tnc' which of course won't exist
-
-eapply rmI_eqc. apply ImpL_tnc'. reflexivity. 
-apply dlCons.
-eapply derI. eapply (@fextI _ _ _ [_] G).
-eapply rmI_eqc. apply Id_tnc'. reflexivity. apply dlNil.
++ (* Imp (Var v) A2 - different from LJA *)
+eapply derI. eapply (@fextI _ _ _ [] G).
+eapply rmI_eqc. apply atom_tnc'. reflexivity. 
 apply dersrec_singleI.
 apply IH.  apply dnsub_ImpR.
 + eapply derI. eapply (@fextI _ _ _ [_] G).
 eapply rmI_eqc. apply lrls_tnc'. apply Bot_sl. apply Botrule_I.  reflexivity.
 apply dlNil.
+
+OK to here
+now use LJT_rel_adm_ImpR 
+
 + eapply derI. eapply (@fextI _ _ _ [] (_ :: G)).
 eapply rmI_eqc. apply Imp_tnc'. reflexivity.
 apply dlCons.  (* now invert ImpR rule *)

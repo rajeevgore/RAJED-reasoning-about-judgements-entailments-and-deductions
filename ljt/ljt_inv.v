@@ -129,6 +129,8 @@ Proof. intros. subst. apply rr_ext_relI. exact X. Qed.
 
 Definition rr_ext_relI_eqc W Y R ant G G' Φ1 Φ2 seq2 rga := 
   @rr_ext_relI_eq W Y R ant G G' Φ1 Φ2 _ seq2 rga eq_refl. 
+Definition rr_ext_relI_eqp W Y R ant G G' Φ1 Φ2 seq1 rga s1eq := 
+  @rr_ext_relI_eq W Y R ant G G' Φ1 Φ2 seq1 _ rga s1eq eq_refl. 
 
 Lemma LJAIAE V ps B C D G :
   LJAncrules ps ([@Imp V (And C D) B], G) -> ps = [([Imp C (Imp D B)], G)].
@@ -254,21 +256,24 @@ apply InT_mapE in inxm. cD. subst.
 apply InT_mapE in inxm1. cD. subst.
 eexists. split.  exact (InT_map _ (InT_map _ inxm2)). apply caq. Qed.
 
-Lemma ncdgen W Y rules ps0 l p Γ1 Γ2 : rules ps0 (l : list W, p : Y) ->
-  derl (fst_ext_rls rules) (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ l ++ Γ2, p).
-Proof. intro ljnc. apply in_derl.  eapply fextI.
+Lemma ncgen W Y rules ps0 l p Γ1 Γ2 : rules ps0 (l : list W, p : Y) ->
+  fst_ext_rls rules (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ l ++ Γ2, p).
+Proof. intro ljnc.  eapply fextI.
 eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
 
+Lemma ncgene W Y rules ps0 p Γ1 Γ2 : rules ps0 ([] : list W, p : Y) ->
+  fst_ext_rls rules (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ Γ2, p).
+Proof. intro ljnc. eapply fextI.
+eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
+
+Definition ncdgen W Y rules ps0 l p Γ1 Γ2 rplp :=
+  in_derl _ _ _ (@ncgen W Y rules ps0 l p Γ1 Γ2 rplp).
 Definition ncagen W Y rules ps0 l p Γ1 Γ2 rplp :=
-  derl_sub_adm (@ncdgen W Y rules ps0 l p Γ1 Γ2 rplp).
-
-Lemma ncdgene W Y rules ps0 p Γ1 Γ2 : rules ps0 ([] : list W, p : Y) ->
-  derl (fst_ext_rls rules) (map (apfst (fmlsext Γ1 Γ2)) ps0) (Γ1 ++ Γ2, p).
-Proof. intro ljnc. apply in_derl.  eapply fextI.
-eapply rmI_eq.  apply ljnc. reflexivity. reflexivity. Qed.
-
+  in_adm _ _ _ (@ncgen W Y rules ps0 l p Γ1 Γ2 rplp).
+Definition ncdgene W Y rules ps0 p Γ1 Γ2 rplp :=
+  in_derl _ _ _ (@ncgene W Y rules ps0 p Γ1 Γ2 rplp).
 Definition ncagene W Y rules ps0 p Γ1 Γ2 rplp :=
-  derl_sub_adm (@ncdgene W Y rules ps0 p Γ1 Γ2 rplp).
+  in_adm _ _ _ (@ncgene W Y rules ps0 p Γ1 Γ2 rplp).
 
 Lemma serl U W R G H J p : srs_ext_rel R (H, p) (J : list U, p : W) -> 
   srs_ext_rel R (G ++ H, p) (G ++ J, p).
@@ -780,34 +785,86 @@ Proof. apply crd_ra. apply LJA_can_rel_ImpLinv2. Qed.
 Check rr_ext_rel ImpRinv.
 Check fun W Y genRinv => (@rr_ext_rel W Y genRinv).
 
-Lemma LJAil_adm_lem {V} ps c Γ1 Γ2 G : @LJAilrules V ps c -> 
-  adm LJArules (map (apfst (fmlsext Γ1 Γ2)) (map (Basics.flip pair G) ps))
+Lemma LJAil_lem_ljts {V} ps c Γ1 Γ2 G : @LJAilrules V ps c -> 
+  LJTSrules (map (apfst (fmlsext Γ1 Γ2)) (map (Basics.flip pair G) ps))
     (Γ1 ++ c ++ Γ2, G).
-Proof. intro il.  apply ncagen.  eapply il_anc.
+Proof. intro il.  apply ncgen.  eapply il_tsnc.
 eapply rmI_eq. apply il.  reflexivity.  reflexivity.  Qed.
 
-Lemma LJsl_adm_lem {V} ps c Γ1 Γ2 G : @LJslrules V ps c -> 
-  adm LJArules (map (apfst (fmlsext Γ1 Γ2)) (map (Basics.flip pair G) ps))
+Lemma LJsl_lem_ljts {V} ps c Γ1 Γ2 G : @LJslrules V ps c -> 
+  LJTSrules (map (apfst (fmlsext Γ1 Γ2)) (map (Basics.flip pair G) ps))
     (Γ1 ++ c ++ Γ2, G).
-Proof. intro il.  apply ncagen.  eapply lrls_anc.
+Proof. intro il.  apply ncgen.  eapply lrls_tsnc.
 eapply rmI_eq. apply il.  reflexivity.  reflexivity.  Qed.
+
+Definition LJAil_lem_lja {V} ps c Γ1 Γ2 G ljpc :=
+  ljts_sub_lja (@LJAil_lem_ljts V ps c Γ1 Γ2 G ljpc).
+Definition LJAil_lem_ljt {V} ps c Γ1 Γ2 G ljpc :=
+  ljts_sub_ljt (@LJAil_lem_ljts V ps c Γ1 Γ2 G ljpc).
+
+Definition LJAil_derl_lem_ljts {V} ps c Γ1 Γ2 G ljpc :=
+  in_derl _ _ _ (@LJAil_lem_ljts V ps c Γ1 Γ2 G ljpc).
+Definition LJAil_derl_lem_lja {V} ps c Γ1 Γ2 G ljpc :=
+  in_derl _ _ _ (@LJAil_lem_lja V ps c Γ1 Γ2 G ljpc).
+Definition LJAil_derl_lem_ljt {V} ps c Γ1 Γ2 G ljpc :=
+  in_derl _ _ _ (@LJAil_lem_ljt V ps c Γ1 Γ2 G ljpc).
+
+Definition LJAil_adm_lem_ljts {V} ps c Γ1 Γ2 G ljpc :=
+  in_adm _ _ _ (@LJAil_lem_ljts V ps c Γ1 Γ2 G ljpc).
+Definition LJAil_adm_lem_lja {V} ps c Γ1 Γ2 G ljpc :=
+  in_adm _ _ _ (@LJAil_lem_lja V ps c Γ1 Γ2 G ljpc).
+Definition LJAil_adm_lem_ljt {V} ps c Γ1 Γ2 G ljpc :=
+  in_adm _ _ _ (@LJAil_lem_ljt V ps c Γ1 Γ2 G ljpc).
+
+Definition LJsl_lem_lja {V} ps c Γ1 Γ2 G ljpc :=
+  ljts_sub_lja (@LJsl_lem_ljts V ps c Γ1 Γ2 G ljpc).
+Definition LJsl_lem_ljt {V} ps c Γ1 Γ2 G ljpc :=
+  ljts_sub_ljt (@LJsl_lem_ljts V ps c Γ1 Γ2 G ljpc).
+
+Definition LJsl_derl_lem_lja {V} ps c Γ1 Γ2 G ljpc :=
+  in_derl _ _ _ (@LJsl_lem_lja V ps c Γ1 Γ2 G ljpc).
+Definition LJsl_derl_lem_ljt {V} ps c Γ1 Γ2 G ljpc :=
+  in_derl _ _ _ (@LJsl_lem_ljt V ps c Γ1 Γ2 G ljpc).
+
+Definition LJsl_adm_lem_lja {V} ps c Γ1 Γ2 G ljpc :=
+  in_adm _ _ _ (@LJsl_lem_lja V ps c Γ1 Γ2 G ljpc).
+Definition LJsl_adm_lem_ljt {V} ps c Γ1 Γ2 G ljpc :=
+  in_adm _ _ _ (@LJsl_lem_ljt V ps c Γ1 Γ2 G ljpc).
+
+(* TODO rename these to LJAil_adm_lem_lja, LJsl_adm_lem_lja *)
+Definition LJAil_adm_lem {V} ps c Γ1 Γ2 G rpc :=
+  in_adm _ _ _ (@LJAil_lem_lja V ps c Γ1 Γ2 G rpc).
+Definition LJsl_adm_lem {V} ps c Γ1 Γ2 G rpc :=
+  in_adm _ _ _ (@LJsl_lem_lja V ps c Γ1 Γ2 G rpc).
 
 Ltac fcr2_tac H0 := apply fcr2 ; intro ; 
 apply rT_step ; simpl ; unfold fmlsext ;  rewrite ?app_nil_r ;
 aprre ; exact H0.
 
+Ltac ljgltac thm H2 H0 := eexists ; split ;
+  [ apply thm ; apply H2 | fcr2_tac H0 ].
 Ltac ljailtac H2 H0 := eexists ; split ;
   [ apply LJAil_adm_lem ; apply H2 | fcr2_tac H0 ].
 Ltac ljsltac H2 H0 := eexists ; split ;
   [ apply LJsl_adm_lem ; apply H2 | fcr2_tac H0 ].
 
+Lemma f1cf W q qs f : f q -> {p : W & InT p (q :: qs) * f p}.
+Proof. intro. eexists. exact (pair (InT_eq _ _) X). Qed.
+
 Lemma f1crr W q qs R : {p : W & InT p (q :: qs) * clos_reflT R p q}.
-Proof. eexists. exact (pair (InT_eq _ _) (rT_refl _ _)). Qed.
+Proof. apply f1cf. apply rT_refl. Qed.
 
 (* note, could now replace this by use of insL_lja *)
 Ltac drstac fd1 fd2 X0 X2 := simpl ;  unfold fmlsext ;  apply dlCons ; [
 (* need to do weakening and exchange here *)
 apply (fer_der fd1 fd2) in X0 ; apply (exchL_lja X0) ;  apply fst_relI ;
+rewrite ?app_nil_r ; simpl ; swap_tac_Rc |
+apply dersrec_singleI ; apply (eq_rect _ _ X2) ; list_eq_assoc ].
+
+(* TODO - not commonality with drstac *)
+Ltac drstac_t fd1 fd2 X0 X2 := simpl ;  unfold fmlsext ;  apply dlCons ; [
+(* need to do weakening and exchange here *)
+apply (fer_der fd1 fd2) in X0 ; apply (exchL_ljt X0) ;  apply fst_relI ;
 rewrite ?app_nil_r ; simpl ; swap_tac_Rc |
 apply dersrec_singleI ; apply (eq_rect _ _ X2) ; list_eq_assoc ].
 
@@ -827,6 +884,186 @@ unfold fmlsext ; simpl ; list_eq_assoc ].
 Ltac admtac X1 X3 := unfold fmlsext ; rewrite ?app_nil_r ;
 apply admI ; intro drs ; inversion drs ; inversion X1 ; subst ; clear X1 X3 ;
 eapply derI.
+
+Ltac rinv_tac C := 
+apply ForallT_singleI ; apply f1cf ;
+apply rT_step ; simpl ;unfold fmlsext ; simpl ;
+assoc_single_mid' C ; eapply (rr_ext_relI_eqp _ [C]) ;
+[apply ImpRinv_I |  list_eq_assoc].
+
+Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
+
+(* TODO - try for commonality between this and can_trf_ImpRinv_lja *)
+Lemma can_trf_ImpRinv_ljt {V} ps c : @LJTrules V ps c ->
+  can_trf_rules_rc (rr_ext_rel ImpRinv) (adm LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r as [? ? Y]. subst. clear r.
+unfold can_trf_rules_rc. intros c' ser.
+inversion ser. clear ser. destruct c0. simpl in H.
+unfold fmlsext in H. inversion H. clear H. subst.
+(* pose (LJTSnc_seL X). *)  inversion Y ; subst.
+- pose (LJTSnc_seL X). inversion X.
+-- (* LJAilrules *)
+inversion X0. subst.
+acacD'T2 ; subst.
+apply sing_empty_app in s. sD ; subst.
++ simpl in X1.  assoc_mid H2.  ljgltac @LJAil_adm_lem_ljt X1 H0.
++ rewrite ?app_nil_r in X1.  assoc_mid H3.  ljgltac @LJAil_adm_lem_ljt X1 H0.
++ assoc_mid l.  ljgltac @LJAil_adm_lem_ljt X1 H0.
++ assoc_mid l.  ljgltac @LJAil_adm_lem_ljt X1 H0.
+
+-- (* ImpL_Imp_rule *)
+inversion X0. inversion H0. subst. clear X0 H0 s.
+acacD'T2 ; subst.
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_r.
+++ admtac X1 X3.
++++ ljartac Imp_tnc' (Γ1 ++ [C0]) Γ2.
++++ drstac_t [C0] ([] : list (PropF V)) X0 X2.
+
++ list_eq_ncT. cD. subst.
+eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_l.
+++ admtac X1 X3.
++++ ljartac Imp_tnc' Γ1 (C0 :: Γ2).
++++ drstac_t ([] : list (PropF V)) [C0] X0 X2.
+
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_l.
+++ admtac X1 X3.
++++ ljartac Imp_tnc' Γ1 (H1 ++ C0 :: Φ2).
++++ drstac_t ([] : list (PropF V)) [C0] X0 X2.
+
++ eexists [ _ ; _ ]. split. all: cycle 1. 
+++ fictac list_assoc_r.
+++ admtac X1 X3.
++++ ljartac Imp_tnc' (Φ1 ++ [C0] ++ H3) Γ2.
++++ drstac_t [C0] ([] : list (PropF V)) X0 X2.
+
+-- (* ImpRrule *)
+inversion X0. inversion H0. subst.  inversion H4. subst. clear H4 H0 X0.
+eexists. split. all: cycle 1.
+apply ForallT_singleI.  eexists. split.  apply InT_eq.  apply rT_refl.
+simpl in H3.  simpl. unfold fmlsext. 
+apply admI. intro d.  apply dersrec_singleD in d.
+apply (exchL_ljt d).  apply fst_relI.
+exact (swap_ins _ _ _ _ [A] H3).
+-- (* Idrule (Var - so n/a) *)
+inversion X0.  inversion H0. subst.  inversion H4.
+-- (* LJslrules *)
+inversion X0. subst.
+acacD'T2 ; subst.
+apply sing_empty_app in s. sD ; subst.
+
++ simpl in X1.  assoc_mid H2. 
+  ljgltac @LJsl_adm_lem_ljt X1 H0.
++ rewrite ?app_nil_r in X1.  assoc_mid H3.  ljgltac @LJsl_adm_lem_ljt X1 H0.
++ assoc_mid l.  ljgltac @LJsl_adm_lem_ljt X1 H0.
++ assoc_mid l.  ljgltac @LJsl_adm_lem_ljt X1 H0.
+-- (* LJsrrules - different formulae *)
+inversion H0.  inversion X0. subst. clear X0 H0.
+inversion X1 ; inversion X0.
+
+- (* ImpL_atom_rule *)
+inversion X.  inversion H0.  destruct X0. subst. clear X H0 Y. simpl.
+acacD'T2 ; subst.
+-- rewrite ?app_nil_r.  eexists. split. apply in_adm.
+apply (@fextI _ _ _ (Γ1 ++ [C]) Γ2).
+eapply rmI_eqc.  apply atom_tnc'.
+simpl.  unfold fmlsext.  simpl.  list_eq_assoc.
+apply ForallT_singleI ; apply f1cf.
+apply rT_step.  simpl. unfold fmlsext.  simpl.  
+eapply (rr_ext_relI_eq _ [C] Γ1 (B :: Var p0 :: Γ2)).
+apply ImpRinv_I.  list_eq_assoc.  list_eq_assoc.
+
+-- (* C between Imp (Var p0) B and Var p0 *)
+eexists [ _ ]. split. all: cycle 1.
+apply ForallT_singleI. apply f1cf. apply rT_step.
+eapply (rr_ext_relI_eqp _ [C] _ []).
+apply ImpRinv_I. simpl. reflexivity.
+simpl. apply derl_sub_adm.  eapply derl_trans.
+apply sw_ljt.  apply fst_relI.
+eapply (swapped_I [] [C]). reflexivity. simpl. reflexivity.
+
+apply derl_dersl_single. apply in_derl.
+apply (@fextI _ _ _ (C :: Γ1) Γ2).
+eapply rmI_eq. apply atom_tnc'.
+simpl. unfold fmlsext.  simpl. reflexivity.
+simpl. unfold fmlsext.  simpl. list_eq_assoc.
+
+-- list_eq_ncT. cD. subst.
+eexists. split. apply in_adm.
+apply (@fextI _ _ _ Γ1 (C :: Γ2)).
+eapply rmI_eqc.  apply atom_tnc'.
+simpl.  unfold fmlsext.  simpl.  list_eq_assoc.
+apply ForallT_singleI ; apply f1cf.
+apply rT_step.  simpl. unfold fmlsext.  simpl.
+eapply (rr_ext_relI_eq _ [C] (Γ1 ++ [B; Var p0]) Γ2).
+apply ImpRinv_I.  list_eq_assoc.  list_eq_assoc.
+
+-- eexists. split. apply in_adm.
+apply (@fextI _ _ _ Γ1 (H1 ++ C :: Φ2)).
+eapply rmI_eqc.  apply atom_tnc'.
+simpl.  unfold fmlsext.  simpl.  list_eq_assoc.
+apply ForallT_singleI ; apply f1cf.
+apply rT_step.  simpl. unfold fmlsext.  simpl.
+eapply (rr_ext_relI_eq _ [C] (Γ1 ++ B :: Var p0 :: H1) Φ2).
+apply ImpRinv_I.  list_eq_assoc.  list_eq_assoc.
+
+-- eexists. split. apply in_adm.
+apply (@fextI _ _ _ (Φ1 ++ C :: H3) Γ2).
+eapply rmI_eqc.  apply atom_tnc'.
+simpl.  unfold fmlsext.  simpl.  list_eq_assoc.
+apply ForallT_singleI ; apply f1cf.
+apply rT_step.  simpl. unfold fmlsext.  simpl.
+eapply (rr_ext_relI_eq _ [C] Φ1 (H3 ++ B :: Var p0 :: Γ2)).
+apply ImpRinv_I.  list_eq_assoc.  list_eq_assoc.
+
+- (* exch_rule *)
+inversion X.  inversion H0.  destruct X0. subst. clear X H0 Y. simpl.
+acacD'T2 ; subst. (* 6 subgoals *)
+
+-- rewrite ?app_nil_r.  eexists. split. apply in_adm.
+apply (@fextI _ _ _ (Γ1 ++ [C]) Γ2).
+eapply rmI_eqc.  eapply exch_tnc.  apply rmI. apply exchI.
+sfseq.
+rinv_tac C.
+
+-- eexists. split. apply in_adm.
+apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc.  eapply exch_tnc.  apply rmI. 
+apply (exchI x y X0 (H5 ++ C :: H2)).
+sfseq.
+rinv_tac C.
+
+-- rewrite ?app_nil_r.  eexists. split. apply in_adm.
+apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc.  eapply exch_tnc.  apply rmI.
+apply (exchI x y X0 (Y0 ++ [C])).
+sfseq.
+rinv_tac C.
+
+-- eexists. split. apply in_adm.
+apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc.  eapply exch_tnc.  apply rmI.
+apply (exchI x y (H6 ++ C :: H1) Y0).
+sfseq.
+rinv_tac C.
+
+-- eexists. split. apply in_adm.
+apply (@fextI _ _ _ Γ1 (H1 ++ C :: Φ2)).
+eapply rmI_eqc.  eapply exch_tnc.  apply rmI.
+apply (exchI x y X0 Y0).
+sfseq.
+rinv_tac C.
+
+-- eexists. split. apply in_adm.
+apply (@fextI _ _ _ (Φ1 ++ C :: H3) Γ2).
+eapply rmI_eqc.  eapply exch_tnc.  apply rmI.
+apply (exchI x y X0 Y0).
+sfseq.
+rinv_tac C.
+
+Qed.
 
 Lemma can_trf_ImpRinv_lja {V} ps c : @LJArules V ps c ->
   can_trf_rules_rc (rr_ext_rel ImpRinv) (adm LJArules) ps c.
@@ -923,9 +1160,15 @@ inversion H0.  inversion X0. subst. clear X0 H0.
 inversion X1 ; inversion X0.
 Qed.
 
+(* we don't have a theorem of invertibility of ImpR for LJ
+  because normally it is needed only for contraction on the right *)
 Lemma LJA_rel_adm_ImpR V : rel_adm LJArules (rr_ext_rel (@ImpRinv V)).
 Proof. apply crd_ra. unfold can_rel.
 apply der_trf_rc_adm.  exact can_trf_ImpRinv_lja.  Qed.
+
+Lemma LJT_rel_adm_ImpR V : rel_adm LJTrules (rr_ext_rel (@ImpRinv V)).
+Proof. apply crd_ra. unfold can_rel.
+apply der_trf_rc_adm.  exact can_trf_ImpRinv_ljt.  Qed.
 
 Lemma can_trf_genRinv_lja V genRinv ps c (rls_unique : forall ps u w, 
     genRinv u w -> LJAncrules ps ([], u) -> InT ([], w) ps) 

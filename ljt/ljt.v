@@ -268,11 +268,19 @@ Definition ImpR_tnc {V} ps c rpc := @sing_tnc V ps c (@ImpR_tsnc V ps c rpc).
 Definition Imp_tnc {V} ps c rpc := @sing_tnc V ps c (@Imp_tsnc V ps c rpc).
 Definition Id_tnc {V} A ps c rpc := @sing_tnc V ps c (@Id_tsnc V A ps c rpc).
 
+Definition rrls_tsnc' {V} ps c rpc := @rrls_tsnc V _ _ (rmI _ _ ps c rpc).
+Definition lrls_tsnc' {V} G ps c rpc := @lrls_tsnc V G _ _ (rmI _ _ ps c rpc).
+Definition il_tsnc' {V} G ps c rpc := @il_tsnc V G _ _ (rmI _ _ ps c rpc).
+Definition ImpR_tsnc' {V} A B := ImpR_tsnc (@ImpRrule_I V A B).
+Definition Imp_tsnc' V B C D G := Imp_tsnc (@ImpL_Imp_rule_I V B C D G).
+
 Definition rrls_tnc' {V} ps c rpc := @rrls_tnc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_tnc' {V} G ps c rpc := @lrls_tnc V G _ _ (rmI _ _ ps c rpc).
 Definition il_tnc' {V} G ps c rpc := @il_tnc V G _ _ (rmI _ _ ps c rpc).
 Definition ImpR_tnc' {V} A B := ImpR_tnc (@ImpRrule_I V A B).
-Definition Imp_tnc' {V} B C D G := Imp_tnc (@ImpL_Imp_rule_I V B C D G).
+Definition Imp_tnc' V B C D G := Imp_tnc (@ImpL_Imp_rule_I V B C D G).
+Definition atom_tnc'2 {V} G ps c rpc := @atom_tnc V G _ _ (rmI _ _ ps c rpc).
+Definition atom_tnc' {V} p B G := atom_tnc'2 G (@ImpL_atom_rule_I V p B).
 
 Definition rrls_anc' {V} ps c rpc := @rrls_anc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_anc' {V} G ps c rpc := @lrls_anc V G _ _ (rmI _ _ ps c rpc).
@@ -295,6 +303,9 @@ Lemma sing_anc V ps c : LJTSncrules ps c -> @LJAncrules V ps c.
 Proof. intro. destruct X.
 exact (il_anc r).  exact (Imp_anc i).  exact (ImpR_anc i).
 exact (Id_anc i).  exact (lrls_anc r).  exact (rrls_anc r). Qed.
+
+Definition ljts_sub_lja {V} := fer_mono (@sing_anc V).
+Definition ljts_sub_ljt {V} := fer_mono (@sing_tnc V).
 
 Lemma LJAncrules_ljts V ps c : 
   @LJAncrules V ps c -> LJTSncrules ps c + ImpLrule_p ps c.
@@ -487,9 +498,35 @@ apply exchL_std_rule. apply LJAnc_seL. Qed.
 
 Print Implicit exchL_lja.
 
+Lemma sw_ljt V p c : fst_rel (@swapped _) p c -> derl (@LJTrules V) [p] c.
+Proof. intro frs.
+inversion frs. destruct H. clear frs. subst.
+destruct B. apply asmI. destruct C. apply asmI.
+apply in_derl. eapply (@fextI _ _ _ A D).
+eapply rmI_eq. eapply exch_tnc. apply rmI.
+eapply exchI.  simpl. unfold fmlsext. list_assoc_r'. reflexivity.
+simpl. unfold fmlsext. list_assoc_r'. reflexivity. Qed.
+
+(* exchange for LJT in similar format *)
+Lemma exchL_ljt: forall V concl,
+  derrec (@LJTrules V) emptyT concl ->
+     forall concl', fst_rel (@swapped _) concl concl' ->
+    derrec (@LJTrules V) emptyT concl'.
+Proof. intros. apply sw_ljt in X0.
+apply (derl_derrec_trans X0). exact (dersrec_singleI X). Qed.
+
 (* insertion for LJ, LJA systems *)
 Definition insL_lj V cl cr mid G := @gen_insL _ _ _ cl cr mid G (@LJnc_seL V).
 Definition insL_lja V cl cr mid G := @gen_insL _ _ _ cl cr mid G (@LJAnc_seL V).
+
+(* insertion, similar format, for LJT systems *)
+Lemma insL_ljt V cl cr mid G :
+  derrec (@LJTrules V) emptyT (cl ++ cr, G) ->
+  derrec LJTrules emptyT (cl ++ mid ++ cr, G).
+Proof. intro dnw.  pose (LJTweakening dnw).
+unfold wkL_valid' in w. simpl in w.  unfold wkL_valid in w. 
+specialize (w [] mid).  unfold fmlsext in w. simpl in w.
+apply (exchL_ljt w).  apply fst_relI. swap_tac. Qed.
 
 (* atom rule derivable in LJ *)
 Lemma lj_der_atom V ps c G : 
