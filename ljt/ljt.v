@@ -281,6 +281,7 @@ Definition ImpR_tnc' {V} A B := ImpR_tnc (@ImpRrule_I V A B).
 Definition Imp_tnc' V B C D G := Imp_tnc (@ImpL_Imp_rule_I V B C D G).
 Definition atom_tnc'2 {V} G ps c rpc := @atom_tnc V G _ _ (rmI _ _ ps c rpc).
 Definition atom_tnc' {V} p B G := atom_tnc'2 G (@ImpL_atom_rule_I V p B).
+Definition Id_tnc' {V} v := Id_tnc (@Idrule_I V (Var v)).
 
 Definition rrls_anc' {V} ps c rpc := @rrls_anc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_anc' {V} G ps c rpc := @lrls_anc V G _ _ (rmI _ _ ps c rpc).
@@ -289,6 +290,13 @@ Definition ImpR_anc' {V} A B := ImpR_anc (@ImpRrule_I V A B).
 Definition Imp_anc' V B C D G := Imp_anc (@ImpL_Imp_rule_I V B C D G).
 Definition ImpL_anc' V p B G := ImpL_anc (@ImpLrule_p_I V p B G).
 Definition Id_anc' {V} v := Id_anc (@Idrule_I V (Var v)).
+
+Definition AndL_sl' {V} A B := AndL_sl (@AndLrule_I V A B).
+Definition AndR_sr' {V} A B := AndR_sr (@AndRrule_I V A B).
+Definition OrL_sl' {V} A B := OrL_sl (@OrLrule_I V A B).
+Definition OrR1_sr' {V} A B := OrR1_sr (@OrR1rule_I V A B).
+Definition OrR2_sr' {V} A B := OrR2_sr (@OrR2rule_I V A B).
+Definition Bot_sl' {V} := Bot_sl (@Botrule_I V).
 
 Lemma LJrules_req V : req (@LJrules V) (fst_ext_rls LJncrules).
 Proof.  unfold LJrules. apply req_refl. Qed.

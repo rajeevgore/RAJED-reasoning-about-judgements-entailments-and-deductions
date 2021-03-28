@@ -21,116 +21,143 @@ Require Import gen_seq gstep gentree rtcT.
 Require Import ljt ljt_inv.
 Require Import Coq.Program.Basics.
 
-(* Lemma 3.2(1) of Dyckhoff & Negri JSL 2000 *)
-(* proofs of LJT_der_id and LJA_der_id similar - can we use this? *)
-Lemma LJT_der_id {V} :
-  forall (A : PropF V) (a : AccT dnsubfml A), 
-  forall G, derrec LJTrules emptyT (A :: G, A).
-Proof. 
-epose (AccT_rect (fun A _ => 
-  (forall G, derrec LJTrules emptyT (A :: G, A)))).
-apply d. clear d.  intros A adn IH G.  destruct A.
+(* lemma for use in LJA_der_id and LJT_der_id *)
+Lemma LJX_der_id_lem {V} rules A
+  (IH : forall y : PropF V, dnsubfml y A ->
+    forall G, derrec (fst_ext_rls rules) emptyT (y :: G, y))
+  (Hv : forall y : PropF V, dnsubfml y A -> forall G v,
+    derrec (fst_ext_rls rules) emptyT (Imp (Var v) y :: Var v :: G, y))
+  (Id_xnc' : forall v : V, rules [] ([Var v], Var v))
+  (ImpR_xnc' : forall A B, rules [([A], B)] ([], Imp A B))
+  (Imp_xnc' : forall B C D G,
+    rules [([Imp D B; C], D); ([B], G)] ([Imp (Imp C D) B], G))
+  (il_xnc' : forall G ps c, LJAilrules ps c -> 
+    rules (map (flip pair G) ps) (flip pair G c))
+  (lrls_xnc' : forall G ps c, LJslrules ps c -> 
+    rules (map (flip pair G) ps) (flip pair G c))
+  (rrls_xnc' : forall ps c, LJsrrules ps c -> 
+    rules (map (pair []) ps) ([], c))
+  (exchL_ljx : forall concl, derrec (fst_ext_rls rules) emptyT concl ->
+     forall concl', fst_rel (@swapped _) concl concl' ->
+     derrec (fst_ext_rls rules) emptyT concl') 
+  (rel_adm_ImpR : rel_adm (fst_ext_rls rules) (rr_ext_rel ImpRinv)) :
+  forall G, derrec (fst_ext_rls rules) emptyT (A :: G, A).
+Proof. intro.  destruct A.
 - eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply Id_tnc. eapply Idrule_I.  
+eapply rmI_eqc. eapply Id_xnc'.
 reflexivity. apply dlNil.
 - eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply lrls_tnc. apply rmI.  apply Bot_sl. apply Botrule_I.
+eapply rmI_eqc. eapply lrls_xnc'.  apply Bot_sl'.
 reflexivity. apply dlNil.
 
 - (* Imp *)
 eapply derI. eapply (@fextI _ _ _ [_] G).
-eapply rmI_eqc. apply ImpR_tnc'. reflexivity.
+eapply rmI_eqc. apply ImpR_xnc'. reflexivity.
 apply dersrec_singleI.  destruct A1.
-+ (* Imp (Var v) A2 - different from LJA *)
-eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. apply atom_tnc'. reflexivity. 
-apply dersrec_singleI.
-apply IH.  apply dnsub_ImpR.
++ (* Imp (Var v) A2 - use the special hypothesis *)
+sfs. apply Hv. apply dnsub_ImpR.
 + eapply derI. eapply (@fextI _ _ _ [_] G).
-eapply rmI_eqc. apply lrls_tnc'. apply Bot_sl. apply Botrule_I.  reflexivity.
+eapply rmI_eqc. apply lrls_xnc'. apply Bot_sl'.  reflexivity.
 apply dlNil.
 + eapply derI. eapply (@fextI _ _ _ [] (_ :: G)).
-eapply rmI_eqc. apply Imp_tnc'. reflexivity.
+eapply rmI_eqc. apply Imp_xnc'. reflexivity.
 apply dlCons.  (* now invert ImpR rule *)
-pose (LJT_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
-2: eapply (radmD r).  simpl. unfold fmlsext. simpl.
+pose rel_adm_ImpR.  destruct r.  erequire r.  erequire r.  require r.
+2: eapply (radmD r). sfs.
 eapply (rr_ext_relI_eqc _ _ _ [_] (_ :: G)).
 apply ImpRinv_I. reflexivity.
 specialize (IH _ (dnsub_ImpL _ _) (Imp A1_2 A2 :: G)). 
-apply (exchL_ljt IH).  apply fst_relI.  apply swapped_cc.
+apply (exchL_ljx _ IH).  apply fst_relI.  apply swapped_cc.
 apply dersrec_singleI.
 apply (IH _ (dnsub_ImpR _ _)).
 
 + eapply derI. eapply (@fextI _ _ _ [_] G).
-eapply rmI_eqc. apply lrls_tnc'. apply AndL_sl. apply AndLrule_I.  reflexivity.
+eapply rmI_eqc. apply lrls_xnc'. apply AndL_sl'.  reflexivity.
 apply dersrec_singleI.
 eapply derI. eapply (@fextI _ _ _ [] _).
-eapply rmI_eqc. apply il_tnc'.
+eapply rmI_eqc. apply il_xnc'.
 apply And_ail. apply ImpL_And_rule_I.  reflexivity.
 apply dersrec_singleI.  simpl.
 (* now use invertibility of ImpR twice *)
-pose (LJT_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
+pose rel_adm_ImpR.  destruct r.  erequire r.  erequire r.  require r.
 2: eapply (radmD r).  unfold fmlsext. simpl.
 eapply (rr_ext_relI_eqc _ _ _ [_ ; _] G).
 apply ImpRinv_I. reflexivity. clear r.
-pose (LJT_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
+pose rel_adm_ImpR.  destruct r.  erequire r.  erequire r.  require r.
 2: eapply (radmD r).  
 eapply (rr_ext_relI_eqc _ _ _ [_] G).
 apply ImpRinv_I. reflexivity.
 apply (IH _ (dnsub_Imp_AndL _ _ _)).
 
 + eapply derI. eapply (@fextI _ _ _ [] _).
-eapply rmI_eqc. apply il_tnc'.
+eapply rmI_eqc. apply il_xnc'.
 apply Or_ail. apply ImpL_Or_rule_I.  reflexivity.
 apply dersrec_singleI.  simpl.
 eapply derI. eapply (@fextI _ _ _ [_ ; _] _).
-eapply rmI_eqc. apply lrls_tnc'. apply OrL_sl. apply OrLrule_I.  reflexivity.
+eapply rmI_eqc. apply lrls_xnc'. apply OrL_sl'.  reflexivity.
 simpl. unfold fmlsext. simpl. apply dlCons.
 (* now invert ImpR rule *)
-pose (LJT_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
+pose rel_adm_ImpR.  destruct r.  erequire r.  erequire r.  require r.
 2: eapply (radmD r).
 eapply (rr_ext_relI_eqc _ _ _ [_ ; _] G).
 apply ImpRinv_I. reflexivity.
 apply (IH _ (dnsub_Imp_OrL1 _ _ _)).
 apply dersrec_singleI.  (* now invert ImpR rule *)
-pose (LJT_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
+pose rel_adm_ImpR.  destruct r.  erequire r.  erequire r.  require r.
 2: eapply (radmD r).
 eapply (rr_ext_relI_eqc _ _ _ [_ ; _] G).
 apply ImpRinv_I. reflexivity.
 (* now need to use exchange *)
 specialize (IH _ (dnsub_Imp_OrL2 _ _ _) (Imp A1_1 A2 :: G)).
-apply (exchL_ljt IH).  apply fst_relI.  apply swapped_cc.
+apply (exchL_ljx _ IH).  apply fst_relI.  apply swapped_cc.
 
 - eapply derI. eapply (@fextI _ _ _ [] (And A1 A2 :: G)).
-eapply rmI_eqc. apply rrls_tnc. apply rmI. apply AndR_sr.  apply AndRrule_I.
+eapply rmI_eqc. apply rrls_xnc'. apply AndR_sr'.
 reflexivity.  apply dlCons.
 -- eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply lrls_tnc. apply rmI. apply AndL_sl.  apply AndLrule_I.
+eapply rmI_eqc. eapply lrls_xnc'. apply AndL_sl'.
 reflexivity.  apply dersrec_singleI.
 apply IH. apply dnsub_AndL. 
 -- apply dersrec_singleI.
 eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply lrls_tnc. apply rmI. apply AndL_sl.  apply AndLrule_I.
+eapply rmI_eqc. eapply lrls_xnc'. apply AndL_sl'.
 reflexivity.  apply dersrec_singleI.
 (* need to use exchange *)
-simpl. unfold fmlsext. simpl.
-specialize (IH _ (dnsub_AndR _ _) (A1 :: G)). 
-apply (exchL_ljt IH). apply fst_relI. apply swapped_cc.
+sfs.  specialize (IH _ (dnsub_AndR _ _) (A1 :: G)). 
+apply (exchL_ljx _ IH). apply fst_relI. apply swapped_cc.
 - eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply lrls_tnc. apply rmI. apply OrL_sl.  apply OrLrule_I.
+eapply rmI_eqc. eapply lrls_xnc'. apply OrL_sl'.
 reflexivity.  apply dlCons.
 -- eapply derI. eapply (@fextI _ _ _ [A1] G).
-eapply rmI_eqc. apply rrls_tnc. apply rmI. apply OrR1_sr.  apply OrR1rule_I.
+eapply rmI_eqc. apply rrls_xnc'. apply OrR1_sr'.
 reflexivity.  apply dersrec_singleI.
 apply (IH _ (dnsub_OrL _ _)).
 -- apply dersrec_singleI.
 eapply derI. eapply (@fextI _ _ _ [A2] G).
-eapply rmI_eqc. apply rrls_tnc. apply rmI. apply OrR2_sr.  apply OrR2rule_I.
+eapply rmI_eqc. apply rrls_xnc'. apply OrR2_sr'.
 reflexivity.  apply dersrec_singleI.
 apply (IH _ (dnsub_OrR _ _)).
 Qed.
 
-Print Implicit LJT_der_id.
+Print Implicit LJX_der_id_lem.
+
+(* Lemma 3.2(1) of Dyckhoff & Negri JSL 2000 *)
+Lemma LJT_der_id {V} :
+  forall (A : PropF V) (a : AccT dnsubfml A), 
+  forall G, derrec LJTrules emptyT (A :: G, A).
+Proof. 
+epose (AccT_rect (fun A _ => 
+  (forall G, derrec LJTrules emptyT (A :: G, A)))).
+apply d. clear d.  intros A adn IH G.  
+apply LJX_der_id_lem.
+- exact IH.
+- intros. eapply derI. eapply (@fextI _ _ _ [] G0).
+eapply rmI_eqc. apply atom_tnc'. sfs. reflexivity. 
+apply dersrec_singleI. sfs.  exact (IH _ H _). 
+- apply Id_tnc'.  - apply ImpR_tnc'.  - apply Imp_tnc'.
+- apply il_tnc'.  - apply lrls_tnc'.  - apply rrls_tnc'.
+- apply exchL_ljt.  - apply LJT_rel_adm_ImpR.
+Qed.
 
 Lemma LJA_der_id {V} :
   forall (A : PropF V) (a : AccT dnsubfml A), 
@@ -138,109 +165,22 @@ Lemma LJA_der_id {V} :
 Proof. 
 epose (AccT_rect (fun A _ => 
   (forall G, derrec LJArules emptyT (A :: G, A)))).
-apply d. clear d.  intros A adn IH G.  destruct A.
-- eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply Id_anc. eapply Idrule_I.  
-reflexivity. apply dlNil.
-- eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply lrls_anc. apply rmI.  apply Bot_sl. apply Botrule_I.
-reflexivity. apply dlNil.
-- (* Imp *)
-eapply derI. eapply (@fextI _ _ _ [_] G).
-eapply rmI_eqc. apply ImpR_anc'. reflexivity.
-apply dersrec_singleI.  destruct A1.
-+ eapply derI. eapply (@fextI _ _ _ [] (Var v :: G)).
+apply d. clear d.  intros A adn IH G.  
+apply LJX_der_id_lem.
+- exact IH.
+- (* now deal with Imp (Var v) y *)
+intros.  eapply derI. eapply (@fextI _ _ _ [] (Var v :: G0)).
 eapply rmI_eqc. apply ImpL_anc'. reflexivity. 
 apply dlCons.
-eapply derI. eapply (@fextI _ _ _ [_] G).
+eapply derI. eapply (@fextI _ _ _ [_] G0).
 eapply rmI_eqc. apply Id_anc'. reflexivity. apply dlNil.
 apply dersrec_singleI.
-apply IH.  apply dnsub_ImpR.
-+ eapply derI. eapply (@fextI _ _ _ [_] G).
-eapply rmI_eqc. apply lrls_anc'. apply Bot_sl. apply Botrule_I.  reflexivity.
-apply dlNil.
-+ eapply derI. eapply (@fextI _ _ _ [] (_ :: G)).
-eapply rmI_eqc. apply Imp_anc'. reflexivity.
-apply dlCons.  (* now invert ImpR rule *)
-pose (LJA_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
-2: eapply (radmD r).  simpl. unfold fmlsext. simpl.
-eapply (rr_ext_relI_eqc _ _ _ [_] (_ :: G)).
-apply ImpRinv_I. reflexivity.
-specialize (IH _ (dnsub_ImpL _ _) (Imp A1_2 A2 :: G)). 
-apply (exchL_lja IH).  apply fst_relI.  apply swapped_cc.
-apply dersrec_singleI.
-apply (IH _ (dnsub_ImpR _ _)).
+apply (IH _ H). 
 
-+ eapply derI. eapply (@fextI _ _ _ [_] G).
-eapply rmI_eqc. apply lrls_anc'. apply AndL_sl. apply AndLrule_I.  reflexivity.
-apply dersrec_singleI.
-eapply derI. eapply (@fextI _ _ _ [] _).
-eapply rmI_eqc. apply il_anc'.
-apply And_ail. apply ImpL_And_rule_I.  reflexivity.
-apply dersrec_singleI.  simpl.
-(* now use invertibility of ImpR twice *)
-pose (LJA_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
-2: eapply (radmD r).  unfold fmlsext. simpl.
-eapply (rr_ext_relI_eqc _ _ _ [_ ; _] G).
-apply ImpRinv_I. reflexivity. clear r.
-pose (LJA_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
-2: eapply (radmD r).  
-eapply (rr_ext_relI_eqc _ _ _ [_] G).
-apply ImpRinv_I. reflexivity.
-apply (IH _ (dnsub_Imp_AndL _ _ _)).
-
-+ eapply derI. eapply (@fextI _ _ _ [] _).
-eapply rmI_eqc. apply il_anc'.
-apply Or_ail. apply ImpL_Or_rule_I.  reflexivity.
-apply dersrec_singleI.  simpl.
-eapply derI. eapply (@fextI _ _ _ [_ ; _] _).
-eapply rmI_eqc. apply lrls_anc'. apply OrL_sl. apply OrLrule_I.  reflexivity.
-simpl. unfold fmlsext. simpl. apply dlCons.
-(* now invert ImpR rule *)
-pose (LJA_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
-2: eapply (radmD r).
-eapply (rr_ext_relI_eqc _ _ _ [_ ; _] G).
-apply ImpRinv_I. reflexivity.
-apply (IH _ (dnsub_Imp_OrL1 _ _ _)).
-apply dersrec_singleI.  (* now invert ImpR rule *)
-pose (LJA_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
-2: eapply (radmD r).
-eapply (rr_ext_relI_eqc _ _ _ [_ ; _] G).
-apply ImpRinv_I. reflexivity.
-(* now need to use exchange *)
-specialize (IH _ (dnsub_Imp_OrL2 _ _ _) (Imp A1_1 A2 :: G)).
-apply (exchL_lja IH).  apply fst_relI.  apply swapped_cc.
-
-- eapply derI. eapply (@fextI _ _ _ [] (And A1 A2 :: G)).
-eapply rmI_eqc. apply rrls_anc. apply rmI. apply AndR_sr.  apply AndRrule_I.
-reflexivity.  apply dlCons.
--- eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply lrls_anc. apply rmI. apply AndL_sl.  apply AndLrule_I.
-reflexivity.  apply dersrec_singleI.
-apply IH. apply dnsub_AndL. 
--- apply dersrec_singleI.
-eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply lrls_anc. apply rmI. apply AndL_sl.  apply AndLrule_I.
-reflexivity.  apply dersrec_singleI.
-(* need to use exchange *)
-simpl. unfold fmlsext. simpl.
-specialize (IH _ (dnsub_AndR _ _) (A1 :: G)). 
-apply (exchL_lja IH). apply fst_relI. apply swapped_cc.
-- eapply derI. eapply (@fextI _ _ _ [] G).
-eapply rmI_eqc. eapply lrls_anc. apply rmI. apply OrL_sl.  apply OrLrule_I.
-reflexivity.  apply dlCons.
--- eapply derI. eapply (@fextI _ _ _ [A1] G).
-eapply rmI_eqc. apply rrls_anc. apply rmI. apply OrR1_sr.  apply OrR1rule_I.
-reflexivity.  apply dersrec_singleI.
-apply (IH _ (dnsub_OrL _ _)).
--- apply dersrec_singleI.
-eapply derI. eapply (@fextI _ _ _ [A2] G).
-eapply rmI_eqc. apply rrls_anc. apply rmI. apply OrR2_sr.  apply OrR2rule_I.
-reflexivity.  apply dersrec_singleI.
-apply (IH _ (dnsub_OrR _ _)).
+- apply Id_anc'.  - apply ImpR_anc'.  - apply Imp_anc'.
+- apply il_anc'.  - apply lrls_anc'.  - apply rrls_anc'.
+- apply exchL_lja.  - apply LJA_rel_adm_ImpR.
 Qed.
-
-Print Implicit LJA_der_id.
 
 (*
 don't do this - wrong, follow proof in paper, just do Lemma 3.2 (1) first
