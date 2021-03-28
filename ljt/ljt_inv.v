@@ -854,18 +854,9 @@ Proof. intro. eexists. exact (pair (InT_eq _ _) X). Qed.
 Lemma f1crr W q qs R : {p : W & InT p (q :: qs) * clos_reflT R p q}.
 Proof. apply f1cf. apply rT_refl. Qed.
 
-(* note, could now replace this by use of insL_lja *)
-Ltac drstac fd1 fd2 X0 X2 := simpl ;  unfold fmlsext ;  apply dlCons ; [
-(* need to do weakening and exchange here *)
-apply (fer_der fd1 fd2) in X0 ; apply (exchL_lja X0) ;  apply fst_relI ;
-rewrite ?app_nil_r ; simpl ; swap_tac_Rc |
-apply dersrec_singleI ; apply (eq_rect _ _ X2) ; list_eq_assoc ].
-
-(* TODO - not commonality with drstac *)
-Ltac drstac_t fd1 fd2 X0 X2 := simpl ;  unfold fmlsext ;  apply dlCons ; [
-(* need to do weakening and exchange here *)
-apply (fer_der fd1 fd2) in X0 ; apply (exchL_ljt X0) ;  apply fst_relI ;
-rewrite ?app_nil_r ; simpl ; swap_tac_Rc |
+Ltac drstac_tn th C0 X0 X2 := simpl ;  unfold fmlsext ;  apply dlCons ; [
+assoc_single_mid' C0 ; apply (th _ _ _ [C0]) ;
+apply (eq_rect _ _ X0) ; list_eq_assoc |
 apply dersrec_singleI ; apply (eq_rect _ _ X2) ; list_eq_assoc ].
 
 Ltac fictac list_assoc_x := simpl ; apply ForallT_cons ; [ apply f1crr |
@@ -885,13 +876,14 @@ Ltac admtac X1 X3 := unfold fmlsext ; rewrite ?app_nil_r ;
 apply admI ; intro drs ; inversion drs ; inversion X1 ; subst ; clear X1 X3 ;
 eapply derI.
 
+Ltac sfs := simpl ; unfold fmlsext ; simpl.
+Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
+
 Ltac rinv_tac C := 
 apply ForallT_singleI ; apply f1cf ;
-apply rT_step ; simpl ;unfold fmlsext ; simpl ;
+apply rT_step ; simpl ; unfold fmlsext ; simpl ;
 assoc_single_mid' C ; eapply (rr_ext_relI_eqp _ [C]) ;
 [apply ImpRinv_I |  list_eq_assoc].
-
-Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
 
 (* TODO - try for commonality between this and can_trf_ImpRinv_lja *)
 Lemma can_trf_ImpRinv_ljt {V} ps c : @LJTrules V ps c ->
@@ -918,26 +910,26 @@ acacD'T2 ; subst.
 ++ fictac list_assoc_r.
 ++ admtac X1 X3.
 +++ ljartac Imp_tnc' (Γ1 ++ [C0]) Γ2.
-+++ drstac_t [C0] ([] : list (PropF V)) X0 X2.
++++ drstac_tn insL_ljt C0 X0 X2.
 
 + list_eq_ncT. cD. subst.
 eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_l.
 ++ admtac X1 X3.
 +++ ljartac Imp_tnc' Γ1 (C0 :: Γ2).
-+++ drstac_t ([] : list (PropF V)) [C0] X0 X2.
++++ drstac_tn insL_ljt C0 X0 X2.
 
 + eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_l.
 ++ admtac X1 X3.
 +++ ljartac Imp_tnc' Γ1 (H1 ++ C0 :: Φ2).
-+++ drstac_t ([] : list (PropF V)) [C0] X0 X2.
++++ drstac_tn insL_ljt C0 X0 X2.
 
 + eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_r.
 ++ admtac X1 X3.
 +++ ljartac Imp_tnc' (Φ1 ++ [C0] ++ H3) Γ2.
-+++ drstac_t [C0] ([] : list (PropF V)) X0 X2.
++++ drstac_tn insL_ljt C0 X0 X2.
 
 -- (* ImpRrule *)
 inversion X0. inversion H0. subst.  inversion H4. subst. clear H4 H0 X0.
@@ -954,8 +946,7 @@ inversion X0. subst.
 acacD'T2 ; subst.
 apply sing_empty_app in s. sD ; subst.
 
-+ simpl in X1.  assoc_mid H2. 
-  ljgltac @LJsl_adm_lem_ljt X1 H0.
++ simpl in X1.  assoc_mid H2.  ljgltac @LJsl_adm_lem_ljt X1 H0.
 + rewrite ?app_nil_r in X1.  assoc_mid H3.  ljgltac @LJsl_adm_lem_ljt X1 H0.
 + assoc_mid l.  ljgltac @LJsl_adm_lem_ljt X1 H0.
 + assoc_mid l.  ljgltac @LJsl_adm_lem_ljt X1 H0.
@@ -969,9 +960,9 @@ acacD'T2 ; subst.
 -- rewrite ?app_nil_r.  eexists. split. apply in_adm.
 apply (@fextI _ _ _ (Γ1 ++ [C]) Γ2).
 eapply rmI_eqc.  apply atom_tnc'.
-simpl.  unfold fmlsext.  simpl.  list_eq_assoc.
+sfseq.
 apply ForallT_singleI ; apply f1cf.
-apply rT_step.  simpl. unfold fmlsext.  simpl.  
+apply rT_step.  sfs.
 eapply (rr_ext_relI_eq _ [C] Γ1 (B :: Var p0 :: Γ2)).
 apply ImpRinv_I.  list_eq_assoc.  list_eq_assoc.
 
@@ -987,34 +978,34 @@ eapply (swapped_I [] [C]). reflexivity. simpl. reflexivity.
 apply derl_dersl_single. apply in_derl.
 apply (@fextI _ _ _ (C :: Γ1) Γ2).
 eapply rmI_eq. apply atom_tnc'.
-simpl. unfold fmlsext.  simpl. reflexivity.
-simpl. unfold fmlsext.  simpl. list_eq_assoc.
+sfs. reflexivity.
+sfseq.
 
 -- list_eq_ncT. cD. subst.
 eexists. split. apply in_adm.
 apply (@fextI _ _ _ Γ1 (C :: Γ2)).
 eapply rmI_eqc.  apply atom_tnc'.
-simpl.  unfold fmlsext.  simpl.  list_eq_assoc.
+sfseq.
 apply ForallT_singleI ; apply f1cf.
-apply rT_step.  simpl. unfold fmlsext.  simpl.
+apply rT_step.  sfs.
 eapply (rr_ext_relI_eq _ [C] (Γ1 ++ [B; Var p0]) Γ2).
 apply ImpRinv_I.  list_eq_assoc.  list_eq_assoc.
 
 -- eexists. split. apply in_adm.
 apply (@fextI _ _ _ Γ1 (H1 ++ C :: Φ2)).
 eapply rmI_eqc.  apply atom_tnc'.
-simpl.  unfold fmlsext.  simpl.  list_eq_assoc.
+sfseq.
 apply ForallT_singleI ; apply f1cf.
-apply rT_step.  simpl. unfold fmlsext.  simpl.
+apply rT_step.  sfs.
 eapply (rr_ext_relI_eq _ [C] (Γ1 ++ B :: Var p0 :: H1) Φ2).
 apply ImpRinv_I.  list_eq_assoc.  list_eq_assoc.
 
 -- eexists. split. apply in_adm.
 apply (@fextI _ _ _ (Φ1 ++ C :: H3) Γ2).
 eapply rmI_eqc.  apply atom_tnc'.
-simpl.  unfold fmlsext.  simpl.  list_eq_assoc.
+sfseq.
 apply ForallT_singleI ; apply f1cf.
-apply rT_step.  simpl. unfold fmlsext.  simpl.
+apply rT_step.  sfs.
 eapply (rr_ext_relI_eq _ [C] Φ1 (H3 ++ B :: Var p0 :: Γ2)).
 apply ImpRinv_I.  list_eq_assoc.  list_eq_assoc.
 
@@ -1025,43 +1016,37 @@ acacD'T2 ; subst. (* 6 subgoals *)
 -- rewrite ?app_nil_r.  eexists. split. apply in_adm.
 apply (@fextI _ _ _ (Γ1 ++ [C]) Γ2).
 eapply rmI_eqc.  eapply exch_tnc.  apply rmI. apply exchI.
-sfseq.
-rinv_tac C.
+sfseq.  rinv_tac C.
 
 -- eexists. split. apply in_adm.
 apply (@fextI _ _ _ Γ1 Γ2).
 eapply rmI_eqc.  eapply exch_tnc.  apply rmI. 
 apply (exchI x y X0 (H5 ++ C :: H2)).
-sfseq.
-rinv_tac C.
+sfseq.  rinv_tac C.
 
 -- rewrite ?app_nil_r.  eexists. split. apply in_adm.
 apply (@fextI _ _ _ Γ1 Γ2).
 eapply rmI_eqc.  eapply exch_tnc.  apply rmI.
 apply (exchI x y X0 (Y0 ++ [C])).
-sfseq.
-rinv_tac C.
+sfseq.  rinv_tac C.
 
 -- eexists. split. apply in_adm.
 apply (@fextI _ _ _ Γ1 Γ2).
 eapply rmI_eqc.  eapply exch_tnc.  apply rmI.
 apply (exchI x y (H6 ++ C :: H1) Y0).
-sfseq.
-rinv_tac C.
+sfseq.  rinv_tac C.
 
 -- eexists. split. apply in_adm.
 apply (@fextI _ _ _ Γ1 (H1 ++ C :: Φ2)).
 eapply rmI_eqc.  eapply exch_tnc.  apply rmI.
 apply (exchI x y X0 Y0).
-sfseq.
-rinv_tac C.
+sfseq.  rinv_tac C.
 
 -- eexists. split. apply in_adm.
 apply (@fextI _ _ _ (Φ1 ++ C :: H3) Γ2).
 eapply rmI_eqc.  eapply exch_tnc.  apply rmI.
 apply (exchI x y X0 Y0).
-sfseq.
-rinv_tac C.
+sfseq.  rinv_tac C.
 
 Qed.
 
@@ -1088,26 +1073,26 @@ acacD'T2 ; subst.
 ++ fictac list_assoc_r.
 ++ admtac X1 X3.
 +++ ljartac Imp_anc' (Γ1 ++ [C0]) Γ2.
-+++ drstac [C0] ([] : list (PropF V)) X0 X2.
++++ drstac_tn insL_lja C0 X0 X2.
 
 + list_eq_ncT. cD. subst.
 eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_l.
 ++ admtac X1 X3.
 +++ ljartac Imp_anc' Γ1 (C0 :: Γ2).
-+++ drstac ([] : list (PropF V)) [C0] X0 X2.
++++ drstac_tn insL_lja C0 X0 X2.
 
 + eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_l.
 ++ admtac X1 X3.
 +++ ljartac Imp_anc' Γ1 (H1 ++ C0 :: Φ2).
-+++ drstac ([] : list (PropF V)) [C0] X0 X2.
++++ drstac_tn insL_lja C0 X0 X2.
 
 + eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_r.
 ++ admtac X1 X3.
 +++ ljartac Imp_anc' (Φ1 ++ [C0] ++ H3) Γ2.
-+++ drstac [C0] ([] : list (PropF V)) X0 X2.
++++ drstac_tn insL_lja C0 X0 X2.
 
 - (* ImpLrule_p *)
 inversion X0. inversion H0. subst. clear X0 H0 s.
@@ -1116,26 +1101,26 @@ acacD'T2 ; subst.
 ++ fictac list_assoc_r.
 ++ admtac X1 X3.
 +++ ljartac ImpL_anc' (Γ1 ++ [C]) Γ2.
-+++ drstac [C] ([] : list (PropF V)) X0 X2.
++++ drstac_tn insL_lja C X0 X2.
 
 + list_eq_ncT. cD. subst.
 eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_l.
 ++ admtac X1 X3.
 +++ ljartac ImpL_anc' Γ1 (C :: Γ2).
-+++ drstac ([] : list (PropF V)) [C] X0 X2.
++++ drstac_tn insL_lja C X0 X2.
 
 + eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_l.
 ++ admtac X1 X3.
 +++ ljartac ImpL_anc' Γ1 (H1 ++ C :: Φ2).
-+++ drstac ([] : list (PropF V)) [C] X0 X2.
++++ drstac_tn insL_lja C X0 X2.
 
 + eexists [ _ ; _ ]. split. all: cycle 1. 
 ++ fictac list_assoc_r.
 ++ admtac X1 X3.
 +++ ljartac ImpL_anc' (Φ1 ++ [C] ++ H3) Γ2.
-+++ drstac [C] ([] : list (PropF V)) X0 X2.
++++ drstac_tn insL_lja C X0 X2.
 
 - (* ImpRrule *)
 inversion X0. inversion H0. subst.  inversion H1. subst. clear H1 H0 X0.

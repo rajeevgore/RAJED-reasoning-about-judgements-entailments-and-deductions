@@ -22,7 +22,7 @@ Require Import ljt ljt_inv.
 Require Import Coq.Program.Basics.
 
 (* Lemma 3.2(1) of Dyckhoff & Negri JSL 2000 *)
-(* proofs of LJT_der_id and LJA_der_id similar - can we use this? 
+(* proofs of LJT_der_id and LJA_der_id similar - can we use this? *)
 Lemma LJT_der_id {V} :
   forall (A : PropF V) (a : AccT dnsubfml A), 
   forall G, derrec LJTrules emptyT (A :: G, A).
@@ -36,6 +36,7 @@ reflexivity. apply dlNil.
 - eapply derI. eapply (@fextI _ _ _ [] G).
 eapply rmI_eqc. eapply lrls_tnc. apply rmI.  apply Bot_sl. apply Botrule_I.
 reflexivity. apply dlNil.
+
 - (* Imp *)
 eapply derI. eapply (@fextI _ _ _ [_] G).
 eapply rmI_eqc. apply ImpR_tnc'. reflexivity.
@@ -48,10 +49,6 @@ apply IH.  apply dnsub_ImpR.
 + eapply derI. eapply (@fextI _ _ _ [_] G).
 eapply rmI_eqc. apply lrls_tnc'. apply Bot_sl. apply Botrule_I.  reflexivity.
 apply dlNil.
-
-OK to here
-now use LJT_rel_adm_ImpR 
-
 + eapply derI. eapply (@fextI _ _ _ [] (_ :: G)).
 eapply rmI_eqc. apply Imp_tnc'. reflexivity.
 apply dlCons.  (* now invert ImpR rule *)
@@ -134,7 +131,6 @@ apply (IH _ (dnsub_OrR _ _)).
 Qed.
 
 Print Implicit LJT_der_id.
-*)
 
 Lemma LJA_der_id {V} :
   forall (A : PropF V) (a : AccT dnsubfml A), 
