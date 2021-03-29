@@ -76,7 +76,7 @@ eapply rmI_eqc. apply lrls_xnc'. apply AndL_sl'.  reflexivity.
 apply dersrec_singleI.
 eapply derI. eapply (@fextI _ _ _ [] _).
 eapply rmI_eqc. apply il_xnc'.
-apply And_ail. apply ImpL_And_rule_I.  reflexivity.
+apply And_ail'.  reflexivity.
 apply dersrec_singleI.  simpl.
 (* now use invertibility of ImpR twice *)
 pose rel_adm_ImpR.  destruct r.  erequire r.  erequire r.  require r.
@@ -91,7 +91,7 @@ apply (IH _ (dnsub_Imp_AndL _ _ _)).
 
 + eapply derI. eapply (@fextI _ _ _ [] _).
 eapply rmI_eqc. apply il_xnc'.
-apply Or_ail. apply ImpL_Or_rule_I.  reflexivity.
+apply Or_ail'.  reflexivity.
 apply dersrec_singleI.  simpl.
 eapply derI. eapply (@fextI _ _ _ [_ ; _] _).
 eapply rmI_eqc. apply lrls_xnc'. apply OrL_sl'.  reflexivity.
@@ -216,6 +216,19 @@ Definition l41prop {V} (D : PropF V) seq :=
   forall B E, derrec LJArules emptyT (fmlsext G1 G2 [B], E) ->
   derrec LJArules emptyT (apfst (fmlsext G1 G2) ([Imp D B], E)).
 
+Definition l41prop_t {V} (D : PropF V) seq := 
+  forall G1 G2, seq = (G1 ++ G2, D) -> 
+  forall B E, derrec LJTrules emptyT (fmlsext G1 G2 [B], E) ->
+  derrec LJTrules emptyT (apfst (fmlsext G1 G2) ([Imp D B], E)).
+
+(* trying this instead of l41prop and l41prop_t
+  runs into trouble at the second appe in inv_gl_tac
+  TODO investigate and fix in due course *)
+Definition l41prop' {V} (rules : rlsT (srseq (PropF V))) D seq := 
+  forall G1 G2, seq = (G1 ++ G2, D) -> 
+  forall B E, derrec rules emptyT (fmlsext G1 G2 [B], E) ->
+  derrec rules emptyT (apfst (fmlsext G1 G2) ([Imp D B], E)).
+
 Lemma LJX_inv_sl V LJXrules G1 G2 E ps c 
   (LJX_can_rel_AndLinv : forall seq, derrec LJXrules emptyT seq ->
        can_rel LJXrules (srs_ext_rel (Y:=PropF V)) AndLinv seq)
@@ -223,10 +236,8 @@ Lemma LJX_inv_sl V LJXrules G1 G2 E ps c
        can_rel LJXrules (srs_ext_rel (Y:=PropF V)) OrLinv1 seq)
   (LJX_can_rel_OrLinv2 : forall seq, derrec LJXrules emptyT seq ->
        can_rel LJXrules (srs_ext_rel (Y:=PropF V)) OrLinv2 seq) :
-  (@LJslrules V) ps c ->
-  derrec LJXrules emptyT (G1 ++ c ++ G2, E) -> 
-  dersrec LJXrules emptyT (map (apfst (fmlsext G1 G2)) 
-  (map (flip pair E) ps)).
+  (@LJslrules V) ps c -> derrec LJXrules emptyT (G1 ++ c ++ G2, E) -> 
+  dersrec LJXrules emptyT (map (apfst (fmlsext G1 G2)) (map (flip pair E) ps)).
 Proof. intros ljpc dce.  destruct ljpc.
 - destruct a.
 apply LJX_can_rel_AndLinv in dce.
@@ -261,10 +272,8 @@ Lemma LJX_inv_ail V (LJXrules : rlsT (srseq (PropF V))) G1 G2 E ps c
        can_rel LJXrules (@srs_ext_rel _ (PropF V)) ImpL_And_inv seq)
   (LJX_can_rel_ImpL_Or_inv : forall seq, derrec LJXrules emptyT seq ->
        can_rel LJXrules (srs_ext_rel (Y:=PropF V)) ImpL_Or_inv seq) :
-  (@LJAilrules V) ps c ->
-  derrec LJXrules emptyT (G1 ++ c ++ G2, E) -> 
-  dersrec LJXrules emptyT (map (apfst (fmlsext G1 G2)) 
-  (map (flip pair E) ps)).
+  (@LJAilrules V) ps c -> derrec LJXrules emptyT (G1 ++ c ++ G2, E) -> 
+  dersrec LJXrules emptyT (map (apfst (fmlsext G1 G2)) (map (flip pair E) ps)).
 Proof. intros ljpc dce.  destruct ljpc ; destruct i.
 - apply LJX_can_rel_ImpL_And_inv in dce.
 unfold can_rel in dce.
@@ -326,6 +335,7 @@ apply InT_map ;  apply InT_map ; eassumption ] ;
 eapply ForallTD_forall in fp ; [ |
 apply InT_map ;  apply InT_map ; eassumption ] ;
 unfold l41prop in fp ;
+unfold l41prop_t in fp ;
 appe ; appe ; subst ;
 unfold fmlsext ;  assoc_single_mid ;
 simpl in fp ;  unfold fmlsext in fp ;
@@ -357,7 +367,31 @@ inv_gl_tac (@il_anc) LJA_inv_ail H0 X fp dbe cin1.
 - inv_gl_tac (@il_anc) LJA_inv_ail c0 X fp dbe cin1.
 Qed.
 
-Check gs_LJA_ImpL_Ail.
+Lemma gs_LJT_ImpL_Ail V (D : PropF V) ps c Γ1 Γ2 G 
+  (r : rlsmap (flip pair G) LJAilrules ps c) :
+  gen_step l41prop_t D isubfml (derrec LJTrules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad.
+unfold l41prop_t. intros * ceq * dbe.
+inversion r. subst. clear r. 
+rewrite ceq in dc.
+simpl in ceq. unfold fmlsext in ceq.
+inversion ceq. subst. clear ceq.
+acacD'T2 ; subst.
+
+- inv_gl_tac (@il_tnc) LJT_inv_ail c0 X fp dbe cin1.
+
+- pose (LJAil_sing_empty X). apply sing_empty_app in s.  sD ; subst.
++ simpl in X.  rewrite ?app_nil_r.
+rewrite ?app_nil_r in dbe.  rewrite ?app_nil_r in dc.
+inv_gl_tac (@il_tnc) LJT_inv_ail H2 X fp dbe cin1.
++ rewrite ?app_nil_r in X.  simpl in dc.  simpl in dbe.
+inv_gl_tac (@il_tnc) LJT_inv_ail H0 X fp dbe cin1.
+
+- inv_gl_tac (@il_tnc) LJT_inv_ail c0 X fp dbe cin1.
+Qed.
+
+Check gs_LJA_ImpL_Ail.  Check gs_LJT_ImpL_Ail.
 
 Lemma gs_LJA_ImpL_sl V (D : PropF V) ps c Γ1 Γ2 G 
   (r : rlsmap (flip pair G) LJslrules ps c) :
@@ -383,7 +417,31 @@ inv_gl_tac (@lrls_anc) LJA_inv_sl H0 X fp dbe cin1.
 - inv_gl_tac (@lrls_anc) LJA_inv_sl c0 X fp dbe cin1.
 Qed.
 
-Check gs_LJA_ImpL_sl.
+Lemma gs_LJT_ImpL_sl V (D : PropF V) ps c Γ1 Γ2 G 
+  (r : rlsmap (flip pair G) LJslrules ps c) :
+  gen_step l41prop_t D isubfml (derrec LJTrules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad.
+unfold l41prop_t. intros * ceq * dbe.
+inversion r. subst. clear r. 
+rewrite ceq in dc.
+simpl in ceq. unfold fmlsext in ceq.
+inversion ceq. subst. clear ceq.
+acacD'T2 ; subst.
+
+- inv_gl_tac (@lrls_tnc) LJT_inv_sl c0 X fp dbe cin1.
+
+- pose (LJsl_sing_empty X). apply sing_empty_app in s.  sD ; subst.
++ simpl in X.  rewrite ?app_nil_r.
+rewrite ?app_nil_r in dbe.  rewrite ?app_nil_r in dc.
+inv_gl_tac (@lrls_tnc) LJT_inv_sl H2 X fp dbe cin1.
++ rewrite ?app_nil_r in X.  simpl in dc.  simpl in dbe.
+inv_gl_tac (@lrls_tnc) LJT_inv_sl H0 X fp dbe cin1.
+
+- inv_gl_tac (@lrls_tnc) LJT_inv_sl c0 X fp dbe cin1.
+Qed.
+
+Check gs_LJA_ImpL_sl.  Check gs_LJT_ImpL_sl.
 
 Ltac gs_Imp_p_tac V c p A B D E X X0 X1 dbe La Ra Lb Rb Lc Rc Ld Rd :=
 erequire c ; require c ; [
@@ -442,12 +500,18 @@ Qed.
 
 Check gs_LJA_ImpL_Imp_p.
 
-Lemma gs_LJA_ImpL_sr V (D : PropF V) ps c Γ1 Γ2 
+Lemma gs_LJX_ImpL_sr V LJXncrules (D : PropF V) ps c Γ1 Γ2 
+  (il_xnc' : forall G ps c, LJAilrules ps c ->
+    LJXncrules (map (flip pair G) ps) (flip pair G c))
+  (insL_ljx : forall cl cr mid G, 
+      derrec (fst_ext_rls LJXncrules) emptyT (cl ++ cr, G) ->
+      derrec (fst_ext_rls LJXncrules) emptyT (cl ++ mid ++ cr, G))
   (r : rlsmap (pair []) LJsrrules ps c) :
-  gen_step l41prop D isubfml (derrec LJArules emptyT)
+  gen_step (l41prop' (fst_ext_rls LJXncrules)) D isubfml 
+    (derrec (fst_ext_rls LJXncrules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. 
-unfold l41prop. intros * ceq * dbe.
+unfold l41prop'. intros * ceq * dbe.
 inversion r. subst. clear r. 
 inversion ceq. subst. clear ceq. 
 destruct X.
@@ -460,7 +524,7 @@ specialize (sad _ (isub_AndL _ _) _ (fst X)).
 specialize (sad _ _ eq_refl _ _ l).
 clear dc dbe H0 X X1 l.
 eapply derI. eapply fextI. apply rmI.
-apply il_anc'. apply And_ail'.
+apply il_xnc'. apply And_ail'.
 exact (dersrec_singleI sad).
 - destruct o.  simpl in fp.  inversion fp.  clear fp X0. subst.
 rewrite H0 in X.
@@ -468,8 +532,8 @@ specialize (sad _ (isub_OrL _ _) _ (fst X)).
 specialize (sad _ _ eq_refl _ _ dbe).
 clear dc dbe H0 X.
 eapply derI. eapply fextI. apply rmI.
-apply il_anc'. apply Or_ail'. simpl. simpl in sad.
-pose (insL_lja (G1 ++ [Imp A B]) G2 [Imp B0 B]).
+apply il_xnc'. apply Or_ail'. simpl. simpl in sad.
+pose (insL_ljx (G1 ++ [Imp A B]) G2 [Imp B0 B]).
 rewrite <- !app_assoc in d.
 apply d in sad.  unfold fmlsext.  exact (dersrec_singleI sad).
 - destruct o.  simpl in fp.  inversion fp.  clear fp X0. subst.
@@ -478,12 +542,24 @@ specialize (sad _ (isub_OrR _ _) _ (fst X)).
 specialize (sad _ _ eq_refl _ _ dbe).
 clear dc dbe H0 X.
 eapply derI. eapply fextI. apply rmI.
-apply il_anc'. apply Or_ail'. simpl. simpl in sad.
-pose (insL_lja G1 (Imp B0 B :: G2) [Imp A B]).
+apply il_xnc'. apply Or_ail'. simpl. simpl in sad.
+pose (insL_ljx G1 (Imp B0 B :: G2) [Imp A B]).
 apply d in sad.  unfold fmlsext.  exact (dersrec_singleI sad).
 Qed.
 
-Check gs_LJA_ImpL_sr.
+Definition gs_LJT_ImpL_sr' V D ps c Γ1 Γ2 :=
+  @gs_LJX_ImpL_sr V _ D ps c Γ1 Γ2 il_tnc' (@insL_ljt V).
+Definition gs_LJA_ImpL_sr' V D ps c Γ1 Γ2 :=
+  @gs_LJX_ImpL_sr V _ D ps c Γ1 Γ2 il_anc' (@insL_lja V).
+
+(* not sure if we need this or can just use gs_LJA_ImpL_sr' *)
+Lemma gs_LJA_ImpL_sr V (D : PropF V) ps c Γ1 Γ2 
+  (r : rlsmap (pair []) LJsrrules ps c) :
+  gen_step l41prop D isubfml (derrec LJArules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. apply gs_LJA_ImpL_sr'. exact r. Qed.
+
+Check gs_LJX_ImpL_sr.  Check gs_LJA_ImpL_sr.  Check gs_LJT_ImpL_sr'.
 
 (*
 
