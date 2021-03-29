@@ -256,24 +256,33 @@ Definition LJA_inv_sl V G1 G2 E ps c := @LJX_inv_sl V _ G1 G2 E ps c
 Definition LJT_inv_sl V G1 G2 E ps c := @LJX_inv_sl V _ G1 G2 E ps c
   LJT_can_rel_AndLinv LJT_can_rel_OrLinv1 LJT_can_rel_OrLinv2.
 
-Lemma LJA_inv_ail V G1 G2 E ps c :
+Lemma LJX_inv_ail V (LJXrules : rlsT (srseq (PropF V))) G1 G2 E ps c 
+  (LJX_can_rel_ImpL_And_inv : forall seq, derrec LJXrules emptyT seq ->
+       can_rel LJXrules (@srs_ext_rel _ (PropF V)) ImpL_And_inv seq)
+  (LJX_can_rel_ImpL_Or_inv : forall seq, derrec LJXrules emptyT seq ->
+       can_rel LJXrules (srs_ext_rel (Y:=PropF V)) ImpL_Or_inv seq) :
   (@LJAilrules V) ps c ->
-  derrec LJArules emptyT (G1 ++ c ++ G2, E) -> 
-  dersrec LJArules emptyT (map (apfst (fmlsext G1 G2)) 
+  derrec LJXrules emptyT (G1 ++ c ++ G2, E) -> 
+  dersrec LJXrules emptyT (map (apfst (fmlsext G1 G2)) 
   (map (flip pair E) ps)).
 Proof. intros ljpc dce.  destruct ljpc ; destruct i.
-- apply LJA_can_rel_ImpL_And_inv in dce.
+- apply LJX_can_rel_ImpL_And_inv in dce.
 unfold can_rel in dce.
 apply dersrec_singleI.
 apply dce.  simpl.  unfold fmlsext.
 eapply srs_ext_relI_eq.  apply fslr_I.
 apply ImpL_And_invs_I.  reflexivity.  reflexivity.
-- apply LJA_can_rel_ImpL_Or_inv in dce.
+- apply LJX_can_rel_ImpL_Or_inv in dce.
 unfold can_rel in dce.
 apply dersrec_singleI.
 apply dce.  simpl.  unfold fmlsext.
 eapply srs_ext_relI_eq.  apply fslr_I.
 apply ImpL_Or_invs_I.  reflexivity.  reflexivity. Qed.
+
+Definition LJA_inv_ail V G1 G2 E ps c := @LJX_inv_ail V _ G1 G2 E ps c
+  LJA_can_rel_ImpL_And_inv LJA_can_rel_ImpL_Or_inv.
+Definition LJT_inv_ail V G1 G2 E ps c := @LJX_inv_ail V _ G1 G2 E ps c
+  LJT_can_rel_ImpL_And_inv LJT_can_rel_ImpL_Or_inv.
 
 (* not sure if we need this *)
 Lemma LJAil_psne V ps c : (@LJAilrules V) ps c ->
