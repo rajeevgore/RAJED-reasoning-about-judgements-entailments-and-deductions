@@ -200,6 +200,15 @@ eapply (rr_ext_relI_eqc _ _ _ [] _).
 apply ImpRinv_I. reflexivity. clear r.
 apply LJA_der_id. apply AccT_dnsubfml. Qed.
 
+Lemma LJT_der_mp {V} (A B : PropF V) H :
+  derrec LJTrules emptyT (A :: Imp A B :: H, B).
+Proof. 
+pose (LJT_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
+2: eapply (radmD r). 
+eapply (rr_ext_relI_eqc _ _ _ [] _).
+apply ImpRinv_I. reflexivity. clear r.
+apply LJT_der_id. apply AccT_dnsubfml. Qed.
+
 (* Lemma 4.1 of Dyckhoff & Negri JSL 2000 *)
 (* relevant property of sequent to be proved by induction *)
 Definition l41prop {V} (D : PropF V) seq := 
@@ -207,14 +216,20 @@ Definition l41prop {V} (D : PropF V) seq :=
   forall B E, derrec LJArules emptyT (fmlsext G1 G2 [B], E) ->
   derrec LJArules emptyT (apfst (fmlsext G1 G2) ([Imp D B], E)).
 
-Lemma LJA_inv_sl V G1 G2 E ps c :
+Lemma LJX_inv_sl V LJXrules G1 G2 E ps c 
+  (LJX_can_rel_AndLinv : forall seq, derrec LJXrules emptyT seq ->
+       can_rel LJXrules (srs_ext_rel (Y:=PropF V)) AndLinv seq)
+  (LJX_can_rel_OrLinv1 : forall seq, derrec LJXrules emptyT seq ->
+       can_rel LJXrules (srs_ext_rel (Y:=PropF V)) OrLinv1 seq)
+  (LJX_can_rel_OrLinv2 : forall seq, derrec LJXrules emptyT seq ->
+       can_rel LJXrules (srs_ext_rel (Y:=PropF V)) OrLinv2 seq) :
   (@LJslrules V) ps c ->
-  derrec LJArules emptyT (G1 ++ c ++ G2, E) -> 
-  dersrec LJArules emptyT (map (apfst (fmlsext G1 G2)) 
+  derrec LJXrules emptyT (G1 ++ c ++ G2, E) -> 
+  dersrec LJXrules emptyT (map (apfst (fmlsext G1 G2)) 
   (map (flip pair E) ps)).
 Proof. intros ljpc dce.  destruct ljpc.
 - destruct a.
-apply LJA_can_rel_AndLinv in dce.
+apply LJX_can_rel_AndLinv in dce.
 unfold can_rel in dce.
 apply dersrec_singleI.
 apply dce.  simpl.  unfold fmlsext.
@@ -222,19 +237,24 @@ eapply srs_ext_relI_eq.  apply fslr_I.
 apply AndLinvs_I.  reflexivity.  reflexivity.
 - destruct o.
 apply dlCons.
-+ apply LJA_can_rel_OrLinv1 in dce.
++ apply LJX_can_rel_OrLinv1 in dce.
 unfold can_rel in dce.
 apply dce.  simpl.  unfold fmlsext.
 eapply srs_ext_relI_eq.  apply fslr_I.
 apply OrLinv1s_I.  reflexivity.  reflexivity.
 + apply dersrec_singleI.
-apply LJA_can_rel_OrLinv2 in dce.
+apply LJX_can_rel_OrLinv2 in dce.
 unfold can_rel in dce.
 apply dce.  simpl.  unfold fmlsext.
 eapply srs_ext_relI_eq.  apply fslr_I.
 apply OrLinv2s_I.  reflexivity.  reflexivity.
 - (* Botrule *)
 destruct b. apply dlNil. Qed.
+
+Definition LJA_inv_sl V G1 G2 E ps c := @LJX_inv_sl V _ G1 G2 E ps c
+  LJA_can_rel_AndLinv LJA_can_rel_OrLinv1 LJA_can_rel_OrLinv2.
+Definition LJT_inv_sl V G1 G2 E ps c := @LJX_inv_sl V _ G1 G2 E ps c
+  LJT_can_rel_AndLinv LJT_can_rel_OrLinv1 LJT_can_rel_OrLinv2.
 
 Lemma LJA_inv_ail V G1 G2 E ps c :
   (@LJAilrules V) ps c ->
