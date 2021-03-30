@@ -663,6 +663,70 @@ Proof. apply gs_LJA_ImpL_ImpL'. exact r. Qed.
 
 Check gs_LJA_ImpL_ImpL.
 
+(*
+Lemma LJT_atom_cases V (Γ1 Γ2 G1 G2 : list (PropF V)) p B E 
+  (dbe : derrec LJTrules emptyT (fmlsext G1 G2 [B], E))
+  (H : fmlsext Γ1 Γ2 [Var p] = G1 ++ G2) :
+  derrec LJTrules emptyT (apfst (fmlsext G1 G2) ([Imp (Var p) B], E)).
+Proof. unfold fmlsext in *. simpl in *.  
+acacD'T2 ; subst.
+- apply (@exchL_ljt _ (G1 ++ H ++ Imp (Var p) B :: Var p :: Γ2, E)).
+eapply derI.
+eapply (@fextI _ _ _ Ld Rd) ;
+
+  (* uses exchL_ljt *)
+
+
+Lemma gs_LJT_ImpL_adm V (D : PropF V) ps c Γ1 Γ2 (r : LJTncrules ps c) :
+  gen_step l41prop_t D isubfml (derrec LJTrules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof.  destruct r.
+- destruct l.
+
+-- (* left compound Imp rules, invertible *)
+eapply gs_LJT_ImpL_Ail. exact r.
+
+-- (* ImpL_Imp_rule *)
+eapply gs_LJT_ImpL_ImpL. exact i.
+
+-- (* ImpRrule, IH not used *) destruct i.  unfold gen_step.
+intros sub fdt dab. clear sub dab.
+inversion fdt. clear X0 fdt. subst.  unfold l41prop_t.
+intros * abeq * dbe. destruct X. clear l.
+inversion abeq. clear abeq. subst.
+(* apply ImpL_Imp_rule *)
+eapply derI.  eapply fextI.  apply rmI.  apply Imp_tnc'.
+unfold fmlsext in H0. simpl in H0.
+eapply swap_ins in H0.
+unfold fmlsext in d.  eapply exchL_ljt in d.
+2: apply fst_relI. 2: exact (swapped_comm H0).
+apply dlCons.  exact (insL_ljt _ _ [Imp B B0] d).
+apply dersrec_singleI. exact dbe.
+
+-- (* Idrule, so D is Var _ , IH not used *) destruct i.
+unfold gen_step.  intros sub fdt dt. clear sub fdt.  unfold l41prop_t.
+intros * vveq * dbe.  inversion vveq. clear vveq. subst.
+
+need to make this one a separate lemma
+
+
+
+eapply derI.  eapply fextI.  apply rmI.  apply ImpL_tnc'.
+simpl in dt. rewrite -> H0 in dt.
+apply dlCons.  exact (insL_ljt _ _ [Imp (Var A) B] dt).
+apply dersrec_singleI. exact dbe.
+
+-- (* common left rules, invertible *)
+eapply gs_LJT_ImpL_sl. exact r.
+
+-- (* simple right rules *)
+eapply gs_LJT_ImpL_sr. exact r.
+
+Qed.
+
+Check gs_LJA_ImpL_adm.
+*)
+
 Lemma gs_LJA_ImpL_adm V (D : PropF V) ps c Γ1 Γ2 (r : LJAncrules ps c) :
   gen_step l41prop D isubfml (derrec LJArules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
