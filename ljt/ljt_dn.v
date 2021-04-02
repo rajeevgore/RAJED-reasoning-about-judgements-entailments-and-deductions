@@ -547,19 +547,20 @@ pose (insL_ljx G1 (Imp B0 B :: G2) [Imp A B]).
 apply d in sad.  unfold fmlsext.  exact (dersrec_singleI sad).
 Qed.
 
-Definition gs_LJT_ImpL_sr' V D ps c Γ1 Γ2 :=
+Definition gs_LJT_ImpL_sr V D ps c Γ1 Γ2 :=
   @gs_LJX_ImpL_sr V _ D ps c Γ1 Γ2 il_tnc' (@insL_ljt V).
-Definition gs_LJA_ImpL_sr' V D ps c Γ1 Γ2 :=
+Definition gs_LJA_ImpL_sr V D ps c Γ1 Γ2 :=
   @gs_LJX_ImpL_sr V _ D ps c Γ1 Γ2 il_anc' (@insL_lja V).
 
-(* not sure if we need this or can just use gs_LJA_ImpL_sr' *)
+(* not sure if we need this or can just use gs_LJA_ImpL_sr' 
 Lemma gs_LJA_ImpL_sr V (D : PropF V) ps c Γ1 Γ2 
   (r : rlsmap (pair []) LJsrrules ps c) :
   gen_step l41prop D isubfml (derrec LJArules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. apply gs_LJA_ImpL_sr'. exact r. Qed.
+*)
 
-Check gs_LJX_ImpL_sr.  Check gs_LJA_ImpL_sr.  Check gs_LJT_ImpL_sr'.
+Check gs_LJX_ImpL_sr.  Check gs_LJA_ImpL_sr.  Check gs_LJT_ImpL_sr.
 
 (*
 
@@ -663,20 +664,32 @@ Proof. apply gs_LJA_ImpL_ImpL'. exact r. Qed.
 
 Check gs_LJA_ImpL_ImpL.
 
-(*
-Lemma LJT_atom_cases V (Γ1 Γ2 G1 G2 : list (PropF V)) p B E 
+Lemma LJT_41_atom_cases V (Γ1 Γ2 G1 G2 : list (PropF V)) p B E 
   (dbe : derrec LJTrules emptyT (fmlsext G1 G2 [B], E))
   (H : fmlsext Γ1 Γ2 [Var p] = G1 ++ G2) :
   derrec LJTrules emptyT (apfst (fmlsext G1 G2) ([Imp (Var p) B], E)).
 Proof. unfold fmlsext in *. simpl in *.  
 acacD'T2 ; subst.
 - apply (@exchL_ljt _ (G1 ++ H ++ Imp (Var p) B :: Var p :: Γ2, E)).
-eapply derI.
-eapply (@fextI _ _ _ Ld Rd) ;
+eapply derI.  eapply (@fextI _ _ _ (G1 ++ H) Γ2).
+eapply rmI_eqc.  eapply atom_tnc'.  sfseq.
+sfs. apply dersrec_singleI.  apply (exchL_ljt dbe).
+apply fst_relI. swap_tac_Rc.  apply fst_relI. swap_tac_Rc.
+- eapply derI. eapply (@fextI _ _ _ (Γ1 ++ []) Γ2).
+eapply rmI_eqc. eapply atom_tnc'. reflexivity.
+apply dersrec_singleI. exact dbe.
 
-  (* uses exchL_ljt *)
+- apply (@exchL_ljt _ (Γ1 ++ Imp (Var p) B :: Var p :: H1 ++ G2, E)).
+eapply derI.  eapply (@fextI _ _ _ Γ1 (H1 ++ G2)).
+eapply rmI_eqc.  eapply atom_tnc'.  sfseq.
+sfs. apply dersrec_singleI.  apply (exchL_ljt dbe).
+apply fst_relI. swap_tac_Rc.
+apply (swapped_simple' (Var p :: H1) [B]).
+apply fst_relI. swap_tac_Rc.
+apply (swapped_simple' [_] (Var p :: H1)).
+Qed.
 
-
+(*
 Lemma gs_LJT_ImpL_adm V (D : PropF V) ps c Γ1 Γ2 (r : LJTncrules ps c) :
   gen_step l41prop_t D isubfml (derrec LJTrules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
@@ -706,21 +719,67 @@ apply dersrec_singleI. exact dbe.
 -- (* Idrule, so D is Var _ , IH not used *) destruct i.
 unfold gen_step.  intros sub fdt dt. clear sub fdt.  unfold l41prop_t.
 intros * vveq * dbe.  inversion vveq. clear vveq. subst.
-
-need to make this one a separate lemma
-
-
-
-eapply derI.  eapply fextI.  apply rmI.  apply ImpL_tnc'.
-simpl in dt. rewrite -> H0 in dt.
-apply dlCons.  exact (insL_ljt _ _ [Imp (Var A) B] dt).
-apply dersrec_singleI. exact dbe.
+exact (LJT_41_atom_cases _ _ _ _ _ _ dbe H0).
 
 -- (* common left rules, invertible *)
 eapply gs_LJT_ImpL_sl. exact r.
 
 -- (* simple right rules *)
 eapply gs_LJT_ImpL_sr. exact r.
+
+- (* ImpL_atom_rule *)
+inversion r. subst. clear r. destruct X.
+unfold gen_step.  intros sub fdt dt. clear sub. (* dt *)
+inversion fdt. clear X0 fdt. subst.  unfold l41prop_t.
+sfs. intros * abeq * dbe. destruct X. (* clear d. *)
+inversion abeq. clear abeq. subst.
+acacD'T2 ; subst.
+Check LJT_can_rel_ImpL_Var_inv2.
+Print can_rel.
+
++ eapply derI.  apply (@fextI _ _ _ (G1 ++ Imp D B0 :: H0) Γ2).
+eapply rmI_eqc. apply atom_tnc'. sfseq.
+apply dersrec_singleI. revert l. sfs. list_assoc_r'. intro l.
+apply l. reflexivity. sfs.
+apply LJT_can_rel_ImpL_Var_inv2 in dbe.  apply dbe.
+list_assoc_r'. apserc. apply ImpL_Var_inv2_I.
+
++ eapply derI.  apply (@fextI _ _ _ (Γ1 ++ [Imp D B0]) Γ2).
+eapply rmI_eqc. apply atom_tnc'. sfseq.
+apply dersrec_singleI. revert l. sfs. list_assoc_r'. intro l.
+apply l. reflexivity. sfs.
+apply LJT_can_rel_ImpL_Var_inv2 in dbe.  apply dbe.
+list_assoc_r'. apserc. apply ImpL_Var_inv2_I.
+
++ (* this one needs exchange because the B and Imp D B
+  are between the two principal formulae of the atom rule *)
+admit.
+
++ eapply derI.  apply (@fextI _ _ _ Γ1 (H4 ++ Imp D B0 :: G2)).
+eapply rmI_eqc. apply atom_tnc'. sfseq.
+apply dersrec_singleI. revert l. sfs. list_assoc_l'. intro l.
+apply l. reflexivity. sfs.
+apply LJT_can_rel_ImpL_Var_inv2 in dbe.  apply dbe.
+list_assoc_r'. apserc. apply ImpL_Var_inv2_I.
+
+- (* exchange rule *)
+inversion r. subst. clear r. destruct X.
+unfold gen_step.  intros sub fdt dt. clear sub dt.
+inversion fdt. clear X1 fdt. subst.  unfold l41prop_t.
+sfs. intros * abeq * dbe. destruct X0. 
+inversion abeq. clear abeq d. subst.
+acacD'T2 ; subst.
+
++ eapply derI.  apply (@fextI _ _ _ (G1 ++ Imp D B :: H0) Γ2).
+eapply rmI_eqc. apply exch_tnc'. sfseq.
+apply dersrec_singleI. revert l. sfs. list_assoc_r'. intro l.
+apply l. reflexivity. sfs.
+eapply derI.  apply (@fextI _ _ _ (G1 ++ B :: H0) Γ2).
+eapply rmI_eqc. apply exch_tnc'. sfseq.
+apply dersrec_singleI. sfs. apply (eq_rect _ _ dbe). list_eq_assoc.
+
+more cases many probably similar 
+
 
 Qed.
 

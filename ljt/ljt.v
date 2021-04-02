@@ -282,6 +282,8 @@ Definition Imp_tnc' V B C D G := Imp_tnc (@ImpL_Imp_rule_I V B C D G).
 Definition atom_tnc'2 {V} G ps c rpc := @atom_tnc V G _ _ (rmI _ _ ps c rpc).
 Definition atom_tnc' {V} p B G := atom_tnc'2 G (@ImpL_atom_rule_I V p B).
 Definition Id_tnc' {V} v := Id_tnc (@Idrule_I V (Var v)).
+Definition exch_tnc'2 {V} G ps c rpc := @exch_tnc V G _ _ (rmI _ _ ps c rpc).
+Definition exch_tnc' {V} u w U W G := exch_tnc'2 G (@exchI (PropF V) u w U W).
 
 Definition rrls_anc' {V} ps c rpc := @rrls_anc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_anc' {V} G ps c rpc := @lrls_anc V G _ _ (rmI _ _ ps c rpc).

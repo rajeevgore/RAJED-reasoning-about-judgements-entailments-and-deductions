@@ -19,6 +19,9 @@ Require Import gen_tacs.
 Require Import gen_seq gstep rtcT.
 Require Import ljt.
 
+Ltac sfs := simpl ; unfold fmlsext ; simpl.
+Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
+
 Inductive ImpRinv {V} : PropF V -> srseq (PropF V) -> Type :=
   | ImpRinv_I : forall C D, ImpRinv (Imp C D) (pair [C] D).
 
@@ -313,7 +316,15 @@ Proof. intro rhj.
 pose (srs_ext_relI _ _ _ p [] [] rhj).
 simpl in s. rewrite -> !app_nil_r in s. exact s. Qed.
 
+Lemma serat U W R (h1 h2 j1 j2 : U) G p : R [h1 ; h2] [j1 ; j2] ->
+  srs_ext_rel R (h1 :: h2 :: G, p) (j1 :: j2 :: G, p : W).
+Proof. intro rhj.  exact (srs_ext_relI _ _ _ p [] G rhj).  Qed.
+
 Ltac apser := repeat (apply serr || apply serl) ; 
+  try apply serrc2 ; try apply serrc1 ; 
+  try apply serc2 ; try apply serrc ; try apply serne.
+
+Ltac apserc := repeat (apply serr || apply serl || apply serlc) ; 
   try apply serrc2 ; try apply serrc1 ; 
   try apply serc2 ; try apply serrc ; try apply serne.
 
@@ -322,7 +333,12 @@ Ltac apser' := list_assoc_l' ; repeat (apply serr) ;
   list_assoc_r' ; repeat (apply serl) ;
   try apply serc2 ; try apply serrc ; try apply serne.
 
+(* version for atom rule *)
+Ltac apserat := list_assoc_r' ; repeat (apply serl || apply serlc) ;
+  apply serat.
+
 Ltac apserx := apply rT_step ; simpl ; unfold fmlsext ;  apser.
+Ltac apserxat := apply rT_step ; simpl ; unfold fmlsext ;  apserat.
 
 (* for when last arg is unspecified *)
 Lemma sercfr U W R u w Z Y : 
@@ -400,8 +416,7 @@ eapply dtderI.  2: apply asmsI.
 subst. eapply fer_mono. exact rs.
 apply (@fextI _ _ _ A D).  eapply rmI_eq.
 apply rmI.  apply (exchI w w0 B C).
-simpl. unfold fmlsext. list_eq_assoc.
-simpl. unfold fmlsext. list_eq_assoc. Qed.
+sfseq.  sfseq. Qed.
 
 Lemma ctrcl1 W Y ferr seq wy sfg ps :
   clos_reflT sfg wy ps -> derl ferr [ps] seq -> 
@@ -876,9 +891,6 @@ Ltac admtac X1 X3 := unfold fmlsext ; rewrite ?app_nil_r ;
 apply admI ; intro drs ; inversion drs ; inversion X1 ; subst ; clear X1 X3 ;
 eapply derI.
 
-Ltac sfs := simpl ; unfold fmlsext ; simpl.
-Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
-
 Ltac rinv_tac C := 
 apply ForallT_singleI ; apply f1cf ;
 apply rT_step ; simpl ; unfold fmlsext ; simpl ;
@@ -1296,6 +1308,12 @@ Proof. apply can_trf_genLinv_geni.  apply LJTSnc_seL.
 intros * auv.  destruct auv. intro rocd.  
 pose (LJAIIE (sing_anc rocd)). clearbody e. subst. solve_InT.  Qed.
 
+Lemma can_trf_ImpL_Var_inv2_ljts {V} ps c: @LJTSrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_Var_inv2) (derl LJTSrules) ps c.
+Proof. apply can_trf_genLinv_geni.  apply LJTSnc_seL.
+intros * auv.  destruct auv. intro rocd.  
+pose (LJAIpE (sing_anc rocd)). clearbody e. subst. solve_InT.  Qed.
+
 Definition ctrc_d_f_mono V R := @can_trf_rules_rc_mono _ R _ _ 
   (derl_mono (fer_mono (rsubI _ _ (@sing_tnc V)))).
   
@@ -1408,6 +1426,51 @@ exact (atom_tnc r).
 - (* exch_rule *) unfold ImpL_Imp_inv2.
 eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
+Lemma can_trf_ImpL_Var_inv2_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel ImpL_Var_inv2) (derl LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
+- (* LJTSncrules *)
+eapply ctrc_d_f_mono.
+apply can_trf_ImpL_Var_inv2_ljts.
+eapply fextI.  apply rmI.  exact l.
+- (* ImpL_atom_rule *)
+unfold ImpL_Var_inv2.
+inversion r. subst. clear r. destruct X.
+sfs.  unfold can_trf_rules_rc. intros c' ser.
+inversion ser. clear ser. subst. 
+destruct H2. simpl in H. destruct i.
+(* notge - the rule involves Var p, B, inversion involves Var p0, B0 *)
+acacD'T2 ; subst.
+
++ eexists. split. apply asmI.
+apply ForallT_singleI ; apply f1cf.
+rewrite app_nil_r.  apply rT_refl.
+
++ inversion H4.
++ eexists. split. apply in_derl.
+apply (@fextI _ _ _ Γ1 (H3 ++ B0 :: Φ2)).
+eapply rmI_eqc. apply atom_tnc'. sfseq.
+apply ForallT_singleI ; apply f1cf.
+apply rT_step.  sfs.
+eapply (srs_ext_relI_eq _ [Imp (Var p0) B0] [B0] (Γ1 ++ B :: Var p :: H3) Φ2).
+apply ImpL_Var_inv2_I.  list_eq_assoc.  list_eq_assoc.
+
++ eexists. split. apply asmI.
+apply ForallT_singleI ; apply f1cf.
+rewrite app_nil_r.  apply rT_refl.
+
++ eexists. split. apply in_derl.
+apply (@fextI _ _ _ (Φ1 ++ [B0] ++ H1) Γ2).
+eapply rmI_eqc. apply atom_tnc'. sfseq.
+apply ForallT_singleI ; apply f1cf.
+apply rT_step.  sfs.
+eapply (srs_ext_relI_eq _ [Imp (Var p0) B0] [B0] Φ1 (H1 ++ B :: Var p :: Γ2)).
+apply ImpL_Var_inv2_I.  list_eq_assoc.  list_eq_assoc.
+
+- inversion r. subst. clear r. 
+eapply can_trf_genLinv_exch. intro. apply exch_tnc.
+apply rmI. exact X. Qed.
+
 (* now inversion results in terms of can_rel *)
 Lemma LJT_can_rel_AndLinv {V} seq :
   derrec LJTrules emptyT seq ->
@@ -1449,3 +1512,24 @@ Lemma LJT_can_rel_ImpL_Imp_inv2 {V} seq :
 Proof. unfold can_rel.
 apply der_trf_rc_derl.  exact (@can_trf_ImpL_Imp_inv2_ljt V).  Qed.
 
+Lemma LJT_can_rel_ImpL_Var_inv2 {V} seq :
+  derrec LJTrules emptyT seq ->
+  can_rel LJTrules (@srs_ext_rel _ _) (@ImpL_Var_inv2 V) seq.
+Proof. unfold can_rel.
+apply der_trf_rc_derl.  exact (@can_trf_ImpL_Var_inv2_ljt V).  Qed.
+
+(* invertibility of atom rule for LJT - different as two principal formulae *)
+(* TODO these two to ljt *)
+Lemma ljts_niv V p B G ps tl :
+  @LJTSncrules V ps (Imp (Var p) B :: tl, G) -> False.
+Proof. intro. inversion X ; inversion X0 ; inversion X1 ; inversion X2. Qed.
+
+Lemma ljts_nv V p G ps tl :
+  @LJTSncrules V ps (Var p :: tl, G) -> (G = Var p) * (tl = []) * (ps = []).
+Proof. intro. inversion X ; inversion X0.
+inversion X1 ; inversion X2.  tauto.  inversion X1 ; inversion X2.  Qed.
+
+(* notes
+Lemma can_trf_ImpL_Var_inv2_ljt {V} ps c: done
+Lemma LJT_can_rel_ImpL_Var_inv2 {V} seq :
+*)
