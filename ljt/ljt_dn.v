@@ -689,7 +689,6 @@ apply fst_relI. swap_tac_Rc.
 apply (swapped_simple' [_] (Var p :: H1)).
 Qed.
 
-(*
 Lemma gs_LJT_ImpL_adm V (D : PropF V) ps c Γ1 Γ2 (r : LJTncrules ps c) :
   gen_step l41prop_t D isubfml (derrec LJTrules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
@@ -729,13 +728,11 @@ eapply gs_LJT_ImpL_sr. exact r.
 
 - (* ImpL_atom_rule *)
 inversion r. subst. clear r. destruct X.
-unfold gen_step.  intros sub fdt dt. clear sub. (* dt *)
+unfold gen_step.  intros sub fdt dt. clear sub dt.
 inversion fdt. clear X0 fdt. subst.  unfold l41prop_t.
-sfs. intros * abeq * dbe. destruct X. (* clear d. *)
-inversion abeq. clear abeq. subst.
+sfs. intros * abeq * dbe. destruct X.
+inversion abeq. clear abeq d. subst.
 acacD'T2 ; subst.
-Check LJT_can_rel_ImpL_Var_inv2.
-Print can_rel.
 
 + eapply derI.  apply (@fextI _ _ _ (G1 ++ Imp D B0 :: H0) Γ2).
 eapply rmI_eqc. apply atom_tnc'. sfseq.
@@ -753,7 +750,21 @@ list_assoc_r'. apserc. apply ImpL_Var_inv2_I.
 
 + (* this one needs exchange because the B and Imp D B
   are between the two principal formulae of the atom rule *)
-admit.
+(* swap ... B0 and Imp (Var p) B *)
+eapply (@exchL_ljt V (Γ1 ++ Imp D B0 :: Imp (Var p) B :: Var p :: Γ2, E)).
+pose (@exchL_ljt V _ dbe 
+  (Γ1 ++ B0 :: Imp (Var p) B :: Var p :: Γ2, E)).
+clearbody d. clear dbe.  require d. clear d.
+apply fst_relI. list_assoc_r'. simpl. swap_tac. apply swapped_cc.
+all: cycle 1.
+apply fst_relI. list_assoc_r'. simpl. swap_tac. apply swapped_cc.
+(* now should be similar to other cases *)
+eapply derI.  apply (@fextI _ _ _ (Γ1  ++ [Imp D B0]) Γ2).
+eapply rmI_eqc. apply atom_tnc'. sfseq.
+apply dersrec_singleI. sfs.  assoc_single_mid' (Imp D B0). simpl.
+apply l. sfseq. sfs.
+apply LJT_can_rel_ImpL_Var_inv2 in d.  apply d.
+apserc. apply ImpL_Var_inv2_I.
 
 + eapply derI.  apply (@fextI _ _ _ Γ1 (H4 ++ Imp D B0 :: G2)).
 eapply rmI_eqc. apply atom_tnc'. sfseq.
@@ -778,13 +789,49 @@ eapply derI.  apply (@fextI _ _ _ (G1 ++ B :: H0) Γ2).
 eapply rmI_eqc. apply exch_tnc'. sfseq.
 apply dersrec_singleI. sfs. apply (eq_rect _ _ dbe). list_eq_assoc.
 
-more cases many probably similar 
++ eapply derI.  apply (@fextI _ _ _ (Γ1 ++ [Imp D B]) Γ2).
+eapply rmI_eqc. apply exch_tnc'. sfseq.
+apply dersrec_singleI. revert l. sfs. list_assoc_r'. intro l.
+apply l. reflexivity. sfs.
+eapply derI.  apply (@fextI _ _ _ (Γ1 ++ [B]) Γ2).
+eapply rmI_eqc. apply exch_tnc'. sfseq.
+apply dersrec_singleI. sfs. apply (eq_rect _ _ dbe). list_eq_assoc.
 
++ eapply derI.  apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc. apply (exch_tnc' x y X (H2 ++ Imp D B :: H5)). sfseq.
+apply dersrec_singleI. sfs. assoc_single_mid' (Imp D B).
+apply l. sfseq. sfs.
+eapply derI.  apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc. apply (exch_tnc' y x (H2 ++ B :: H5) X). sfseq.
+apply dersrec_singleI. sfs. apply (eq_rect _ _ dbe). list_eq_assoc.
+
++ eapply derI.  apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc. apply (exch_tnc' (Imp D B) y (x :: X) Y). sfseq.
+apply dersrec_singleI. revert l. sfs. list_assoc_r'. intro l.
+apply l. reflexivity. sfs.
+eapply derI.  apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc. apply (exch_tnc' y B Y (x :: X)). sfseq.
+apply dersrec_singleI. sfs. apply (eq_rect _ _ dbe). list_eq_assoc.
+
++ eapply derI.  apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc. apply (exch_tnc' x y (H8 ++ Imp D B :: H4) Y). sfseq.
+apply dersrec_singleI. sfs. assoc_single_mid' (Imp D B). 
+apply l. sfseq. sfs.
+eapply derI.  apply (@fextI _ _ _ Γ1 Γ2).
+eapply rmI_eqc. apply (exch_tnc' y x Y (H8 ++ B :: H4)). sfseq.
+apply dersrec_singleI. sfs. apply (eq_rect _ _ dbe). list_eq_assoc.
+
++ eapply derI.  apply (@fextI _ _ _ Γ1 (H4 ++ Imp D B :: G2)).
+eapply rmI_eqc. apply exch_tnc'. sfseq.
+apply dersrec_singleI. revert l. sfs. list_assoc_l'. intro l.
+apply l. reflexivity. sfs.
+eapply derI.  apply (@fextI _ _ _ Γ1 (H4 ++ B :: G2)).
+eapply rmI_eqc. apply exch_tnc'. sfseq.
+apply dersrec_singleI. sfs. apply (eq_rect _ _ dbe). list_eq_assoc.
 
 Qed.
 
-Check gs_LJA_ImpL_adm.
-*)
+Check gs_LJT_ImpL_adm.
 
 Lemma gs_LJA_ImpL_adm V (D : PropF V) ps c Γ1 Γ2 (r : LJAncrules ps c) :
   gen_step l41prop D isubfml (derrec LJArules emptyT)
@@ -837,7 +884,13 @@ Proof.  eapply gen_step_lemT. apply AccT_isubfml.
 intros * ljpc.  destruct ljpc. inversion r.
 apply gs_LJA_ImpL_adm. exact X. Qed.
 
-Check LJA_ImpL_adm.
+Lemma LJT_ImpL_adm V D : forall seq, derrec LJTrules emptyT seq -> 
+  @l41prop_t V D seq.
+Proof.  eapply gen_step_lemT. apply AccT_isubfml.
+intros * ljpc.  destruct ljpc. inversion r.
+apply gs_LJT_ImpL_adm. exact X. Qed.
+
+Check LJA_ImpL_adm.  Check LJT_ImpL_adm.
 
 Lemma idrule_der_lja {V} A : derrec LJArules emptyT ([A : PropF V], A).
 Proof. induction A.

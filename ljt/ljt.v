@@ -18,6 +18,9 @@ Require Import Coq.Program.Basics.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import PeanoNat.
 
+Ltac sfs := simpl ; unfold fmlsext ; simpl.
+Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
+
 Inductive PropF (V : Set): Type :=
  | Var : V -> PropF V
  | Bot : PropF V
@@ -537,6 +540,20 @@ Proof. intro dnw.  pose (LJTweakening dnw).
 unfold wkL_valid' in w. simpl in w.  unfold wkL_valid in w. 
 specialize (w [] mid).  unfold fmlsext in w. simpl in w.
 apply (exchL_ljt w).  apply fst_relI. swap_tac. Qed.
+
+(* generalised derived atom rule for LJT *)
+Lemma gen_atom_ljt V p B G1 G2 G3 E : 
+  derl LJTrules [(G1 ++ B :: G2 ++ @Var V p :: G3, E)] 
+    (G1 ++ Imp (Var p) B :: G2 ++ Var p :: G3, E).
+Proof.
+apply (@derl_trans _ _ _ [(G1 ++ G2 ++ Imp (Var p) B :: Var p :: G3, E)]).
+apply sw_ljt. apply fst_relI. swap_tac_Rc.
+apply derl_dersl_single.
+eapply dtderI.
+apply (@fextI _ _ _ (G1 ++ G2) G3).
+eapply rmI_eqc. apply atom_tnc'. sfseq.
+apply derl_dersl_single.  apply sw_ljt. apply fst_relI.
+(* NB - swap_tac_Rc needed twice *) swap_tac_Rc ; swap_tac_Rc. Qed.
 
 (* atom rule derivable in LJ *)
 Lemma lj_der_atom V ps c G : 

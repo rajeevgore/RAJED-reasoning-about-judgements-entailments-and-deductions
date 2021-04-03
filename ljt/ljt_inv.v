@@ -19,9 +19,6 @@ Require Import gen_tacs.
 Require Import gen_seq gstep rtcT.
 Require Import ljt.
 
-Ltac sfs := simpl ; unfold fmlsext ; simpl.
-Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
-
 Inductive ImpRinv {V} : PropF V -> srseq (PropF V) -> Type :=
   | ImpRinv_I : forall C D, ImpRinv (Imp C D) (pair [C] D).
 
