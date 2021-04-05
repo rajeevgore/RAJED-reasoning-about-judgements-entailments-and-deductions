@@ -463,9 +463,10 @@ Qed.
 
 Check can_trf_genLinv_exch.
 
-(* try to get a version for where rule may have a list of principal formulae *)
-Lemma can_trf_genLinv_lem W Y rules genLinv ps cl cr Γ1 Γ2 :
-  (forall u w, genLinv u w -> InT u cl -> False) -> rules ps (cl, cr) ->
+(* a version for where rule may have a list of principal formulae *)
+Lemma can_trf_genLinv_leml W Y rules genLinv ps cl cr Γ1 Γ2 :
+  (forall u w X Y, genLinv u w -> cl = X ++ [u] ++ Y -> 
+    InT (X ++ w ++ Y, cr) ps) -> rules ps (cl, cr) ->
   can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) (derl (fst_ext_rls rules)) 
     (map (apfst (fmlsext Γ1 Γ2)) ps) (Γ1 ++ cl ++ Γ2, cr).
 Proof. intros clnl rpc. 
@@ -476,11 +477,15 @@ acacD'T2 ; subst.
 assoc_mid H0.  eexists. split.  apply ncdgen. apply rpc.
 apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
 - list_eq_ncT. cD. subst. simpl. 
-require (clnl _ _ g). solve_InT. destruct clnl.
-- require (clnl _ _ g). solve_InT. destruct clnl.
+specialize (clnl _ _ H0 [] g). 
+rewrite ?app_nil_r in clnl.  specialize (clnl eq_refl).
+eapply fcrd. exact clnl. sfseq.
+- specialize (clnl _ _ _ _ g eq_refl). 
+eapply fcrd. exact clnl. sfseq.
 - eexists. split. assoc_mid cl. apply ncdgen. apply rpc.
 apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
-- require (clnl _ _ g). solve_InT. destruct clnl.
+- specialize (clnl _ _ [] _ g eq_refl). 
+eapply fcrd. exact clnl. sfseq.
 - list_eq_ncT. cD. subst. simpl in rpc.
 eexists. split. assoc_mid H4. apply ncdgen. apply rpc.
 apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
@@ -490,20 +495,29 @@ apply fcr. intro. destruct q.
 rewrite ?app_nil_r.
 apserx. apply fslr_I. exact g.
 + simpl. rewrite ?app_nil_r.  
-require (clnl _ _ g). solve_InT. destruct clnl.
+require (clnl _ _ [] [] g).  rewrite ?app_nil_r. reflexivity.
+rewrite ?app_nil_r in clnl.  
+eapply fcrd. exact clnl. sfseq.
 - list_eq_ncT. cD.  list_eq_ncT. cD. subst. (* simpl. NO! *) list_assoc_l'.
 eexists. split. apply ncdgene. apply rpc.
 apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
 - eexists. split. assoc_mid cl. apply ncdgen. apply rpc.
 apply fcr. intro. destruct q. 
 list_assoc_r'. simpl.  
-apserx. apply fslr_I. exact g.
-Qed.
+apserx. apply fslr_I. exact g.  Qed.
+
+Check can_trf_genLinv_leml.
+
+Lemma can_trf_genLinv_lem W Y rules genLinv ps cl cr Γ1 Γ2 :
+  (forall u w, genLinv u w -> InT u cl -> False) -> rules ps (cl, cr) ->
+  can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv)) (derl (fst_ext_rls rules)) 
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (Γ1 ++ cl ++ Γ2, cr).
+Proof. intros clnl.  apply can_trf_genLinv_leml.
+intros * guw cleq.  require (clnl _ _ guw). subst. solve_InT.
+destruct clnl. Qed.
 
 Check can_trf_genLinv_lem.
 
-(* TODO  can can_trf_genLinv_lem be used to prove can_trf_genLinv_genl,
-  where some rule can't match genLinv? *)
 Lemma can_trf_genLinv_genl W Y rules genLinv ps c
   (rls_unique : forall ps u w X Y G,
     genLinv u w -> rules ps (X ++ [u] ++ Y, G) -> InT (X ++ w ++ Y, G) ps) :
@@ -511,43 +525,9 @@ Lemma can_trf_genLinv_genl W Y rules genLinv ps c
   can_trf_rules_rc (@srs_ext_rel W Y (fslr genLinv))
     (derl (fst_ext_rls rules)) ps c.
 Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r.
-unfold can_trf_rules_rc. intros c' ser.
-inversion ser. clear ser. destruct c0. simpl in H0.
-unfold fmlsext in H0. inversion H0. clear H0. subst.
-destruct X0.  
-acacD'T2 ; subst.
-- rewrite ?app_nil_r in X. 
-assoc_mid H2.  eexists. split.  apply ncdgen. apply X.
-apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
-- list_eq_ncT. cD. subst. simpl. 
-specialize (rls_unique ps0 _ _ H2 [] y g). 
-rewrite ?app_nil_r in rls_unique.  specialize (rls_unique X).
-eapply fcrd. exact rls_unique.  simpl. unfold fmlsext. list_eq_assoc.
-- specialize (rls_unique ps0 _ _ _ _ _ g X).
-eapply fcrd. exact rls_unique.  simpl. unfold fmlsext. list_eq_assoc.
-- eexists. split. assoc_mid l. apply ncdgen. apply X.
-apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
-- specialize (rls_unique ps0 _ _ [] H4 y g X). 
-eapply fcrd. exact rls_unique.  simpl. unfold fmlsext. list_eq_assoc.
-- list_eq_ncT. cD. subst. simpl in X.
-eexists. split. assoc_mid H4. apply ncdgen. apply X.
-apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
-- list_eq_ncT. sD ; subst.
-+ eexists. split.  apply ncdgene. apply X.
-apply fcr. intro. destruct q. 
-rewrite ?app_nil_r.
-apserx. apply fslr_I. exact g.
-+ simpl. rewrite ?app_nil_r.  
-specialize (rls_unique ps0 _ _ [] [] y g X). 
-eapply fcrd. exact rls_unique.  simpl. unfold fmlsext. list_eq_assoc.
-- list_eq_ncT. cD.  list_eq_ncT. cD. subst. (* simpl. NO! *) list_assoc_l'.
-eexists. split. apply ncdgene. apply X.
-apply fcr. intro. destruct q.  apserx. apply fslr_I. exact g.
-- eexists. split. assoc_mid l. apply ncdgen. apply X.
-apply fcr. intro. destruct q. 
-list_assoc_r'. simpl.  
-apserx. apply fslr_I. exact g.
-Qed.
+destruct c0.  apply can_trf_genLinv_leml.
+intros * guw leq. subst.
+exact (rls_unique _ _ _ _ _ _ guw X). exact X. Qed.
 
 Check can_trf_genLinv_genl.
 
