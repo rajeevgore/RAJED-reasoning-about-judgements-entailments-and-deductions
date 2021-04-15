@@ -21,6 +21,7 @@ Require Import gen_seq gstep gentree rtcT.
 Require Import ljt ljt_inv.
 Require Import Coq.Program.Basics.
 
+(* don't seem to use LJA_der_id, LJT_der_id
 (* lemma for use in LJA_der_id and LJT_der_id *)
 Lemma LJX_der_id_lem {V} rules A
   (IH : forall y : PropF V, dnsubfml y A ->
@@ -181,6 +182,7 @@ apply (IH _ H).
 - apply il_anc'.  - apply lrls_anc'.  - apply rrls_anc'.
 - apply exchL_lja.  - apply LJA_rel_adm_ImpR.
 Qed.
+*)
 
 (*
 don't do this - wrong, follow proof in paper, just do Lemma 3.2 (1) first
@@ -190,6 +192,7 @@ Lemma LJA_der_id_mp {V} :
   (forall B H, derrec LJArules emptyT (A :: Imp A B :: H, B)).
 *)
 
+(* don't seem to use LJA_der_mp, LJT_der_mp 
 (* Lemma 3.2(2) of Dyckhoff & Negri JSL 2000 *)
 Lemma LJA_der_mp {V} (A B : PropF V) H :
   derrec LJArules emptyT (A :: Imp A B :: H, B).
@@ -208,6 +211,7 @@ pose (LJT_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
 eapply (rr_ext_relI_eqc _ _ _ [] _).
 apply ImpRinv_I. reflexivity. clear r.
 apply LJT_der_id. apply AccT_dnsubfml. Qed.
+*)
 
 (* Lemma 4.1 of Dyckhoff & Negri JSL 2000 *)
 (* relevant property of sequent to be proved by induction *)
@@ -228,6 +232,11 @@ Definition l41prop' {V} (rules : rlsT (srseq (PropF V))) D seq :=
   forall G1 G2, seq = (G1 ++ G2, D) -> 
   forall B E, derrec rules emptyT (fmlsext G1 G2 [B], E) ->
   derrec rules emptyT (apfst (fmlsext G1 G2) ([Imp D B], E)).
+
+Lemma l41_t' {V} D seq : @l41prop_t V D seq -> @l41prop' V LJTrules D seq.
+Proof. firstorder. Qed.
+Lemma l41' {V} D seq : @l41prop V D seq -> @l41prop' V LJArules D seq.
+Proof. firstorder. Qed.
 
 Lemma LJX_inv_sl V LJXrules G1 G2 E ps c 
   (LJX_can_rel_AndLinv : forall seq, derrec LJXrules emptyT seq ->
@@ -892,59 +901,109 @@ apply gs_LJT_ImpL_adm. exact X. Qed.
 
 Check LJA_ImpL_adm.  Check LJT_ImpL_adm.
 
+Lemma idrule_der_ljx {V : Set} rules A 
+  (Id_xnc' : forall v : V, rules [] ([Var v], Var v))
+  (ImpR_xnc' : forall A B, rules [([A], B)] ([], Imp A B))
+  (lrls_xnc' : forall G ps c, LJslrules ps c -> 
+    rules (map (flip pair G) ps) (flip pair G c))
+  (rrls_xnc' : forall ps c, LJsrrules ps c -> 
+    rules (map (pair []) ps) ([], c)) 
+  (LJX_ImpL_adm : forall D seq, derrec (fst_ext_rls rules) emptyT seq ->
+    l41prop' (fst_ext_rls rules) D seq) :
+  derrec (fst_ext_rls rules) emptyT ([A : PropF V], A).
+Proof. induction A.
+- eapply derI. apply rsub_fer.  eapply Id_xnc'. apply dlNil.
+- eapply derI. apply rsub_fer.  eapply lrls_xnc'. apply Bot_sl'.  apply dlNil.
+- (* Imp - apply ImpR rule *)
+eapply derI. eapply (@fextI _ _ _ _ []).
+eapply rmI_eqc.  apply ImpR_xnc'.  
+sfs. rewrite !app_nil_r.  reflexivity.
+apply dersrec_singleI.  sfs.
+(* use Lemma 4.1 *)
+specialize (LJX_ImpL_adm A1 _ IHA1 [] [A1] eq_refl A2 A2).
+simpl in LJX_ImpL_adm. unfold fmlsext in LJX_ImpL_adm.
+apply LJX_ImpL_adm. clear LJX_ImpL_adm.
+apply (fer_der [] [A1] IHA2). 
+
+- (* And *) eapply derI. 
++ apply rsub_fer.  eapply lrls_xnc'.  apply AndL_sl'.
++ simpl.  apply dersrec_singleI. eapply derI.
+++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eqc.
+eapply rrls_xnc'.  apply AndR_sr'.  reflexivity.  
+++ sfs.  apply dlCons.
++++ apply (fer_der [] [A2] IHA1).
++++ apply dersrec_singleI.
+apply (fer_der [A1] []) in IHA2. exact IHA2.
+
+- (* Or *) eapply derI. 
++ apply rsub_fer.  eapply lrls_xnc'.  apply OrL_sl'.  
++ simpl. apply dlCons.
+++ eapply derI.
++++ eapply (@fextI _ _ _ [A1] []).  eapply rmI_eqc.
+eapply rrls_xnc'.  apply OrR1_sr'.  sfs. reflexivity.
++++ sfs. apply dersrec_singleI. apply IHA1.
+++ apply dersrec_singleI.  eapply derI.
++++ eapply (@fextI _ _ _ [A2] []).  eapply rmI_eqc.
+eapply rrls_xnc'.  apply OrR2_sr'.  sfs. reflexivity.
++++ sfs. apply dersrec_singleI. apply IHA2.
+Qed.
+
+Print Implicit idrule_der_ljx.
+
+(*
 Lemma idrule_der_lja {V} A : derrec LJArules emptyT ([A : PropF V], A).
 Proof. induction A.
-- eapply derI. apply rsub_fer.
-eapply Id_anc. apply Idrule_I. apply dlNil.
-- eapply derI. apply rsub_fer.
-eapply lrls_anc. eapply rmI_eq.  apply Bot_sl.
-apply Botrule_I.  reflexivity.  reflexivity.  apply dlNil.
+- eapply derI. apply rsub_fer.  eapply Id_anc'. apply dlNil.
+- eapply derI. apply rsub_fer.  eapply lrls_anc'. apply Bot_sl'.  apply dlNil.
 - (* Imp - apply ImpR rule *)
 eapply derI. eapply (@fextI _ _ _ _ []).
 eapply rmI_eqc.  apply ImpR_anc'.  
-simpl. unfold fmlsext. rewrite !app_nil_r.  reflexivity.
-apply dersrec_singleI.  simpl. unfold fmlsext. rewrite !app_nil_r.
+sfs. rewrite !app_nil_r.  reflexivity.
+apply dersrec_singleI.  sfs.
 (* use Lemma 4.1 *)
 pose (@LJA_ImpL_adm _ A1 _ IHA1 [] [A1] eq_refl A2 A2).
 simpl in d. unfold fmlsext in d.  apply d. clear d.
 apply (fer_der [] [A1] IHA2). 
 
 - (* And *) eapply derI. 
-+ apply rsub_fer.  eapply lrls_anc.  eapply rmI_eq.
-apply AndL_sl.  apply AndLrule_I.  reflexivity.  reflexivity.
++ apply rsub_fer.  eapply lrls_anc'.  apply AndL_sl'.
 + simpl.  apply dersrec_singleI. eapply derI.
-++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eq.
-eapply rrls_anc.  apply rmI.
-apply AndR_sr.  apply AndRrule_I.  reflexivity.  reflexivity.
-++ simpl. unfold fmlsext. simpl.  apply dlCons.
+++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eqc.
+eapply rrls_anc'.  apply AndR_sr'.  reflexivity.  
+++ sfs.  apply dlCons.
 +++ apply (fer_der [] [A2] IHA1).
 +++ apply dersrec_singleI.
-apply (fer_der [A1] []) in IHA2.
-rewrite app_nil_r in IHA2. exact IHA2.
+apply (fer_der [A1] []) in IHA2. exact IHA2.
 
 - (* Or *) eapply derI. 
-+ apply rsub_fer.  eapply lrls_anc.  eapply rmI_eq.
-apply OrL_sl.  apply OrLrule_I.  reflexivity.  reflexivity.
++ apply rsub_fer.  eapply lrls_anc'.  apply OrL_sl'.  
 + simpl. apply dlCons.
 ++ eapply derI.
-+++ eapply (@fextI _ _ _ [A1] []).  eapply rmI_eq.
-eapply rrls_anc.  apply rmI.
-apply OrR1_sr.  apply OrR1rule_I.  reflexivity.
-simpl. unfold fmlsext. reflexivity.
-+++ simpl. unfold fmlsext. simpl. apply dersrec_singleI. apply IHA1.
++++ eapply (@fextI _ _ _ [A1] []).  eapply rmI_eqc.
+eapply rrls_anc'.  apply OrR1_sr'.  sfs. reflexivity.
++++ sfs. apply dersrec_singleI. apply IHA1.
 ++ apply dersrec_singleI.  eapply derI.
-+++ eapply (@fextI _ _ _ [A2] []).  eapply rmI_eq.
-eapply rrls_anc.  apply rmI.
-apply OrR2_sr.  apply OrR2rule_I.  reflexivity.
-simpl. unfold fmlsext. reflexivity.
-+++ simpl. unfold fmlsext. simpl. apply dersrec_singleI. apply IHA2.
++++ eapply (@fextI _ _ _ [A2] []).  eapply rmI_eqc.
+eapply rrls_anc'.  apply OrR2_sr'.  sfs. reflexivity.
++++ sfs. apply dersrec_singleI. apply IHA2.
 Qed.
+*)
 
-Print Implicit idrule_der_lja.
+Lemma idrule_der_lja {V} A : derrec LJArules emptyT ([A : PropF V], A).
+Proof. apply idrule_der_ljx.  apply Id_anc'.  apply ImpR_anc'.
+apply lrls_anc'.  apply rrls_anc'.  apply LJA_ImpL_adm.  Qed.
+
+Lemma idrule_der_ljt {V} A : derrec LJTrules emptyT ([A : PropF V], A).
+Proof. apply idrule_der_ljx.  apply Id_tnc'.  apply ImpR_tnc'.
+apply lrls_tnc'.  apply rrls_tnc'.  apply LJT_ImpL_adm.  Qed.
 
 Lemma InT_der_LJA V A ant : InT A ant -> derrec (@LJArules V) emptyT (ant, A).
 Proof. intro ia.  apply InT_split in ia.  cD. subst.
   exact (fer_der _ _ (idrule_der_lja A)). Qed.
+
+Lemma InT_der_LJT V A ant : InT A ant -> derrec (@LJTrules V) emptyT (ant, A).
+Proof. intro ia.  apply InT_split in ia.  cD. subst.
+  exact (fer_der _ _ (idrule_der_ljt A)). Qed.
 
 (* atom rule derivable in LJA *)
 Lemma lja_der_atom V ps c G : 
@@ -956,6 +1015,8 @@ simpl. unfold fmlsext. simpl.  eapply (@dtCons _ _ []).
 apply derrec_nil_derl.  apply InT_der_LJA. solve_InT.
 eapply (@dtCons _ _ [_]). apply asmI. apply dtNil.
 Qed.
+  
+(* and of course the atom rule is part of LJT, see atom_tnc *)
   
 (* Lemma 4.2 of Dyckhoff & Negri JSL 2000 *)
 Lemma LJA_dn42_princ V ps B C D E :
@@ -985,6 +1046,33 @@ clear X X0.  simpl in d.  unfold fmlsext in d.  exact d.
 - inversion X. 
 Qed.
 
+Lemma LJT_dn42_princ V ps B C D E :
+  LJTncrules ps ([Imp (Imp C D) B], E) ->
+  forall Γ1 Γ2 : list (PropF V),
+  adm (fst_ext_rls LJTncrules) (map (apfst (fmlsext Γ1 Γ2)) ps)
+    (fmlsext Γ1 Γ2 [Imp D B ; Imp D B ; C], E).
+Proof. intro ljpc. inversion ljpc ; subst ; clear ljpc.
+- inversion X. 
++ inversion X0 ; inversion X1 ; inversion X2.
+
++ (* the non-trivial case *) inversion X0. subst. clear X0 X. 
+sfs.  intros *. apply admI. intro drs.
+inversion drs. subst. clear drs.
+pose (@LJT_ImpL_adm V D _ X _ _ eq_refl B E).  require d.
+clear X d.  inversion X0. clear X0 X1. subst.
+pose (@insL_ljt V (Γ1 ++ [B]) Γ2 [Imp D B ; C] E).
+require d.  apply (eq_rect _ _ X). list_eq_assoc.
+apply (eq_rect _ _ d). list_eq_assoc.
+(* now need exchange *)
+clear X X0.  simpl in d.  unfold fmlsext in d.  exact d.
+
++ inversion X0. 
++ inversion X0. 
++ inversion X0. subst. clear X0 X. inversion X1 ; inversion X.
++ inversion X0. 
+- inversion X. inversion X0.
+- inversion X. inversion X0.  list_eq_ncT. inversion H5. Qed.
+
 Inductive dn42invs {V} : PropF V -> list (PropF V) -> Type :=
   | dn42invs_I : forall B C D, 
     dn42invs (Imp (Imp C D) B) [Imp D B ; Imp D B ; C].
@@ -994,6 +1082,8 @@ Definition dn42inv {V} := fslr (@dn42invs V).
 Lemma dn42inv_I {V} (B C D : PropF V) : 
   dn42inv [Imp (Imp C D) B] [Imp D B ; Imp D B ; C].
 Proof. apply fslr_I. apply dn42invs_I. Qed.
+
+(* done for LJT to here *)
 
 Lemma can_trf_dn42inv_lja {V} ps c: @LJArules V ps c ->
   can_trf_rules_rc (srs_ext_rel dn42inv) (adm LJArules) ps c.
