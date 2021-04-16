@@ -1091,8 +1091,30 @@ Proof. apply can_trf_genLinv_geng.  apply LJAnc_seL.
 intros * auv.  destruct auv.
 apply LJA_dn42_princ.  Qed.
 
-Lemma can_rel_dn42inv {V} seq :
+Lemma can_rel_dn42inv_lja {V} seq :
 derrec LJArules emptyT seq ->
   can_rel LJArules (srs_ext_rel (Y:=PropF V)) dn42inv seq.
 Proof. unfold can_rel.
 apply der_trf_rc_adm.  exact can_trf_dn42inv_lja.  Qed.
+
+(* try to adapt to ljt
+Lemma can_trf_dn42inv_ljt {V} ps c: @LJTrules V ps c ->
+  can_trf_rules_rc (srs_ext_rel dn42inv) (adm LJTrules) ps c.
+Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
+- (* LJTSncrules *)
+eapply can_trf_genLinv_geng2.  apply LJTSnc_seL.
+intros * auv ljtspc.  destruct auv.
+apply LJT_dn42_princ. exact (sing_tnc ljtspc).
+eapply fextI. apply rmI. exact l. apply rsubI. apply sing_tnc.
+- (* ImpL_atom_rule *)
+admit.
+- (* exchange rule *)
+admit.
+Admitted.
+
+Lemma can_rel_dn42inv_ljt {V} seq :
+derrec LJTrules emptyT seq ->
+  can_rel LJTrules (srs_ext_rel (Y:=PropF V)) dn42inv seq.
+Proof. unfold can_rel.
+apply der_trf_rc_adm.  exact can_trf_dn42inv_ljt.  Qed.
+*)

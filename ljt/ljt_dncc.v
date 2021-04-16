@@ -190,7 +190,7 @@ Ltac app42i fp X A :=
 simpl in fp ; unfold fmlsext in fp ; simpl in fp ; 
 inversion fp ; apply fst in X ; subst ; clear fp ;
 (* apply Lemma 4.2 to X *)
-apply can_rel_dn42inv in X ;
+apply can_rel_dn42inv_lja in X ;
 unfold can_rel in X ;  erequire X ;  require X ; [
 assoc_single_mid' A ;
 eapply srs_ext_relI_c1 ;  apply dn42inv_I | ].
