@@ -1083,8 +1083,6 @@ Lemma dn42inv_I {V} (B C D : PropF V) :
   dn42inv [Imp (Imp C D) B] [Imp D B ; Imp D B ; C].
 Proof. apply fslr_I. apply dn42invs_I. Qed.
 
-(* done for LJT to here *)
-
 Lemma can_trf_dn42inv_lja {V} ps c: @LJArules V ps c ->
   can_trf_rules_rc (srs_ext_rel dn42inv) (adm LJArules) ps c.
 Proof. apply can_trf_genLinv_geng.  apply LJAnc_seL.
@@ -1097,7 +1095,6 @@ derrec LJArules emptyT seq ->
 Proof. unfold can_rel.
 apply der_trf_rc_adm.  exact can_trf_dn42inv_lja.  Qed.
 
-(* try to adapt to ljt
 Lemma can_trf_dn42inv_ljt {V} ps c: @LJTrules V ps c ->
   can_trf_rules_rc (srs_ext_rel dn42inv) (adm LJTrules) ps c.
 Proof. intro ljpc. destruct ljpc. inversion r. subst. clear r. destruct X.
@@ -1107,14 +1104,20 @@ intros * auv ljtspc.  destruct auv.
 apply LJT_dn42_princ. exact (sing_tnc ljtspc).
 eapply fextI. apply rmI. exact l. apply rsubI. apply sing_tnc.
 - (* ImpL_atom_rule *)
-admit.
+apply (can_trf_rules_rc_mono (@rsub_derl_adm _ _)).
+destruct c.  apply can_trf_genLinv_leml.
++ intros * duw leq. 
+inversion r. subst. clear r. destruct duw.  inversion X0.
+acacD'T2 ; subst.
+++ inversion H0.  ++ inversion H3.  ++ list_eq_ncT.  inversion H4.
++ exact (atom_tnc r).
 - (* exchange rule *)
-admit.
-Admitted.
+apply (can_trf_rules_rc_mono (@rsub_derl_adm _ _)).
+eapply can_trf_genLinv_exch. apply rsubI. apply exch_tnc. exact r.  Qed.
 
 Lemma can_rel_dn42inv_ljt {V} seq :
 derrec LJTrules emptyT seq ->
   can_rel LJTrules (srs_ext_rel (Y:=PropF V)) dn42inv seq.
 Proof. unfold can_rel.
 apply der_trf_rc_adm.  exact can_trf_dn42inv_ljt.  Qed.
-*)
+
