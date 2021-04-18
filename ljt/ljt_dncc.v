@@ -166,17 +166,19 @@ Definition gs_ljt_ilrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
 Definition gs_lja_ilrules V A Γ1 Γ2 G ps c := @gs_ljg_glrules V
   A _ _ _ Γ1 Γ2 G ps c LJAil_single il_anc' lja_ctr_il.
 
-Ltac appii fml X sub := 
+Ltac appii Imp_xnc' fml X sub := 
 assoc_single_mid' fml ;
-eapply derI ; [ eapply fextI ; eapply rmI_eqc ; [ apply Imp_anc' |
+eapply derI ; [ eapply fextI ; eapply rmI_eqc ; [ apply Imp_xnc' |
 simpl ; unfold fmlsext ; reflexivity ] |
 apply dlCons ; [
 apply (eq_rect _ _ X) ; simpl ; unfold fmlsext ; list_eq_assoc |
 apply dersrec_singleI ;
 apply (eq_rect _ _ sub) ; simpl ; unfold fmlsext ; list_eq_assoc ]].
 
-Ltac appii2 A B X1 sub := 
-apply LJA_can_rel_ImpL_Imp_inv2 in X1 ;
+Check LJA_can_rel_ImpL_Imp_inv2.  Check LJT_can_rel_ImpL_Imp_inv2.
+
+Ltac appii2 crii2 A B X1 sub := 
+apply crii2 in X1 ;
 unfold can_rel in X1 ;  erequire X1 ;  require X1 ; [
 apply srs_ext_relI_alt ; apply fst_relI ; ertac A ; 
 apply ext_relI_nil ; apply fslr_I ;  apply ImpL_Imp_inv2s_I | 
@@ -186,11 +188,13 @@ sersctrtac sub B ;
 (* now apply ImpL_Imp_rule *)
 simpl in sub ; clear X1 ].
 
-Ltac app42i fp X A := 
+Check can_rel_dn42inv_lja.  Check can_rel_dn42inv_ljt.
+
+Ltac app42i crdn41i fp X A := 
 simpl in fp ; unfold fmlsext in fp ; simpl in fp ; 
 inversion fp ; apply fst in X ; subst ; clear fp ;
 (* apply Lemma 4.2 to X *)
-apply can_rel_dn42inv_lja in X ;
+apply crdn41i in X ;
 unfold can_rel in X ;  erequire X ;  require X ; [
 assoc_single_mid' A ;
 eapply srs_ext_relI_c1 ;  apply dn42inv_I | ].
@@ -200,11 +204,19 @@ Proof. eapply tT_trans ; apply tT_step ; apply dnsub_ImpL. Qed.
 
 (* difficult case of contraction for Lemma 5.1, as top of pg 1505 *)
 
-Lemma gs_lja_ImpL_Imp V A Γ1 Γ2 ps c : ImpL_Imp_rule ps c ->
-  gen_step (can_rel (fst_ext_rls LJAncrules)
+Lemma gs_ljx_ImpL_Imp V A (rules : rlsT (srseq (PropF V))) Γ1 Γ2 ps c 
+  (crdn42i : forall seq, derrec (fst_ext_rls rules) emptyT seq ->
+    can_rel (fst_ext_rls rules) (@srs_ext_rel _ _) dn42inv seq)
+  (crii2 : forall seq, derrec (fst_ext_rls rules) emptyT seq ->
+    can_rel (fst_ext_rls rules) (@srs_ext_rel _ _) ImpL_Imp_inv2 seq)
+  (Imp_xnc' : forall (B C D G : PropF V),
+    rules [([Imp D B; C], D); ([B], G)] ([Imp (Imp C D) B], G)) :
+  ImpL_Imp_rule ps c ->
+  gen_step (can_rel (fst_ext_rls rules)
       (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A 
-    (clos_transT dnsubfml) (derrec (fst_ext_rls LJAncrules) emptyT)
+    (clos_transT dnsubfml) (derrec (fst_ext_rls rules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+
 Proof.  intro r. destruct r.  unfold gen_step.
 intros sub fp dc seq' sc.
 inversion sc. destruct X. clear sc. subst.
@@ -212,7 +224,7 @@ unfold fmlsext in H0.  simpl in H0.
 acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst). (* 7 subgoals *)
 
 - (* principal formula is occurrence of contracted formula *)
-app42i fp X (Imp (Imp C D) B).
+app42i crdn42i fp X (Imp (Imp C D) B).
 
 (* now contract Imp D B, twice *)
 pose (sub _ (tT_step _ _ _ (dnsub_Imp_ImpL _ _ _))).
@@ -224,10 +236,10 @@ sersctrtac c C ; simpl in c ; clear X.
 
 inversion X0. subst. clear X0 X1. apply fst in X.
 (* apply inversion to Imp (Imp C D) B in X to get B *)
-appii2 (Imp (Imp C D) B) B X sub.
-appii (Imp (Imp C D) B) c sub.
+appii2 crii2 (Imp (Imp C D) B) B X sub.
+appii Imp_xnc' (Imp (Imp C D) B) c sub.
 
-- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
+- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_xnc'.
 simpl. unfold fmlsext. simpl.
 list_assoc_r'. reflexivity.
 eapply usefm. exact fp.
@@ -236,7 +248,7 @@ destruct p. simpl. unfold fmlsext. simpl.
 apser'.  apply (sctr_relI A S).
 
 - (* principal formula is occurrence of contracted formula *)
-app42i fp X (Imp (Imp C D) B).
+app42i crdn42i fp X (Imp (Imp C D) B).
 (* now contract Imp D B, twice *)
 pose (sub _ (tT_step _ _ _ (dnsub_Imp_ImpL _ _ _))).
 apply c in X. sersctrtac X (Imp D B).
@@ -245,13 +257,13 @@ apply c in X. sersctrtac X (Imp D B).
 sersctrtac c C ; simpl in c ; clear X.
 inversion X0. subst. clear X0 X1. apply fst in X.
 (* apply inversion to Imp (Imp C D) B in X to get B *)
-appii2 (Imp (Imp C D) B) B X sub.
-appii (Imp (Imp C D) B) c sub.
+appii2 crii2 (Imp (Imp C D) B) B X sub.
+appii Imp_xnc' (Imp (Imp C D) B) c sub.
 
 - acacD'T2 ; subst. (* why is this necessary? *)
 + (* principal formula is occurrence of contracted formula *)
 
-app42i fp X (Imp (Imp C D) B).
+app42i crdn42i fp X (Imp (Imp C D) B).
 (* now contract Imp D B, twice *)
 pose (sub _ (tT_step _ _ _ (dnsub_Imp_ImpL _ _ _))).
 apply c in X. sersctrtac X (Imp D B).
@@ -260,11 +272,11 @@ apply c in X. sersctrtac X (Imp D B).
 sersctrtac c C ; simpl in c ; clear X.
 inversion X0. subst. clear X0 X1. apply fst in X.
 (* apply inversion to Imp (Imp C D) B in X to get B *)
-appii2 (Imp (Imp C D) B) B X sub.
-appii (Imp (Imp C D) B) c sub.
+appii2 crii2 (Imp (Imp C D) B) B X sub.
+appii Imp_xnc' (Imp (Imp C D) B) c sub.
 
 + (* principal formula between occurrences of contracted formula *)
-clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
+clear sub. eapply derI. eapply fextI_eqc'. apply Imp_xnc'.
 simpl. unfold fmlsext. simpl.
 assoc_single_mid' (Imp (Imp C D) B). reflexivity.
 eapply usefm. exact fp.
@@ -273,7 +285,7 @@ destruct p. simpl. unfold fmlsext. simpl.
 apser'.  eapply arg1_cong_imp.
 2: apply sctr_relI.  list_eq_assoc.
 
-- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
+- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_xnc'.
 simpl. unfold fmlsext. simpl.
 list_assoc_l'. reflexivity.
 eapply usefm. exact fp.
@@ -282,7 +294,7 @@ destruct p. simpl. unfold fmlsext. simpl.
 apser'.  apply (sctr_relI A S).
 
 - (* principal formula is occurrence of contracted formula *)
-app42i fp X (Imp (Imp C D) B).
+app42i crdn42i fp X (Imp (Imp C D) B).
 (* now contract Imp D B, twice *)
 pose (sub _ (tT_step _ _ _ (dnsub_Imp_ImpL _ _ _))).
 apply c in X. sersctrtac X (Imp D B).
@@ -291,10 +303,10 @@ apply c in X. sersctrtac X (Imp D B).
 sersctrtac c C ; simpl in c ; clear X.
 inversion X0. subst. clear X0 X1. apply fst in X.
 (* apply inversion to Imp (Imp C D) B in X to get B *)
-appii2 (Imp (Imp C D) B) B X sub.
-appii (Imp (Imp C D) B) c sub.
+appii2 crii2 (Imp (Imp C D) B) B X sub.
+appii Imp_xnc' (Imp (Imp C D) B) c sub.
 
-- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_anc'.
+- clear sub. eapply derI. eapply fextI_eqc'. apply Imp_xnc'.
 simpl. unfold fmlsext. simpl.
 list_assoc_l'. reflexivity.
 eapply usefm. exact fp.
@@ -304,7 +316,15 @@ apser'.  apply (sctr_relI A S).
 
 Qed.
 
-Check gs_lja_ImpL_Imp.
+Check gs_ljx_ImpL_Imp.
+
+Definition gs_lja_ImpL_Imp V A Γ1 Γ2 ps c :=
+  @gs_ljx_ImpL_Imp V A _ Γ1 Γ2 ps c 
+    can_rel_dn42inv_lja LJA_can_rel_ImpL_Imp_inv2 (@Imp_anc' V).
+
+Definition gs_ljt_ImpL_Imp V A Γ1 Γ2 ps c :=
+  @gs_ljx_ImpL_Imp V A _ Γ1 Γ2 ps c 
+    can_rel_dn42inv_ljt LJT_can_rel_ImpL_Imp_inv2 (@Imp_tnc' V).
 
 (* Proposition 5.1, contraction admissibility for LJA *)
 Lemma ctr_adm_lja V (fml : PropF V) :
