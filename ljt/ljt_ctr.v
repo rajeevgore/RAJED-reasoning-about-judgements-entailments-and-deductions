@@ -761,6 +761,66 @@ Qed.
 
 Print Implicit ctr_adm_lj.
 
+(* contraction when last rule is exchange rule *)
+Ltac crer c := unfold can_rel in c ; erequire c ; require c.
+(* to solve ((((A :: H5) ++ H2) ++ []) ++ H10) ++ [A] = A :: ?Goal23 ++ [A] *)
+Ltac ctreq A := list_assoc_r' ; apply (f_equal (cons A)) ;
+  list_assoc_l' ; reflexivity.
+Ltac do_ctr' := apser_exch' ; apply srs_ext_relI_nil ; eapply sctr_relI_eqp.
+Ltac sw_rtc_ljg exch_gnc c := simpl in c ; apply (exchL_rtc_ljg exch_gnc c) ; 
+  apply fst_relI ; rewrite ?app_nil_r.
+Ltac sw_ljg exch_gnc c := simpl in c ; apply (exchL_ljg exch_gnc c) ; 
+  apply fst_relI ; rewrite ?app_nil_r ; swap_tac_Rc.
+
+Lemma gs_ljg_exch U W A rules any Γ1 Γ2 (G : W) ps c 
+  (exch_gnc : forall G ps c, rlsmap (flip pair G) exch_rule ps c -> rules ps c):
+  rlsmap (flip pair G) exch_rule ps c -> gen_step (can_rel (fst_ext_rls rules)
+      (fun fml' : U => srs_ext_rel (sctr_rel fml'))) A
+    any (derrec (fst_ext_rls rules) emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
+    (apfst (fmlsext Γ1 Γ2) c).
+Proof. intro epc. inversion epc. subst. destruct X.
+remember (x :: X) as xX.  remember (y :: Y) as yY.
+clear x y X Y HeqxX HeqyY.
+unfold gen_step. sfs.
+intros sub fp dc seq' sc. 
+inversion fp. clear X0 fp. destruct X.
+inversion sc. destruct X. clear sc sub epc dc d. subst.
+(* check on clear dc d *)
+repeat (acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst)). (* 52 subgoals *)
+
+all : try (crer c ; [ do_ctr' ; ctreq A | 
+  sw_ljg exch_gnc c ; fail ]). (* 7 subgoals *)
+
++ crer c ; [ do_ctr' ; ctreq A | sw_rtc_ljg exch_gnc c ].
+apply (rtT_trans (y := Γ1 ++ A :: H2 ++ H9 ++ H1 ++ Φ2)) ; 
+  apply rtT_step ; swap_tac_Rc.
+
++ crer c ; [ do_ctr' ; ctreq A | sw_rtc_ljg exch_gnc c ].
+apply (rtT_trans (y := Γ1 ++ H2 ++ H0 ++ H7 ++ A :: H4 ++ Γ2)) ; apply rtT_step.
+apply (swapped_I Γ1 (H7 ++ A :: H4) (H2 ++ H0) Γ2) ; list_eq_assoc.
+apply (swapped_I (Γ1 ++ H2) (H0 ++ H7) [A] (H4 ++ Γ2)) ; list_eq_assoc.
+
++ crer c ; [ do_ctr' ; ctreq A | sw_rtc_ljg exch_gnc c ].
+apply (rtT_trans (y := Γ1 ++ H2 ++ A :: H4 ++ S ++ Γ2)) ; 
+  apply rtT_step ; swap_tac_Rc.
+
++ crer c ; [ do_ctr' ; ctreq A | sw_rtc_ljg exch_gnc c ].
+apply (rtT_trans (y := Φ1 ++ H7 ++ H1 ++ A :: H4 ++ Γ2)) ; apply rtT_step.
+swap_tac_Rc.
+apply (swapped_I Φ1 (H7 ++ H1) [A] (H4 ++ Γ2)) ; list_eq_assoc.
+
+(* why is all the following necessary ? *)
++ sD ; subst ; (crer c ; [ do_ctr' ; ctreq A | sw_ljg exch_gnc c ]).
++ sD ; subst ; (crer c ; [ do_ctr' ; ctreq A | sw_ljg exch_gnc c ]).
++ sD ; subst ; list_eq_ncT ; sD ; subst ;
+(crer c ; [ do_ctr' ; ctreq A | sw_ljg exch_gnc c ]).
+Qed.
+
+Check gs_ljg_exch.  (* used for ctr_adm_ljt in ljt_dncc.v *)
+
+Definition gs_ljt_exch V A any Γ1 Γ2 G ps c :=
+  @gs_ljg_exch _ _ A _ any Γ1 Γ2 G ps c (@exch_tnc V).
+
 (* extending contraction of one formula to contraction of a list of formulae *)
 Lemma lctr_adm_gen U Y (rules : rlsT (list U * Y)) fmls 
   (ctr_adm : forall (fml : U) seq, derrec rules emptyT seq ->

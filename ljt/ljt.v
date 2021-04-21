@@ -511,22 +511,52 @@ apply exchL_std_rule. apply LJAnc_seL. Qed.
 
 Print Implicit exchL_lja.
 
-Lemma sw_ljt V p c : fst_rel (@swapped _) p c -> derl (@LJTrules V) [p] c.
+Lemma sw_ljg U W rules p c 
+  (exch_gnc : forall (G : W) ps (c : list U * W),
+     rlsmap (flip pair G) exch_rule ps c -> rules ps c) :
+  fst_rel (@swapped _) p c -> derl (fst_ext_rls rules) [p] c.
 Proof. intro frs.
-inversion frs. destruct H. clear frs. subst.
+inversion frs. destruct X. clear frs. subst.
 destruct B. apply asmI. destruct C. apply asmI.
 apply in_derl. eapply (@fextI _ _ _ A D).
-eapply rmI_eq. eapply exch_tnc. apply rmI.
-eapply exchI.  simpl. unfold fmlsext. list_assoc_r'. reflexivity.
-simpl. unfold fmlsext. list_assoc_r'. reflexivity. Qed.
+eapply rmI_eq. eapply exch_gnc. apply rmI.
+eapply exchI. sfs. list_assoc_r'. reflexivity.
+sfs. list_assoc_r'. reflexivity. Qed.
 
-(* exchange for LJT in similar format *)
-Lemma exchL_ljt: forall V concl,
-  derrec (@LJTrules V) emptyT concl ->
+Lemma sw_rtc_ljg U W rules p c 
+  (exch_gnc : forall (G : W) ps (c : list U * W),
+     rlsmap (flip pair G) exch_rule ps c -> rules ps c) :
+  fst_rel (clos_refl_transT (@swapped _)) p c -> derl (fst_ext_rls rules) [p] c.
+Proof. intro frs.
+inversion frs. subst. clear frs. induction X. 
+- apply (sw_ljg _ exch_gnc). apply fst_relI. exact r.
+- apply asmI.
+- clear X1 X2. apply (derl_trans IHX2).
+apply derl_dersl_single. exact IHX1. Qed.
+
+Lemma exchL_ljg U W rules concl 
+  (exch_gnc : forall (G : W) ps (c : list U * W),
+     rlsmap (flip pair G) exch_rule ps c -> rules ps c) :
+  derrec (fst_ext_rls rules) emptyT concl ->
      forall concl', fst_rel (@swapped _) concl concl' ->
-    derrec (@LJTrules V) emptyT concl'.
-Proof. intros. apply sw_ljt in X0.
+    derrec (fst_ext_rls rules) emptyT concl'.
+Proof. intros. apply (sw_ljg _ exch_gnc) in X0.
 apply (derl_derrec_trans X0). exact (dersrec_singleI X). Qed.
+
+Lemma exchL_rtc_ljg U W rules concl 
+  (exch_gnc : forall (G : W) ps (c : list U * W),
+     rlsmap (flip pair G) exch_rule ps c -> rules ps c) :
+  derrec (fst_ext_rls rules) emptyT concl ->
+     forall concl', fst_rel (clos_refl_transT (@swapped _)) concl concl' ->
+    derrec (fst_ext_rls rules) emptyT concl'.
+Proof. intros. apply (sw_rtc_ljg _ exch_gnc) in X0.
+apply (derl_derrec_trans X0). exact (dersrec_singleI X). Qed.
+
+Definition sw_ljt V p c := @sw_ljg _ _ _ p c (@exch_tnc V).
+(* exchange for LJT in similar format as for LJA, LJ *)
+Definition exchL_ljt V concl := @exchL_ljg _ _ _ concl (@exch_tnc V).
+Definition sw_rtc_ljt V p c := @sw_rtc_ljg _ _ _ p c (@exch_tnc V).
+Definition exchL_rtc_ljt V concl := @exchL_rtc_ljg _ _ _ concl (@exch_tnc V).
 
 (* insertion for LJ, LJA systems *)
 Definition insL_lj V cl cr mid G := @gen_insL _ _ _ cl cr mid G (@LJnc_seL V).

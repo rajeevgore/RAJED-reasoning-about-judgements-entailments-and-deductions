@@ -295,6 +295,18 @@ Lemma serrc U W R G H J p : srs_ext_rel R ([H], p) ([J : U], p : W) ->
   srs_ext_rel R (H :: G, p) (J :: G, p).
 Proof. intro srs. eapply serr in srs. simpl in srs. exact srs. Qed.
 
+Lemma serrco1 U W R G H A B p : 
+  srs_ext_rel R (A ++ [H : U], p) (B, p : W) -> 
+  srs_ext_rel R (A ++ H :: G, p) (B ++ G, p).
+Proof. intro srs. eapply serr in srs. revert srs.
+list_assoc_r'. simpl. intro srs. exact srs. Qed.
+
+Lemma serrco U W R G H J A B p : 
+  srs_ext_rel R (A ++ [H], p) (B ++ [J : U], p : W) -> 
+  srs_ext_rel R (A ++ H :: G, p) (B ++ J :: G, p).
+Proof. intro srs. eapply serr in srs. revert srs.
+list_assoc_r'. simpl. intro srs. exact srs. Qed.
+
 Lemma serrc1 U W R G H J p : srs_ext_rel R ([H : U], p) (J, p : W) -> 
   srs_ext_rel R (H :: G, p) (J ++ G, p).
 Proof. intro srs. eapply serr in srs. simpl in srs. exact srs. Qed.
@@ -340,6 +352,31 @@ Ltac apserat := list_assoc_r' ; repeat (apply serl || apply serlc) ;
 
 Ltac apserx := apply rT_step ; simpl ; unfold fmlsext ;  apser.
 Ltac apserxat := apply rT_step ; simpl ; unfold fmlsext ;  apserat.
+
+(* for gs_ljg_exch in ljt_ctr.v, want to ignore the A :: and ++ [A] 
+  in A :: ?G ++ [A], where goal is srs_ext_rel _ ... ?G *)
+Ltac apser_exch y :=
+  list_assoc_r' ; repeat (apply serl) ;
+ list_assoc_l' ; repeat ((apply (serr [y]) ; fail 1) || apply serr).
+
+(*
+Ltac apser_exch' y := 
+  list_assoc_r' ; repeat (apply serl) ; (* but not serlc *)
+  list_assoc_l' ; repeat
+    ((apply (serrco []) ; fail 1) || apply serrco ||
+    (apply (serr [y]) ; fail 1) || apply serr).
+
+Ltac apser_exch'2 := 
+  list_assoc_r' ; repeat (apply serl) ; (* but not serlc *)
+  list_assoc_l' ; repeat
+    ((apply (serrco []) ; fail 1) || apply serrco || apply serr).
+    *)
+
+Ltac apser_exch' := 
+  list_assoc_r' ; repeat (apply serl) ; (* but not serlc *)
+  list_assoc_l' ; repeat
+    ((apply (serrco1 []) ; fail 1) || apply serrco1 || apply serr).
+
 
 (* for when last arg is unspecified *)
 Lemma sercfr U W R u w Z Y : 
