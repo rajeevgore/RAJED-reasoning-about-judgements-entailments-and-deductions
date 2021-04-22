@@ -785,7 +785,6 @@ unfold gen_step. sfs.
 intros sub fp dc seq' sc. 
 inversion fp. clear X0 fp. destruct X.
 inversion sc. destruct X. clear sc sub epc dc d. subst.
-(* check on clear dc d *)
 repeat (acacD'T2 ; subst ; repeat (list_eq_ncT ; cD ; subst)). (* 52 subgoals *)
 
 all : try (crer c ; [ do_ctr' ; ctreq A | 
@@ -820,6 +819,98 @@ Check gs_ljg_exch.  (* used for ctr_adm_ljt in ljt_dncc.v *)
 
 Definition gs_ljt_exch V A any Γ1 Γ2 G ps c :=
   @gs_ljg_exch _ _ A _ any Γ1 Γ2 G ps c (@exch_tnc V).
+
+Ltac do_ctra x := 
+  apser_atom x ; apply srs_ext_relI_nil ; eapply sctr_relI_eqp.
+
+Ltac datac sub := eapply derI ; [ eapply fextI ; eapply rmI_eqc ; 
+  [ apply atom_tnc' | sfs ; reflexivity ] |
+  apply dersrec_singleI ; sfs ; apply (eq_rect _ _ sub) ; list_eq_assoc ].
+
+Ltac sriv := 
+  apply serl ; apply serrc ;  apply srs_ext_relI_nil ;  apply ImpL_Var_inv2_I.
+
+Lemma gs_ljt_ImpL_atom V A G Γ1 Γ2 ps c : 
+  rlsmap (flip pair G) ImpL_atom_rule ps c ->
+  gen_step (can_rel (@LJTrules V)
+    (fun fml' => srs_ext_rel (sctr_rel fml'))) A dnsubfml
+    (derrec LJTrules emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
+    (apfst (fmlsext Γ1 Γ2) c).
+Proof. intro riapc. inversion riapc. subst. destruct X.  clear riapc.
+unfold gen_step. sfs.
+intros sub fp dc seq' sc. 
+inversion fp. clear X0 fp. destruct X.
+inversion sc. destruct X. clear sc dc. subst.
+repeat (acacD'T2 ; subst ; repeat (list_eq_ncT ; sD ; subst)). (* 12 subgoals *)
+- inversion H0.
+
+- (* contraction of Imp (Var p) B *)
+(* use Lemma 3.1(6) on Imp (Var p) B *)
+apply LJT_can_rel_ImpL_Var_inv2 in d. clear c.
+crer d.  assoc_single_mid' (Imp (Var p) B). 
+apply serl. apply serrc.  apply srs_ext_relI_nil.  apply ImpL_Var_inv2_I.
+(* now contract B *)
+specialize (sub _ (dnsub_ImpR _ _) _ d).
+crer sub. do_ctra B.  ctreq B.
+(* apply ImpL_atom_rule *)
+assoc_single_mid' (Imp (Var p) B). datac sub.
+
+- crer c. do_ctra (Var p).  ctreq (Var p).
+(* apply ImpL_atom_rule *)
+assoc_single_mid' (Imp (Var p) B). datac c.
+
+- crer c. do_ctra A. ctreq A.
+assoc_single_mid' (Imp (Var p) B). datac c.
+
+- crer c. do_ctra A. ctreq A.
+assoc_single_mid' (Imp (Var p) B). datac c.
+
+- (* contraction of Imp (Var p) B *)
+(* use Lemma 3.1(6) on Imp (Var p) B *)
+apply LJT_can_rel_ImpL_Var_inv2 in d. clear c.
+crer d.  assoc_single_mid' (Imp (Var p) B).  sriv.
+(* now contract B *)
+specialize (sub _ (dnsub_ImpR _ _) _ d).
+crer sub. do_ctra B.  ctreq B.
+(* apply ImpL_atom_rule - need version using exchange, with sth between *)
+apply (derl_derrec_trans (gen_atom_ljt _ _ _ _ _ _)).
+apply (eq_rect _ _ (dersrec_singleI sub)). list_eq_assoc.
+
+- (* contraction of Imp (Var p) B *)
+(* use Lemma 3.1(6) on Imp (Var p) B *)
+apply LJT_can_rel_ImpL_Var_inv2 in d. clear c.
+crer d.  assoc_single_mid' (Imp (Var p) B).  sriv.
+(* now contract B *)
+specialize (sub _ (dnsub_ImpR _ _) _ d).
+crer sub. do_ctra B.  ctreq B.
+(* apply ImpL_atom_rule - need version using exchange, with sth between *)
+apply (derl_derrec_trans (gen_atom_ljt _ _ _ _ _ _)).
+apply (eq_rect _ _ (dersrec_singleI sub)). list_eq_assoc.
+
+- inversion H1.
+
+- (* contraction of Imp (Var p) B *)
+(* use Lemma 3.1(6) on Imp (Var p) B *)
+apply LJT_can_rel_ImpL_Var_inv2 in d. clear c.
+crer d.  assoc_single_mid' (Imp (Var p) B).  sriv.
+(* now contract B *)
+specialize (sub _ (dnsub_ImpR _ _) _ d).
+crer sub. do_ctra B.  ctreq B.
+(* apply ImpL_atom_rule *)
+assoc_single_mid' (Imp (Var p) B). datac sub.
+
+- crer c. do_ctra (Var p). ctreq (Var p).
+(* apply ImpL_atom_rule - need version using exchange, with sth between *)
+list_assoc_r'.
+apply (derl_derrec_trans (gen_rev_atom_ljt _ _ _ _ _ _)).
+apply (eq_rect _ _ (dersrec_singleI c)). list_eq_assoc.
+
+- crer c. do_ctra A.  ctreq A. 
+assoc_single_mid' (Imp (Var p) B). datac c.
+
+- crer c. do_ctra A.  ctreq A. 
+assoc_single_mid' (Imp (Var p) B). datac c.
+Qed.
 
 (* extending contraction of one formula to contraction of a list of formulae *)
 Lemma lctr_adm_gen U Y (rules : rlsT (list U * Y)) fmls 

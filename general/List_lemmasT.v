@@ -32,6 +32,10 @@ Ltac list_assoc_r_simp' := repeat
   || rewrite !app_nil_r).
 Ltac list_eq_assoc := list_assoc_r ; reflexivity.
 
+(* this won't loop *)
+Lemma cc_app: forall {T} (a b : T) X, a :: b :: X = [a] ++ b :: X.
+Proof. reflexivity. Qed.
+
 Lemma if_eq_rev_eq: forall {T} (a b : list T),
   a = b -> (rev a = rev b).
 Proof. intros. subst. reflexivity. Qed.

@@ -354,7 +354,6 @@ Qed.
 
 Check ctr_adm_lja.
 
-(*
 (* Proposition 5.1, contraction admissibility for LJT *)
 Lemma ctr_adm_ljt V (fml : PropF V) :
   forall seq, derrec LJTrules emptyT seq ->
@@ -378,15 +377,13 @@ exact (gs_ljt_lrules _ _ r).
 + (* right rules *)
 exact (gs_ljt_rrules _ _ _ r).
 - (* ImpL_atom_rule *)
-admit. (* may need analogue of gs_lja_ImpL which is in ljt_ctr.v *)
+eapply gen_step_sub_mono. intro. apply tT_step.
+exact (gs_ljt_ImpL_atom _ _ r).
 - (* exch_rule *)
-admit. (* need lemma for ctr adm where last rule is exch *)
-(* lemma will be gs_ljt_exch, from gs_ljg_exch in ljt_ctr.v *)
-
+exact (gs_ljt_exch _ _ _ r).
 Qed.
 
 Check ctr_adm_ljt.
-*)
 
 (* for contracting a list of formulae in LJA *)
 Definition lctr_adm_lja V fmls :=

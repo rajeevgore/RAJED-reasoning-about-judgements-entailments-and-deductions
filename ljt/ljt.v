@@ -585,6 +585,19 @@ eapply rmI_eqc. apply atom_tnc'. sfseq.
 apply derl_dersl_single.  apply sw_ljt. apply fst_relI.
 (* NB - swap_tac_Rc needed twice *) swap_tac_Rc ; swap_tac_Rc. Qed.
 
+Lemma gen_rev_atom_ljt V p B G1 G2 G3 E : 
+  derl LJTrules [(G1 ++ @Var V p :: G3 ++ B :: G2, E)] 
+    (G1 ++ Var p :: G3 ++ Imp (Var p) B :: G2, E).
+Proof. eapply derl_trans. apply sw_ljt. apply fst_relI.
+apply (swapped_I G1 (Imp (Var p) B :: G2) (Var p :: G3) []).
+reflexivity. rewrite ?app_nil_r. list_eq_assoc.
+apply derl_dersl_single.
+eapply derl_trans.  rewrite ?app_nil_r. 
+list_assoc_r'. apply gen_atom_ljt.
+apply derl_dersl_single. apply sw_ljt.  apply fst_relI.
+apply (swapped_I G1 (Var p :: G3) (B :: G2) []) ;
+rewrite ?app_nil_r ; list_eq_assoc. Qed.
+
 (* atom rule derivable in LJ *)
 Lemma lj_der_atom V ps c G : 
   rlsmap (flip pair G) (@ImpL_atom_rule V) ps c -> derl LJrules ps c.
