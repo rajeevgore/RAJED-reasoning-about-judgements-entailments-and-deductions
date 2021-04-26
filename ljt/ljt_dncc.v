@@ -459,7 +459,7 @@ apply lj_ImpL_adm_lja. eapply fextI. apply rmI. apply i.
 - intros. apply dlCons ; assumption.
 Qed.
 
-(* cut adm in LJA via equivalence to LJ *)
+(* cut adm in LJA, LJT via equivalence to LJ *)
 Theorem lja_cut_adm_alt V fml cl cr: derrec (@LJArules V) emptyT cl ->
   derrec LJArules emptyT cr -> cedc LJArules fml cl cr.
 Proof. intros dl dr. split. intros * cle cre.
@@ -467,15 +467,12 @@ apply (fst (der_lja_lj V)) in dl.  apply (fst (der_lja_lj V)) in dr.
 apply (fst (der_lj_lja V)).  destruct (lj_cut_adm fml dl dr).
 exact (d _ _ _ _ cle cre). Qed.
 
-(* CURRENT
 Theorem ljt_cut_adm_alt V fml cl cr: derrec (@LJTrules V) emptyT cl ->
   derrec LJTrules emptyT cr -> cedc LJTrules fml cl cr.
 Proof. intros dl dr. split. intros * cle cre.
 apply (fst (der_ljt_lj V)) in dl.  apply (fst (der_ljt_lj V)) in dr.
-der_ljt_lj not found
 apply (fst (der_lj_ljt V)).  destruct (lj_cut_adm fml dl dr).
 exact (d _ _ _ _ cle cre). Qed.
-*)
 
 (* Proposition 5.3 of Dyckhoff & Negri JSL 2000 *)
 (* relevant property of sequent to be proved by induction *)
@@ -493,6 +490,8 @@ intro ; simpl ; intro dl ; apply snd in dl ;
 unfold l53prop in dl ; specialize (dl _ _ eq_refl) ;
 unfold fmlsext ; assoc_single_mid' B ; apply dl ;
 unfold fmlsext ; list_eq_assoc ].
+
+(* done for LJT to here *)
 
 Lemma gs_LJA_53_sl V (D : PropF V) any ps c Γ1 Γ2 G 
   (r : rlsmap (flip pair G) LJslrules ps c) :

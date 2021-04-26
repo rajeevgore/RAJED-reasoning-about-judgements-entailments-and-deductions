@@ -449,6 +449,21 @@ eapply derrec_all_rect. tauto.
 intros.  eapply derI. exact X0.
 apply dersrecI_all. exact X2. Qed.
 
+Lemma derrec_pmono_s: forall W (rules : rlsT W) premsa premsb,
+  (forall p, premsa p -> premsb p) -> 
+  (forall concl, derrec rules premsa concl -> derrec rules premsb concl) *
+  (forall cs, dersrec rules premsa cs -> dersrec rules premsb cs).
+Proof. intros. apply derrec_dersrec_rect_mut ; intros.
+- apply dpI. exact (X _ p).
+- exact (derI _ r X0). 
+- apply dlNil.
+- apply dlCons ; assumption. Qed.
+
+Definition derrec_pmono W rules premsa premsb concl rs := 
+  fst (@derrec_pmono_s W rules premsa premsb rs) concl.
+Definition dersrec_pmono W rules premsa premsb rs := 
+  snd (@derrec_pmono_s W rules premsa premsb rs).
+
 Lemma derrec_rmono_s: forall W (rulesa rulesb : rlsT W) prems,
   rsub rulesa rulesb -> 
   (forall concl, derrec rulesa prems concl -> derrec rulesb prems concl) *

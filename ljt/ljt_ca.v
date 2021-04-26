@@ -575,11 +575,7 @@ Proof. intro r. destruct r. destruct r. destruct l.
 apply admI. intro dbp.
 eapply derI. eapply fextI. eapply rmI_eqc. 
 apply ImpL_nc'. sfs. reflexivity.
-sfs. apply dlCons.
-(* TODO use InT_der_LJ after fix *)
-eapply derI.  eapply (@fextI _ _ _ (Γ1 ++ [Imp (Var p) B]) Γ2). eapply rmI_eqc. 
-exact (Id_nc' p). sfs. list_eq_assoc. apply dlNil.
-exact dbp.
+sfs. apply dlCons.  apply InT_der_LJ'. solve_InT.  exact dbp.
 - (* exch rule *)
 destruct r. sfs. destruct e.
 apply admI. intro ds. apply dersrec_singleD in ds.

@@ -366,10 +366,9 @@ Print Implicit LJweakening.  Print Implicit LJAweakening.
 Lemma idrule_der_lj {V} A : derrec LJrules emptyT ([A : PropF V], A).
 Proof. induction A.
 - eapply derI. apply rsub_fer.
-eapply Id_nc. apply Idrule_I. apply dlNil.
+eapply Id_nc'. apply dlNil.
 - eapply derI. apply rsub_fer.
-eapply lrls_nc. eapply rmI_eqc.  apply Bot_sl.
-apply Botrule_I.  reflexivity.  apply dlNil.
+eapply lrls_nc'.  apply Bot_sl'. apply dlNil.
 
 - (* Imp *) eapply derI.
 + eapply (@fextI _ _ _ [_] []).  eapply rmI_eqc.
@@ -384,11 +383,11 @@ rewrite app_nil_r in IHA1. exact IHA1.
 
 - (* And *) eapply derI. 
 + apply rsub_fer.  eapply lrls_nc.  eapply rmI_eqc.
-apply AndL_sl.  apply AndLrule_I.  reflexivity.  
+apply AndL_sl'.  reflexivity.  
 + simpl.  apply dersrec_singleI. eapply derI.
 ++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eqc.
-eapply rrls_nc.  apply rmI.
-apply AndR_sr.  apply AndRrule_I.  reflexivity.  
+eapply rrls_nc'.
+apply AndR_sr'.  reflexivity.  
 ++ simpl. unfold fmlsext. simpl.  apply dlCons.
 +++ apply (fer_der [] [A2] IHA1).
 +++ apply dersrec_singleI.
@@ -397,23 +396,26 @@ rewrite app_nil_r in IHA2. exact IHA2.
 
 - (* Or *) eapply derI. 
 + apply rsub_fer.  eapply lrls_nc.  eapply rmI_eq.
-apply OrL_sl.  apply OrLrule_I.  reflexivity.  reflexivity.
+apply OrL_sl'.  reflexivity.  reflexivity.
 + simpl. apply dlCons.
 ++ eapply derI.
 +++ eapply (@fextI _ _ _ [A1] []).  eapply rmI_eq.
-eapply rrls_nc.  apply rmI.
+eapply rrls_nc'.
 apply OrR1_sr.  apply OrR1rule_I.  reflexivity.
 simpl. unfold fmlsext. reflexivity.
 +++ simpl. unfold fmlsext. simpl. apply dersrec_singleI. apply IHA1.
 ++ apply dersrec_singleI.  eapply derI.
 +++ eapply (@fextI _ _ _ [A2] []).  eapply rmI_eq.
-eapply rrls_nc.  apply rmI.
-apply OrR2_sr.  apply OrR2rule_I.  reflexivity.
+eapply rrls_nc'.
+apply OrR2_sr'.  reflexivity.
 simpl. unfold fmlsext. reflexivity.
 +++ simpl. unfold fmlsext. simpl. apply dersrec_singleI. apply IHA2.
 Qed.
 
 Print Implicit idrule_der_lj.
+
+Definition idrule_der_lj' V A prems :=
+  derrec_pmono prems (@emptyT_any' _ _) (@idrule_der_lj V A).
 
 Lemma fer_Id V A ant : InT A ant -> fst_ext_rls (@Idrule V A) [] (ant, A).
 Proof. intro ia. apply InT_split in ia.  cD. subst.
@@ -422,6 +424,9 @@ eapply fextI_eq'. apply Idrule_I. reflexivity. reflexivity. Qed.
 Lemma InT_der_LJ V A ant : InT A ant -> derrec (@LJrules V) emptyT (ant, A).
 Proof. intro ia.  apply InT_split in ia.  cD. subst.
   exact (fer_der _ _ (idrule_der_lj A)). Qed.
+
+Definition InT_der_LJ' V A prems ant ina :=
+  derrec_pmono prems (@emptyT_any' _ _) (@InT_der_LJ V A ant ina).
 
 (* to prove Ail rules in LJ *)
 Lemma LJ_ImpL_Or1 V B C D :
