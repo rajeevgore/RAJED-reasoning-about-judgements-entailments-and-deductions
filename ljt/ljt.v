@@ -262,6 +262,7 @@ Definition rrls_nc' {V} ps c rpc := @rrls_nc V _ _ (rmI _ _ ps c rpc).
 Definition lrls_nc' {V} G ps c rpc := @lrls_nc V G _ _ (rmI _ _ ps c rpc).
 Definition ImpR_nc' {V} A B := ImpR_nc (@ImpRrule_I V A B).
 Definition ImpL_nc' {V} A B G := ImpL_nc (@ImpLrule_I V A B G).
+Definition Id_nc' {V} A := Id_nc (@Idrule_I V (Var A)).
 
 Definition rrls_tnc {V} ps c rpc := @sing_tnc V ps c (@rrls_tsnc V ps c rpc).
 Definition lrls_tnc {V} G ps c rpc := 

@@ -385,9 +385,28 @@ Qed.
 
 Check ctr_adm_ljt.
 
-(* for contracting a list of formulae in LJA *)
+(* for contracting a list of formulae in LJA and LJT *)
 Definition lctr_adm_lja V fmls :=
   @lctr_adm_gen _ _ (@LJArules V) fmls (@ctr_adm_lja V).
+
+Definition lctr_adm_ljt V fmls :=
+  @lctr_adm_gen _ _ (@LJTrules V) fmls (@ctr_adm_ljt V).
+
+(* Proposition 5.2, admissibility of LJ in LJT *)
+Lemma lj_ImpL_adm_ljt {V} : rsub (fst_ext_rls ImpLrule) (adm (@LJTrules V)).
+Proof. split. destruct X.
+inversion r. subst. clear r. destruct X.
+simpl. unfold fmlsext. intro drs.
+inversion drs. inversion X0. subst. clear drs X0 X2.
+(* weaken second premise *) apply (insL_ljt _ _ [Imp A B]) in X1.
+(* apply Lemma 4.1 *) eapply LJT_ImpL_adm in X.
+unfold l41prop in X.
+specialize (X (Γ1 ++ [Imp A B]) Γ2).  require X. list_eq_assoc.
+simpl in X. unfold fmlsext in X. 
+specialize (X B G). require X. apply (eq_rect _ _ X1). list_eq_assoc.
+eapply ctr_adm_ljt in X.
+(* contract Imp A B *) sersctrtac X (Imp A B). 
+apply (eq_rect _ _ X). list_eq_assoc. Qed.
 
 (* Proposition 5.2, admissibility of LJ in LJA *)
 Lemma lj_ImpL_adm_lja {V} : rsub (fst_ext_rls ImpLrule) (adm (@LJArules V)).
@@ -405,10 +424,27 @@ eapply ctr_adm_lja in X.
 (* contract Imp A B *) sersctrtac X (Imp A B). 
 apply (eq_rect _ _ X). list_eq_assoc. Qed.
 
-(* at this point we have that LJA is complete wrt LJ *)
+(* at this point we have that LJA, LJT are complete wrt LJ *)
+Lemma der_lj_ljt V :
+  (forall c (d : derrec (@LJrules V) emptyT c), derrec LJTrules emptyT c) *
+  (forall cs (ds : dersrec (@LJrules V) emptyT cs), dersrec LJTrules emptyT cs).
+Proof. apply derrec_dersrec_rect_mut.
+- intros. destruct p.
+- intros.  clear d. destruct r. destruct r. destruct l.
++ apply derrec_adm.
+apply (derI' _ (dersrec_rmono (rsub_adm _) X)).
+apply lj_ImpL_adm_ljt. eapply fextI. apply rmI. apply i.
++ apply (derI' _ X). eapply fextI. apply rmI. apply (ImpR_tnc i).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (Id_tnc i).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (lrls_tnc r).
++ apply (derI' _ X). eapply fextI. apply rmI. apply (rrls_tnc r).
+- apply dlNil.
+- intros. apply dlCons ; assumption.
+Qed.
+
 Lemma der_lj_lja V :
   (forall c (d : derrec (@LJrules V) emptyT c), derrec LJArules emptyT c) *
-  (forall cs (ds : dersrec (@LJrules V) emptyT cs), dersrec LJArules emptyT cs).
+ (forall cs (ds : dersrec (@LJrules V) emptyT cs), dersrec LJArules emptyT cs).
 Proof. apply derrec_dersrec_rect_mut.
 - intros. destruct p.
 - intros.  clear d. destruct r. destruct r. destruct l.
@@ -430,6 +466,16 @@ Proof. intros dl dr. split. intros * cle cre.
 apply (fst (der_lja_lj V)) in dl.  apply (fst (der_lja_lj V)) in dr.
 apply (fst (der_lj_lja V)).  destruct (lj_cut_adm fml dl dr).
 exact (d _ _ _ _ cle cre). Qed.
+
+(* CURRENT
+Theorem ljt_cut_adm_alt V fml cl cr: derrec (@LJTrules V) emptyT cl ->
+  derrec LJTrules emptyT cr -> cedc LJTrules fml cl cr.
+Proof. intros dl dr. split. intros * cle cre.
+apply (fst (der_ljt_lj V)) in dl.  apply (fst (der_ljt_lj V)) in dr.
+der_ljt_lj not found
+apply (fst (der_lj_ljt V)).  destruct (lj_cut_adm fml dl dr).
+exact (d _ _ _ _ cle cre). Qed.
+*)
 
 (* Proposition 5.3 of Dyckhoff & Negri JSL 2000 *)
 (* relevant property of sequent to be proved by induction *)

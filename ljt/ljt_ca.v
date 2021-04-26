@@ -532,12 +532,10 @@ destruct l.
 About lj_gs2. 
 About lj_cut_adm. 
 
-Lemma der_lja_lj V :
-  (forall c (d : derrec (@LJArules V) emptyT c), derrec LJrules emptyT c) *
-  (forall cs (ds : dersrec (@LJArules V) emptyT cs), dersrec LJrules emptyT cs).
-Proof. apply derrec_dersrec_rect_mut.
-- intros. destruct p.
-- intros.  clear d. destruct r. destruct r. destruct l.
+
+(* this way, will also be useful for der_ljt_lj *)
+Lemma ljts_adm_lj V ps c : @LJTSrules V ps c -> adm LJrules ps c.
+Proof. intro r. apply admI. intro. destruct r. destruct r. destruct l.
 + destruct r. destruct l ; destruct i ; inversion X ; clear X X1 ; subst.
 (* cut with LJ_ImpL_And, LJ_ImpL_Or *)
 ++ apply (lj_cut_adm (Imp C (Imp D B)) (LJ_ImpL_And B C D) X0).
@@ -564,11 +562,55 @@ apply dersrec_singleI.  apply (eq_rect _ _ d).
 simpl. unfold fmlsext. list_eq_assoc.
 apply dersrec_singleI. apply X2.
 
-+ apply (derI' _ X). eapply fextI. apply rmI. destruct i. apply ImpL_nc'.
 + apply (derI' _ X). eapply fextI. apply rmI. apply (ImpR_nc i).
 + apply (derI' _ X). eapply fextI. apply rmI. apply (Id_nc i).
 + apply (derI' _ X). eapply fextI. apply rmI. apply (lrls_nc r).
 + apply (derI' _ X). eapply fextI. apply rmI. apply (rrls_nc r).
+Qed.
+
+Lemma ljt_adm_lj V ps c : @LJTrules V ps c -> adm LJrules ps c.
+Proof. intro r. destruct r. destruct r. destruct l.
+- (* LJTSncrules *) apply ljts_adm_lj.  apply fextI'. exact l. 
+- (* ImpL_atom_rule - use ImpLrule *) destruct r. destruct i. sfs.
+apply admI. intro dbp.
+eapply derI. eapply fextI. eapply rmI_eqc. 
+apply ImpL_nc'. sfs. reflexivity.
+sfs. apply dlCons.
+(* TODO use InT_der_LJ after fix *)
+eapply derI.  eapply (@fextI _ _ _ (Γ1 ++ [Imp (Var p) B]) Γ2). eapply rmI_eqc. 
+exact (Id_nc' p). sfs. list_eq_assoc. apply dlNil.
+exact dbp.
+- (* exch rule *)
+destruct r. sfs. destruct e.
+apply admI. intro ds. apply dersrec_singleD in ds.
+apply (exchL_lj ds). apply fst_relI. 
+apply (swapped_I Γ1 (x :: X) (y :: Y) Γ2) ; list_eq_assoc.
+Qed.
+
+Lemma lja_adm_lj V ps c : @LJArules V ps c -> adm LJrules ps c.
+Proof. intro r. destruct r. destruct r.
+destruct (LJAncrules_ljts l).
++ apply ljts_adm_lj.  apply fextI'. exact l0. 
++ apply admI. intro.
+apply (derI' _ X). eapply fextI. apply rmI. destruct i. apply ImpL_nc'.
+Qed.
+
+Lemma der_lja_lj V :
+  (forall c (d : derrec (@LJArules V) emptyT c), derrec LJrules emptyT c) *
+  (forall cs (ds : dersrec (@LJArules V) emptyT cs), dersrec LJrules emptyT cs).
+Proof. apply derrec_dersrec_rect_mut.
+- intros. destruct p.
+- intros.  destruct (lja_adm_lj r). exact (d0 X).
+- apply dlNil.
+- intros. apply dlCons ; assumption.
+Qed.
+
+Lemma der_ljt_lj V :
+  (forall c (d : derrec (@LJTrules V) emptyT c), derrec LJrules emptyT c) *
+  (forall cs (ds : dersrec (@LJTrules V) emptyT cs), dersrec LJrules emptyT cs).
+Proof. apply derrec_dersrec_rect_mut.
+- intros. destruct p.
+- intros.  destruct (ljt_adm_lj r). exact (d0 X).
 - apply dlNil.
 - intros. apply dlCons ; assumption.
 Qed.
