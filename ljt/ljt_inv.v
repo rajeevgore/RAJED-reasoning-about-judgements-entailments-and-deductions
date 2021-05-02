@@ -104,6 +104,7 @@ Definition srs_ext_relI_eqp W Y R ant ant' G Φ1 Φ2 seq1 raa eq1 :=
   @srs_ext_relI_eq W Y R ant ant' G Φ1 Φ2 seq1 _ raa eq1 eq_refl.
 
 Definition srs_ext_relI_c1 W Y R a := @srs_ext_relI W Y R [a].
+Definition srs_ext_relI_c1p1 W Y R a b := @srs_ext_relI W Y R [a] [b].
 
 Lemma srs_ext_relI_nil W Y R (ant ant' : list W) (G : Y) : 
   R ant ant' -> srs_ext_rel R (ant, G) (ant', G).
@@ -1460,7 +1461,7 @@ inversion r. subst. clear r. destruct X.
 sfs.  unfold can_trf_rules_rc. intros c' ser.
 inversion ser. clear ser. subst. 
 destruct H2. simpl in H. destruct i.
-(* notge - the rule involves Var p, B, inversion involves Var p0, B0 *)
+(* note - the rule involves Var p, B, inversion involves Var p0, B0 *)
 acacD'T2 ; subst.
 
 + eexists. split. apply asmI.

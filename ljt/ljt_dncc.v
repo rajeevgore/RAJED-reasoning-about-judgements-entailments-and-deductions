@@ -481,24 +481,30 @@ Definition l53prop {V} (AB : PropF V) seq :=
   forall G1 G2 E, seq = (G1 ++ AB :: G2, E) -> 
   derrec LJArules emptyT (G1 ++ B :: G2, E).
 
-Ltac inv53tac X B fp dl grls_anc :=
+Definition l53propg {V} (rules : rlsT (srseq (PropF V))) (AB : PropF V) seq :=
+  forall A B, AB = Imp A B -> 
+  forall G1 G2 E, seq = (G1 ++ AB :: G2, E) -> 
+  derrec (fst_ext_rls rules) emptyT (G1 ++ B :: G2, E).
+
+Ltac inv53tacg X B fp dl grls_anc :=
 eapply derI ; [ eapply fextI ;
-eapply (rmI_eqc _ _ _ _ (grls_anc _ _ _ _ (rmI _ _ _ _ X))) ;
+eapply (rmI_eqc _ _ _ _ (grls_anc _ _ _ (rmI _ _ _ _ X))) ;
 simpl ;  unfold fmlsext ;  reflexivity |
 eapply (usefmm _ _ _ _ _ fp) ;
 intro ; simpl ; intro dl ; apply snd in dl ;
-unfold l53prop in dl ; specialize (dl _ _ eq_refl) ;
+unfold l53propg in dl ; specialize (dl _ _ eq_refl) ;
 unfold fmlsext ; assoc_single_mid' B ; apply dl ;
 unfold fmlsext ; list_eq_assoc ].
 
 (* done for LJT to here *)
 
-Lemma gs_LJA_53_sl V (D : PropF V) any ps c Γ1 Γ2 G 
-  (r : rlsmap (flip pair G) LJslrules ps c) :
-  gen_step l53prop D any (derrec LJArules emptyT)
+Lemma gs_LJX_53_sl V (D : PropF V) rules any ps c Γ1 Γ2 G 
+  (lrls_xnc : forall G ps c, rlsmap (flip pair G) LJslrules ps c -> rules ps c)
+  (r : rlsmap (flip pair G) (@LJslrules V) ps c) :
+  gen_step (l53propg rules) D any (derrec (fst_ext_rls rules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. clear sad.
-unfold l53prop. intros * deq * ceq. subst.
+unfold l53propg. intros * deq * ceq. subst.
 inversion r. subst. clear r. 
 inversion ceq. subst. clear ceq. unfold fmlsext in H0.
 acacD'T2 ; subst. (* 6 subgoals *)
@@ -507,9 +513,9 @@ acacD'T2 ; subst. (* 6 subgoals *)
 
 - inversion X ; subst ; rename_last slr ; inversion slr.
 
-- assoc_mid c0.  inv53tac X B fp dl @lrls_anc.
+- assoc_mid c0.  inv53tacg X B fp dl lrls_xnc.
 
-- rewrite ?app_nil_r in X. assoc_mid H0. inv53tac X B fp dl @lrls_anc.
+- rewrite ?app_nil_r in X. assoc_mid H0. inv53tacg X B fp dl lrls_xnc.
 
 - pose (LJsl_sing X). cD. list_eq_ncT. sD.
 + inversion s1. subst. clear s1.
@@ -517,15 +523,22 @@ simpl in X.
 inversion X ; subst ; rename_last slr ; inversion slr.
 + inversion s1.
 
-- assoc_mid c0.  inv53tac X B fp dl @lrls_anc.
+- assoc_mid c0.  inv53tacg X B fp dl lrls_xnc.
 Qed.
 
-Lemma gs_LJA_53_Ail V (D : PropF V) ps c Γ1 Γ2 G 
+Check gs_LJX_53_sl.
+
+Lemma gs_LJX_53_Ail V (D : PropF V) rules ps c Γ1 Γ2 G 
+  (ctr_adm_ljx : forall fml seq, derrec (fst_ext_rls rules) emptyT seq ->
+     can_rel (fst_ext_rls rules) 
+       (fun fml' : PropF V => srs_ext_rel (sctr_rel fml')) fml seq)
+  (il_xnc : forall G ps c, rlsmap (flip pair G) LJAilrules ps c -> rules ps c)
   (r : rlsmap (flip pair G) LJAilrules ps c) :
-  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+  gen_step (l53propg rules) D (clos_transT dnsubfml)
+    (derrec (fst_ext_rls rules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. 
-unfold l53prop. intros * deq * ceq. subst.
+unfold l53propg. intros * deq * ceq. subst.
 inversion r. subst. clear r. 
 inversion ceq. subst. clear ceq. unfold fmlsext in H0.
 acacD'T2 ; subst. (* 6 subgoals *)
@@ -548,12 +561,12 @@ specialize (sad _ (tT_step _ _ _ (dnsub_Imp_OrL2 _ _ _)) _ l).
 specialize (sad _ _ eq_refl (G1 ++ [B]) Γ2 E).
 require sad. unfold fmlsext. list_eq_assoc. clear l.
 (* now need to contract B *)
-eapply ctr_adm_lja in sad.  sersctrtac sad B.
+eapply ctr_adm_ljx in sad.  sersctrtac sad B.
 apply (eq_rect _ _ sad). list_eq_assoc.
 
-- clear sad. assoc_mid c0.  inv53tac X B fp dl @il_anc.
+- clear sad. assoc_mid c0.  inv53tacg X B fp dl il_xnc.
 
-- rewrite ?app_nil_r in X. assoc_mid H0. inv53tac X B fp dl @il_anc.
+- rewrite ?app_nil_r in X. assoc_mid H0.  inv53tacg X B fp dl il_xnc.
 
 - pose (LJAil_sing X). cD. list_eq_ncT. sD.
 + inversion s1. subst. clear s1.
@@ -575,32 +588,34 @@ specialize (sad _ (tT_step _ _ _ (dnsub_Imp_OrL2 _ _ _)) _ l).
 specialize (sad _ _ eq_refl (Γ1 ++ [B]) Γ2 E).
 require sad. unfold fmlsext. list_eq_assoc. clear l.
 (* now need to contract B *)
-eapply ctr_adm_lja in sad.  sersctrtac sad B.
+eapply ctr_adm_ljx in sad.  sersctrtac sad B.
 apply (eq_rect _ _ sad). list_eq_assoc.
 
 + inversion s1.
 
-- clear sad. assoc_mid c0.  inv53tac X B fp dl @il_anc.
+- clear sad. assoc_mid c0.  inv53tacg X B fp dl il_xnc.
 
 Qed.
 
-Check gs_LJA_53_Ail.
+Check gs_LJX_53_Ail.
 
-Ltac inv53itac B fp c dl grls_anc :=
+Ltac inv53itacg B fp c dl grls_anc :=
 eapply derI ; [ eapply fextI ;
 eapply (rmI_eqc _ _ _ _ (grls_anc _ _ _)) ;
 simpl ;  unfold fmlsext ;  reflexivity |
 eapply (usefm _ _ _ fp) ; clear fp ;
 intro c ; destruct c ; simpl ; unfold fmlsext ;
 intro dl ; apply snd in dl ;
-unfold l53prop in dl ; specialize (dl _ _ eq_refl) ;
+unfold l53propg in dl ; specialize (dl _ _ eq_refl) ;
 assoc_single_mid' B ; apply dl ; list_eq_assoc ].
 
-Lemma gs_LJA_53_Imp V D any ps c Γ1 Γ2 (r : @ImpL_Imp_rule V ps c) :
-  gen_step l53prop D any (derrec LJArules emptyT)
+Lemma gs_LJX_53_Imp V D rules any ps c Γ1 Γ2 (r : @ImpL_Imp_rule V ps c) 
+  (Imp_xnc' : forall (B C D G : PropF V),
+     rules [([Imp D B; C], D); ([B], G)] ([Imp (Imp C D) B], G)) :
+  gen_step (l53propg rules) D any (derrec (fst_ext_rls rules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. clear sad dc.
-unfold l53prop. intros * deq * ceq. subst.
+unfold l53propg. intros * deq * ceq. subst.
 destruct r.
 inversion ceq. subst. clear ceq. unfold fmlsext in H0.
 acacD'T2 ; subst. (* 7 subgoals *)
@@ -608,28 +623,28 @@ acacD'T2 ; subst. (* 7 subgoals *)
 - inversion fp.  inversion X0.
 apply (eq_rect _ _ (fst X1)).  unfold fmlsext. list_eq_assoc.
 
-- assoc_mid [Imp (Imp C D) B0].  inv53itac B fp c dl (@Imp_anc' V B0).
+- assoc_mid [Imp (Imp C D) B0].  inv53itacg B fp c dl (Imp_xnc' B0).
 
 - inversion H4.
 
 - list_eq_ncT. cD. subst. clear H0.
-assoc_mid [Imp (Imp C D) B0].  inv53itac B fp c dl (@Imp_anc' V B0).
+assoc_mid [Imp (Imp C D) B0].  inv53itacg B fp c dl (Imp_xnc' B0).
 
 - inversion H5. subst. clear H5.  inversion fp.  inversion X0.
 apply (eq_rect _ _ (fst X1)).  unfold fmlsext. list_eq_assoc.
 
 - list_eq_ncT. inversion H8.
 
-- assoc_mid [Imp (Imp C D) B0].  inv53itac B fp c dl (@Imp_anc' V B0).
+- assoc_mid [Imp (Imp C D) B0].  inv53itacg B fp c dl (Imp_xnc' B0).
 Qed.
 
-Check gs_LJA_53_Imp.
+Check gs_LJX_53_Imp.
 
 Lemma gs_LJA_53_ImpL_p V D any ps c Γ1 Γ2 (r : @ImpLrule_p V ps c) :
-  gen_step l53prop D any (derrec LJArules emptyT)
+  gen_step (l53propg LJAncrules) D any (derrec LJArules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. clear sad dc.
-unfold l53prop. intros * deq * ceq. subst.
+unfold l53propg. intros * deq * ceq. subst.
 destruct r.
 inversion ceq. subst. clear ceq. unfold fmlsext in H0.
 acacD'T2 ; subst. (* 7 subgoals *)
@@ -637,29 +652,72 @@ acacD'T2 ; subst. (* 7 subgoals *)
 - inversion fp.  inversion X0.
 apply (eq_rect _ _ (fst X1)).  unfold fmlsext. list_eq_assoc.
 
-- assoc_mid [Imp (Var p) B0].  inv53itac B fp c dl (@ImpL_anc' V).
+- assoc_mid [Imp (Var p) B0].  inv53itacg B fp c dl (@ImpL_anc' V).
 
 - inversion H4.
 
 - list_eq_ncT. cD. subst. clear H0.
-assoc_mid [Imp (Var p) B0].  inv53itac B fp c dl (@ImpL_anc' V).
+assoc_mid [Imp (Var p) B0].  inv53itacg B fp c dl (@ImpL_anc' V).
 
 - inversion H5. subst. clear H5.  inversion fp.  inversion X0.
 apply (eq_rect _ _ (fst X1)).  unfold fmlsext. list_eq_assoc.
 
 - list_eq_ncT. inversion H8.
 
-- assoc_mid [Imp (Var p) B0].  inv53itac B fp c dl (@ImpL_anc' V).
+- assoc_mid [Imp (Var p) B0].  inv53itacg B fp c dl (@ImpL_anc' V).
 Qed.
 
 Check gs_LJA_53_ImpL_p.
 
-Lemma gs_LJA_53_sr V (D : PropF V) ps c Γ1 Γ2 
+Lemma gs_LJT_53_ImpL_atom V D any G ps c Γ1 Γ2 
+  (r : rlsmap (flip pair G) (@ImpL_atom_rule V) ps c) :
+  gen_step (l53propg LJTncrules) D any (derrec LJTrules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad dc.
+unfold l53propg. intros * deq * ceq. subst.
+destruct r. destruct i.
+inversion ceq. subst. clear ceq. unfold fmlsext in H0. simpl in H0.
+revert fp. sfs. intro fp. apply ForallT_singleD in fp. destruct fp.
+(* now last rule is B0 :: Var p / Imp (Var p) B0 :: Var p  
+  have G1 Imp A B G2 |- E want G1 B G2 |- E *)
+acacD'T2 ; subst. (* 5 subgoals *)
+- apply (eq_rect _ _ d). list_eq_assoc.
+
+- unfold l53propg in l.
+specialize (l _ _ eq_refl).
+erequire l.  erequire l.  erequire l.  require l.
+assoc_single_mid' (Imp A B). reflexivity.
+assoc_single_mid' (Imp (Var p) B0).
+eapply derI. eapply fextI. eapply rmI_eqc. apply atom_tnc'.
+sfs.  reflexivity.
+apply dersrec_singleI. sfs.
+apply (eq_rect _ _ l). list_eq_assoc.
+
+- rewrite ?app_nil_r. exact d.
+- inversion H5.
+
+(* following is exact copy of proof of 2nd bullet above *)
+- unfold l53propg in l.
+specialize (l _ _ eq_refl).
+erequire l.  erequire l.  erequire l.  require l.
+assoc_single_mid' (Imp A B). reflexivity.
+assoc_single_mid' (Imp (Var p) B0).
+eapply derI. eapply fextI. eapply rmI_eqc. apply atom_tnc'.
+sfs.  reflexivity.
+apply dersrec_singleI. sfs.
+apply (eq_rect _ _ l). list_eq_assoc.
+Qed.
+
+Check gs_LJT_53_ImpL_atom.
+
+Lemma gs_LJX_53_sr V (D : PropF V) rules ps c Γ1 Γ2 
+  (rrls_xnc : forall ps c, rlsmap (pair []) LJsrrules ps c -> rules ps c)
   (r : rlsmap (pair []) LJsrrules ps c) :
-  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+  gen_step (l53propg rules) D (clos_transT dnsubfml)
+    (derrec (fst_ext_rls rules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. clear sad.
-unfold l53prop. intros * deq * ceq. subst.
+unfold l53propg. intros * deq * ceq. subst.
 inversion r. subst. clear r. 
 inversion ceq. subst. clear ceq. 
 assert (map (apfst (fmlsext Γ1 Γ2)) (map (pair []) ps0) =
@@ -668,62 +726,121 @@ assert (map (apfst (fmlsext Γ1 Γ2)) (map (pair []) ps0) =
 reflexivity. rewrite IHps0. rewrite H0. reflexivity. }
 rewrite H in fp.
 eapply derI.  eapply fextI.  eapply rmI_eqc.
-apply rrls_anc.  apply rmI.  exact X.
+apply rrls_xnc.  apply rmI.  exact X.
 simpl. unfold fmlsext. reflexivity.
 eapply (usefm12 _ _ _ _ fp). clear fp.
 intro ; simpl ; intro dl ; apply snd in dl ;
-unfold l53prop in dl ; specialize (dl _ _ eq_refl _ _ _ eq_refl) ;
+unfold l53propg in dl ; specialize (dl _ _ eq_refl _ _ _ eq_refl) ;
 unfold fmlsext ; exact dl.
 Qed.
 
-Lemma gs_LJA_53_Id V D p ps c Γ1 Γ2 (r : Idrule (@Var V p)ps c) :
-  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+Lemma gs_LJX_53_Id V D rules p ps c Γ1 Γ2 (r : Idrule (@Var V p)ps c) 
+  (Id_xnc : forall A ps c, Idrule (Var A) ps c -> rules ps c) :
+  gen_step (l53propg rules) D (clos_transT dnsubfml) 
+    (derrec (fst_ext_rls rules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. clear sad fp.
-unfold l53prop. intros * deq * ceq. subst.
+unfold l53propg. intros * deq * ceq. subst.
 inversion r. subst. clear r.
 inversion ceq. subst. clear ceq.
 unfold fmlsext in H0.
-eapply gen_der_Id. unfold rsub. apply Id_anc.
+eapply gen_der_Id. unfold rsub. apply Id_xnc.
 acacD'T2 ; subst ; try solve_InT ; rename_last vi ; inversion vi.
 Qed.
 
-Lemma gs_LJA_53_ImpR V D ps c Γ1 Γ2 (r : @ImpRrule V ps c) :
-  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+Lemma gs_LJX_53_ImpR V D rules ps c Γ1 Γ2 (r : @ImpRrule V ps c) 
+  (ImpR_xnc' : forall A B, rules [([A], B)] ([], Imp A B)) :
+  gen_step (l53propg rules) D (clos_transT dnsubfml) 
+    (derrec (fst_ext_rls rules) emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. unfold gen_step. intros sad fp dc. clear sad dc.
-unfold l53prop. intros * deq * ceq. subst.
+unfold l53propg. intros * deq * ceq. subst.
 destruct r.  inversion ceq. subst. clear ceq.
 unfold fmlsext in H0. simpl in H0.
 simpl in fp. unfold fmlsext in fp.
 inversion fp. subst. clear fp X0.
-apply snd in X. unfold l53prop in X. specialize (X _ _ eq_refl).
+apply snd in X. unfold l53propg in X. specialize (X _ _ eq_refl).
 acacD'T2 ; subst.
 - specialize (X (G1 ++ [A0]) G2 B0). require X. list_eq_assoc.
-eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_anc'.  reflexivity.
+eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_xnc'.  reflexivity.
 apply dersrec_singleI.  apply (eq_rect _ _ X). list_eq_assoc.
 - specialize (X G1 (H2 ++ A0 :: Γ2) B0). require X. list_eq_assoc.
-eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_anc'.  
+eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_xnc'.  
 list_assoc_l'.  reflexivity.
 apply dersrec_singleI.  apply (eq_rect _ _ X).
 simpl. unfold fmlsext.  list_eq_assoc.
 - specialize (X (Γ1 ++ A0 :: H0) G2 B0). require X. list_eq_assoc.
-eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_anc'.  
+eapply derI.  eapply fextI. eapply rmI_eqc. apply ImpR_xnc'.  
 list_assoc_r'. simpl. unfold fmlsext. simpl.  reflexivity.
 apply dersrec_singleI.  apply (eq_rect _ _ X).  list_eq_assoc.
 Qed.
+
+(*
+can we use can_trf_genLinv_exch to prove this,
+should be able to get a link between can_trf_rules_rc and gen_step ?
+doesn't work because l53propg specifies A and B,
+whereas can_trf_genLinv_exch doesn't, so following proof fails
+or define a version of ImpLinv2s which specifies A and B
+
+Lemma gs_LJT_53_exch V D any G ps c Γ1 Γ2 
+  (r : rlsmap (flip pair G) exch_rule ps c) :
+  gen_step (l53propg LJTncrules) D any (derrec (@LJTrules V) emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. unfold gen_step. intros sad fp dc. clear sad dc.
+unfold l53propg. intros * deq * ceq. subst.
+eapply can_trf_genLinv_exch in r.
+unfold can_trf_rules_rc in r.
+assert (srs_ext_rel (fslr (@ImpLinv2s V)) (apfst (fmlsext Γ1 Γ2) c) 
+  (G1 ++ B :: G2, E)).
+{ rewrite ceq. apply srs_ext_relI_c1p1. apply fslrI. apply ImpLinv2_I. }
+specialize (r _ X). cD.
+eapply derl_derrec_trans. exact r0.
+apply dersrecI_forall.
+intros c1 incr.
+eapply ForallTD_forall in r1. 2: exact incr.  cD.
+eapply ForallTD_forall in fp. 2: exact r2.
+destruct fp. unfold l53propg in l.
+specialize (l _ _ eq_refl).
+inversion r3. subst.
+inversion X0. subst. destruct H0. destruct i.
+specialize (l _ _ _ eq_refl). (* fails here *)
+*)
+
+(*
+Lemma gs_LJT_53 V D ps c Γ1 Γ2 (r : @LJTncrules V ps c) :
+  gen_step (l53propg LJTncrules) D (clos_transT dnsubfml) 
+    (derrec LJTrules emptyT)
+    (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
+Proof. destruct r.
+- destruct l.
++ eapply gs_LJX_53_Ail. apply ctr_adm_ljt.  exact il_tnc. exact r.
++ apply gs_LJX_53_Imp. exact i. exact (@Imp_tnc' _).
++ apply gs_LJX_53_ImpR. exact i. exact ImpR_tnc'.
++ eapply gs_LJX_53_Id. exact i. exact Id_tnc.
++ eapply gs_LJX_53_sl. exact lrls_tnc. exact r.
++ apply gs_LJX_53_sr. exact rrls_tnc. exact r.
+- eapply gs_LJT_53_ImpL_atom. exact r.
+- unfold gen_step. unfold l53propg.
+
+
+need gs_LJT_53_exch
+
+
+Qed.
+*)
+
 
 Lemma gs_LJA_53 V D ps c Γ1 Γ2 (r : @LJAncrules V ps c) :
   gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. destruct r.
-- eapply gs_LJA_53_Ail. exact r.
-- apply gs_LJA_53_Imp. exact i.
+- eapply gs_LJX_53_Ail. apply ctr_adm_lja.  exact il_anc. exact r.
+- apply gs_LJX_53_Imp. exact i. exact (@Imp_anc' _).
 - apply gs_LJA_53_ImpL_p. exact i.
-- apply gs_LJA_53_ImpR. exact i.
-- eapply gs_LJA_53_Id. exact i.
-- eapply gs_LJA_53_sl. exact r.
-- apply gs_LJA_53_sr. exact r.
+- apply gs_LJX_53_ImpR. exact i. exact ImpR_anc'.
+- eapply gs_LJX_53_Id. exact i. exact Id_anc.
+- eapply gs_LJX_53_sl. exact lrls_anc. exact r.
+- apply gs_LJX_53_sr. exact rrls_anc. exact r.
 Qed.
 
 Lemma ImpL_inv_adm_lja V (D : PropF V) :
