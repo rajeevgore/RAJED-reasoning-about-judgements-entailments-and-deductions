@@ -775,12 +775,9 @@ list_assoc_r'. simpl. unfold fmlsext. simpl.  reflexivity.
 apply dersrec_singleI.  apply (eq_rect _ _ X).  list_eq_assoc.
 Qed.
 
-(*
-can we use can_trf_genLinv_exch to prove this,
-should be able to get a link between can_trf_rules_rc and gen_step ?
-doesn't work because l53propg specifies A and B,
-whereas can_trf_genLinv_exch doesn't, so following proof fails
-or define a version of ImpLinv2s which specifies A and B
+(* this lemma uses can_trf_genLinv_exch,
+  getting the link between can_trf_rules_rc and gen_step 
+  TODO - can we generalise this? *)
 
 Lemma gs_LJT_53_exch V D any G ps c Γ1 Γ2 
   (r : rlsmap (flip pair G) exch_rule ps c) :
@@ -789,24 +786,23 @@ Lemma gs_LJT_53_exch V D any G ps c Γ1 Γ2
 Proof. unfold gen_step. intros sad fp dc. clear sad dc.
 unfold l53propg. intros * deq * ceq. subst.
 eapply can_trf_genLinv_exch in r.
-unfold can_trf_rules_rc in r.
-assert (srs_ext_rel (fslr (@ImpLinv2s V)) (apfst (fmlsext Γ1 Γ2) c) 
+- unfold can_trf_rules_rc in r.
+assert (srs_ext_rel (fslr (ImpLinv2sps A B)) (apfst (fmlsext Γ1 Γ2) c) 
   (G1 ++ B :: G2, E)).
-{ rewrite ceq. apply srs_ext_relI_c1p1. apply fslrI. apply ImpLinv2_I. }
+{ rewrite ceq. apply srs_ext_relI_c1p1. apply ImpLinv2sp_I. }
 specialize (r _ X). cD.
-eapply derl_derrec_trans. exact r0.
-apply dersrecI_forall.
-intros c1 incr.
+apply (derl_derrec_trans r0). 
+apply dersrecI_forall.  intros c1 incr.
 eapply ForallTD_forall in r1. 2: exact incr.  cD.
 eapply ForallTD_forall in fp. 2: exact r2.
 destruct fp. unfold l53propg in l.
-specialize (l _ _ eq_refl).
 inversion r3. subst.
-inversion X0. subst. destruct H0. destruct i.
-specialize (l _ _ _ eq_refl). (* fails here *)
-*)
++ inversion X0. subst. destruct H0. destruct i.
+exact (l _ _ eq_refl _ _ _ eq_refl). 
++ subst. exact d.
+- apply rsubI. apply exch_tnc.
+Qed.
 
-(*
 Lemma gs_LJT_53 V D ps c Γ1 Γ2 (r : @LJTncrules V ps c) :
   gen_step (l53propg LJTncrules) D (clos_transT dnsubfml) 
     (derrec LJTrules emptyT)
@@ -820,15 +816,8 @@ Proof. destruct r.
 + eapply gs_LJX_53_sl. exact lrls_tnc. exact r.
 + apply gs_LJX_53_sr. exact rrls_tnc. exact r.
 - eapply gs_LJT_53_ImpL_atom. exact r.
-- unfold gen_step. unfold l53propg.
-
-
-need gs_LJT_53_exch
-
-
+- eapply gs_LJT_53_exch. exact r.
 Qed.
-*)
-
 
 Lemma gs_LJA_53 V D ps c Γ1 Γ2 (r : @LJAncrules V ps c) :
   gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)

@@ -44,6 +44,10 @@ Inductive ImpL_Imp_inv2s {V} : PropF V -> list (PropF V) -> Type :=
 Inductive ImpL_Var_inv2s {V} : PropF V -> list (PropF V) -> Type :=
   | ImpL_Var_inv2s_I : forall B p, ImpL_Var_inv2s (Imp (Var p) B) [B].
 
+(* need version of this specifying C and D *)
+Inductive ImpLinv2sps {V} (C D : PropF V) : PropF V -> list (PropF V) -> Type :=
+  | ImpLinv2sps_I : ImpLinv2sps C D (Imp C D) ([D]).
+
 Inductive ImpLinv2s {V} : PropF V -> list (PropF V) -> Type :=
   | ImpLinv2s_I : forall C D, ImpLinv2s (Imp C D) ([D]).
 Inductive AndLinvs {V} : PropF V -> list (PropF V) -> Type :=
@@ -60,6 +64,7 @@ Definition AndLinv {V} := fslr (@AndLinvs V).
 Definition OrLinv1 {V} := fslr (@OrLinv1s V).
 Definition OrLinv2 {V} := fslr (@OrLinv2s V).
 Definition ImpLinv2 {V} := fslr (@ImpLinv2s V).
+Definition ImpLinv2sp {V} C D := fslr (@ImpLinv2sps V C D).
 Definition ImpL_And_inv {V} := fslr (@ImpL_And_invs V).
 Definition ImpL_Or_inv {V} := fslr (@ImpL_Or_invs V).
 Definition ImpL_Imp_inv2 {V} := fslr (@ImpL_Imp_inv2s V).
@@ -73,6 +78,9 @@ Proof. apply fslr_I. apply OrLinv1s_I. Qed.
 
 Lemma OrLinv2_I {V} (C D : PropF V) : OrLinv2 [Or C D] [D].
 Proof. apply fslr_I. apply OrLinv2s_I. Qed.
+
+Lemma ImpLinv2sp_I {V} (C D : PropF V) : ImpLinv2sp C D [Imp C D] [D].
+Proof. apply fslr_I. apply ImpLinv2sps_I. Qed.
 
 Lemma ImpLinv2_I {V} (C D : PropF V) : ImpLinv2 [Imp C D] [D].
 Proof. apply fslr_I. apply ImpLinv2s_I. Qed.
