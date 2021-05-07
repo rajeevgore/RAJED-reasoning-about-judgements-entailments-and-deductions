@@ -476,11 +476,6 @@ exact (d _ _ _ _ cle cre). Qed.
 
 (* Proposition 5.3 of Dyckhoff & Negri JSL 2000 *)
 (* relevant property of sequent to be proved by induction *)
-Definition l53prop {V} (AB : PropF V) seq :=
-  forall A B, AB = Imp A B -> 
-  forall G1 G2 E, seq = (G1 ++ AB :: G2, E) -> 
-  derrec LJArules emptyT (G1 ++ B :: G2, E).
-
 Definition l53propg {V} (rules : rlsT (srseq (PropF V))) (AB : PropF V) seq :=
   forall A B, AB = Imp A B -> 
   forall G1 G2 E, seq = (G1 ++ AB :: G2, E) -> 
@@ -820,7 +815,8 @@ Proof. destruct r.
 Qed.
 
 Lemma gs_LJA_53 V D ps c Γ1 Γ2 (r : @LJAncrules V ps c) :
-  gen_step l53prop D (clos_transT dnsubfml) (derrec LJArules emptyT)
+  gen_step (l53propg LJAncrules) D (clos_transT dnsubfml)
+    (derrec LJArules emptyT)
     (map (apfst (fmlsext Γ1 Γ2)) ps) (apfst (fmlsext Γ1 Γ2) c).
 Proof. destruct r.
 - eapply gs_LJX_53_Ail. apply ctr_adm_lja.  exact il_anc. exact r.
@@ -832,8 +828,13 @@ Proof. destruct r.
 - apply gs_LJX_53_sr. exact rrls_anc. exact r.
 Qed.
 
+Lemma ImpL_inv_adm_ljt V (D : PropF V) :
+  forall seq, derrec LJTrules emptyT seq -> (l53propg LJTncrules) D seq.
+Proof. eapply gen_step_lemT. apply AccT_tc.  apply AccT_dnsubfml.
+intros * ljpc. destruct ljpc. destruct r. apply gs_LJT_53. apply l. Qed.
+
 Lemma ImpL_inv_adm_lja V (D : PropF V) :
-  forall seq, derrec LJArules emptyT seq -> l53prop D seq.
+  forall seq, derrec LJArules emptyT seq -> (l53propg LJAncrules) D seq.
 Proof. eapply gen_step_lemT. apply AccT_tc.  apply AccT_dnsubfml.
 intros * ljpc. destruct ljpc. destruct r. apply gs_LJA_53. apply l. Qed.
 

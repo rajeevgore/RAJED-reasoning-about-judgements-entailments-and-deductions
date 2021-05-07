@@ -710,7 +710,7 @@ inversion dsc. rename X into dc. subst seq seqs. clear X0.
 unfold can_nspc. clear dsc apd idb.
 (* apply Prop 5.3 *)
 eapply ImpL_inv_adm_lja in dc.
-unfold l53prop in dc.
+unfold l53propg in dc.
 specialize (dc (Var q) C eq_refl (Γ0 ++ B :: Γ1) Γ2 G).
 require dc. subst cbqc. list_eq_assoc.
 (* make derivation from db and dc *)
@@ -771,7 +771,7 @@ inversion dsc. rename X into dc. subst seq seqs. clear X0.
 unfold can_nspc. clear dsc apd idb.
 (* apply Prop 5.3 *)
 eapply ImpL_inv_adm_lja in dc.
-unfold l53prop in dc.
+unfold l53propg in dc.
 specialize (dc (Var q) C eq_refl Γ0 (Γ1 ++ B :: Γ2) G).
 require dc. subst cbqc. list_eq_assoc.
 (* make derivation from db and dc *)

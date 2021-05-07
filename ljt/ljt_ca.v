@@ -69,14 +69,19 @@ specialize (d0 _ _ _ _ eq_refl eq_refl).
 apply (eq_rect _ _ d0). list_eq_assoc.  Qed.
 
 Definition gs2_lrlsL_lj V fml any drsa drsb G psl psr cl cr := 
-  @gs2_lrlsL_gen (PropF V) fml any LJncrules LJslrules
-  drsa drsb G psl psr cl cr lrls_nc'.
+  @gs2_lrlsL_gen (PropF V) fml any _ _ drsa drsb G psl psr cl cr lrls_nc'.
 Definition gs2_lrlsL_lja V fml any drsa drsb G psl psr cl cr := 
-  @gs2_lrlsL_gen (PropF V) fml any LJAncrules LJslrules
-  drsa drsb G psl psr cl cr lrls_anc'.
+  @gs2_lrlsL_gen (PropF V) fml any _ _ drsa drsb G psl psr cl cr lrls_anc'.
 Definition gs2_AilL_lja V fml any drsa drsb G psl psr cl cr := 
-  @gs2_lrlsL_gen (PropF V) fml any LJAncrules LJAilrules
-  drsa drsb G psl psr cl cr il_anc'.
+  @gs2_lrlsL_gen (PropF V) fml any _ _ drsa drsb G psl psr cl cr il_anc'.
+Definition gs2_lrlsL_ljt V fml any drsa drsb G psl psr cl cr := 
+  @gs2_lrlsL_gen (PropF V) fml any _ _ drsa drsb G psl psr cl cr lrls_tnc'.
+Definition gs2_AilL_ljt V fml any drsa drsb G psl psr cl cr := 
+  @gs2_lrlsL_gen (PropF V) fml any _ _ drsa drsb G psl psr cl cr il_tnc'.
+Definition gs2_atomL_ljt V fml any drsa drsb G psl psr cl cr := 
+  @gs2_lrlsL_gen (PropF V) fml any _ _ drsa drsb G psl psr cl cr atom_tnc'2.
+Definition gs2_exchL_ljt V fml any drsa drsb G psl psr cl cr := 
+  @gs2_lrlsL_gen (PropF V) fml any _ _ drsa drsb G psl psr cl cr exch_tnc'2.
 
 Lemma gs2_ImpLL_gen U rules fml any Xa Xs Ya Za Zs drsb psl psr cl cr 
   (ImpL_gnc' : forall D, rules [(Xa, Xs) ; (Ya, D)] (Za, D)) :
@@ -112,12 +117,25 @@ Proof. intro fmrr.  destruct fmrr. destruct r.  destruct i.
 eapply gs2_ImpLL_gen.  intro.  apply ImpL_anc'.
 eapply fextI.  apply rmI.  apply rlsT_ofI. Qed.
 
-Lemma gs2_ImpL_ImpL V fml any drsb psl psr cl cr :
+Lemma gs2_ImpL_ImpL_gen V rules fml any drsb psl psr cl cr 
+  (Imp_gnc' : forall (B C D G : PropF V),
+       rules [([Imp D B; C], D); ([B], G)] ([Imp (Imp C D) B], G)) :
+  fst_ext_rls (@ImpL_Imp_rule V) psl cl -> 
+  gen_step2 (cedc (fst_ext_rls rules)) fml any 
+    (derrec (fst_ext_rls rules) emptyT) drsb psl cl psr cr.
+Proof. intro fmrr.  destruct fmrr. destruct r.  destruct i.
+eapply gs2_ImpLL_gen.  intro.  apply Imp_gnc'.
+eapply fextI.  apply rmI.  apply rlsT_ofI. Qed.
+
+Lemma gs2_ImpL_ImpL_lja V fml any drsb psl psr cl cr :
   fst_ext_rls (@ImpL_Imp_rule V) psl cl -> 
   gen_step2 (cedc LJArules) fml any (derrec LJArules emptyT) drsb psl cl psr cr.
-Proof. intro fmrr.  destruct fmrr. destruct r.  destruct i.
-eapply gs2_ImpLL_gen.  intro.  apply Imp_anc'.
-eapply fextI.  apply rmI.  apply rlsT_ofI. Qed.
+Proof. apply gs2_ImpL_ImpL_gen. intros.  apply Imp_anc'. Qed.
+
+Lemma gs2_ImpL_ImpL_ljt V fml any drsb psl psr cl cr :
+  fst_ext_rls (@ImpL_Imp_rule V) psl cl -> 
+  gen_step2 (cedc LJTrules) fml any (derrec LJTrules emptyT) drsb psl cl psr cr.
+Proof. apply gs2_ImpL_ImpL_gen. intros.  apply Imp_tnc'. Qed.
 
 (* right rule on right premise *)
 Lemma gs2_rrlsR_gen fty (fml : fty) any rules rrules drsa drsb psl psr cl cr 
@@ -142,6 +160,9 @@ Definition gs2_rrlsR_lj V fml any drsa drsb psl psr cl cr :=
 Definition gs2_rrlsR_lja V fml any drsa drsb psl psr cl cr := 
   @gs2_rrlsR_gen (PropF V) fml any LJAncrules LJsrrules
   drsa drsb psl psr cl cr rrls_anc'.
+Definition gs2_rrlsR_ljt V fml any drsa drsb psl psr cl cr := 
+  @gs2_rrlsR_gen (PropF V) fml any LJTncrules LJsrrules
+  drsa drsb psl psr cl cr rrls_tnc'.
 
 Ltac irrtac ImpR_gnc' d0 Γ1 Γ2 :=
   require d0 ; [ list_eq_assoc | ] ; eapply derI ; [
@@ -173,6 +194,8 @@ Definition gs2_ImpRR_lj V fml any drsa drsb psl psr cl cr :=
   @gs2_ImpRR_gen V LJncrules fml any drsa drsb psl psr cl cr (@ImpR_nc' V).
 Definition gs2_ImpRR_lja V fml any drsa drsb psl psr cl cr :=
   @gs2_ImpRR_gen V LJAncrules fml any drsa drsb psl psr cl cr (@ImpR_anc' V).
+Definition gs2_ImpRR_ljt V fml any drsa drsb psl psr cl cr :=
+  @gs2_ImpRR_gen V LJTncrules fml any drsa drsb psl psr cl cr (@ImpR_tnc' V).
 
 (* Id rule on left premise - requires weakening and exchange *)
 Lemma gs2_idL_gen V rules A fml any drsa psl psr cl cr  
@@ -196,6 +219,8 @@ Definition gs2_idL_lj V A fml any drsa psl psr cl cr :=
   @gs2_idL_gen V LJncrules A fml any drsa psl psr cl cr (@exchL_lj V).
 Definition gs2_idL_lja V A fml any drsa psl psr cl cr :=
   @gs2_idL_gen V LJAncrules A fml any drsa psl psr cl cr (@exchL_lja V).
+Definition gs2_idL_ljt V A fml any drsa psl psr cl cr :=
+  @gs2_idL_gen V LJTncrules A fml any drsa psl psr cl cr (@exchL_ljt V).
 
 Lemma InT_der_gen V rules p ant : rsub (Idrule (@Var V p)) rules ->
   InT (Var p) ant -> derrec (fst_ext_rls rules) emptyT (ant, Var p).
@@ -219,19 +244,25 @@ acacD'T2 ; subst.
 - apply (InT_der_gen rsir). solve_InT.
 Qed.
 
-Lemma gs2_idR_lj V A fml any drsb psl psr cl cr : 
+Lemma gs2_idR_gen' V rules A fml any drsb psl psr cl cr  
+  (InT_der_LJX : forall (A : PropF V) ant,
+       InT A ant -> derrec (fst_ext_rls rules) emptyT (ant, A)) :
   fst_ext_rls (@Idrule V A) psr cr ->
-  gen_step2 (cedc LJrules) fml any (derrec LJrules emptyT) drsb psl cl psr cr.
+  gen_step2 (cedc (fst_ext_rls rules)) fml any 
+    (derrec (fst_ext_rls rules) emptyT) drsb psl cl psr cr.
 Proof. intros fidr sub fpl fpr dl dr. apply cedcI. intros * cle cre.
 clear sub fpl fpr dr. destruct fidr. destruct r. destruct i.
 simpl in cre. unfold fmlsext in cre. simpl in cre.
 inversion cre. subst. clear cre.
 acacD'T2 ; subst.
 - exact (fer_der _ _ dl).
-- apply InT_der_LJ. solve_InT.
+- apply InT_der_LJX. solve_InT.
 - exact (fer_der _ _ dl).
-- apply InT_der_LJ. solve_InT.
+- apply InT_der_LJX. solve_InT.
 Qed.
+
+Definition gs2_idR_lj V A fml any drsb psl psr cl cr :=
+  @gs2_idR_gen' V _ A fml any drsb psl psr cl cr (@InT_der_LJ V).
 
 (* gen_step2 property for srseq such that rule on left is principal *)
 Definition gs2_sr_princ U rules subf fml la lc rc Γ1 Γ2 (D : U) psl psr :=
