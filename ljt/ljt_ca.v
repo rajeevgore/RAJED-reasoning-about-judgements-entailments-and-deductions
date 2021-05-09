@@ -278,6 +278,27 @@ Definition gs2_sr_princ U rules subf fml la lc rc Γ1 Γ2 (D : U) psl psr :=
           (map (apfst (fmlsext lc rc)) psr)) ->
   derrec (fst_ext_rls rules) emptyT (lc ++ (Γ1 ++ la ++ Γ2) ++ rc, D).
 
+(* variation on gs2_sr_princ for when skeleton of right rule has > 1 formula *)
+Definition gs2_sr_princ2 U rules subf fml la rll rlr lc rc Γ1 Γ2 D psl psr :=
+  (forall A' : U, subf A' fml ->
+        forall dl, derrec (fst_ext_rls rules) emptyT dl ->
+        forall dr, derrec (fst_ext_rls rules) emptyT dr ->
+        cedc (fst_ext_rls rules) A' dl dr) ->
+  (ForallT (fun pl => derrec (fst_ext_rls rules) emptyT pl *
+	 cedc (fst_ext_rls rules) fml pl (lc ++ (rll ++ fml :: rlr) ++ rc, D)) 
+	 (map (apfst (fmlsext Γ1 Γ2)) psl)) ->
+  (ForallT (fun pr => derrec (fst_ext_rls rules) emptyT pr *
+           cedc (fst_ext_rls rules) fml (Γ1 ++ la ++ Γ2, fml) pr)
+          (map (apfst (fmlsext lc rc)) psr)) ->
+  derrec (fst_ext_rls rules) emptyT 
+    (lc ++ (rll ++ (Γ1 ++ la ++ Γ2) ++ rlr) ++ rc, D).
+
+Lemma gs2_sr_princ_2 U rules subf fml la lc rc Γ1 Γ2 D psl psr :
+  @gs2_sr_princ U rules subf fml la lc rc Γ1 Γ2 D psl psr ->
+  @gs2_sr_princ2 U rules subf fml la [] [] lc rc Γ1 Γ2 D psl psr.
+Proof. unfold gs2_sr_princ.  unfold gs2_sr_princ2.
+rewrite ?app_nil_r. simpl.  intro gp. exact gp. Qed.
+
 Lemma gs2_sr_princ_sub_mono U rules sub1 sub2 fml la lc rc Γ1 Γ2 D psl psr :
   rsub sub1 sub2 -> gs2_sr_princ rules sub1 fml la lc rc Γ1 Γ2 D psl psr ->
   @gs2_sr_princ U rules sub2 fml la lc rc Γ1 Γ2 D psl psr.
@@ -397,6 +418,22 @@ Lemma gs2_rp U rules subfml (fml : U) la lc rc G1 G2 D psl psr
 Proof.  unfold gen_step2. unfold gs2_sr_princ.
 intros gs2 sub fpl fpr.  specialize (gs2 sub fpl fpr dl dr). 
 clear sub fpl fpr dl dr. apply gs2 ; reflexivity. Qed.
+
+Lemma gs2_rp2 U rules subfml (fml : U) la rll rlr lc rc G1 G2 D psl psr
+  (dl : derrec (fst_ext_rls rules) emptyT (G1 ++ la ++ G2, fml))
+  (dr : derrec (fst_ext_rls rules) emptyT 
+    (lc ++ (rll ++ fml :: rlr) ++ rc, D)) :
+  gen_step2 (cedc (fst_ext_rls rules)) fml subfml 
+    (derrec (fst_ext_rls rules) emptyT) (derrec (fst_ext_rls rules) emptyT) 
+    (map (apfst (fmlsext G1 G2)) psl) (G1 ++ la ++ G2, fml)
+    (map (apfst (fmlsext lc rc)) psr) (lc ++ (rll ++ fml :: rlr) ++ rc, D) ->
+  gs2_sr_princ2 rules subfml fml la rll rlr lc rc G1 G2 D psl psr.
+Proof.  unfold gen_step2. unfold gs2_sr_princ2.
+intros gs2 sub fpl fpr.  specialize (gs2 sub fpl fpr dl dr). 
+clear sub fpl fpr dl dr.  inversion gs2.
+specialize (X _ (lc ++ rll) (rlr ++ rc) D eq_refl).
+require X. list_eq_assoc.
+apply (eq_rect _ _ X). list_eq_assoc.  Qed.
 
 Lemma lj_gs2_rp {V} fml la lc rc G1 G2 (D : PropF V) psl psr 
   (ljl : LJncrules psl (la, fml))
