@@ -327,8 +327,61 @@ About ljt_gs2_rp.
 (* note that ljt_gs2_rp is incomplete because it requires
   LJTncrules psr ([fml], D)) which excludes atom and exchange rules *)
 
-(* CURRENT
-Lemma ljt_gs2_rp2' {V} fml la rll rlr lc rc G1 G2 (D : PropF V) psl psr 
+Lemma gs2_sr_exch V any fml la rll rlr lc rc G1 G2 D psl psr G :
+  rlsmap (flip pair G) exch_rule psr (rll ++ fml :: rlr, D : PropF V) ->
+  gs2_sr_princ2 LJTncrules any fml la rll rlr lc rc G1 G2 D psl psr.
+Proof. intros re sub fpl fpr. clear sub fpl.
+inversion re. inversion X. subst. clear X re. 
+apply ForallT_singleD in fpr. destruct fpr. clear d. destruct c.
+acacD'T2 ; subst. (* 5 subgoals *)
++ do 4 (erequire d).  specialize (d eq_refl).
+require d. sfs. assoc_single_mid' y. reflexivity.
+apply (exchL_ljt d). apply fst_relI. swap_tac.
+list_assoc_l. eapply swapped_nc. 2: reflexivity. list_eq_assoc.
++ do 4 (erequire d).  specialize (d eq_refl).
+require d. sfs. assoc_single_mid' fml. reflexivity.
+apply (exchL_ljt d). apply fst_relI. swap_tac.  rewrite ?app_nil_r.
+list_assoc_l. eapply swapped_nc. reflexivity. list_eq_assoc.
++ do 4 (erequire d).  specialize (d eq_refl).
+require d. sfs. assoc_single_mid' fml. reflexivity.
+apply (exchL_ljt d). apply fst_relI. swap_tac.  
+list_assoc_l. eapply swapped_nc. 2: reflexivity. list_eq_assoc.
++ do 4 (erequire d).  specialize (d eq_refl).
+require d. sfs. assoc_single_mid' x. reflexivity.
+apply (exchL_ljt d). apply fst_relI. swap_tac.  
+list_assoc_l. eapply swapped_nc. reflexivity. list_eq_assoc.
++ do 4 (erequire d).  specialize (d eq_refl).
+require d. sfs. assoc_single_mid' fml. reflexivity.
+apply (exchL_ljt d). apply fst_relI. swap_tac.  
+list_assoc_l. eapply swapped_nc. reflexivity. list_eq_assoc.
+Qed.
+
+Lemma ljt_gs2_ImpR_atom V la p B lc rc G1 G2 D psl :
+  ImpRrule psl (la, Imp (@Var V p) B) ->
+  gs2_sr_princ2 LJTncrules dnsubfml (Imp (Var p) B) la [] [
+    Var p] lc rc G1 G2 D psl (map (flip pair D) [[B; Var p]]).
+Proof. intros irl sub fpl fpr. 
+apply ForallT_singleD in fpr.  destruct fpr.  clear c.
+inversion irl. subst. 
+apply ForallT_singleD in fpl.  destruct fpl.  clear c.
+(* cut admissibility on B between both premises *)
+specialize (sub _ (@dnsub_ImpR _ _ _) _ d0 _ d).
+inversion sub. clear sub.
+do 4 (erequire X).  specialize (X eq_refl).
+require X. sfs. assoc_single_mid' B. reflexivity. clear d d0.
+(* now need to contract Var p *)
+revert X. sfs. intro X.
+(* need contraction and exchange *)
+eapply ctr_adm_ljt in X.  unfold can_rel in X.
+specialize (X (lc ++ (G1 ++ Var p :: G2) ++ rc, D)).
+require X.
+apply (@srs_ext_relI_eq _ _ _ (Var p :: G2 ++ [Var p]) (Var p :: G2)
+  D (lc ++ G1) rc).
+apply sctr_relI. list_eq_assoc. list_eq_assoc.
+apply (exchL_ljt X).  apply fst_relI. swap_tac_Rc. Qed.
+
+(* where r_seL does not hold, need a stronger result than ljg_gs2_rp *)
+Lemma ljt_gs2_rp2 {V} fml la rll rlr lc rc G1 G2 (D : PropF V) psl psr 
   (ljl : LJTncrules psl (la, fml))
   (ljr : LJTncrules psr (rll ++ fml :: rlr, D))
   (dl : derrec (fst_ext_rls LJTncrules) emptyT (G1 ++ la ++ G2, fml))
@@ -356,7 +409,7 @@ eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 eapply (gs2_rp2 _ _ _ _ _ _ _ _ _ dl dr).  eapply gs2_ImpL_ImpL_ljt.
 eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 ++ (* ImpRrule on the left *)
-admit.
+apply ljt_gs2_ImpR_atom. exact X0.
 ++ (* Idrule on the left, wrong formula *) inversion X0.
 ++ (* left rules on the left *)
 eapply (gs2_rp2 _ _ _ _ _ _ _ _ _ dl dr).  eapply gs2_lrlsL_ljt.
@@ -369,8 +422,6 @@ eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
 + (* exch_rule on the left *)
 eapply (gs2_rp2 _ _ _ _ _ _ _ _ _ dl dr).  eapply gs2_exchL_ljt.
 eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
-
-DONE TO HERE
 
 -- (* cut fml is Var p *)
 inversion ljl ; subst.
@@ -385,7 +436,8 @@ eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 ++ (* ImpRrule on the left, wrong formula *)
 inversion X0.
 ++ (* Idrule on the left *) 
-admit.
+eapply (gs2_rp2 _ _ _ _ _ _ _ _ _ dl dr).  eapply gs2_idL_ljt.
+eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
 ++ (* left rules on the left *)
 eapply (gs2_rp2 _ _ _ _ _ _ _ _ _ dl dr).  eapply gs2_lrlsL_ljt.
 eapply fextI. apply (rmI_eqc _ _ _ _ X0). reflexivity.
@@ -399,9 +451,8 @@ eapply (gs2_rp2 _ _ _ _ _ _ _ _ _ dl dr).  eapply gs2_exchL_ljt.
 eapply fextI. apply (rmI_eqc _ _ _ _ X). reflexivity.
 -- list_eq_ncT. inversion H3.
 - (* exchange rule on the right *)
-
-Admitted.
-*)
+eapply gs2_sr_exch. exact X.
+Qed.
 
 Lemma lja_gs2_rp {V} fml la lc rc G1 G2 (D : PropF V) psl psr 
   (ljl : LJAncrules psl (la, fml))
@@ -518,7 +569,7 @@ Qed.
 
 About lja_gs2_rp.
 
-Lemma ljg_gs2' U rules subf fml psl psr cl cr
+Lemma ljg_gs2_2 U rules subf fml psl psr cl cr
   (ljg_gs2_rp2 : forall fml la rll rlr lc rc G1 G2 D psl psr,
     rules psl (la, fml) -> rules psr (rll ++ fml :: rlr, D) ->
     derrec (fst_ext_rls rules) emptyT (G1 ++ la ++ G2, fml : U) ->
@@ -684,6 +735,9 @@ dr : derrec (fst_ext_rls rules) emptyT
 Definition lja_gs2 V fml psl psr cl cr :=
   @ljg_gs2 _ LJAncrules dnsubfml fml psl psr cl cr (@LJAnc_seL V) lja_gs2_rp.
 
+Definition ljt_gs2 V fml psl psr cl cr :=
+  @ljg_gs2_2 _ (@LJTncrules V) dnsubfml fml psl psr cl cr ljt_gs2_rp2.
+
 Theorem lja_cut_adm V fml cl cr: derrec (@LJArules V) emptyT cl ->  
   derrec LJArules emptyT cr -> cedc LJArules fml cl cr.
 Proof. intros dl dr.
@@ -695,4 +749,16 @@ Qed.
 
 Check lja_cut_adm.
 Print Assumptions lja_cut_adm.
+
+Theorem ljt_cut_adm V fml cl cr: derrec (@LJTrules V) emptyT cl ->  
+  derrec LJTrules emptyT cr -> cedc LJTrules fml cl cr.
+Proof. intros dl dr.
+eapply (@gen_step2_lemT _ _ _ (cedc (@LJTrules V)) fml dnsubfml).
+apply AccT_dnsubfml.
+intros * ra rb.  apply (ljt_gs2 ra rb).
+exact dl. exact dr.
+Qed.
+
+Check ljt_cut_adm.
+Print Assumptions ljt_cut_adm.
 

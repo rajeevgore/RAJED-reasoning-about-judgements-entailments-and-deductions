@@ -32,6 +32,10 @@ Lemma swapped_R: forall T X Y Z,
   swapped X (Y : list T) -> swapped (X ++ Z) (Y ++ Z).
 Proof.  intros *; intros X0. destruct X0. subst. rewrite <- !app_assoc. apply swapped_I'. Qed.
 
+Definition swapped_nc' T X Y B C := @swapped_I T X Y [] B C [].
+Lemma swapped_nc T (X Y B C : list T) : X = B ++ C -> Y = C ++ B -> swapped X Y.
+intros. apply (swapped_I [] B C []) ; rewrite app_nil_r ; assumption. Qed.
+
 Lemma swapped_cons: forall T (x : T) Y Z,
   swapped Y Z -> swapped (x :: Y) (x :: Z).
 Proof.
