@@ -16,6 +16,7 @@ ll/ll_ca.vo \
 ll/lldefs.vo \
 ll/ll_exch.vo \
 ll/ll_lems.vo \
+ll/ll_thms.vo \
 ll/ll.vo \
 ll/fmlsext.vo
 modal: \
@@ -46,14 +47,15 @@ ljt/ljt_ctr.vo: ljt/ljt_ctr.v ljt/ljt_inv.vo
 ljt/ljt_ca.vo: ljt/ljt_ca.v ljt/ljt_ctr.vo
 ljt/ljt_dn.vo: ljt/ljt_dn.v ljt/ljt_inv.vo
 ljt/ljt_dncc.vo: ljt/ljt_dncc.v ljt/ljt_dn.vo ljt/ljt_ca.vo
-ljt/ljt_dnca.vo: ljt/ljt_dnca.v ljt/ljt_dncc.vo ljt/ljt_ca.vo
+ljt/ljt_dnca.vo: ljt/ljt_dnca.v ljt/ljt_dncc.vo 
 ljt/ljt_dnterm.vo: ljt/ljt_dnterm.v ljt/ljt_dncc.vo general/rtcT.vo general/gen_tacs.vo
-ll/ll_camq.vo: ll/ll_camq.v general/dd_fc.vo ll/fmlsext.vo ll/lldefs.vo ll/ll_lems.vo ll/ll_exch.vo ll/ll_cam.vo
-ll/ll_cam.vo: ll/ll_cam.v general/swappedT.vo general/gentree.vo
-ll/ll_ca.vo: ll/ll_ca.v general/ddT.vo
+ll/ll_camq.vo: ll/ll_camq.v general/dd_fc.vo ll/ll_exch.vo ll/ll_cam.vo
+ll/ll_cam.vo: ll/ll_cam.v ll/ll_lems.vo general/gentree.vo
+ll/ll_ca.vo: ll/ll_ca.v ll/lldefs.vo general/ddT.vo
+ll/ll_thms.vo: ll/ll_thms.v ll/ll_exch.vo general/ddT.vo 
+ll/ll_exch.vo: ll/ll_exch.v ll/lldefs.vo general/swappedT.vo 
+ll/ll_lems.vo: ll/ll_lems.v ll/lldefs.vo general/swappedT.vo general/gentree.vo
 ll/lldefs.vo: ll/lldefs.v ll/fmlsext.vo general/gstep.vo
-ll/ll_exch.vo: ll/ll_exch.v general/swappedT.vo general/gstep.vo
-ll/ll_lems.vo: ll/ll_lems.v general/swappedT.vo general/gentree.vo
 ll/ll.vo: ll/ll.v general/ddT.vo general/swappedT.vo 
 ll/fmlsext.vo: ll/fmlsext.v general/ddT.vo general/gen_tacs.vo general/List_lemmasT.vo 
 modal/k4_ca.vo: modal/k4_ca.v general/gen_tacs.vo general/gen_seq.vo general/gentree.vo modal/k4_ctr.vo

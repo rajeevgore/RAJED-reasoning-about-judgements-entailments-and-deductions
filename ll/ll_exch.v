@@ -180,7 +180,7 @@ exact (can_trf_rules_mono' (rsubI _ _ bang_maellI) c0).
 Qed.
 
 Definition exch_maell V := der_trf (@maell_tfr V).
-(* also have height-reserving exchange *)
+(* also have height-preserving exchange *)
 Definition exch_maell_ht V := der_trf_ht (@maell_tfr V).
 
 Theorem adm_exch_maell {V} concl concl' : 

@@ -1,7 +1,6 @@
 
 (* linear logic as in https://en.wikipedia.org/wiki/Linear_logic
-  ie, multiplicative and additive rules (mall)
-  also exponentials *)
+  ie, multiplicative and additive rules (mall), also exponentials *)
 
 Require Export List.
 Export ListNotations.
@@ -74,6 +73,12 @@ try (apply isub_tensL || apply isub_tensR || apply isub_wthL ||
 
 Lemma dual_sub' {V} A B : isubfml (@dual V A) (dual B) -> isubfml A B.
 Proof. intro idd. pose (dual_sub idd). rewrite -> !dual_dual in i. exact i. Qed.
+
+Definition lolli {V} A B := @par V (dual A) B.
+Definition eqv {V} A B := @wth V (lolli A B) (lolli B A).
+
+Lemma dual_lolli {V} A B : @dual V (lolli A B) = tens A (dual B).
+Proof. unfold lolli. simpl. rewrite dual_dual. reflexivity. Qed.
 
 (* specifying formula, so we can limit it to propositions *)
 Inductive Idrule {V} A : rlsT (list (LLfml V)) :=
@@ -391,7 +396,11 @@ Proof. induction A ; eapply derI.
   simpl. apply dersrec_singleI. unfold fmlsext. simpl. exact IHA.
 Qed.
 
-Check maell_id.
+Theorem maell_idr {V} (A : LLfml V) : derrec maell_rules emptyT [ dual A ; A ].
+Proof. pose (maell_id (dual A)).
+clearbody d. rewrite dual_dual in d. exact d. Qed.
+
+Check maell_id.  Check maell_idr.
 
 (* arbitrary weakening/contraction is derivable *)
 Lemma gen_wk_ctr W (A : W) rules :

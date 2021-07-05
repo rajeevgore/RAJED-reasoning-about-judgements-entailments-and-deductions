@@ -237,6 +237,9 @@ Qed.
 (* fmlsext copied from ../ll/fmlsext.v *)
 Definition fmlsext (W : Type) Γ1 Γ2 (fmls : (list W)) := (Γ1 ++ fmls ++ Γ2).
 
+Ltac sfs := simpl ; unfold fmlsext ; simpl.
+Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
+
 Lemma fmlsext_fmlsext: forall V (Γ1 Γ2 Φ1 Φ2 : list V) seq,
   fmlsext Γ1 Γ2 (fmlsext Φ1 Φ2 seq) = fmlsext (Γ1 ++ Φ1) (Φ2 ++ Γ2) seq.
 Proof. intros. unfold fmlsext.  rewrite !app_assoc. reflexivity. Qed.

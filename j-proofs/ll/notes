@@ -2,3 +2,28 @@
 proof writeup notes, started July 2021, based on code at that time,
 (for ll, late 2020) which would run on Coq 8.11.2 
 
+system is linear logic as in https://en.wikipedia.org/wiki/Linear_logic
+ie, multiplicative and additive rules (mall) also exponentials
+
+code in gitlab repo https://gitlab.anu.edu.au/u8413080/tense-logic-in-Coq.git
+files in directory ll, but also uses files in directories general and modal
+
+formulae (see lldefs.v) defined by
+Inductive LLfml (V : Set): Type :=
+ | Var : V -> LLfml V
+ | DVar : V -> LLfml V
+ | Bot : LLfml V
+ | Top : LLfml V
+ | One : LLfml V
+ | Zero : LLfml V
+ | tens : LLfml V -> LLfml V -> LLfml V
+ | wth : LLfml V -> LLfml V -> LLfml V
+ | par : LLfml V -> LLfml V -> LLfml V
+ | plus : LLfml V -> LLfml V -> LLfml V
+ | Bang : LLfml V -> LLfml V
+ | Query : LLfml V -> LLfml V
+.
+
+function dual : forall V : Set, LLfml V -> LLfml V
+where dual (Var v) = DVar v
+
