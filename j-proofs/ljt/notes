@@ -1,0 +1,5 @@
+
+proof writeup notes, started July 2021, based on code at that time,
+(for ljt, commit 7af8c80959b2955f36654965be17c61bed0a8acf 14 May 2021)
+which would run on Coq 8.11.2 
+
