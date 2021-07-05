@@ -1,0 +1,9 @@
+
+this directory in branch j-proofs-paper is for a paper, 
+initially planned for TABLEAUX2021, containing writeups 
+of the Coq proofs jeremy has done in the last year or two
+
+later changed workplan to have all this in directory j-proofs
+in branch jeremy-dev (so that one can edit writeup files and
+run proofs at the same time, so they need to be in the same branch)
+
