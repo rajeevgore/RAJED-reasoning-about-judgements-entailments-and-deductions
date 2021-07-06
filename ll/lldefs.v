@@ -350,14 +350,14 @@ Proof. induction A ; eapply derI.
   apply (dlCons IHA1 (dlCons IHA2 (dlNil _ _))).
 - eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []). apply Wth_p.
   eapply Wthrule_I. reflexivity. reflexivity.
-- simpl. unfold fmlsext. simpl.  apply dlCons. eapply derI.
+- sfs.  apply dlCons. eapply derI.
   eapply princ_maellI. eapply (OSgctxt_eq _ _ _ [A1]). apply PlusL_p.
   apply PlusLrule_I. reflexivity. reflexivity.
-  simpl. apply dersrec_singleI. unfold fmlsext. simpl. apply IHA1.
+  sfs. apply dersrec_singleI. apply IHA1.
   apply dersrec_singleI. eapply derI.
   eapply princ_maellI. eapply (OSgctxt_eq _ _ _ [A2]). apply PlusR_p.
   apply PlusRrule_I. reflexivity. reflexivity.
-  simpl. apply dersrec_singleI. unfold fmlsext. simpl. apply IHA2.
+  sfs. apply dersrec_singleI. apply IHA2.
 - simpl.  eapply princ_maellI. 
   eapply (OSgctxt_eq _ _ _ [] [tens _ _]). apply Par_p.
   eapply Parrule_I. reflexivity. reflexivity.
@@ -372,28 +372,28 @@ Proof. induction A ; eapply derI.
   apply (dlCons IHA1 (dlCons IHA2 (dlNil _ _))).
 - simpl. eapply princ_maellI. eapply (OSgctxt_eq _ _ _ [_] []). apply Wth_p.
   eapply Wthrule_I. reflexivity. reflexivity.
-- simpl. unfold fmlsext. simpl.  apply dlCons. eapply derI.
+- sfs.  apply dlCons. eapply derI.
   eapply princ_maellI. eapply (OSgctxt_eq _ _ _ [] [_]). apply PlusL_p.
   apply PlusLrule_I. reflexivity. reflexivity.
-  simpl. apply dersrec_singleI. unfold fmlsext. simpl. apply IHA1.
+  sfs. apply dersrec_singleI. apply IHA1.
   apply dersrec_singleI. eapply derI.
   eapply princ_maellI. eapply (OSgctxt_eq _ _ _ [] [_]). apply PlusR_p.
   apply PlusRrule_I. reflexivity. reflexivity.
-  simpl. apply dersrec_singleI. unfold fmlsext. simpl. apply IHA2.
+  sfs. apply dersrec_singleI. apply IHA2.
 - apply bang_maellI. simpl.
   eapply (fmlsrulegq_I _ _ [] [_]) ; split. (*( why does this work? *)
-- simpl. apply dersrec_singleI. unfold fmlsext. simpl.
+- sfs. apply dersrec_singleI. 
   eapply derI.  apply query_maellI. 
   eapply (OSgctxt_eq _ _ _ [A] []). apply Queryrule_I.
   reflexivity. reflexivity. 
-  simpl. apply dersrec_singleI. unfold fmlsext. simpl. exact IHA.
+  sfs. apply dersrec_singleI. apply IHA.
 - simpl.  apply bang_maellI. 
   eapply (fmlsrulegq_I _ _ [_] []) ; split. (*( why does this work? *)
-- simpl. apply dersrec_singleI. unfold fmlsext. simpl.
+- sfs. apply dersrec_singleI. 
   eapply derI.  apply query_maellI. 
   eapply (OSgctxt_eq _ _ _ [] [dual A]). apply Queryrule_I.
   reflexivity. reflexivity. 
-  simpl. apply dersrec_singleI. unfold fmlsext. simpl. exact IHA.
+  sfs. apply dersrec_singleI. apply IHA.
 Qed.
 
 Theorem maell_idr {V} (A : LLfml V) : derrec maell_rules emptyT [ dual A ; A ].
