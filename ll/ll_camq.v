@@ -194,7 +194,6 @@ simpl in IHxs. exact (IHxs H1). Qed.
 
 Print Implicit merge_paramL_ngl_QT.
 
-(*
 Lemma plusL_wth_q V (A : LLfml V) rules ys zs drsa drsb psa psb ca cb :
   fmlsrule [] ys PlusLrule psa ca -> 
   fmlsrule [] zs Wthrule psb cb -> 
@@ -244,7 +243,7 @@ Lemma tens_par_q V (A : LLfml V) rules ys zs drsa psa psb ca cb :
   gen_step2 (osscamq dual rules) A isubfml drsa
          (derrec rules emptyT) psa ca psb cb.
 Proof. intros psca pscb. apply gs_osscamq_lem.  intros * caes cbes.
-inversion psca. subst.  inversion pscb. subst. clear psca pscb.
+inversion psca. subst.  inversion pscb. subst. 
 inversion X. destruct X0. inversion H. subst. clear X H.
 unfold fmlsext in cbes.
 simpl in caes. simpl in cbes.
@@ -284,11 +283,9 @@ Lemma query_bang V (A : LLfml V) rules ys zs drsa drsb psa psb ca cb :
   fmlsrule [] ys Queryrule psa ca -> fmlsrule [] zs Bangrule psb cb -> 
   gen_step2 (osscam dual rules) A isubfml drsa drsb psa ca psb cb.
 Proof. intros fqa fbb saa fpl fpr da db.
-inversion fqa.  inversion fbb. 
-inversion H.  inversion H2.  subst.
-unfold fmlsext. simpl.
+inversion fqa.  inversion fbb. destruct X. destruct X0. subst. sfs.
 apply osscamI. intros * qe be mrg. inversion qe. inversion be. subst.
-simpl in H4. inversion H4. subst.
+simpl in H2. inversion H2. subst.
 simpl in fpl. unfold fmlsext in fpl. simpl in fpl.
 simpl in fpr. unfold fmlsext in fpr. simpl in fpr.
 apply ForallT_singleD in fpl.  apply ForallT_singleD in fpr. cD.
@@ -305,7 +302,6 @@ apply map_eq_nil in H2. subst. exists a ; reflexivity. Qed.
 
 (* lemma for Query and Bang rules, where Bang principal 
   as with gs_ctr_ng and gs_wk_ng can't express whether Query rule principal *)
-
 
 (* need version of query_bang_n_ht for mQ *)
 Lemma query_bang_mQ_ht V (A : LLfml V) zs 
@@ -383,12 +379,12 @@ specialize (d2 _ _ _ eq_refl eq_refl (mergeLI A mrg)).
 
 (* now induction on the formula using d2 and nextup of d0 *)
 specialize (saa A (isub_Query A) (fcI d2)).
-inversion fbb.  destruct H1.  unfold fmlsext in H0. simpl in H0.
-inversion H0. subst. clear H0.
-simpl in H. unfold fmlsext in H. simpl in H.
+inversion fbb.  destruct X0.  unfold fmlsext in H. simpl in H.
+inversion H. subst. clear H.
+simpl in H0. unfold fmlsext in H0. simpl in H0.
 pose (botr_ps_der d0).
 (* rewrite <- H in d3. fails - why ?? *)
-pose (eq_rect_r _ d3 H).  apply dersrec_singleD in d4.
+pose (eq_rect_r _ d3 H0).  apply dersrec_singleD in d4.
 specialize (saa (fcI d4) (AccT_measure _ _) (AccT_measure _ _)).
 unfold dt2fun in saa. destruct saa.
 rewrite !der_fc_concl_eq in o0.  destruct o0.  simpl in d5.
@@ -400,6 +396,7 @@ apply (derl_mono ctrq_maell) in mrgd1.
 exact (derl_derrec_trans mrgd1 (dersrec_singleI d5)).
 Qed.
 
+(*
 Lemma query_bang_n_ht V (A : LLfml V) zs 
   (dta dtb : derrec_fc maell_rules emptyT) psa psb ca cb 
   (btra : botRule_fc dta psa ca) (btrb : botRule_fc dtb psb cb) :
@@ -1340,5 +1337,4 @@ apply (hs2_maell_Q adm_exch_maell (get_botrule _) (get_botrule _)
  (bot_is_rule _) (bot_is_rule _)).  Qed.
 
 Print Implicit cut_adm_maell_Q.
-
 *)

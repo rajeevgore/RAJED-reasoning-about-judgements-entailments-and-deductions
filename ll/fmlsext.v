@@ -291,6 +291,8 @@ Lemma merge_simple_app W xs ys : @merge W xs ys (xs ++ ys).
 Proof. induction xs ; simpl. apply merge_Lnil.
 exact (mergeLI _ IHxs). Qed.
 
+Definition merge_simple_appr W xs ys := merge_sym (@merge_simple_app W ys xs).
+
 Inductive sing {X} : list X -> Type :=
   | singI : forall a, sing [a].
 
