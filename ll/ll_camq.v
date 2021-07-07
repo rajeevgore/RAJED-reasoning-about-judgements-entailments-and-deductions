@@ -396,7 +396,7 @@ apply (derl_mono ctrq_maell) in mrgd1.
 exact (derl_derrec_trans mrgd1 (dersrec_singleI d5)).
 Qed.
 
-(*
+(* a lot of this proof is similar to the previous lemma *)
 Lemma query_bang_n_ht V (A : LLfml V) zs 
   (dta dtb : derrec_fc maell_rules emptyT) psa psb ca cb 
   (btra : botRule_fc dta psa ca) (btrb : botRule_fc dtb psb cb) :
@@ -467,12 +467,12 @@ destruct o.  rewrite !der_fc_concl_eq in d2.
 specialize (d2 _ _ _ eq_refl eq_refl (mergeLI A0 mrg)).
 (* now induction on the formula using d2 and nextup of d0 *)
 specialize (saa A0 (isub_Query A0) (fcI d2)).
-inversion fbb.  destruct H1.  unfold fmlsext in H0. simpl in H0.
-inversion H0. subst. clear H0.
-simpl in H. unfold fmlsext in H. simpl in H.
+inversion fbb.  destruct X0.  unfold fmlsext in H. simpl in H.
+inversion H. subst. clear H.
+simpl in H0. unfold fmlsext in H0. simpl in H0.
 pose (botr_ps_der d0).
 (* rewrite <- H in d3. fails - why ?? *)
-pose (eq_rect_r _ d3 H).  apply dersrec_singleD in d4.
+pose (eq_rect_r _ d3 H0).  apply dersrec_singleD in d4.
 specialize (saa (fcI d4) (AccT_measure _ _) (AccT_measure _ _)).
 destruct saa.  specialize (o 1).  rewrite !der_fc_concl_eq in o.
 destruct o. simpl in d5.
@@ -691,6 +691,7 @@ simpl in ma.  inversion mb ; subst.
 + exact (gs_tens_mall' (rsub_trans (rsubI _ _ mall_maellI) rs) adm_exch ma X).
 + inversion X.  unfold fmlsext in H1. destruct Φ1 ; simpl in H1.
 * destruct X0. inversion H1.
+
 * exact (princ_paramR (@wk_sing _ _) (OSctxt _ _ _ _ _ X0)
     (rsub_trans (rsubI _ _ (@wk_maellI _ _)) rs)).
 + inversion X.  unfold fmlsext in H1. destruct Φ1 ; simpl in H1.
@@ -698,10 +699,10 @@ simpl in ma.  inversion mb ; subst.
 * exact (princ_paramR (@ctr_sing _ _) (OSctxt _ _ _ _ _ X0)
     (rsub_trans (rsubI _ _ (@ctr_maellI _ _)) rs)).
 + inversion X.  unfold fmlsext in H. destruct Φ1 ; simpl in H.
-* destruct H1. inversion H.
-* exact (princ_paramR (@query_sing _) (OSctxt _ _ _ _ _ H1)
+* destruct X0. inversion H1.
+* exact (princ_paramR (@query_sing _) (OSctxt _ _ _ _ _ X0)
     (rsub_trans (rsubI _ _ (@query_maellI _)) rs)).
-+ inversion X. subst. destruct cl ; destruct H ; inversion H3.
++ inversion X. subst. destruct cl ; destruct X0 ; inversion H2.
 - (* tensor rule with context on the left *)
   exact (merge_paramL _ tens_sing mca (rsub_trans (rsubI _ _ tens_maellI) rs)).
 Qed.
@@ -732,7 +733,7 @@ exact (princ_paramR_n_e _ _ llprinc_sing
   (OSctxt _ _ _ _ _ X0) (rsub_trans princ_mallI rsmr)).
 - (* tensor rule *)
 inversion X. subst.  destruct cl. 
-+ inversion X0. destruct H0. inversion H. 
++ inversion X0. destruct X1. inversion H. 
 + apply (gen_step2_sub_mono (rsub_emptyT _)).  apply gs_osscang_Q_lem.
 apply gs_osscan_g_lem. intro n.
 exact (merge_paramR_n_e _ tens_sing X0 (rsub_trans tens_mallI rsmr)).
@@ -971,7 +972,7 @@ exact (rsub_trans (rsubI _ _ princ_mallI) rsr).
 - (* merge_ctxtg Tensrule on right *)
 inversion X. destruct cl. subst.
 + (* no left context, so principal formula should be Bang *)
-inversion X0. destruct H0.  simpl in H. inversion H.
+inversion X0. destruct X1. inversion H.
 + eapply merge_paramR_n_e.  apply tens_sing. exact X0.
 exact (rsub_trans (rsubI _ _ tens_mallI) rsr).
 - inversion X.  - inversion X.  - inversion X. Qed.
@@ -1001,7 +1002,7 @@ Proof. intros mr fbl. inversion fbl. subst.
 apply gs2_osscamQ_lem ; intros * cle cre. 
 destruct cl0. 
 - (* no left context, so cut-formula is Bang or Query *)
-unfold fmlsext. simpl. destruct H.
+unfold fmlsext. simpl. destruct X.
 unfold fmlsext in cle. simpl in cle. destruct cle.
 -- inversion e. (* cut formula is Bang *)
 apply gs2_osscamQ_dual_e'. (* now cut formula is Query, mall rules on left *)
@@ -1247,7 +1248,7 @@ Lemma gs2_Q_nQ V A psl psr cl cr (X0 : fmlsruleg Queryrule psl cl)
   gen_step2 (osscamQ dual maell_rules) A isubfml (derrec maell_rules emptyT)
   (derrec maell_rules emptyT) psl cl psr cr.
 Proof.  apply fmlsrule_g_ex in X0. cD. destruct X0.
-* inversion X2. destruct H.  unfold fmlsext. simpl. clear X2.
+* inversion X2. destruct X.  unfold fmlsext. simpl. clear X2.
 apply gs2_osscamQ_lem. intros * aq. destruct aq ; subst.
 inversion e. subst. destruct (s  _ eq_refl).
 destruct (s  _ eq_refl).
@@ -1337,4 +1338,4 @@ apply (hs2_maell_Q adm_exch_maell (get_botrule _) (get_botrule _)
  (bot_is_rule _) (bot_is_rule _)).  Qed.
 
 Print Implicit cut_adm_maell_Q.
-*)
+
