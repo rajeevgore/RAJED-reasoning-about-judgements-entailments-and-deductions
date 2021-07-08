@@ -192,6 +192,11 @@ eapply (@merge_ctxtI _ _ _ _ [] [] [_]). apply Tensrule_I.
 apply merge_nil.  apply merge_simple_app.  reflexivity. simpl.
 apply (dlCons (maell_id _)). exact (dersrec_singleI X). Qed.
 
+Lemma tens_lemd {V} A B fs : derrec maell_rules emptyT (B ::fs) ->
+  derrec maell_rules emptyT (@tens V (dual A) B :: A ::fs).
+Proof. intro b. pose (tens_lem (dual A) b). 
+clearbody d. rewrite dual_dual in d. exact d. Qed.
+
 Lemma tens_assoc1_lem {V} A B C : derrec maell_rules emptyT
   [@tens V A (tens B (dual C)) ; dual A ; dual B ; C].
 Proof. apply tens_lem.  apply tens_lem. apply maell_idr. Qed.
@@ -271,10 +276,81 @@ apply plusL_sI. apply plusL_sI.  apply maell_idr.
 apply wth_2sI.  apply plusL_sI. apply plusR_sI.  apply maell_idr.
 apply plusR_sI.  apply maell_idr. Qed.
 
+Definition tens_lem' {V} A B := @tens_lem V A B _ (maell_id _).
+
+Lemma dpar_lem {V} A B : derrec maell_rules emptyT
+  (dual (@par V A B) :: [A ; B]).
+Proof. pose (tens_lem' (dual A) (dual B)).
+clearbody d.  rewrite !dual_dual in d. exact d. Qed.
+
 (* results involving invertibility of rules, etc, need cut adm *)
+Lemma par_inv {V} A B rc : 
+  derrec maell_rules emptyT (@par V A B :: rc) -> 
+  derrec maell_rules emptyT (A :: B :: rc).
+Proof. intro dp.
+pose (cut_adm_maell_Q (par A B) dp (dpar_lem A B)).
+inversion o. clear o X0. inversion X.
+exact (X0 _ _ _ eq_refl eq_refl (merge_simple_appr _ _)). Qed.
 
+Lemma use_lolli {V} A B rc : derrec maell_rules emptyT [@lolli V A B] ->
+  derrec maell_rules emptyT (A :: rc) -> derrec maell_rules emptyT (B :: rc).
+Proof. intros lab ac.
+pose (cut_adm_maell_Q A ac (par_inv lab)).
+inversion o. clear o X0. inversion X.
+exact (X0 _ _ _ eq_refl eq_refl (merge_simple_appr _ _)). Qed.
 
+(* -o and so eqv are congruences *)
+Lemma parL_cong {V} A B C rc : derrec maell_rules emptyT (@lolli V A B :: rc) ->
+  derrec maell_rules emptyT (lolli (par C A) (par C B) :: rc).
+Proof. intro lab. apply par_sI. apply par_2sI. simpl.
+apply tens_lemd.  apply par_inv. exact lab. Qed.
 
+Lemma tensL_cong {V} A B C rc : 
+  derrec maell_rules emptyT (@lolli V A B :: rc) ->
+  derrec maell_rules emptyT (lolli (tens C A) (tens C B) :: rc).
+Proof. intro lab.
+eapply (use_lolli (lolli_dual _ _)) in lab.
+apply (parL_cong (dual C)) in lab.
+apply (use_lolli (lolli_dual _ _)) in lab.
+simpl in lab. rewrite !dual_dual in lab. exact lab. Qed.
 
+Lemma plusL_cong {V} A B C : 
+  derrec maell_rules emptyT [@lolli V A B] ->
+  derrec maell_rules emptyT [lolli (plus C A) (plus C B)].
+Proof. intro lab. apply par_sI. simpl. apply wth_sI.
+apply plusL_2sI. apply maell_idr.
+apply plusR_2sI. exact (par_inv lab). Qed.
 
+Lemma wthL_cong {V} A B C : 
+  derrec maell_rules emptyT [@lolli V A B] ->
+  derrec maell_rules emptyT [lolli (wth C A) (wth C B)].
+Proof. intro lab. apply par_sI. simpl. apply wth_2sI.
+apply plusL_sI. apply maell_idr.
+apply plusR_sI. exact (par_inv lab). Qed.
+
+Lemma query_cong {V} A B : 
+  derrec maell_rules emptyT [@lolli V A B] ->
+  derrec maell_rules emptyT [lolli (Query A) (Query B)].
+Proof. intro lab. apply par_sI. simpl.
+eapply derI.  apply bang_maellI.
+eapply (fmlsrulegq_I _ _ [] [_]). eapply Bangrule_I.
+reflexivity.  reflexivity.  reflexivity.  reflexivity.
+apply dersrec_singleI. sfs.
+eapply derI.  apply query_maellI.
+eapply (OSgctxt_eq _ _ _ [_] []).  eapply Queryrule_I.
+reflexivity.  reflexivity.
+apply dersrec_singleI. sfs.  exact (par_inv lab). Qed.
+
+Lemma bang_cong {V} A B : 
+  derrec maell_rules emptyT [@lolli V A B] ->
+  derrec maell_rules emptyT [lolli (Bang A) (Bang B)].
+Proof. intro lab.
+eapply (use_lolli (lolli_dual _ _)) in lab.
+apply query_cong in lab.
+apply (use_lolli (lolli_dual _ _)) in lab.
+simpl in lab. rewrite !dual_dual in lab. exact lab. Qed.
+
+Print Implicit bang_cong.
+
+(* from these could get congruence of eqv *)
 
