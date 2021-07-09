@@ -1,4 +1,7 @@
 
+(* general stuff for one-sided sequents, 
+  ie, fmlsext, fmlsrule, and merge of lists *)
+
 Require Export List.
 Export ListNotations.
 Set Implicit Arguments.
@@ -11,10 +14,8 @@ Require Import genT.
 Require Import ddT.
 Require Import List_lemmasT gen_tacs.
 
+(* fmlsext, ie next 23 lines, same as ../general/gen_seq.v *)
 Definition fmlsext (W : Type) Γ1 Γ2 (fmls : (list W)) := (Γ1 ++ fmls ++ Γ2).
-
-(* TODO - look at definition of fmlsext in general/gen_seq.v
-  is there unnecessary duplication ?? *)
 
 Ltac sfs := simpl ; unfold fmlsext ; simpl.
 Ltac sfseq := simpl ; unfold fmlsext ; simpl ; list_assoc_r' ; reflexivity.
@@ -32,6 +33,10 @@ simpl. rewrite IHseqs. rewrite fmlsext_fmlsext. reflexivity. Qed.
 Lemma fmlsext_def : forall (W : Type) Φ1 Φ2 U,
       @fmlsext W Φ1 Φ2 U = (Φ1 ++ U ++ Φ2).
 Proof. reflexivity. Qed.
+
+Lemma map_fmlsext U W (xs Γ1 Γ2 : list U) f : map f (fmlsext Γ1 Γ2 xs) = 
+  fmlsext (map f Γ1) (map f Γ2) (map f xs : list W).
+Proof. unfold fmlsext. rewrite !map_app. reflexivity. Qed.
 
 Inductive fmlsrule (W : Type) Φ1 Φ2 (pr : rlsT (list W)) : rlsT (list W) := 
   | OSctxt : forall ps c, pr ps c -> 

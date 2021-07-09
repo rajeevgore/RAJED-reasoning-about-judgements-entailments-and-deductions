@@ -1,4 +1,6 @@
 
+(* general stuff for sequents of lists, seqext, seqrule,
+  general lemmas about exchange *)
 Require Export List.
 Export ListNotations.
 Set Implicit Arguments.
@@ -234,7 +236,7 @@ Proof.
   subst. repeat eexists.
 Qed.
 
-(* fmlsext copied from ../ll/fmlsext.v *)
+(* fmlsext, ie next 23 lines, same as ../ll/fmlsext.v *)
 Definition fmlsext (W : Type) Γ1 Γ2 (fmls : (list W)) := (Γ1 ++ fmls ++ Γ2).
 
 Ltac sfs := simpl ; unfold fmlsext ; simpl.
