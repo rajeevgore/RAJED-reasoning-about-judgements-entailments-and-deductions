@@ -5,8 +5,68 @@ proof writeup notes, started July 2021, based on code at that time,
 system is linear logic as in https://en.wikipedia.org/wiki/Linear_logic
 ie, multiplicative and additive rules (mall) also exponentials
 
+see also https://plato.stanford.edu/entries/logic-linear/
+which has, in s2.1, a 2-sided sequent system, otherwise similar
+and in s2.2 a different system with 2 zones 
+
 code in gitlab repo https://gitlab.anu.edu.au/u8413080/tense-logic-in-Coq.git
 files in directory ll, but also uses files in directories general and modal
+
+relevant emails to/from Raj (in email folder project)
+
+23/6/20
+
+I found a PhD thesis by Dirk Roorda (1991), Resource Logics Proof
+theoretical Investigations which does a proof for a system as on the
+wikipedia page, which encounters the same problem I encountered but says
+it isn't a problem because in all cases where it arises you can use the
+inductive hypothesis on the other subtree.
+
+So I'm getting on with it as I was before, but it is slow - I seem to
+spend time trying to generalise previous lemmas and then finding that
+doing so is so complicated that I need to reprove similar things anyway.
+The property I'm trying to prove inductively is a sort of multicut where
+the number of occurrences of A to be cut away is 1 or > 1 or 0 (> 1 or
+0 only for a ?-formula) and that gets tricky.
+
+see also emails 28/5/20 refer to other related work
+
+PhD thesis Dirk Roorda Resource Logics Proof theoretical Investigations
+(1991) is at
+~/doc/cut-elim/Roorda_1991_Resource_Logics_Proof_theoretical_Investigations.pdf
+
+my email 24/4/20
+
+The interesting issue that arose is that although a statement in Coq
+like d : derrec rules prems concl means not only that d is a statement
+that concl is derivable etc, but d is also a derivation tree.
+
+This means that the stuff I did in Isabelle (theorems valid_derrec,
+and vv, that if c is derivable then there is a valid derivation tree,
+and vv) comes for free in Coq.
+
+Except it doesn't quite come for free: in Isabelle you have a final rule
+then a list of the derivation (sub-)trees at the next level.  In Coq
+you can't make a list of them because they are all of different types
+because they have different conclusions.  Getting around this problem
+is complex and time-consuming - which of course may mean that there is
+a worthwhile story to be told.
+
+my email 25/7/19
+
+I've spent a couple of weeks exploring the idea that in Coq,
+the assertion of some property (like that something is derivable) is
+also an object containing the proof of that fact, and that therefore we
+can measure the height, or size, etc of the proof tree.
+
+However this only works when the derivability predicate is encoded as
+... -> Type, not as ... -> Prop.
+So I tried to redo the minimal logic stuff (being simpler than redoing
+all the nested sequent stuff), which meant that a lot of the related
+definitions and lemmas (eg In a xs, meaning a is in list xs) need to be
+redone similarly.  So there is a reasonable story there.  And I've done
+proofs of weakening admissibility by induction on the height of a
+derivation, and then height-preserving weakening.
 
 formulae (see lldefs.v) defined by
 Inductive LLfml (V : Set): Type :=
