@@ -13,41 +13,6 @@ Require Import fmlsext.
 Require Import lldefs ll_lems.
 Require Import gstep gentree.
 
-(* princ_paramL - dual and isubfml are generic *)
-(* note, this should be a special case of princ_paramL_nn *)
-Lemma princ_paramL' W (A : W) rules dual any prs x xs ys
-  drsa drsb psa psb ca cb : rsub prs (fun _ => sing) ->
-  fmlsrule (x :: xs) ys prs psa ca -> rsub (fmlsruleg prs) rules -> 
-  gen_step2 (osscam dual rules) A any drsa drsb psa ca psb cb.
-Proof. intros ps fpa rsr. unfold gen_step2.
-intros sub fpl fpr dl dr. clear sub fpr.
-apply osscamI. intros * cae cbe m. subst.
-inversion fpa. subst. clear fpa.
-pose (rsubD ps ps0 c X). simpl in s. destruct s.
-eapply merge_ctns_singleL in m. cD. subst.
-eapply derI. 
-+ apply (rsubD rsr).  eapply OSgctxt_eq. apply X. 
-reflexivity. reflexivity.
-+ apply dersrecI_forall. intros c0 inmf.
-apply InT_mapE in inmf. cD.
-eapply ForallTD_forall in fpl.
-2: apply (InT_map _ inmf1).
-destruct fpl. destruct o. subst.
-unfold fmlsext.  unfold fmlsext in d0. simpl in d0.
-apply (d0 _ _ _ eq_refl eq_refl).
-replace m0 with ([] ++ m0) by reflexivity.
-exact (merge_app m3 (merge_app (merge_Rnil inmf) m6)). Qed.
-
-Definition princ_paramL W A rules dual any prs x xs ys :=
-  @princ_paramL' W A rules dual any prs x xs ys 
-    (derrec rules emptyT) (derrec rules emptyT).
-  
-(* princ_paramR - specific to dual, isubfml *)
-Definition princ_paramR V A rules prs x xs ys psa psb ca cb rps fpb rsr := 
-  gs2_osscam_dual' (@princ_paramL _ (dual A : LLfml V)
-    rules dual isubfml prs x xs ys psb psa cb ca rps fpb rsr).
-Check princ_paramL.  Check princ_paramR.
-
 (* dual and subformula relation are arbitrary *)
 Lemma princ_paramL_nn W (A : W) rules dual nl nr any prs xs ys
   drsa drsb psa psb ca cb : rsub prs (fun _ => sing) ->
@@ -87,35 +52,29 @@ Definition princ_paramR_nn V A rules nl nr prs xs ys
 
 Check princ_paramL_nn.  Check princ_paramR_nn.
 
+(* princ_paramL - dual and isubfml are generic *)
+(* this is a special case of princ_paramL_nn *)
+Lemma princ_paramL' W (A : W) rules dual any prs x xs ys
+  drsa drsb psa psb ca cb : rsub prs (fun _ => sing) ->
+  fmlsrule (x :: xs) ys prs psa ca -> rsub (fmlsruleg prs) rules -> 
+  gen_step2 (osscam dual rules) A any drsa drsb psa ca psb cb.
+Proof. intros rss rsfr rpr. eapply gs2_eq.
+intro. apply req_sym.  apply osscam_nn_eq.
+eapply (fun x => princ_paramL_nn _ _ _ rss rsfr x rpr).
+simpl. apply leT_n_S. apply leT_0_n. Qed.
+
+Definition princ_paramL W A rules dual any prs x xs ys :=
+  @princ_paramL' W A rules dual any prs x xs ys 
+    (derrec rules emptyT) (derrec rules emptyT).
+  
+(* princ_paramR - specific to dual, isubfml *)
+Definition princ_paramR V A rules prs x xs ys psa psb ca cb rps fpb rsr := 
+  gs2_osscam_dual' (@princ_paramL _ (dual A : LLfml V)
+    rules dual isubfml prs x xs ys psb psa cb ca rps fpb rsr).
+Check princ_paramL.  Check princ_paramR.
+
 (* if the cut formula is different from the conclusion of rule(s) prs,
   then it musts be parametric, not principal *)
-Lemma princ_paramL_nn_ne W (A : W) rules dual nl nr any prs xs ys
-  drsa drsb psa psb ca cb : rsub prs (fun _ => sing) ->
-  fmlsrule xs ys prs psa ca -> 
-  (forall ps c, prs ps c -> {c' : W & c = [c'] & c' <> A}) -> 
-  rsub (fmlsruleg prs) rules ->
-  gen_step2 (osscann dual rules nl nr) A any drsa drsb psa ca psb cb.
-Proof.
-pose (leT_or_gt nl (length xs)). destruct s.
-(* assuming leT nl (length xs) *)
-intros ps fpa cd.  eapply princ_paramL_nn ; eassumption. 
-(* assuming leT (S (length xs)) nl *)
-intros ps fpa cd rsr saa fpl fpr dl dr. 
-apply osscannI. intros * cae cbe mrg. clear saa fpl fpr dl dr ps rsr.
-destruct fpa.  specialize (cd _ _ p). destruct cd.
-unfold fmlsext in cae. subst.
-acacD'T2 ; subst.
-+ rewrite app_length in l. rewrite repeat_length in l.
-destruct (leT_S_F (leT_trans l (leT_plus_l _ _))).
-+ rewrite app_nil_r in cae0. subst. rewrite repeat_length in l.
-destruct (leT_S_F l).
-+ apply repeat_eq_app in cae0. cD.
-destruct cae4 ; simpl in cae6 ; inversion cae6.  destruct (n H0).
-+ apply repeat_eq_app in cae0. cD.
-destruct cae3 ; simpl in cae4 ; inversion cae4.  destruct (n H0).
-Qed.
-
-(* TODO this should make princ_paramL_nn_ne above redundant *)
 Lemma princ_paramL_nn_ne' W (A : W) rules dual nl nr any prs 
   drsa drsb psa psb ca cb : rsub prs (fun _ => sing) ->
   fmlsruleg prs psa ca -> 
@@ -144,6 +103,14 @@ destruct cae4 ; simpl in cae6 ; inversion cae6.  destruct (n H0).
 destruct cae3 ; simpl in cae4 ; inversion cae4.  destruct (n H0).
 Qed.
 
+(* like princ_paramL_nn_ne' but with fmlsrule xs ys *)
+Definition princ_paramL_nn_ne W (A : W) rules dual nl nr any prs xs ys
+  drsa drsb psa psb ca cb rpr fr := 
+  @princ_paramL_nn_ne' W (A : W) rules dual nl nr any prs 
+  drsa drsb psa psb ca cb rpr (@fmlsrule_g _ xs ys _ _ _ fr).
+
+Check princ_paramL_nn_ne.  Check princ_paramL_nn_ne'. 
+
 Lemma princ_paramL_n W (A : W) rules dual n any prs xs ys
   drsa drsb psa psb ca cb : rsub prs (fun _ => sing) ->
   fmlsrule xs ys prs psa ca -> leT n (length xs) ->
@@ -164,28 +131,6 @@ eapply gs2_eq.  2: eapply princ_paramL_nn.
 intro. apply req_sym.  apply osscan'_eq.
 exact ps. exact fpa. simpl. apply leT_n_S. apply leT_0_n.
 exact rsr. Qed.
-
-(*
-(* adapt the above to where other side of cut is repeat A n 
-  note princ_paramR is the case n=1 of this *)
-Lemma princ_paramR_n V (A : LLfml V) rules n prs x xs ys
-  drsa drsb psa psb ca cb : rsub prs (fun _ => sing) ->
-  fmlsrule (x :: xs) ys prs psb cb -> rsub (fmlsruleg prs) rules -> 
-  gen_step2 (osscan dual rules n) A isubfml drsa drsb psa ca psb cb.
-Proof. intros ps fpa rsr. 
-eapply gs2_eq.  2: eapply princ_paramR_nn.
-intro. apply req_sym.  apply osscan_eq.
-exact ps. exact fpa. simpl. apply leT_n_S. apply leT_0_n.
-exact rsr. Qed.
-
-Check (fun x => gs2_osscann_n' (gs2_osscann_dual' (gs2_osscan_nn x))).
-
-(* note - could prove this from princ_paramL_nn, so dual and isubfml generic *)
-Definition princ_paramL_n' V A rules n prs x xs ys
-  drsa drsb psa psb ca cb rps fp rsr :=
-  gs2_osscann_n' (gs2_osscann_dual' (gs2_osscan_nn (@princ_paramR_n
-    V (dual A) rules n prs x xs ys drsb drsa psb psa cb ca rps fp rsr))).
-*)
 
 (* note princ_paramR is the case n=1 of this *)
 Definition princ_paramR_n V A rules n prs x xs ys

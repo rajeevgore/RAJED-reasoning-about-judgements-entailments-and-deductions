@@ -247,7 +247,7 @@ Proof. repeat split ; intros * ue ve mrg.
 - destruct X. simpl in ue.  exact (d _ _ _ ue ve mrg).
 - inversion X. simpl in X0.  exact (X0 _ _ _ ue ve mrg). Qed.
 
-Definition osscam_nn_eq {V} dual rules (A : LLfml V) :=
+Definition osscam_nn_eq {W} dual rules (A : W) :=
   req_trans (@osscam_n_eq _ rules dual A) (@osscan_eq _ dual rules 1 A).
 
 Definition osscam_n'_eq {V} rules (A : LLfml V) :=
