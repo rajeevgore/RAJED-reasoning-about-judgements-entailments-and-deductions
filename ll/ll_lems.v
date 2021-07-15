@@ -49,23 +49,33 @@ exact fpr. apply roo. exact fpr0.  exact inxp. }
 (** dualities between left and right subproofs 
   for ossca ... and gen_step2 (ossca ...) **)
 
+Definition gs2_osscam_n' V rules (A : LLfml V) sub dls drs psa ca psb cb :=
+  @gs2_eq _ _ _ _ _ A sub dls drs psa ca psb cb (osscam_n'_eq rules).
+
+Definition gs2_osscan'_m V rules (A : LLfml V) sub dls drs psa ca psb cb :=
+  @gs2_eq _ _ _ _ _ A sub dls drs psa ca psb cb
+    (fun A => req_sym (osscam_n'_eq rules A)).
+
+Definition gs2_osscam_n W dual rules (A : W) sub dls drs psa ca psb cb :=
+  @gs2_eq _ _ W _ _ A sub dls drs psa ca psb cb (osscam_n_eq dual rules).
+
+Definition gs2_osscan_m W dual rules (A : W) sub dls drs psa ca psb cb :=
+  @gs2_eq _ _ W _ _ A sub dls drs psa ca psb cb 
+    (fun A => req_sym (osscam_n_eq dual rules A)).
+
 Definition gs2_osscan_nn W dual rules n (A : W) sub dls drs psa ca psb cb :=
   @gs2_eq _ _ W _ _ A sub dls drs psa ca psb cb (osscan_eq dual rules n).
 
 Definition gs2_osscann_n W dual rules n (A : W) sub dls drs psa ca psb cb :=
   @gs2_eq _ _ W _ _ A sub dls drs psa ca psb cb 
-     (fun A => req_sym (osscan_eq dual rules n A)).
+    (fun A => req_sym (osscan_eq dual rules n A)).
 
-Lemma gs2_osscann_n' V rules n (A : LLfml V) sub dls drs psa ca psb cb:
-  gen_step2 (osscann dual rules 1 n) A sub dls drs psa ca psb cb ->
-       gen_step2 (osscan' dual rules n) A sub dls drs psa ca psb cb.
-Proof. intro. eapply gs2_eq.
-intro.  apply req_sym. apply osscan'_eq.  exact X. Qed.
+Definition gs2_osscan'_nn V rules n (A : LLfml V) sub dls drs psa ca psb cb :=
+  @gs2_eq _ _ _ _ _ A sub dls drs psa ca psb cb (osscan'_eq rules n).
 
-Lemma gs2_osscan'_nn V rules n (A : LLfml V) sub dls drs psa ca psb cb:
-  gen_step2 (osscan' dual rules n) A sub dls drs psa ca psb cb ->
-       gen_step2 (osscann dual rules 1 n) A sub dls drs psa ca psb cb.
-Proof. intro. eapply gs2_eq.  intro.  apply osscan'_eq.  exact X. Qed.
+Definition gs2_osscann_n' V rules n (A : LLfml V) sub dls drs psa ca psb cb :=
+  @gs2_eq _ _ _ _ _ A sub dls drs psa ca psb cb 
+    (fun A => req_sym (osscan'_eq rules n A)).
 
 Lemma osscann_dual {V} (A : LLfml V) rules nl nr cl cr :
   osscann dual rules nl nr A cl cr -> osscann dual rules nr nl (dual A) cr cl.
