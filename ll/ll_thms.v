@@ -456,6 +456,7 @@ Proof. pose (plus_wth (dual A) (dual B) (dual C)).
 eapply (use_lolli (lolli_dual _ _)) in d. simpl in d.
 rewrite !dual_dual in d. exact d. Qed.
 
+(* also, lolli A bot is equivalent (inter-derivable) to dual A *)
 
 
 
