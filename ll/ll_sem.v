@@ -134,11 +134,67 @@ Lemma sub_dual_inv (X Y : M -> Prop) :
 Proof. intros xdy v yv.  apply (dual_anti _ xdy).
 exact (dual_dual_sem _ yv). Qed.
 
+Lemma sub_inv_dual (X Y : M -> Prop) : fact X -> 
+  (forall v, dual_sem X v -> dual_sem Y v) -> (forall v, Y v -> X v).
+Proof. intros fx dxy v yv.  exact (fx _ (sub_dual_inv _ dxy v yv)).  Qed.
+
 Lemma dual_sub_inv (X Y : M -> Prop) : fact X ->
   (forall v, dual_sem X v -> Y v) -> (forall v, dual_sem Y v -> X v).
 Proof. intros fx dxy v dy. apply fx. revert v dy.
 apply sub_dual_inv.  intros v dxv.
 exact (dual_dual_sem _ (dxy v dxv)). Qed.
+
+Lemma bot_o x v : bot (m x v) <-> dual_sem (eq x) v.
+Proof. unfold dual_sem. unfold lolli_sem.
+pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
+destruct H0. rewrite H0. split.
+- intros. subst. assumption.
+- intro eb. exact (eb _ eq_refl). Qed.
+
+Lemma curry_prods_sem X Y Z u : 
+  lolli_sem (prods X Y) Z u -> lolli_sem X (lolli_sem Y Z) u.
+Proof. unfold lolli_sem.  intros unc v xv w yw.
+pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
+rewrite H. apply unc.  apply (prodI _ _ _ _ xv yw). Qed.
+
+Lemma curry_sem X Y Z u : 
+  lolli_sem (tens_sem X Y) Z u -> lolli_sem X (lolli_sem Y Z) u.
+Proof. intro lt. apply curry_prods_sem.
+unfold lolli_sem.  unfold lolli_sem in lt.
+intros v pxy. apply lt. unfold tens_sem. exact (dual_dual_sem _ pxy). Qed.
+
+Lemma curry_sem_bot X Y u : 
+  dual_sem (tens_sem X Y) u -> lolli_sem X (dual_sem Y) u.
+Proof. unfold dual_sem. apply curry_sem. Qed.
+
+Lemma curry_bot_prods X Y u : 
+  dual_sem (prods X Y) u -> lolli_sem X (dual_sem Y) u.
+Proof. intro dpxy. apply curry_sem_bot.
+unfold tens_sem. rewrite ddd_iff. exact dpxy. Qed.
+
+(* does this hold for tens instead of prods? easier if Z is bot *)
+Lemma uncurry_prods_sem X Y Z u : 
+  lolli_sem X (lolli_sem Y Z) u -> lolli_sem (prods X Y) Z u.
+Proof. unfold lolli_sem.  intros cur v ddp.  destruct ddp.
+specialize (cur _ H _ H0).
+pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
+rewrite H1 in cur. exact cur. Qed.
+
+Lemma uncurry_bot_prods X Y u :
+  lolli_sem X (dual_sem Y) u -> dual_sem (prods X Y) u.
+Proof. apply uncurry_prods_sem. Qed.
+
+Lemma uncurry_sem_bot X Y u : 
+  lolli_sem X (dual_sem Y) u -> dual_sem (tens_sem X Y) u.
+Proof. unfold tens_sem. rewrite ddd_iff. apply uncurry_bot_prods. Qed.
+
+(* curry/uncurry equivalences *)
+Definition curry_prods_sem_eqv X Y Z u : iff _ _ :=
+  conj (@curry_prods_sem X Y Z u) (@uncurry_prods_sem X Y Z u).
+Definition curry_sem_bot_eqv X Y u : iff _ _ :=
+  conj (@curry_sem_bot X Y u) (@uncurry_sem_bot X Y u).
+Definition curry_bot_prods_eqv X Y u : iff _ _ :=
+  conj (@curry_bot_prods X Y u) (@uncurry_bot_prods X Y u).
 
 (*
 Lemma ddp_comm X Y u : dual_sem (dual_sem (prods X Y)) u ->
@@ -202,7 +258,83 @@ exact (prods_mono _ _ IHA1 IHA2).
 pose (dual_sub_inv (fact_sem _ _ fsv) IHA) as dsd. firstorder.
 - apply dd_mono. firstorder. Qed.
 
+Lemma sem_dual {V} sv A : (forall v, fact (sv v)) -> 
+  forall u, (sem sv (@dual V A) u) <-> (dual_sem (sem sv A) u).
+Proof. intros fsv u. split.
+apply (sem_dual_fwd _ _ fsv).  apply (sem_dual_bwd _ _ fsv). Qed.
+
+Lemma sem_lolli {V} A B sv u : (forall v, fact (sv v)) ->
+  sem sv (@lolli V A B) u <-> lolli_sem (sem sv A) (sem sv B) u.
+Proof. intro fsv. unfold lolli. simpl. unfold par_sem.
+rewrite curry_sem_bot_eqv.  unfold lolli_sem.
+pose (fun A => sem_dual _ A fsv).  clearbody i.  split.
+- intros dd v sa. specialize (dd v).  rewrite <- i in dd.
+rewrite dual_dual in dd.
+exact (fact_sem B sv fsv (dd sa)).
+- intros sabm v dda.  rewrite <- i in dda. 
+rewrite dual_dual in dda.  exact (dual_dual_sem _ (sabm v dda)). Qed.
+
+(* note, all the binary semantic definitions are commutative *)
+(* not obvious that they are all associative *)
+
+Lemma prods_lolli X Y u : prods (lolli_sem X Y) X u -> Y u.
+Proof. intro pl. inversion pl. unfold lolli_sem in H. exact (H _ H0). Qed.
+
+Lemma lolli_sem_e X Y : lolli_sem X Y e <-> (forall x, X x -> Y x).
+Proof. unfold lolli_sem. 
+pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
+destruct H0.  destruct H1. 
+split ; intros eqv v xv ; specialize (eqv v xv).
+rewrite H2 in eqv. exact eqv.  rewrite H2. exact eqv. Qed.
+
+Lemma dual_sem_e X : dual_sem X e <-> (forall x, X x -> bot x).
+Proof. unfold dual_sem. apply lolli_sem_e. Qed.
+
+(* soundness - in semantics, true means set contains e,
+  for semantics of list of formulae, imagine them joined by par *)
+Lemma lolli_same_sound X : lolli_sem X X e.
+Proof. apply lolli_sem_e. firstorder. Qed.
+
+Lemma id_sound X : par_sem (dual_sem X) X e.
+Proof.  unfold par_sem.  apply lolli_sem_e.  unfold tens_sem.
+apply (dual_sub_inv fact_bot). apply dual_anti. apply prods_lolli. Qed.
+
+Lemma par_sem_e_bwd (X Y : M -> Prop) :
+  (forall x, X x -> Y x) -> par_sem (dual_sem X) Y e.
+Proof. intro xy. unfold par_sem.  unfold tens_sem. rewrite ddd_iff.
+rewrite curry_bot_prods_eqv.  rewrite lolli_sem_e.
+exact (dd_mono xy). Qed.
+
+Lemma par_sem_bwd (X Y : M -> Prop) u : 
+  lolli_sem (dual_sem X) Y u -> par_sem X Y u.
+Proof. unfold lolli_sem. intros xy.
+unfold par_sem.  unfold tens_sem. rewrite ddd_iff.
+rewrite curry_bot_prods_eqv.  unfold lolli_sem.
+intros v ddxv.  exact (dual_dual_sem _ (xy v ddxv)). Qed.
+
+Lemma par_sem_fwd (X Y : M -> Prop) u : fact Y -> 
+  par_sem (dual_sem X) Y u -> lolli_sem X Y u.
+Proof. intros fy.  unfold par_sem.  unfold tens_sem. rewrite ddd_iff.
+rewrite curry_bot_prods_eqv.  unfold lolli_sem.
+intros ddxy v xv.  exact (fy _ (ddxy v (dual_dual_sem _ xv))). Qed.
+
+Lemma lolli_C (X Y Z : M -> Prop) u :
+  lolli_sem X (lolli_sem Y Z) u -> lolli_sem Y (lolli_sem X Z) u.
+Proof. unfold lolli_sem.  intros xyz v yv w xw.  pose (xyz _ xw _ yv).
+pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'. destruct H0.  
+rewrite H. rewrite -> H in z. rewrite (H0 v w). exact z. Qed.
+
+Lemma lolli_dual_inv X Y u : 
+  lolli_sem X (dual_sem Y) u -> lolli_sem Y (dual_sem X) u.
+Proof. apply lolli_C. Qed.
+
+Lemma lolli_B (X Y Z : M -> Prop) u w :
+  lolli_sem Y Z u -> lolli_sem X Y w -> lolli_sem X Z (m u w).
+Proof. unfold lolli_sem. intros yz xy v xv.
+pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'. rewrite H.
+exact (yz _ (xy _ xv)). Qed.
+
+
 (*
 End Phase_Space.
 *)
-
