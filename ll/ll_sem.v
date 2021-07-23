@@ -1,4 +1,3 @@
-
 (* linear logic phase semantics *)
 
 Set Implicit Arguments.
@@ -62,6 +61,16 @@ exact (prodI _ _ _ _ (xx _ H) (yy _ H0)). Qed.
  
 Definition tens_sem X Y := dual_sem (dual_sem (prods X Y)).
 Definition par_sem X Y := dual_sem (tens_sem (dual_sem X) (dual_sem Y)).
+
+Lemma tens_sem_mono (X X' Y Y' : M -> Prop) : (forall u, X u -> X' u) ->
+  (forall u, Y u -> Y' u) -> (forall u, tens_sem X Y u -> tens_sem X' Y' u).
+Proof. unfold tens_sem. intros xx yy. apply dd_mono. 
+apply (prods_mono _ _ xx yy). Qed.
+
+Lemma par_sem_mono (X X' Y Y' : M -> Prop) : (forall u, X u -> X' u) ->
+  (forall u, Y u -> Y' u) -> (forall u, par_sem X Y u -> par_sem X' Y' u).
+Proof. unfold par_sem. intros xx yy. apply dual_anti.
+apply tens_sem_mono ; apply dual_anti ; assumption. Qed.
 
 Inductive idems : M -> Prop := 
   | idemsI : forall x : M, m x x = x -> idems x.
@@ -233,7 +242,6 @@ Proof. intros fsv. induction A ; simpl ; intros u.
 
 Print Implicit sub_dual_inv.
 Print Implicit prods_mono.
-Print Implicit fact_sem.
 
 Lemma sem_dual_bwd {V} sv A : (forall v, fact (sv v)) -> 
   forall u, (dual_sem (sem sv A) u) -> (sem sv (@dual V A) u). 
@@ -290,15 +298,6 @@ rewrite H2 in eqv. exact eqv.  rewrite H2. exact eqv. Qed.
 Lemma dual_sem_e X : dual_sem X e <-> (forall x, X x -> bot x).
 Proof. unfold dual_sem. apply lolli_sem_e. Qed.
 
-(* soundness - in semantics, true means set contains e,
-  for semantics of list of formulae, imagine them joined by par *)
-Lemma lolli_same_sound X : lolli_sem X X e.
-Proof. apply lolli_sem_e. firstorder. Qed.
-
-Lemma id_sound X : par_sem (dual_sem X) X e.
-Proof.  unfold par_sem.  apply lolli_sem_e.  unfold tens_sem.
-apply (dual_sub_inv fact_bot). apply dual_anti. apply prods_lolli. Qed.
-
 Lemma par_sem_e_bwd (X Y : M -> Prop) :
   (forall x, X x -> Y x) -> par_sem (dual_sem X) Y e.
 Proof. intro xy. unfold par_sem.  unfold tens_sem. rewrite ddd_iff.
@@ -318,6 +317,11 @@ Proof. intros fy.  unfold par_sem.  unfold tens_sem. rewrite ddd_iff.
 rewrite curry_bot_prods_eqv.  unfold lolli_sem.
 intros ddxy v xv.  exact (fy _ (ddxy v (dual_dual_sem _ xv))). Qed.
 
+Lemma par_sem_fwd' (X Y : M -> Prop) u : fact Y -> 
+  par_sem X Y u -> lolli_sem (dual_sem X) Y u.
+Proof. intros fy pxy. apply (par_sem_fwd fy).
+eapply (par_sem_mono (@dual_dual_sem _)). 2: apply pxy. tauto. Qed.
+
 Lemma lolli_C (X Y Z : M -> Prop) u :
   lolli_sem X (lolli_sem Y Z) u -> lolli_sem Y (lolli_sem X Z) u.
 Proof. unfold lolli_sem.  intros xyz v yv w xw.  pose (xyz _ xw _ yv).
@@ -333,6 +337,66 @@ Lemma lolli_B (X Y Z : M -> Prop) u w :
 Proof. unfold lolli_sem. intros yz xy v xv.
 pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'. rewrite H.
 exact (yz _ (xy _ xv)). Qed.
+
+(* soundness - in semantics, true means set contains e,
+  for semantics of list of formulae, imagine them joined by par *)
+Lemma lolli_same_sound X : lolli_sem X X e.
+Proof. apply lolli_sem_e. firstorder. Qed.
+
+Lemma id_sound X : par_sem (dual_sem X) X e.
+Proof.  unfold par_sem.  apply lolli_sem_e.  unfold tens_sem.
+apply (dual_sub_inv fact_bot). apply dual_anti. apply prods_lolli. Qed.
+
+Lemma one_sound V sv : sem sv (One V) e.
+Proof. simpl. apply dual_dual_sem. reflexivity. Qed.
+
+Lemma top_ctxt_sound V sv X : par_sem X (sem sv (Top V)) e.
+Proof. apply par_sem_bwd.  rewrite lolli_sem_e. simpl. tauto. Qed.
+
+Lemma bot_ctxt_sound V sv (X : M -> Prop) : 
+  X e -> par_sem X (sem sv (Bot V)) e.
+Proof. intro xe. apply par_sem_bwd.  rewrite lolli_sem_e. simpl.
+intro x. unfold dual_sem. unfold lolli_sem.
+intro xb.  pose (xb _ xe).
+pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
+destruct H0.  destruct H1. rewrite -> H1 in b. exact b. Qed.
+
+(* this should be true as par_sem is commutative, but
+  similar proof fails, so par_sem_bwd must not be an equivalence
+Lemma bot_ctxt_sound' V sv (X : M -> Prop) : 
+  X e -> par_sem (sem sv (Bot V)) X e.
+  *)
+
+Lemma plusL_sem V sv A B u : sem sv A u -> sem sv (@plus V A B) u.
+Proof. intro sa. simpl. apply dual_dual_sem. exact (or_introl sa). Qed.
+
+Lemma plusL_ctxt_sound V sv (X : M -> Prop) A B u : 
+  par_sem X (sem sv A) u -> par_sem X (sem sv (@plus V A B)) u.
+Proof. apply par_sem_mono. tauto. apply plusL_sem. Qed.
+
+Lemma wth_ctxt_sound V sv (X : M -> Prop) A B u :
+  (forall v, fact (sv v)) -> par_sem X (sem sv A) u ->
+  par_sem X (sem sv B) u -> par_sem X (sem sv (@wth V A B)) u.
+Proof. intros fsv sa sb.
+apply par_sem_bwd. unfold lolli_sem.
+pose (par_sem_fwd' (fact_sem _ _ fsv) sa) as la.
+pose (par_sem_fwd' (fact_sem _ _ fsv) sb) as lb.
+unfold lolli_sem in la.  unfold lolli_sem in lb.
+intros v dxv. simpl.  exact (conj (la v dxv) (lb v dxv)). Qed.
+
+Lemma tens_mrg_sound V sv X Y A B :
+  (forall v, fact (sv v)) -> par_sem X (sem sv A) e ->
+  par_sem Y (sem sv B) e -> par_sem (par_sem X Y) (sem sv (@tens V A B)) e.
+Proof. intros fsv sxa syb.
+apply par_sem_e_bwd.  intros v txy.
+pose (par_sem_fwd' (fact_sem _ _ fsv) sxa) as lxa.
+pose (par_sem_fwd' (fact_sem _ _ fsv) syb) as lyb.
+unfold lolli_sem in lxa.  unfold lolli_sem in lyb.
+pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
+destruct H0.  destruct H1. 
+revert txy. apply tens_sem_mono ; intros u dsu.
+- specialize (lxa u dsu). rewrite H2 in lxa. exact lxa.
+- specialize (lyb u dsu). rewrite H2 in lyb. exact lyb. Qed.
 
 
 (*
