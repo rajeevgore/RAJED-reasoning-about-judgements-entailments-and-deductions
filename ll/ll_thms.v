@@ -1,4 +1,5 @@
 
+
 (* assortment of theorems of linear logic, and derivations *)
 
 Require Export List.
@@ -11,7 +12,8 @@ Add LoadPath "../general".
 Require Import gen genT ddT swappedT.
 Require Import fmlsext.
 Require Import Coq.Program.Basics.
-Require Import lldefs ll_exch ll_camq.
+Require Import lldefs ll_exch.
+(* Require Import ll_camq. below - to show where we use cut adm *)
 
 Lemma query_csI {V} lc A fs :
   derrec maell_rules emptyT (lc ++ A :: fs) ->
@@ -273,7 +275,10 @@ Lemma dpar_lem {V} A B : derrec maell_rules emptyT
 Proof. pose (tens_lem' (dual A) (dual B)).
 clearbody d.  rewrite !dual_dual in d. exact d. Qed.
 
-(* results involving invertibility of rules, etc, need cut adm *)
+(* results involving invertibility of rules, etc, need cut adm,
+  not required for results above *)
+Require Import ll_camq.
+
 Lemma par_inv {V} A B rc : 
   derrec maell_rules emptyT (@par V A B :: rc) -> 
   derrec maell_rules emptyT (A :: B :: rc).

@@ -8,20 +8,20 @@ Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Logic.ProofIrrelevance.
 Require Import Coq.Logic.ClassicalFacts.
 Require Import Coq.Logic.Classical_Prop. (* for classic *)
-Print prop_degeneracy.  Print prop_extensionality.
-Print excluded_middle.  Print Classical_Prop.classic.
-Axiom ax_prop_ext : prop_extensionality.
-
-Lemma iff_app_eq A P Q : (forall x : A, P x <-> Q x) -> P = Q.
-Proof. intro ipq. apply functional_extensionality.
-intro x. apply ax_prop_ext. apply ipq. Qed.
-
-Print Assumptions iff_app_eq.
+Print ClassicalFacts.prop_degeneracy. Print ClassicalFacts.prop_extensionality.
+Print ClassicalFacts.excluded_middle. Print Classical_Prop.classic.
+Axiom ax_prop_ext : ClassicalFacts.prop_extensionality.
 
 Add LoadPath "../general".
 Add LoadPath "../modal".
 Require Import gen genT.
 Require Import fmlsext lldefs.
+
+Lemma iff_app_eq A P Q : (forall x : A, P x <-> Q x) -> P = Q.
+Proof. intro ipq. apply FunctionalExtensionality.functional_extensionality.
+intro x. apply ax_prop_ext. apply ipq. Qed.
+
+Print Assumptions iff_app_eq.
 
 Definition comm_monoid M m e := 
   (forall (x y z : M), m (m x y) z = m x (m y z)) /\
@@ -29,28 +29,30 @@ Definition comm_monoid M m e :=
   (forall (x : M), m x e = x) /\
   (forall (x : M), m e x = x).
 
+Definition cmass M m e (cm : @comm_monoid M m e) := proj1 cm.
+Definition cmcomm M m e (cm : @comm_monoid M m e) := proj1 (proj2 cm).
+Definition cmrid M m e (cm : @comm_monoid M m e) := proj1 (proj2 (proj2 cm)).
+Definition cmlid M m e (cm : @comm_monoid M m e) := proj2 (proj2 (proj2 cm)).
+Check cmass.  Check cmcomm.  Check cmrid.  Check cmlid.
+
 (*
 Section Phase_Space. (* fix a single phase space *)
+*)
 Variable M : Type.
 Variable m : M -> M -> M.
 Variable e : M.
 Variable bot : M -> Prop.
 Hypothesis cmM : comm_monoid m e.
-*)
-Parameter M : Type.
-Parameter m : M -> M -> M.
-Parameter e : M.
-Parameter bot : M -> Prop.
-Axiom cmM : comm_monoid m e.
+
+Check (cmass cmM). Check (cmcomm cmM). Check (cmrid cmM). Check (cmlid cmM).
 
 Definition lolli_sem (X Y : M -> Prop) u := forall (v : M), X v -> Y (m u v).
 Definition dual_sem X := lolli_sem X bot.
 Print Implicit lolli_sem.
 
 Lemma dual_dual_sem (X : M -> Prop) u : X u -> dual_sem (dual_sem X) u.
-Proof. unfold dual_sem.  unfold lolli_sem.  intros.
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-destruct H2.  rewrite H2. apply H0. exact H. Qed.
+Proof. unfold dual_sem. unfold lolli_sem. intros.
+rewrite (cmcomm cmM). apply H0. exact H. Qed.
 
 Lemma dual_anti (X Y : M -> Prop) : (forall u, X u -> Y u) ->
   forall v, dual_sem Y v -> dual_sem X v.
@@ -146,25 +148,30 @@ Proof. intros fy ddxy u xu. rewrite - (fact_dd_eq fy).
 exact (dd_mono ddxy xu). Qed.
 
 Lemma fact_com_lem Y Z u v : 
-  lolli_sem Y Z (m u v) <-> lolli_sem (prods (eq u) Y) Z v.
+  lolli_sem Y Z (m v u) <-> lolli_sem (prods (eq u) Y) Z v.
 Proof.  unfold lolli_sem.
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.  destruct H0.
 split ; intros hy w yv.
-- destruct yv. subst. specialize (hy _ H3).
-rewrite (H0 x v) in hy. rewrite - H. exact hy. 
+- destruct yv. subst. specialize (hy _ H0).
+rewrite - (cmass cmM). exact hy. 
 - specialize (hy (m u w)).
-rewrite (H0 u v).  rewrite H.  apply hy. 
+rewrite (cmass cmM).  apply hy. 
 apply (prodI _ _ _ _ eq_refl yv).  Qed.
 
 Lemma fact_com_lem' Y u : 
-  (fun v => dual_sem Y (m u v)) = dual_sem (prods (eq u) Y).
+  (fun v => dual_sem Y (m v u)) = dual_sem (prods (eq u) Y).
 Proof. apply iff_app_eq. intro x.  apply fact_com_lem.  Qed.
 
-Lemma fact_com Z u : fact (fun v => dual_sem Z (m u v)).
+Lemma fact_com Z u : fact (fun v => dual_sem Z (m v u)).
 Proof. rewrite fact_com_lem'. apply fact_dual. Qed.
 
-Lemma fact_com' Z u : fact Z -> fact (fun v => Z (m u v)).
+Lemma fact_com' Z u : fact Z -> fact (fun v => Z (m v u)).
 Proof. intro fz. destruct (fact_imp_d fz). apply fact_com. Qed.
+
+Lemma fact_comc' Z u : fact Z -> fact (fun v => Z (m u v)).
+Proof. intro fz. eapply fact_com' in fz.
+apply (eq_rect _ _ fz).
+apply FunctionalExtensionality.functional_extensionality.
+intro x.  apply f_equal.  apply (cmcomm cmM x u). Qed.
 
 (* dual_sem o dual_sem is a closure operator and facts are the closed sets *)
 Lemma facts_int X Y : fact X -> fact Y -> fact (fun u => X u /\ Y u).
@@ -174,17 +181,13 @@ unfold fact. intros fx fy u fxy. split.
 
 Lemma dual_sem_1 : forall u, iff (dual_sem (eq e) u) (bot u).
 Proof. unfold dual_sem. unfold lolli_sem.
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-destruct H0. destruct H1.
 intro u. split.
-- intro bm. specialize (bm _ eq_refl).  rewrite H1 in bm. exact bm.
-- intros bu v ev. subst v. rewrite H1. exact bu. Qed.
+- intro bm. specialize (bm _ eq_refl).  rewrite (cmrid cmM) in bm. exact bm.
+- intros bu v ev. subst v. rewrite (cmrid cmM). exact bu. Qed.
 
 Lemma dual_sem_bot : dual_sem bot e.
 Proof. unfold dual_sem. unfold lolli_sem.  intros v bv.
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-destruct H0. destruct H1.
-rewrite H2. exact bv. Qed.
+rewrite (cmlid cmM). exact bv. Qed.
 
 Lemma dual_sem_empty u : dual_sem (fun _ : M => empty) u.
 Proof. unfold dual_sem. unfold lolli_sem.  intros v em. destruct em. Qed.
@@ -224,16 +227,14 @@ exact (dual_dual_sem _ (dxy v dxv)). Qed.
 
 Lemma bot_o x v : bot (m x v) <-> dual_sem (eq x) v.
 Proof. unfold dual_sem. unfold lolli_sem.
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-destruct H0. rewrite H0. split.
+rewrite (cmcomm cmM). split.
 - intros. subst. assumption.
 - intro eb. exact (eb _ eq_refl). Qed.
 
 Lemma curry_prods_sem X Y Z u : 
   lolli_sem (prods X Y) Z u -> lolli_sem X (lolli_sem Y Z) u.
 Proof. unfold lolli_sem.  intros unc v xv w yw.
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-rewrite H. apply unc.  apply (prodI _ _ _ _ xv yw). Qed.
+rewrite (cmass cmM). apply unc.  apply (prodI _ _ _ _ xv yw). Qed.
 
 Lemma curry_sem X Y Z u : 
   lolli_sem (tens_sem X Y) Z u -> lolli_sem X (lolli_sem Y Z) u.
@@ -254,16 +255,14 @@ unfold tens_sem. rewrite ddd_iff. exact dpxy. Qed.
 Lemma uncurry_prods_sem X Y Z u : 
   lolli_sem X (lolli_sem Y Z) u -> lolli_sem (prods X Y) Z u.
 Proof. unfold lolli_sem.  intros cur v ddp.  destruct ddp.
-specialize (cur _ H _ H0).
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-rewrite H1 in cur. exact cur. Qed.
+specialize (cur _ H _ H0).  rewrite (cmass cmM) in cur. exact cur. Qed.
 
 Print Implicit ds_ds_fact.
 
 Lemma uncurry_sem_lem X Y Z u : fact Z ->
   lolli_sem (prods X Y) Z u -> lolli_sem (tens_sem X Y) Z u.
 Proof.  unfold lolli_sem. unfold tens_sem.  intros fz cur.
-exact (ds_ds_fact (fact_com' u fz) cur). Qed.
+exact (ds_ds_fact (fact_comc' u fz) cur). Qed.
 
 Definition uncurry_sem X Y Z fz u llxyz :=
   @uncurry_sem_lem X Y Z u fz (@uncurry_prods_sem X Y Z u llxyz).
@@ -426,10 +425,8 @@ Definition tens_lolli' X Y fy u := @tens_lolli X Y u fy.
 
 Lemma lolli_sem_e X Y : lolli_sem X Y e <-> (forall x, X x -> Y x).
 Proof. unfold lolli_sem. 
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-destruct H0.  destruct H1. 
 split ; intros eqv v xv ; specialize (eqv v xv).
-rewrite H2 in eqv. exact eqv.  rewrite H2. exact eqv. Qed.
+rewrite (cmlid cmM) in eqv. exact eqv.  rewrite (cmlid cmM). exact eqv. Qed.
 
 Lemma dual_sem_e X : dual_sem X e <-> (forall x, X x -> bot x).
 Proof. unfold dual_sem. apply lolli_sem_e. Qed.
@@ -461,8 +458,8 @@ eapply (par_sem_mono (@dual_dual_sem _)). 2: apply pxy. tauto. Qed.
 Lemma lolli_C (X Y Z : M -> Prop) u :
   lolli_sem X (lolli_sem Y Z) u -> lolli_sem Y (lolli_sem X Z) u.
 Proof. unfold lolli_sem.  intros xyz v yv w xw.  pose (xyz _ xw _ yv).
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'. destruct H0.  
-rewrite H. rewrite -> H in z. rewrite (H0 v w). exact z. Qed.
+rewrite (cmass cmM). rewrite -> (cmass cmM) in z. rewrite (cmcomm cmM v w).
+exact z. Qed.
 
 Lemma lolli_dual_inv X Y u : 
   lolli_sem X (dual_sem Y) u -> lolli_sem Y (dual_sem X) u.
@@ -471,8 +468,7 @@ Proof. apply lolli_C. Qed.
 Lemma lolli_B (X Y Z : M -> Prop) u w :
   lolli_sem Y Z u -> lolli_sem X Y w -> lolli_sem X Z (m u w).
 Proof. unfold lolli_sem. intros yz xy v xv.
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'. rewrite H.
-exact (yz _ (xy _ xv)). Qed.
+rewrite (cmass cmM).  exact (yz _ (xy _ xv)). Qed.
 
 (* soundness - in semantics, true means set contains e,
   for semantics of list of formulae, imagine them joined by par *)
@@ -494,8 +490,7 @@ Lemma bot_ctxt_sound V sv (X : M -> Prop) :
 Proof. intro xe. apply par_sem_bwd.  rewrite lolli_sem_e. simpl.
 intro x. unfold dual_sem. unfold lolli_sem.
 intro xb.  pose (xb _ xe).
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-destruct H0.  destruct H1. rewrite -> H1 in b. exact b. Qed.
+rewrite -> (cmrid cmM) in b. exact b. Qed.
 
 (* this should be true as par_sem is commutative, but
   similar proof fails, so par_sem_bwd must not be an equivalence
@@ -509,6 +504,13 @@ Proof. intro sa. simpl. apply dual_dual_sem. exact (or_introl sa). Qed.
 Lemma plusL_ctxt_sound V sv (X : M -> Prop) A B u : 
   par_sem X (sem sv A) u -> par_sem X (sem sv (@plus V A B)) u.
 Proof. apply par_sem_mono. tauto. apply plusL_sem. Qed.
+
+Lemma plusR_sem V sv A B u : sem sv B u -> sem sv (@plus V A B) u.
+Proof. intro sa. simpl. apply dual_dual_sem. exact (or_intror sa). Qed.
+
+Lemma plusR_ctxt_sound V sv (X : M -> Prop) A B u : 
+  par_sem X (sem sv B) u -> par_sem X (sem sv (@plus V A B)) u.
+Proof. apply par_sem_mono. tauto. apply plusR_sem. Qed.
 
 Lemma wth_ctxt_sound V sv (X : M -> Prop) A B u :
   (forall v, fact (sv v)) -> par_sem X (sem sv A) u ->
@@ -528,17 +530,14 @@ apply par_sem_e_bwd.  intros v txy.
 pose (par_sem_fwd' (fact_sem _ _ fsv) sxa) as lxa.
 pose (par_sem_fwd' (fact_sem _ _ fsv) syb) as lyb.
 unfold lolli_sem in lxa.  unfold lolli_sem in lyb.
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-destruct H0.  destruct H1. 
 revert txy. apply tens_sem_mono ; intros u dsu.
-- specialize (lxa u dsu). rewrite H2 in lxa. exact lxa.
-- specialize (lyb u dsu). rewrite H2 in lyb. exact lyb. Qed.
+- specialize (lxa u dsu). rewrite (cmlid cmM) in lxa. exact lxa.
+- specialize (lyb u dsu). rewrite (cmlid cmM) in lyb. exact lyb. Qed.
 
 Lemma par_sem_bot Y u : fact Y -> par_sem bot Y u -> Y u.
 Proof. intros fy pby.  apply (par_sem_fwd' fy) in pby. 
 specialize (pby _ dual_sem_bot).
-pose cmM as cmM'.  unfold comm_monoid in cmM'. destruct cmM'.
-destruct H0.  destruct H1.  rewrite H1 in pby. exact pby. Qed.
+rewrite (cmrid cmM) in pby. exact pby. Qed.
 
 (* cut_sound - assume first tens rule is applied *)
 Lemma cut_sound X Y : fact Y -> par_sem (tens_sem (dual_sem X) X) Y e -> Y e.

@@ -18,6 +18,7 @@ ll/ll_exch.vo \
 ll/ll_lems.vo \
 ll/ll_thms.vo \
 ll/ll_sem.vo \
+ll/ll_comp.vo \
 ll/ll.vo \
 ll/fmlsext.vo
 modal: \
@@ -53,6 +54,7 @@ ljt/ljt_dnterm.vo: ljt/ljt_dnterm.v ljt/ljt_dncc.vo general/rtcT.vo general/gen_
 ll/ll_camq.vo: ll/ll_camq.v general/dd_fc.vo ll/ll_exch.vo ll/ll_cam.vo
 ll/ll_cam.vo: ll/ll_cam.v ll/ll_lems.vo general/gentree.vo
 ll/ll_ca.vo: ll/ll_ca.v ll/lldefs.vo general/ddT.vo
+ll/ll_comp.vo: ll/ll_comp.v ll/ll_camq.vo general/ddT.vo general/swappedT.vo
 ll/ll_sem.vo: ll/ll_sem.v ll/lldefs.vo general/genT.vo
 ll/ll_thms.vo: ll/ll_thms.v ll/ll_camq.vo general/ddT.vo 
 ll/ll_exch.vo: ll/ll_exch.v ll/lldefs.vo general/swappedT.vo 
@@ -75,7 +77,7 @@ general/existsT.vo: general/existsT.v
 general/genT.vo: general/genT.v general/existsT.vo general/gen.vo
 general/ddT.vo: general/ddT.v general/genT.vo 
 general/dd_fc.vo: general/dd_fc.v general/ddT.vo general/gen_tacs.vo
-general/List_lemmasT.vo: general/List_lemmasT.v general/existsT.vo general/genT.vo general/gen.vo
+general/List_lemmasT.vo: general/List_lemmasT.v general/genT.vo
 general/swappedT.vo: general/swappedT.v general/gen_tacs.vo general/List_lemmasT.vo
 general/gen_seq.vo: general/gen_seq.v general/gstep.vo general/swappedT.vo
 
