@@ -16,7 +16,7 @@ Check FunctionalExtensionality.forall_extensionality. (* and P, S *)
 Add LoadPath "../general".
 Add LoadPath "../modal".
 Require Import gen genT.
-Require Import fmlsext lldefs.
+Require Import lldefs.
 
 Lemma iff_app_eq A P Q : (forall x : A, P x <-> Q x) -> P = Q.
 Proof. intro ipq. apply FunctionalExtensionality.functional_extensionality.
@@ -45,8 +45,8 @@ Definition cmlid M m e cm x := proj2 (@cmlide M m e cm x x) eq_refl.
 Check cmass.  Check cmcomm.  Check cmrid.  Check cmlid.
 
 (*
-Section Phase_Space. (* fix a single phase space *)
 *)
+Section Phase_Space. (* fix a single phase space *)
 Variable M : Type.
 Variable m : M -> M -> M -> Prop.
 Variable e : M.
@@ -221,6 +221,9 @@ intro u. split.
 - intros bu v w ev. subst v.  rewrite (cmride cmM). 
 intro uw. subst. exact bu. Qed.
 
+Lemma dual_sem_1_eq : (dual_sem (eq e)) = bot.
+Proof. apply iff_app_eq. apply dual_sem_1. Qed.
+
 Lemma dual_sem_bot : dual_sem bot e.
 Proof. unfold dual_sem. unfold lolli_sem.  intros v w bv mevw.
 rewrite -> (cmlide cmM) in mevw. subst. exact bv. Qed.
@@ -266,6 +269,19 @@ Lemma bot_o x v : (forall y, m v x y -> bot y) <-> dual_sem (eq x) v.
 Proof. unfold dual_sem. unfold lolli_sem.  
 split ; intros ; subst ; firstorder. Qed.
 
+Lemma prods_comm X Y u : prods X Y u -> prods Y X u.
+Proof. intro pxy. destruct pxy.
+rewrite -> (cmcomm cmM) in H1.  exact (prodI _ _ H0 H H1). Qed.
+
+Lemma prods_comm_eq X Y : prods X Y = prods Y X.
+Proof. apply iff_app_eq. split ; apply prods_comm. Qed.
+
+Lemma tens_comm X Y u : tens_sem X Y u -> tens_sem Y X u.
+Proof. unfold tens_sem.  rewrite (prods_comm_eq X Y). tauto. Qed.
+
+Lemma tens_comm_eq X Y : tens_sem X Y = tens_sem Y X.
+Proof. apply iff_app_eq. split ; apply tens_comm. Qed.
+
 Lemma curry_prods_sem X Y Z u : 
   lolli_sem (prods X Y) Z u -> lolli_sem X (lolli_sem Y Z) u.
 Proof. unfold lolli_sem.  intros unc * xv m1 * yv m2.
@@ -304,26 +320,17 @@ Lemma uncurry_sem_bot X Y u :
   lolli_sem X (dual_sem Y) u -> dual_sem (tens_sem X Y) u.
 Proof. unfold tens_sem. rewrite ddd_iff. apply uncurry_bot_prods. Qed.
 
-(* THESE FAIL
+(* THESE FAIL for the non-deterministic monoid
 Lemma uncurry_sem_lem X Y Z u : fact Z ->
   lolli_sem (prods X Y) Z u -> lolli_sem (tens_sem X Y) Z u.
 Proof.  unfold lolli_sem. unfold tens_sem.  intros fz cur.
 intros v w.  revert v.
 epose (@ds_ds_fact (prods X Y) (fun v => m u v w -> Z w)).  apply z.
 2: exact (fun v => cur v w).
-
 need something a bit different, see at fact_comc' above
 exact (ds_ds_fact (fact_comc' fz) cur). Qed.
 
-Definition uncurry_sem X Y Z fz u llxyz :=
-  @uncurry_sem_lem X Y Z u fz (@uncurry_prods_sem X Y Z u llxyz).
-
-(* curry/uncurry equivalences *)
-Definition curry_sem_eqv X Y Z fz u : iff _ _ :=
-  conj (@curry_sem X Y Z u) (@uncurry_sem X Y Z fz u).
-
-  BUT THE FOLLOWING SUCCEED
-  *)
+BUT THE OTHERS FOLLOWING SUCCEED *)
 
 Definition curry_prods_sem_eqv X Y Z u : iff _ _ :=
   conj (@curry_prods_sem X Y Z u) (@uncurry_prods_sem X Y Z u).
@@ -351,11 +358,39 @@ Proof. intros dt.  pose (curry_sem (curry_sem_bot dt)) as l.
 apply uncurry_sem_bot.
 apply (lolli_sem_mono' _ _ l). tauto. apply uncurry_sem_bot. Qed.
 
+Lemma tens_assoc X Y Z u : 
+  (tens_sem X (tens_sem Y Z)) u -> (tens_sem (tens_sem X Y) Z) u.
+Proof. pose (@dual_anti _ _ (@tens_assoc_lem X Y Z) u).
+rewrite -> !(fact_dd_eq (@fact_tens _ _)) in d. exact d. Qed.
+
+Lemma par_assocr X Y Z u : 
+  (par_sem (par_sem X Y) Z) u -> (par_sem X (par_sem Y Z)) u.
+Proof. unfold par_sem.  rewrite  !(fact_dd_eq (@fact_tens _ _)).
+apply dual_anti. intro v. apply tens_assoc. Qed.
+
 (* and with obvious commutativity of tens, tens_assoc one way 
   gives you tens_assoc the other way, and tens_assoc gives par_assoc *)
 
-(* 
+Print Implicit tens_comm_eq.
+
+(* with deterministic monoid, we proved tens_assocr_lem using uncurry_sem,
+  now we do it the other way around *)
 Lemma tens_assocr_lem X Y Z u : dual_sem (tens_sem X (tens_sem Y Z)) u ->
+  dual_sem (tens_sem (tens_sem X Y) Z) u.
+Proof. rewrite !(tens_comm_eq X).  rewrite !(tens_comm_eq _ Z).
+apply tens_assoc_lem. Qed.
+
+Lemma uncurry_sem X Y Z u : fact Z ->
+  lolli_sem X (lolli_sem Y Z) u -> lolli_sem (tens_sem X Y) Z u.
+Proof. intros fz lxyz.  apply fact_imp_d in fz. destruct fz as [Z'].
+apply curry_sem_bot.  apply tens_assocr_lem.  apply uncurry_sem_bot.
+apply (lolli_sem_mono' _ _ lxyz). tauto.  apply uncurry_sem_bot. Qed.
+
+Definition curry_sem_eqv X Y Z fz u : iff _ _ :=
+  conj (@curry_sem X Y Z u) (@uncurry_sem X Y Z u fz).
+
+(* proving tens_assocr_lem using uncurry_sem *)
+Lemma tens_assocr_lem' X Y Z u : dual_sem (tens_sem X (tens_sem Y Z)) u ->
   dual_sem (tens_sem (tens_sem X Y) Z) u.
 Proof. intros dt.  apply uncurry_sem_bot.
 apply uncurry_sem. apply fact_dual.
@@ -367,21 +402,10 @@ Lemma tens_assocr X Y Z u :
 Proof. pose (@dual_anti _ _ (@tens_assocr_lem X Y Z) u).
 rewrite -> !(fact_dd_eq (@fact_tens _ _)) in d. exact d. Qed.
 
-Lemma tens_assoc X Y Z u : 
-  (tens_sem X (tens_sem Y Z)) u -> (tens_sem (tens_sem X Y) Z) u.
-Proof. pose (@dual_anti _ _ (@tens_assoc_lem X Y Z) u).
-rewrite -> !(fact_dd_eq (@fact_tens _ _)) in d. exact d. Qed.
-
-Lemma par_assocr X Y Z u : 
-  (par_sem (par_sem X Y) Z) u -> (par_sem X (par_sem Y Z)) u.
-Proof. unfold par_sem.  rewrite  !(fact_dd_eq (@fact_tens _ _)).
-apply dual_anti. intro v. apply tens_assoc. Qed.
-
 Lemma par_assoc X Y Z u : 
   (par_sem X (par_sem Y Z)) u -> (par_sem (par_sem X Y) Z) u.
 Proof. unfold par_sem.  rewrite  !(fact_dd_eq (@fact_tens _ _)).
 apply dual_anti. intro v. apply tens_assocr. Qed.
-*)
 
 (*
 Lemma ddp_comm X Y u : dual_sem (dual_sem (prods X Y)) u ->
@@ -607,5 +631,5 @@ Proof. intros fy pt.  apply (par_sem_bot fy).
 apply (par_sem_mono' pt (tens_lolli' fact_bot)).  tauto.  Qed.
 
 (*
-End Phase_Space.
 *)
+End Phase_Space.
