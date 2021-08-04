@@ -286,6 +286,21 @@ Proof. intro. induction X.
 Definition merge_LnilE {W} ys ms mrg := @merge_LnilE' W [] ys ms mrg eq_refl.
 Definition merge_RnilE {W} xs ms mrg := @merge_LnilE W xs ms (merge_sym mrg).
 
+Lemma merge_lens {W} xs ys ms : 
+  @merge W xs ys ms -> (length ms = Nat.add (length xs) (length ys)).
+Proof. intro m. induction m ; subst ; simpl.
+3: reflexivity.  all: rewrite IHm. reflexivity.
+rewrite PeanoNat.Nat.add_succ_r. reflexivity. Qed.
+
+(* haven't been able to prove this any other way, eg by induction *)
+Lemma merge_eqL {W} ms ys : @merge W ms ys ms -> ys = (@nil W).
+Proof. intro m. apply merge_lens in m.
+destruct ys. reflexivity. simpl in m.
+rewrite PeanoNat.Nat.add_succ_r in m.
+pose (Plus.le_plus_l (length ms) (length ys)).
+apply Le.le_n_S in l.  rewrite - m in l.
+apply PeanoNat.Nat.nle_succ_diag_l in l. inversion l. Qed.
+
 Lemma merge_app {W} (x1 y1 z1 x2 y2 z2 : list W) :
   merge x1 y1 z1 -> merge x2 y2 z2 -> merge (x1 ++ x2) (y1 ++ y2) (z1 ++ z2).
 Proof. intros * m. induction m.

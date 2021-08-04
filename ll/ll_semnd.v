@@ -110,10 +110,12 @@ exact (yy _ (xy _ _ (xx _ xv) muvw)). Qed.
 Definition lolli_sem_mono' X X' Y Y' u pxy xx yy :=
   @lolli_sem_mono X X' Y Y' xx yy u pxy.
 
-Inductive idems : M -> Prop := 
-  | idemsI : forall x : M, m x x x -> idems x.
+Inductive idems : M -> Prop := | idemsI : forall x : M, m x x x -> idems x.
 
 Definition idem1 x := (m x x x) /\ dual_sem (dual_sem (eq e)) x.
+
+Definition query_sem X := dual_sem (fun x => dual_sem X x /\ idem1 x).
+Definition bang_sem X := dual_sem (dual_sem (fun x => X x /\ idem1 x)).
 
 Fixpoint sem {V : Set} (sv : V -> M -> Prop) f := match f with 
   | Var v => sv v
@@ -126,8 +128,8 @@ Fixpoint sem {V : Set} (sv : V -> M -> Prop) f := match f with
   | par A B => par_sem (sem sv A) (sem sv B) 
   | plus A B => dual_sem (dual_sem (fun x => sem sv A x \/ sem sv B x))
   | wth A B => (fun x => sem sv A x /\ sem sv B x) 
-  | Bang f => dual_sem (dual_sem (fun x => sem sv f x /\ idem1 x))
-  | Query f => dual_sem (fun x => dual_sem (sem sv f) x /\ idem1 x)
+  | Bang f => bang_sem (sem sv f)
+  | Query f => query_sem (sem sv f)
   end.
 
 (* fact and factd are equivalent *)
@@ -137,6 +139,11 @@ Inductive factd : (M -> Prop) -> Prop :=
 
 Lemma fact_dual X : fact (dual_sem X).
 Proof. unfold fact. apply dual_anti. apply dual_dual_sem. Qed.
+
+Lemma fact_int X Y : fact X -> fact Y -> fact (fun u => X u /\ Y u).
+Proof. unfold fact. intros dx dy u ddc. split.
+- apply dx. revert u ddc. apply dd_mono. tauto.
+- apply dy. revert u ddc. apply dd_mono. tauto. Qed.
 
 Lemma fact_tens X Y : fact (tens_sem X Y).  Proof. apply fact_dual. Qed.
 
@@ -214,12 +221,18 @@ unfold fact. intros fx fy u fxy. split.
 - apply fx.  eapply dd_mono. 2: exact fxy. firstorder.
 - apply fy.  eapply dd_mono. 2: exact fxy. firstorder. Qed.
 
-Lemma dual_sem_1 : forall u, iff (dual_sem (eq e) u) (bot u).
-Proof. unfold dual_sem. unfold lolli_sem.
+Lemma lolli_sem_1 X : forall u, iff (lolli_sem (eq e) X u) (X u).
+Proof. unfold lolli_sem.
 intro u. split.
 - intro bm. apply (bm _ _ eq_refl).  apply (cmrid cmM).
 - intros bu v w ev. subst v.  rewrite (cmride cmM). 
 intro uw. subst. exact bu. Qed.
+
+Lemma lolli_sem_1_eq X : (lolli_sem (eq e) X) = X.
+Proof. apply iff_app_eq. apply lolli_sem_1. Qed.
+
+Lemma dual_sem_1 : forall u, iff (dual_sem (eq e) u) (bot u).
+Proof. apply lolli_sem_1. Qed.
 
 Lemma dual_sem_1_eq : (dual_sem (eq e)) = bot.
 Proof. apply iff_app_eq. apply dual_sem_1. Qed.
@@ -524,6 +537,11 @@ unfold par_sem.  unfold tens_sem. rewrite ddd_iff.
 rewrite curry_bot_prods_eqv.  unfold lolli_sem.
 intros * ddxv muvw.  exact (dual_dual_sem (xy _ _ ddxv muvw)). Qed.
 
+Lemma par_sem_bwd' (X Y : M -> Prop) u : fact X -> 
+  lolli_sem X Y u -> par_sem (dual_sem X) Y u.
+Proof. intros fx lxy.  apply par_sem_bwd.  revert u lxy.
+apply lolli_sem_mono.  exact fx. tauto. Qed.
+
 Lemma par_sem_fwd (X Y : M -> Prop) u : fact Y -> 
   par_sem (dual_sem X) Y u -> lolli_sem X Y u.
 Proof. intros fy.  unfold par_sem.  unfold tens_sem. rewrite ddd_iff.
@@ -536,6 +554,11 @@ Lemma par_sem_fwd' (X Y : M -> Prop) u : fact Y ->
 Proof. intros fy pxy. apply (par_sem_fwd fy).
 eapply (par_sem_mono (@dual_dual_sem _)). 2: apply pxy. tauto. Qed.
 
+Definition par_sem_dual_eqv X Y fx fy u : iff _ _ :=
+  conj (@par_sem_fwd X Y u fy) (@par_sem_bwd' X Y u fx). 
+Definition par_sem_eqv X Y fy u : iff _ _ :=
+  conj (@par_sem_fwd' X Y u fy) (@par_sem_bwd X Y u). 
+  
 Lemma lolli_C (X Y Z : M -> Prop) u :
   lolli_sem X (lolli_sem Y Z) u -> lolli_sem Y (lolli_sem X Z) u.
 Proof. unfold lolli_sem.  intros xyz * yv me * xw mw.
@@ -625,10 +648,48 @@ Lemma par_sem_bot Y u : fact Y -> par_sem bot Y u -> Y u.
 Proof. intros fy pby.  apply (par_sem_fwd' fy) in pby. 
 exact (pby e u dual_sem_bot (cmrid cmM _)).  Qed.
 
+Lemma query_sound (X : M -> Prop) u : X u -> query_sem X u.
+Proof. apply sub_dual_inv.
+intros v c. destruct c. exact H. Qed.
+
+Lemma query_ctxt_sound X Y u : 
+  par_sem X Y u -> par_sem X (query_sem Y) u.
+Proof. apply par_sem_mono. tauto. apply query_sound. Qed.
+
+Lemma bang_sound (X : M -> Prop) : X e -> bang_sem X e.
+Proof. unfold bang_sem. rewrite dual_sem_e. intro sa.
+intros u. unfold dual_sem. unfold lolli_sem. unfold idem1.
+intros dsi. specialize (dsi e u). require dsi.
+apply (conj sa). apply (conj (cmlid cmM _)). apply dual_dual_sem. trivial.
+exact (dsi (cmrid cmM _)). Qed.
+
+(*
+Lemma bang_ctxt_sound (X Y : M -> Prop) : 
+  par_sem (query_sem X) Y e -> par_sem (query_sem X) (bang_sem Y) e.
+Proof. unfold query_sem.
+intros qxy.
+apply par_sem_bwd'.
+all: cycle 1. need fact idem1
+apply par_sem_fwd in qxy.
+rewrite lolli_sem_e.
+rewrite -> lolli_sem_e in qxy.
+intros x dsi.
+pose (qxy _ dsi).
+this fails as only works for e: eapply bang_sound'.
+
+(* this adds context for bang rule to bang_sound above *)
+Lemma ctxt_query_sound_ext (X Y Z : M -> Prop) : (X e -> Y e) ->
+  par_sem (query_sem Z) X e -> par_sem (query_sem Z) Y e.
+fails similarly to above
+
+Check par_sem_fwd.
+Check par_sem_bwd'.
+*)
+
 (* cut_sound - assume first tens rule is applied *)
 Lemma cut_sound X Y : fact Y -> par_sem (tens_sem (dual_sem X) X) Y e -> Y e.
-Proof. intros fy pt.  apply (par_sem_bot fy).
-apply (par_sem_mono' pt (tens_lolli' fact_bot)).  tauto.  Qed.
+Proof. intros fy pt. apply (par_sem_bot fy).
+apply (par_sem_mono' pt (tens_lolli' fact_bot)). tauto. Qed.
 
 (*
 *)

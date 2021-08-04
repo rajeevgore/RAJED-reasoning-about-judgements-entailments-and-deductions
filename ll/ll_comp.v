@@ -100,14 +100,8 @@ intros.  destruct H0.  destruct H1.  apply inhabits.
 apply merge_singleL in H0.  cD.  subst.  apply (exch_maell X).
 swap_tac_Rc. Qed.
 
-Lemma fact_pr_sv V v : fact mergeP prb (@pr_sv V v).
+Lemma fact_pr_sv {V} v : fact mergeP prb (@pr_sv V v).
 Proof. apply fact_pr_sem. Qed.
-
-(*
-Lemma pr_sem_tens V A B G : 
-  (tens_sem (@app _) csb (pr_sem A) (pr_sem B)) G -> pr_sem (@tens V A B) G.
-Proof. unfold tens_sem. unfold pr_sem.
-*)
 
 Lemma pr_sem_dual V A G : 
   dual_sem mergeP prb (pr_sem A) G -> pr_sem (@dual V A) G.
@@ -125,37 +119,229 @@ destruct idag.  destruct iav.  destruct mgvw.  apply inhabits.
 destruct (fst (cut_adm_maell_Q A X0 X)). Qed.
 *)
 
-Print Implicit dual_sem_1_eq.
+(* sem_dual instantiated to pr *)
+Definition sem_dual_pr {V} A := 
+  @sem_dual _ _ _ prb (comm_monoid_nd_list _) V pr_sv A fact_pr_sv.
+Definition sem_dual_pr_eq {V} A := iff_app_eq _ _ (@sem_dual_pr V A).
+
+Definition dual_anti_pr {V} := @dual_anti _ mergeP (@prb V).
+Definition dd_mono_pr {V} := @dd_mono _ mergeP (@prb V).
+Definition ddd_iff_pr {V} := 
+  @ddd_iff _ mergeP [] (@prb V) (comm_monoid_nd_list _).
+Definition fact_dd_eq_pr {V} :=
+  @fact_dd_eq _ mergeP [] (@prb V) (comm_monoid_nd_list _).
+Definition dd_pr_sem_eq {V} A := fact_dd_eq_pr (@fact_pr_sem V A).
+Definition par_sem_mono_pr {V} := @par_sem_mono _ mergeP (@prb V).
+Definition tens_sem_mono_pr {V} := @tens_sem_mono _ mergeP (@prb V).
+Print Implicit ds_ds_fact.
+Definition ds_ds_fact_pr {V} A X := @ds_ds_fact _ mergeP [] (@prb V)
+  (comm_monoid_nd_list _) X _ (@fact_pr_sem V A).
+Definition dual_sub_inv_pr {V} A Y := @dual_sub_inv _ mergeP [] (@prb V)
+  (comm_monoid_nd_list _) _ Y (@fact_pr_sem V A).
+
+Print Implicit dual_sub_inv.
+
+Lemma mergeP_same T x : mergeP x x x -> x = (@nil T).
+Proof. intro mps. destruct mps. exact (merge_eqL X). Qed.
+
+Lemma mergeP_same_eq T x : mergeP x x x <-> x = (@nil T).
+Proof. split. apply mergeP_same. 
+intro. subst. apply inhabits. apply merge_Lnil. Qed.
+
+Lemma bang_sem_lem3 V sema x : x = ([] : list (LLfml V)) -> 
+  dual_sem mergeP prb sema [] ->
+    dual_sem mergeP prb sema x /\ mergeP x x x /\
+    dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
+Proof. intros xe sip. rewrite mergeP_same_eq. subst.
+pose (comm_monoid_nd_list (LLfml V)) as cm.
+rewrite (dual_sem_1_eq _ cm).
+split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
+
+Lemma bang_sem_lem'' V sema x : x = ([] : list (LLfml V)) -> 
+  (forall u : list (LLfml V), (sema u : Prop) -> prb u) -> 
+    dual_sem mergeP prb sema x /\ mergeP x x x /\
+    dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
+Proof. intros xe sip. rewrite mergeP_same_eq. subst.
+pose (comm_monoid_nd_list (LLfml V)) as cm.
+rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
+split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
+
+Lemma bang_sem_lem' V A x : x = ([] : list (LLfml V)) -> 
+  (forall u : list (LLfml V), sem mergeP [] prb pr_sv A u -> prb u) -> 
+    dual_sem mergeP prb (sem mergeP [] prb pr_sv A) x /\ mergeP x x x /\
+    dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
+Proof. intros xe sip. rewrite mergeP_same_eq. subst.
+pose (comm_monoid_nd_list (LLfml V)) as cm.
+rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
+split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
+
+Lemma bang_sem_lem V A x : (forall u : list (LLfml V),
+  sem mergeP [] prb pr_sv A u -> prb u) -> 
+  comm_monoid_nd mergeP ([] : list (LLfml V)) -> x = [] -> 
+    dual_sem mergeP prb (sem mergeP [] prb pr_sv A) x /\ mergeP x x x /\
+    dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
+Proof. intros sip cm xe. rewrite mergeP_same_eq. subst.
+rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
+split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
 
 (* now we need to show that the semantics defined using pr_sv
   corresponds to pr_sem (at least, for completeness, one way) *)
+Lemma sem_pr_tens V (sema semb : _ -> Prop) A B
+  (IHAa : forall X, sema X -> pr_sem A X)
+  (IHAb : forall X, semb X -> pr_sem B X) X :
+  tens_sem mergeP prb sema semb X -> pr_sem (@tens V A B) X.
+Proof. intros ts.
+pose (tens_sem_mono_pr IHAa IHAb ts).  clearbody t.
+revert t.  unfold tens_sem.  apply ds_ds_fact_pr.
+intros u p12.  destruct p12.
+destruct H.  destruct H0.  destruct H1. apply inhabits.
+unfold pr_sem in *.
+eapply derI. apply tens_maellI.  eapply merge_ctxtgI. eapply eq_rect.
+eapply (@merge_ctxtI _ _ _ _ [] [] x y). apply Tensrule_I.
+apply merge_nil. apply H.  reflexivity. 
+exact (dlCons X0 (dersrec_singleI X1)). Qed.
+
+Lemma spp_lem V A v w : pr_sem A v -> mergeP [A] v w -> @prb V w.
+Proof.  unfold pr_sem.  unfold prb.
+intros dav me. destruct dav. destruct me. apply inhabits.
+apply merge_singleL in H. cD. subst.
+apply (exch_maell X). swap_tac_Rc. Qed.
+
+Lemma sem_pr_par V (sema semb : _ -> Prop) A B
+  (IHAa : forall X, sema X -> pr_sem A X)
+  (IHAb : forall X, semb X -> pr_sem B X) X :
+  par_sem mergeP prb sema semb X -> pr_sem (@par V A B) X.
+Proof. intro pab.  pose (par_sem_mono_pr IHAa IHAb pab).
+unfold par_sem in p.  unfold tens_sem in p.
+rewrite -> ddd_iff_pr in p.
+clear IHAa IHAb pab.
+unfold dual_sem in p.  unfold lolli_sem in p.
+specialize (p [A ; B] ([A ; B] ++ X)).
+require p.  eapply prodI.  apply spp_lem.  apply spp_lem.
+apply inhabits.  apply merge_simple_app.
+require p.  apply inhabits.  apply merge_simple_appr.
+unfold prb in p. unfold pr_sem. destruct p. apply inhabits.
+eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
+apply Par_p.  eapply Parrule_I. reflexivity. reflexivity.
+exact (dersrec_singleI X0). Qed.
+
 (*
+Lemma sem_pr_query V (sema : _ -> Prop) A 
+  (IHA : forall X, sema X -> pr_sem A X) X :
+  dual_sem mergeP prb (fun x =>
+     dual_sem mergeP prb sema x /\
+     idem1 mergeP [] prb x) X -> pr_sem (@Query V A) X.
+Proof. intro ddi.  apply fact_pr_sem. 
+revert X ddi.  apply dual_anti.  intros u dpq.
+unfold idem1. apply bang_sem_lem3. (* which should be an equivalence *)
+at this point have goals u = [] and  
+forall u0 : list (LLfml V), sema u0 -> prb u0
+Admitted.
+
+Print Implicit lolli_sem_mono.
+Print Implicit dd_mono.
+Print Implicit dd_mono_pr.
+Print Implicit dual_anti.
+Print Implicit dual_anti_pr.
+Print Implicit fact_pr_sv.
+Print Implicit dual_sem_1_eq.
+Print Implicit ds_ds_fact_pr.
+Print Implicit fact_pr_sem.
+Print Implicit fact_dd_eq.
+Print Implicit fact_dd_eq_pr.
+Print Implicit comm_monoid_nd_list.
+Print Implicit par_sem_mono.
+Print Implicit par_sem_mono_pr.
+Check (ds_ds_fact (comm_monoid_nd_list _)).
+Check (fact_dd_eq_pr (@fact_pr_sem _ _)).
+Print Implicit dd_pr_sem_eq.
+
+SHOULD BE OK FROM HERE
+
+
+Print Implicit prodI.
+Print Implicit dual_sub_inv_pr.
+
+
 Lemma sem_pr V A X : sem mergeP [] prb pr_sv A X -> @pr_sem V A X.
-Proof. induction A ; simpl.
+Proof. revert X. induction A ; simpl.
 - unfold pr_sv. unfold pr_sem. tauto.
 - unfold dual_sem. unfold pr_sem. unfold lolli_sem.
-unfold pr_sv. unfold prb. intro.
+unfold pr_sv. unfold prb. intros.
 specialize (H [DVar v]). apply H.
 2: apply inhabits. 2: apply merge_simple_appr.
 apply inhabits. pose (maell_id (Var v)).  simpl in d. exact d.
-- unfold prb. unfold pr_sem. apply inhabited_ind. intro. apply inhabits.
+- unfold prb. unfold pr_sem.
+intro. apply inhabited_ind.  intro. apply inhabits.
 eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
 apply Bot_p.  eapply Botrule_I. reflexivity. reflexivity.
 apply dersrec_singleI. exact X0.
-- unfold pr_sem. intro. apply inhabits.
+- unfold pr_sem. intros. apply inhabits.
 eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
 apply Top_p.  eapply Toprule_I. reflexivity. reflexivity. apply dlNil.
 - rewrite (dual_sem_1_eq (@prb V) (comm_monoid_nd_list _)).
 unfold pr_sem. unfold dual_sem. unfold lolli_sem.
-intro pmb. specialize (pmb [One V] (One V :: X)).
+intros X pmb. specialize (pmb [One V] (One V :: X)).
 unfold prb in pmb. apply pmb.
 2: apply inhabits. 2: apply merge_simple_appr.
 apply inhabits. eapply derI. apply one_maellI. apply Onerule_I. apply dlNil.
-- intro dde. unfold dual_sem in dde. unfold lolli_sem in dde.
+- intros X dde. unfold dual_sem in dde. unfold lolli_sem in dde.
 unfold pr_sem. unfold prb in dde. apply (dde [Zero V]).
 2: apply inhabits. 2: apply merge_simple_appr. tauto.
-- TBC
+
+- (* tens *) apply sem_pr_tens ; assumption.
+
+- (* wth *) intros X sw. 
+specialize (IHA1 _ (proj1 sw)).  specialize (IHA2 _ (proj2 sw)).
+clear sw. unfold pr_sem in *.
+destruct IHA1.  destruct IHA2.  apply inhabits.
+eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
+apply Wth_p.  eapply Wthrule_I. reflexivity. reflexivity.
+exact (dlCons X0 (dersrec_singleI X1)).
+
+- (* par *) apply sem_pr_par ; assumption. 
+
+- (* plus *) apply ds_ds_fact_pr.
+intros u ddo.  destruct ddo.
++ specialize (IHA1 _ H). clear IHA2 H.  destruct IHA1. apply inhabits.
+eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
+apply PlusL_p.  eapply PlusLrule_I. reflexivity. reflexivity.
+exact (dersrec_singleI X).
++ specialize (IHA2 _ H). clear IHA1 H.  destruct IHA2. apply inhabits.
+eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
+apply PlusR_p.  eapply PlusRrule_I. reflexivity. reflexivity.
+exact (dersrec_singleI X).
+ 
+- (* Bang *) apply ds_ds_fact_pr.
+intros u si. destruct si. specialize (IHA _ H).
+unfold idem1 in H0. destruct H0. apply mergeP_same in H0. subst.
+unfold pr_sem.  unfold pr_sem in IHA.
+(* so here we are asked to use the Bang rule without any context *)
+destruct IHA. apply inhabits.
+eapply derI.  eapply bang_maellI. eapply (fmlsrulegq_I _ _ [] []).
+eapply Bangrule_I. reflexivity. reflexivity. reflexivity. reflexivity.
+exact (dersrec_singleI X).
+
+- (* Query *) 
+
+apply sem_pr_query ; assumption.
+
+
+
+intros u dsa.
+Print Queryrule.
+unfold idem1 in dsa.
+
+
+(* this lemma should help *)
+Check bang_sem_lem.
+
+
+rewrite mergeP_same_eq in dsa.
 *)
 
 
+Print Implicit dual_sem_bot.
+Print Implicit dual_sem_1_eq.
+Print Implicit comm_monoid_nd_list.
 
