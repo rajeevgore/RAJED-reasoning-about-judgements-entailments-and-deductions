@@ -113,9 +113,11 @@ Definition lolli_sem_mono' X X' Y Y' u pxy xx yy :=
 Inductive idems : M -> Prop := | idemsI : forall x : M, m x x x -> idems x.
 
 Definition idem1 x := (m x x x) /\ dual_sem (dual_sem (eq e)) x.
+(* try idemd as alternative to idem1 *)
+Definition idemd x := tens_sem (eq x) (eq x) x /\ dual_sem (dual_sem (eq e)) x.
 
-Definition query_sem X := dual_sem (fun x => dual_sem X x /\ idem1 x).
-Definition bang_sem X := dual_sem (dual_sem (fun x => X x /\ idem1 x)).
+Definition query_sem X := dual_sem (fun x => dual_sem X x /\ idemd x).
+Definition bang_sem X := dual_sem (dual_sem (fun x => X x /\ idemd x)).
 
 Fixpoint sem {V : Set} (sv : V -> M -> Prop) f := match f with 
   | Var v => sv v
@@ -658,9 +660,10 @@ Proof. apply par_sem_mono. tauto. apply query_sound. Qed.
 
 Lemma bang_sound (X : M -> Prop) : X e -> bang_sem X e.
 Proof. unfold bang_sem. rewrite dual_sem_e. intro sa.
-intros u. unfold dual_sem. unfold lolli_sem. unfold idem1.
+intros u. unfold dual_sem. unfold lolli_sem. unfold idemd.
 intros dsi. specialize (dsi e u). require dsi.
-apply (conj sa). apply (conj (cmlid cmM _)). apply dual_dual_sem. trivial.
+apply (conj sa).  split ; apply dual_dual_sem.
+eapply prodI ; try reflexivity.  apply (cmlid cmM _). trivial.
 exact (dsi (cmrid cmM _)). Qed.
 
 (*
