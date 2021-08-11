@@ -230,10 +230,14 @@ Lemma sem_pr_query V (sema : _ -> Prop) A
   (IHA : forall X, sema X -> pr_sem A X) X :
   dual_sem mergeP prb (fun x =>
      dual_sem mergeP prb sema x /\
-     idem1 mergeP [] prb x) X -> pr_sem (@Query V A) X.
+     idemd mergeP [] prb x) X -> pr_sem (@Query V A) X.
 Proof. intro ddi.  apply fact_pr_sem. 
 revert X ddi.  apply dual_anti.  intros u dpq.
-unfold idem1. apply bang_sem_lem3. (* which should be an equivalence *)
+unfold idemd.
+
+Check dual_sem_or.
+
+apply bang_sem_lem3. (* which should be an equivalence *)
 at this point have goals u = [] and  
 forall u0 : list (LLfml V), sema u0 -> prb u0
 Admitted.
