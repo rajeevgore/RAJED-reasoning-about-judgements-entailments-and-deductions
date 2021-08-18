@@ -78,6 +78,11 @@ Lemma ddd_iff (X : M -> Prop) v :
   dual_sem (dual_sem (dual_sem X)) v <-> dual_sem X v.
 Proof. split. apply dual_anti. apply dual_dual_sem. apply dual_dual_sem. Qed.
 
+Lemma ds_ds_ds (X Y : M -> Prop) : (forall u, X u -> dual_sem Y u) -> 
+  (forall u, dual_sem (dual_sem X) u -> dual_sem Y u).
+Proof. intros xdy u ddx.  eapply dd_mono in xdy.
+rewrite -> ddd_iff in xdy. exact xdy. exact ddx. Qed.
+
 Inductive prods (X Y : M -> Prop) : M -> Prop :=
   | prodI : forall x y z : M, X x -> Y y -> m x y z -> prods X Y z.
 
@@ -118,6 +123,8 @@ Definition idemd x := tens_sem (eq x) (eq x) x /\ dual_sem (dual_sem (eq e)) x.
 
 Definition query_sem X := dual_sem (fun x => dual_sem X x /\ idemd x).
 Definition bang_sem X := dual_sem (dual_sem (fun x => X x /\ idemd x)).
+Definition bang_query X :
+  dual_sem (query_sem X) = bang_sem (dual_sem X) := eq_refl.
 
 Fixpoint sem {V : Set} (sv : V -> M -> Prop) f := match f with 
   | Var v => sv v
@@ -717,6 +724,33 @@ rewrite lolli_sem_e.  intro x.  unfold idemd.
 rewrite dual_sem_eq_e'.
 apply factd_iff in fy. destruct fy.  intro cc.  eapply lolli_B.
 exact (proj2 (proj2 cc)).  exact ye.  exact (cmrid cmM _). Qed.
+
+Lemma ctr_lolli_lem (X : M -> Prop) : 
+  lolli_sem (bang_sem X) (tens_sem (bang_sem X) (bang_sem X)) e.
+Proof. apply lolli_sem_e. unfold bang_sem. apply ds_ds_ds.
+intros u xui. destruct xui. pose H0. destruct i. revert H1. apply dd_mono.
+apply prods_mono ; intros ; subst ; apply dual_dual_sem ; exact (conj H H0).
+Qed.
+
+(* dualizing ctr_lolli_lem is harder than the original!! *)
+Lemma ctr_lolli_lemd (X : M -> Prop) : 
+  lolli_sem (par_sem (query_sem X) (query_sem X)) (query_sem X) e.
+Proof. apply lolli_sem_e.  unfold par_sem.
+apply dual_anti.  unfold query_sem.
+pose (@ctr_lolli_lem (dual_sem X)).
+pose (proj1 (lolli_sem_e _ _) l).
+intros u diu.  exact (t u (dual_dual_sem diu)). Qed.
+
+Lemma ctr_lolli_sound (X Y : M -> Prop) : 
+  lolli_sem (tens_sem (bang_sem X) (bang_sem X)) Y e ->
+  lolli_sem (bang_sem X) Y e.
+Proof. rewrite !lolli_sem_e.
+intros ty x bx. apply ty.
+revert x bx.  apply lolli_sem_e. apply ctr_lolli_lem. Qed.
+
+Print Implicit ctr_lolli_lem.
+Print Implicit lolli_sem_e.
+Print Implicit dual_sub_inv.
 
 (* cut_sound - assume first tens rule is applied *)
 Lemma cut_sound X Y : fact Y -> par_sem (tens_sem (dual_sem X) X) Y e -> Y e.
