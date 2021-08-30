@@ -16,7 +16,7 @@ Check FunctionalExtensionality.forall_extensionality. (* and P, S *)
 Add LoadPath "../general".
 Add LoadPath "../modal".
 Require Import gen genT.
-Require Import lldefs.
+Require Import lldefs fmlsext.
 
 Lemma iff_app_eq A P Q : (forall x : A, P x <-> Q x) -> P = Q.
 Proof. intro ipq. apply FunctionalExtensionality.functional_extensionality.
@@ -140,6 +140,12 @@ Fixpoint sem {V : Set} (sv : V -> M -> Prop) f := match f with
   | Bang f => bang_sem (sem sv f)
   | Query f => query_sem (sem sv f)
   end.
+
+(* semantics of list of formula is sem of their par *)
+Definition seml {V} sv fs := fold_right par_sem bot (map (@sem V sv) fs).
+(* note useful lemmas
+  fold_left_rev_right fold_right_app fold_symmetric fold_left_app,
+  need to prove more using assoc and comm and identity of par_sem *)
 
 (* fact and factd are equivalent *)
 Definition fact X := forall u, dual_sem (dual_sem X) u -> X u.
@@ -751,6 +757,21 @@ revert x bx.  apply lolli_sem_e. apply ctr_lolli_lem. Qed.
 Print Implicit ctr_lolli_lem.
 Print Implicit lolli_sem_e.
 Print Implicit dual_sub_inv.
+
+(* soundness of rules *)
+(* this might be difficult, need to prove inductively
+  that as par_sem is assoc and commutative, need to just use
+  par_sem context (principal formula) 
+Lemma maell_sound {V} sv ps c : (forall v, fact (sv v)) ->
+  @maell_rules V ps c -> ForallT (fun p => seml sv p e) ps -> seml sv c e.
+Proof. intros fsv mpc pss.
+destruct mpc.
+- (* mall_rules *) admit.
+- (* weakening *) destruct f. destruct w. sfs.
+  unfold seml.
+  rewrite map_app.
+  rewrite fold_right_app.
+*)
 
 (* cut_sound - assume first tens rule is applied *)
 Lemma cut_sound X Y : fact Y -> par_sem (tens_sem (dual_sem X) X) Y e -> Y e.

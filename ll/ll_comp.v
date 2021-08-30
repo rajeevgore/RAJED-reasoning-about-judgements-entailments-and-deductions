@@ -225,15 +225,63 @@ eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
 apply Par_p.  eapply Parrule_I. reflexivity. reflexivity.
 exact (dersrec_singleI X0). Qed.
 
-(*
+Lemma sem_pr_bang V (sema : _ -> Prop) A
+  (IHA : forall X, sema X -> pr_sem A X) X :
+  bang_sem mergeP [] prb sema X -> pr_sem (@Bang V A) X.
+Proof. apply ds_ds_fact_pr.
+intros u si. destruct si. specialize (IHA _ H).
+unfold idemd in H0. destruct H0.
+(* need to get that u consists of query formulae,
+  or something pretty much like query formulae *)
+rewrite (dual_sem_eq_e' (@prb V) (comm_monoid_nd_list _)) in H1.
+
+(* at this point H1 says that you can weaken u
+and H0 says you can contract u
+so u is rather like a lot of ?-formulae, but it is not necessarily one
+
+in fact the K of DLW needs to be a parameter of the semantics,
+which we choose to be the set of lists of query formulae 
+(for DLW, banged formulae)
+so soundness requires certain things like cl K ∅ and K ∘ K ⊆ K.
+and completeness requires K is lists of query formulae (?)
+
+former stuff follows 
+apply mergeP_same in H0. subst.
+unfold pr_sem.  unfold pr_sem in IHA.
+(* so here we are asked to use the Bang rule without any context *)
+destruct IHA. apply inhabits.
+eapply derI.  eapply bang_maellI. eapply (fmlsrulegq_I _ _ [] []).
+eapply Bangrule_I. reflexivity. reflexivity. reflexivity. reflexivity.
+exact (dersrec_singleI X).
+*)
+Admitted.
+
+(* this true but no use *)
+Lemma pr_sem_query V A u : pr_sem A u -> pr_sem (@Query V A) u.
+Proof. unfold pr_sem. intro ia. destruct ia. apply inhabits.
+eapply derI.  eapply query_maellI.  eapply (OSgctxt_eq _ _ _ []).
+eapply Queryrule_I. reflexivity. reflexivity.
+exact (dersrec_singleI X). Qed.
+
+(* this is a sort of monotonicity of query *)
 Lemma sem_pr_query V (sema : _ -> Prop) A 
   (IHA : forall X, sema X -> pr_sem A X) X :
-  dual_sem mergeP prb (fun x =>
-     dual_sem mergeP prb sema x /\
-     idemd mergeP [] prb x) X -> pr_sem (@Query V A) X.
+  query_sem mergeP [] prb sema X -> pr_sem (@Query V A) X.
 Proof. intro ddi.  apply fact_pr_sem. 
-revert X ddi.  apply dual_anti.  intros u dpq.
-unfold idemd.
+revert X ddi.  apply dual_anti.  intros u dpq.  split.
+- revert u dpq.  apply dual_anti.
+intros u su. specialize (IHA u su). exact (pr_sem_query IHA).
+- unfold idemd.
+Admitted.
+
+(*
+why would these be true??
+it seems to ask for proof that an arbitrary u is in idemd
+
+we shouldn't expect this lemma to work - if a query formula is
+semantically valid, then the appropriate rule could be weakening,
+or contraction, or query, or a rule that affects a different formula
+in the sequent
 
 Check dual_sem_or.
 
@@ -261,7 +309,7 @@ Check (fact_dd_eq_pr (@fact_pr_sem _ _)).
 Print Implicit dd_pr_sem_eq.
 
 SHOULD BE OK FROM HERE
-
+*)
 
 Print Implicit prodI.
 Print Implicit dual_sub_inv_pr.
@@ -316,34 +364,9 @@ eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
 apply PlusR_p.  eapply PlusRrule_I. reflexivity. reflexivity.
 exact (dersrec_singleI X).
  
-- (* Bang *) apply ds_ds_fact_pr.
-intros u si. destruct si. specialize (IHA _ H).
-unfold idem1 in H0. destruct H0. apply mergeP_same in H0. subst.
-unfold pr_sem.  unfold pr_sem in IHA.
-(* so here we are asked to use the Bang rule without any context *)
-destruct IHA. apply inhabits.
-eapply derI.  eapply bang_maellI. eapply (fmlsrulegq_I _ _ [] []).
-eapply Bangrule_I. reflexivity. reflexivity. reflexivity. reflexivity.
-exact (dersrec_singleI X).
-
-- (* Query *) 
-
-apply sem_pr_query ; assumption.
-
-
-
-intros u dsa.
-Print Queryrule.
-unfold idem1 in dsa.
-
-
-(* this lemma should help *)
-Check bang_sem_lem.
-
-
-rewrite mergeP_same_eq in dsa.
-*)
-
+- (* Bang *) apply sem_pr_bang ; assumption.
+- (* Query *) apply sem_pr_query ; assumption.
+Qed.
 
 Print Implicit dual_sem_bot.
 Print Implicit dual_sem_1_eq.
