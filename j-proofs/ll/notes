@@ -12,6 +12,205 @@ and in s2.2 a different system with 2 zones
 code in gitlab repo https://gitlab.anu.edu.au/u8413080/tense-logic-in-Coq.git
 files in directory ll, but also uses files in directories general and modal
 
+files up to ll_cam.v
+these do the result without exponentials, cut_adm_mall (in ll.v) 
+
+summary of files and contents
+fmlsext.v: definitions and lemmas
+  fmlsext (putting context around principal formula(e)
+  fmlsrule (fmlsext for premises and conclusion of a rule)
+  lemmas re fmlsrule and derl, eg derl_fmlsrule
+  fmlsruleg (similar, but you can specify the context)
+  merge (order-preserving merge)
+lldefs.v: definitions and basic lemmas for linear logic
+  LLfml (the type of formulae), isubfml, dual
+  mall_rules, maell_rules (the rules, without and with rules for exponentials) 
+  merge_ctxt: for a rule with two premises, applying contexts,
+    where the contexts are merged (see merge above), not copies
+  osscam: the property that cut-admissibility works, where the cut-formulae
+    are at the front of the lists, merging the contexts
+  ossca: as osscam, but just concatenating contexts (we found this didn't work)
+
+We did cut-admissibility for the system involving exponentials, weakening and
+contraction, by doing a sort of multicut which removes any number of
+occurrences of the cut-formula - and because of weakening, this number may be 0
+
+  osscan: the property that multicut-admissibility works,
+    where n occurrences of cut-formula A are removed
+  osscang: as for osscan,
+    where any number of occurrences of cut-formula A are removed
+  osscann: as above, where nl occurrences of cut-formula A are removed from the
+    left, and nr occurrences of dual A are removed from the right
+
+there are several more similar definitions, used in various lemmas,
+some specifying that the cut-formula is either Query _ or Bang _
+and some lemmas relating them
+
+Theorem maell_id: that [ A ; dual A ] is derivable (proved inductively
+  from the rule of the system that this applies only for atoms)
+
+ll_lems.v: most of this file is a massive number of lemmas relating
+  gen_step2 (osscaXX ...) for different values of XX,
+  quite likely a lot of these are unnecessary 
+  (eg, if superseded by more powerful results) ;
+  then some lemmas re merge, eg merge_exch (if exchange is admissible,
+  two different ways of merging us and vs are admissible one from the other)
+
+ll_exch.v: proof that exchange is admissible for maell (and also mall),
+using der_trf which relies on the fact that for any rul ps/c,
+given an exchanged version c' of the conclusion,
+there is a rule ps'/c' giving c' from exchanged versions ps' of the premises
+(this property being can_trf_rules).
+This also gives height-preserving exchange using lemma der_trf_ht. 
+
+ll_ca.v: attempt to prove admissibility of the version of cut 
+where the contexts are simply concatenated, not merged
+(see ossca, defined above), but this didn't work, abandoned
+
+ll_cam.v: proving admissibility of the version of cut 
+where the contexts are merged (though still simplified by saying
+the cut-formulae are the first of the list) (see osscam, defined above)
+
+princ_paramL_nn: the induction step is valid when the rule on the left
+  is parametric, where it is a rule with context added to all premises and
+  conclusion (using fmlsrule), identified to be parametric by the fact
+  that the number of copies of the cut formula to be removed is <=
+  the length of the left context of the rule
+
+princ_paramR_nn: the same, for the rule on the right; this is obtained
+by dualising princ_paramL_nn; this dualisation requires using the actual
+isubfml relation and dual function (whose properties aren't required
+for proving princ_paramL_nn), because the dualisation ultimately depends on
+lemmas dual_sub and dual_dual
+
+princ_paramL and princ_paramR are the special cases of these for cases
+where exactly one copy of the cut formula is to be deleted
+
+princ_paramL_nn_ne is similar, but identifying that a rule application is
+parametric because the cut formula is different from the principal formula
+of the rule
+
+merge_paramL_n, etc, are similar, but for 2-premise rules which deal with
+  contexts by merging rather than copying
+
+then there are lemmas for where the cut is principal on both sides,
+eg plusL_wth, tens_par, bot_one, 
+
+then we have lemmas collecting the above results, eg
+gs_tens_mall, covering all cases where the rule on the right is tens
+and eventually gs_mall, covering all cases, from which we get
+cut_adm_mall
+
+ll_camq.v: adding exponentials - or rather the rules for them
+
+merge_ctr_lem: lemma about merging and contraction, used for merge_paramL_ngl
+
+merge_paramL_ngl: a complex lemma needed for the situation where
+the cut formulae are n copies of ?A on the left, and !A on the right,
+where the !A is principal ((Bang rule on the right)
+and the n copies of ?A on the left are parametric,
+and the rule on the left is one which merges contexts;
+then after doing inductive cuts, the context on the right 
+(which is all query formulae) needs to be contracted
+
+merge_paramL_ngl_QT: similar to merge_paramL_ngl, specific to Tensrule,
+simpler as uses the fact that Tens A B is not a Query formula
+
+cases which are principal on both sides, for rules with copied context
+plusL_wth_q, plusR_wth_q, wth_plusL_q, wth_plusR_q,
+tens_par_q, par_tens_q, one_bot_q, bot_one_q 
+
+query_bang: where Query and Bang rules are principal,
+exactly one copy of query formula
+
+query_bang_mQ_ht: where rule on left is Queryrule (any number of query
+formulae), and rule on right is principal Bangrule,
+this one expresses the inductive step based on height of derivations
+rather than the simpler induction based on subderivations
+
+there are several cases - where the Queryrule on the left is parametric
+(ie producing a Query formula other than one to be cut),
+and where it is principal, in which case the case of n=1 is covered by
+query_bang, but the case of n>1 is more difficult, it requires
+inductive cuts of n-1 copies of ?A then cut of A, and as each of these
+introduces the context of the Bangrule on the right, we need to contract
+those formulae, which are all Query formulae (context of Bangrule)
+
+long proof - should try to split this up into multiple lemmas
+
+query_bang_n_ht: similar to query_bang_mQ_ht, except that this one is
+about osscang, query_bang_mQ_ht is about osscamQ
+
+similar proofs, is one redundant? query_bang_n_ht not used
+
+reminder: osscamQ allows cut formula to be Query _ on either side
+and in that case, any number of copies of it,
+osscang simply allows any number of formulae on the left
+this will give the same result since when the rule on the right
+is Bangrule and is principal, then the cut-formula on the left must
+be Query _ (and the one on the right not)
+
+gs_idL_q: case of Idrule on the left (except if cut-formula is Query _)
+(uses osscaq instead of osscaQ - what's the difference?)
+this is weird - cut-formula can't be Query _
+
+gs_maell_one, gs_one_maell: for when rule on one side is Onerule,
+only one copy of cut-formula
+
+gs_maell_one_q', gs_one_maell_q': for when rule on one side is Onerule,
+cut-formula on other side can't be Query _
+this is weird, if rule on one side is Onerule, how can cut-formula be Query _ ?
+
+gs_tens_maell, gs_maell_tens: Tensrule on one side, principal or not,
+just one copy cut on each side
+
+gs_mall_q: mall_rules on right, cut-formula is Query on left
+(so must be parametric on right)
+gs_mall_q' is symmetric version
+
+gs_ctr_ng, gs_wk_ng: contraction or weakening on A the left 
+(principal or not), cut on A
+
+ctr_neq_paramL, wk_neq_paramL: contraction or weakening on ?B,
+cut-formula is A, different from ?B - so parametric
+
+gs2_ctr_Q, gs2_wk_Q: general, weakening or contraction on left 
+
+gs2_Query_mall_Q: cut formula Query _, mall_rules on right
+
+gs2_osscan0_Bang: used in the following
+
+gs2_Bangrule_mall_Q: Bangrule on left, mall_rules on right
+
+gs2_B_B_n: Bangrule on both sides, cut-formula is Query _
+gs2_B_B: Bangrule on both sides, any cut-formula
+
+hs2_Bangrule_maell_Q: Bangrule on the left, induction on height of derivation
+
+hs2_Query_maell_Q: any rules on either side, cut-formula Query _,
+  induction on height of derivation
+
+gs2_Q_nQ: Queryrule on the left, cut-formula not Query _
+
+hs2_maell_Q: putting all above together
+
+cut_adm_maell_Q: the actual result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 relevant emails to/from Raj (in email folder project)
 
 23/6/20

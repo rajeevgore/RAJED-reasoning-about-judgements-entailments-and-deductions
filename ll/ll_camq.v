@@ -671,6 +671,8 @@ Definition gs_one_maell_q' V A rules psa psb ca cb rs ae ma mb nb :=
   gs2_osscamq_dual' 
     (@gs_maell_one_q' V (dual A) rules psb psa cb ca rs ae mb ma nb).
 
+Check gs_maell_one_q'.  Check gs_one_maell_q'.
+ 
 (* note goal for this one is osscam because of the complications
   for merge_paramL where Bang or Query involved *) 
 Lemma gs_tens_maell V (A : LLfml V) rules psa psb ca cb
@@ -916,7 +918,7 @@ intro ba.  exact (anb (eq_sym ba)).
 + exact rswr.
 Qed.
 
-Check wk_neq_paramL.
+Check ctr_neq_paramL.  Check wk_neq_paramL.
 
 Lemma Q_or_not {V} A : {A' : _ & A = @Query V A'} + forall A', A <> @Query V A'.
 destruct A.

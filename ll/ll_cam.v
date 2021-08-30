@@ -497,3 +497,9 @@ apply (gs_mall adm_exch) ; apply bot_is_rule. Qed.
 Print Implicit gs2c_gs2tr. Print Implicit gs2_gs2c.
 Print Implicit height_step2_tr_lem.
 *)
+
+Check adm_exch_mall. (* which is admissibility of exchange *)
+
+(* cut admissibility for MALL *)
+Definition cut_adm_mall V A := cut_adm_mall' A (@adm_exch_mall V).
+
