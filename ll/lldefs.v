@@ -267,6 +267,33 @@ Proof. split ; intros u v oq.
 destruct oq. exact (o A eq_refl).
 split. intros. exact oq. Qed.
 
+Lemma osscanq_eq V rules A n : 
+  req (osscanq dual rules n (@Query V A)) (osscan dual rules n (@Query V A)).
+Proof. split ; intros u v oq ; destruct oq.
+apply osscanI. exact (d _ eq_refl).
+apply osscanqI. intros A0 qae. inversion qae. subst. exact d. Qed.
+
+Lemma osscaQ_q V rules A :
+  req (@osscaQ V dual rules A) (osscaq dual rules A).
+Proof. split ; intro ; intros ; destruct X.
+- apply osscaqI. intro.  apply osscanqI. intros A0 ae.
+destruct (o _ ae).  destruct (o0 n).  subst.  exact d.
+- apply osscaQI. intros. apply osscangI. intro.
+destruct (o n).  apply osscanI.  subst.  exact (d _ eq_refl). Qed.
+
+Lemma osscaQ_q' V rules A :
+  req (@osscaQ' V dual rules A) (osscaq' dual rules A).
+Proof. unfold req. unfold rsub.  unfold osscaQ'.  unfold osscaq'.
+pose osscaQ_q.  unfold req in r.  unfold rsub in r.
+specialize (r _ rules (dual A)).
+split ; intros u v.  apply (fst r).  apply (snd r). Qed.
+
+Lemma osscamQ_q V rules A :
+  req (@osscamQ V dual rules A) (osscamq dual rules A).
+Proof. unfold req. unfold rsub.  unfold osscamQ.  unfold osscamq.
+split ; intros ; split ; cD ; try (exact X) ; split ; 
+(apply osscaQ_q || apply osscaQ_q') ; assumption. Qed.
+
 Lemma osscaQ_m {V} dual rules (A : LLfml V) cl cr :
   osscaQ dual rules (Query A) cl cr -> osscam dual rules (Query A) cl cr.
 Proof. intro oq. apply osscamI. intros * cle cre mrg.

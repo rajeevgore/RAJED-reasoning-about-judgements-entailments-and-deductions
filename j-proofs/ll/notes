@@ -151,15 +151,20 @@ is Bangrule and is principal, then the cut-formula on the left must
 be Query _ (and the one on the right not)
 
 gs_idL_q: case of Idrule on the left (except if cut-formula is Query _)
-(uses osscaq instead of osscaQ - what's the difference?)
-this is weird - cut-formula can't be Query _
+(uses osscaq which is equivalent to osscaQ,
+and likewise osscamq is equivalent to osscamQ)
+(REMOVED AS NEVER USED)
+
+here, if cut-formula is Query _, and zero copies removed, it is like
+removing one copy and then weakening the result
 
 gs_maell_one, gs_one_maell: for when rule on one side is Onerule,
 only one copy of cut-formula
 
 gs_maell_one_q', gs_one_maell_q': for when rule on one side is Onerule,
-cut-formula on other side can't be Query _
-this is weird, if rule on one side is Onerule, how can cut-formula be Query _ ?
+cut-formula on other side mustn't be Bang _
+(gs_maell_one, gs_one_maell, gs_maell_one_q', gs_one_maell_q'
+REMOVED AS NEVER USED)
 
 gs_tens_maell, gs_maell_tens: Tensrule on one side, principal or not,
 just one copy cut on each side
@@ -178,7 +183,8 @@ gs2_ctr_Q, gs2_wk_Q: general, weakening or contraction on left
 
 gs2_Query_mall_Q: cut formula Query _, mall_rules on right
 
-gs2_osscan0_Bang: used in the following
+gs2_osscan0_Bang: special case of principal Bang rule on right,
+zero copies of Query A removed on left
 
 gs2_Bangrule_mall_Q: Bangrule on left, mall_rules on right
 

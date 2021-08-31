@@ -10,7 +10,7 @@ Add LoadPath "../modal".
 Require Import gen genT ddT dd_fc.
 Require Import gen_tacs swappedT.
 Require Import fmlsext.
-Require Import lldefs ll_lems.
+Require Import lldefs ll_lems ll_exch.
 Require Import gstep gentree.
 
 (* dual and subformula relation are arbitrary *)

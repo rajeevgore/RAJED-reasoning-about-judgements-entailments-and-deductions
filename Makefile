@@ -52,7 +52,7 @@ ljt/ljt_dncc.vo: ljt/ljt_dncc.v ljt/ljt_dn.vo ljt/ljt_ca.vo
 ljt/ljt_dnca.vo: ljt/ljt_dnca.v ljt/ljt_dncc.vo 
 ljt/ljt_dnterm.vo: ljt/ljt_dnterm.v ljt/ljt_dncc.vo general/rtcT.vo general/gen_tacs.vo
 ll/ll_camq.vo: ll/ll_camq.v general/dd_fc.vo ll/ll_exch.vo ll/ll_cam.vo
-ll/ll_cam.vo: ll/ll_cam.v ll/ll_lems.vo general/gentree.vo
+ll/ll_cam.vo: ll/ll_cam.v ll/ll_lems.vo ll/ll_exch.vo general/gentree.vo
 ll/ll_ca.vo: ll/ll_ca.v ll/lldefs.vo general/ddT.vo
 ll/ll_comp.vo: ll/ll_comp.v ll/ll_camq.vo ll/ll_semnd.vo general/ddT.vo general/swappedT.vo
 ll/ll_sem.vo: ll/ll_sem.v ll/lldefs.vo general/genT.vo
