@@ -445,6 +445,24 @@ Proof. intro.  induction X ; intros us vs mrg.
   exact (mergeRI y mrg0).  exact (mergeRI y mrg1).
 - inversion mrg. exists [] ; exact merge_nil. Qed.
 
+(* symmetrical to merge_assoc *)
+Lemma merge_assoc' W (xs ys ms : list W) :
+  merge ys xs ms -> forall us vs, merge vs us xs -> 
+    sigT2 (fun ws => merge ws us ms) (merge ys vs).
+Proof. intros.
+pose (merge_assoc (merge_sym X) (merge_sym X0)). cD.
+exists s ; apply merge_sym ; assumption. Qed.
+
+Lemma merge_assoc4 W (us vs muv xs ys mxy ms : list W) :
+  merge us vs muv -> merge xs ys mxy -> merge muv mxy ms ->
+  sigT2 (fun mux => merge us xs mux) (fun mux => 
+    sigT2 (fun mvy => merge vs ys mvy) (fun mvy => merge mux mvy ms)).
+Proof. intros uv xy all.
+pose (merge_assoc all uv) as uo. cD.
+pose (merge_assoc' uo1 (merge_sym xy)) as vy. cD.
+pose (merge_assoc' uo0 (merge_sym vy0)). cD.
+exists s. exact s1. exists vy ; assumption. Qed.
+
 Lemma merge_repeat' W xs ys zs (A : W):
   merge xs ys zs -> forall n, (zs = repeat A n) ->
   {k : nat & (xs = repeat A k) & {m : nat & (Nat.add k m = n) & 

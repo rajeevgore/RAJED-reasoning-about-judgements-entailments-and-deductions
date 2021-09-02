@@ -26,77 +26,34 @@ Require Import ll_exch.
 Require Import ll_cam.
 Require Import gstep gentree.
 
-Lemma merge_ctr_lem W rules prsl a
-  (ar br pl pr H2 H4 mal mar mbl mbr mrg mrg0 mrg1 mrg2 : list W)
-  (adm_exch : forall seq seq' : list W,
-             swapped seq' seq -> adm rules [seq'] seq)
-  (ctrm : forall q : W, InT q mrg + InT q mrg0 -> 
-    rsub (fmlsruleg (ctrrule q)) rules) 
-  (rsmr : rsub (merge_ctxtg prsl) rules)
-  (X : prsl [pl; pr] [a])
-  (d : derrec rules emptyT (mal ++ pl ++ mar))
-  (mal0 : merge H4 mal mrg1) (mal1 : merge H2 mrg mal)
-  (mar0 : merge br mar mrg2) (mar1 : merge ar mrg0 mar)
-  (d0 : derrec rules emptyT (mbl ++ pr ++ mbr))
-  (mbl0 : merge H2 mbl mrg1) (mbl1 : merge H4 mrg mbl)
-  (mbr0 : merge ar mbr mrg2) (mbr1 : merge br mrg0 mbr) :
-  derrec rules emptyT (mrg1 ++ [a] ++ mrg2).
-Proof.  epose derI.  erequire d1.  erequire d1.  erequire d1.
-erequire d1.  erequire d1.  require d1.
-apply (rsubD rsmr).
-eapply merge_ctxtgI.  eapply merge_ctxtI.  apply X.
-apply merge_simple_app.  apply merge_simple_app.
-require d1.  apply (dlCons d (dersrec_singleI d0)).
-epose (merge_exch adm_exch mal1 (merge_simple_app _ _) [] _).
-rewrite - app_assoc in d1.
-pose (admDs a0 d1). simpl in d2.
-epose (merge_exch adm_exch mbl1 (merge_simple_app _ _) _ _).
-pose (admDs a1 d2). 
-epose (merge_exch adm_exch mar1 (merge_simple_app _ _) 
-  ((H2 ++ mrg) ++ (H4 ++ mrg) ++ [a]) mbr).
-rewrite <- !app_assoc in a2. simpl in a2.
-rewrite <- !app_assoc in d3. 
-pose (admDs a2 d3). 
-epose (merge_exch adm_exch mbr1 (merge_simple_app _ _) _ []).
-rewrite -> app_comm_cons in d4. 
-rewrite -> !app_assoc in d4.  rewrite -> !app_nil_r in a3.
-pose (admDs a3 d4).  rewrite <- !app_assoc in d5.
+Lemma merge_dbl_ctr_lem W rules xs ys zs 
+  (ctrm : forall q : W, InT q ys -> rsub (fmlsruleg (ctrrule q)) rules) :
+  merge xs ys zs -> {zsd : _ & merge xs (doubles ys) zsd &
+    forall us vs ps, derrec rules ps (us ++ zsd ++ vs) -> 
+     derrec rules ps (us ++ zs ++ vs)}.
+Proof. intro m.  induction m.
+- destruct (IHm ctrm).  exists (x :: x0).  exact (mergeLI _ m0).
+intros.  specialize (d (us ++ [x]) vs ps).
+rewrite - !app_assoc in d. exact (d X).
+- require IHm. { intros. apply ctrm. exact (InT_cons y X). }
+cD. exists (y :: y :: IHm).  exact (mergeRI _ (mergeRI _ IHm0)).
+intros.  specialize (IHm1 (us ++ [y;y]) vs ps).
+rewrite - !app_assoc in IHm1.  specialize (IHm1 X).
+specialize (ctrm _ (InT_eq _ _)).
+eapply derI. apply ctrm.  eapply OSgctxt_eq.
+apply ctrrule_I.  simpl. reflexivity.  reflexivity.
+sfs.  exact (dersrec_singleI IHm1).
+- exists []. exact merge_nil. easy.  Qed.
 
-(* now do contraction, need to get mrg and mrg0 are all Query *)
-pose (@gen_ctr_adm _ _ mrg adm_exch) as gcam.
-require gcam.  intros q iqm.  exact (ctrm q (inl iqm)).
-specialize (gcam H2 H4 ((a :: ar) ++ mrg0 ++ br ++ mrg0)).
-pose (admDs gcam d5).
-pose (@gen_ctr_adm _ _ mrg0 adm_exch) as gcam0.
-require gcam0.  intros q iqm.  exact (ctrm q (inr iqm)).
-specialize (gcam0 (H2 ++ mrg ++ H4 ++ (a :: ar)) br []).
-pose (admDs gcam0).
-require d7. rewrite app_nil_r. rewrite - !app_assoc. exact d6.
-rewrite app_nil_r in d7.
+Print Implicit merge_dbl_ctr_lem.
 
-epose (merge_exch adm_exch (merge_simple_app _ _) mal1 [] _).
-simpl in a4.  rewrite <- !app_assoc in d7.  rewrite <- !app_assoc in a4.
-destruct a4.  specialize (d8 (dersrec_singleI d7)).
-epose (merge_exch adm_exch (merge_simple_app _ _) (merge_sym mal0) [] _).
-simpl in a4.  rewrite <- !app_assoc in a4.
-destruct a4.  specialize (d9 (dersrec_singleI d8)).
-
-rewrite cons_app_single in d9.
-epose (merge_exch adm_exch (merge_simple_app _ _) (merge_sym mbr1) _ []).
-rewrite -> !app_nil_r in a4.
-rewrite -> !app_assoc in a4.  rewrite -> !app_assoc in d9.
-destruct a4.  specialize (d10 (dersrec_singleI d9)).
-epose (merge_exch adm_exch (merge_simple_app _ _) mbr0 _ []).
-rewrite -> !app_nil_r in a4.  rewrite -> !app_assoc in a4. 
-destruct a4.  specialize (d11 (dersrec_singleI d10)).
-rewrite - app_assoc in d11.  exact d11.
-Qed.
-
-Print Implicit merge_ctr_lem.
+Definition merge_dbl_ctr_lem' W rules xs ys zs cc m :=
+  @merge_dbl_ctr_lem W rules xs ys zs m cc.
 
 (* according to Dirk Roorda's thesis, shouldn't need this in general
   but do need revised version, rh rule is principal Bangrule
   dual and isubfml are generic *)
+
 Lemma merge_paramL_ngl V (A : LLfml V) rules dual n any prsl prsr xs ys zs
   drsb psa psb ca cb 
   (adm_exch : forall seq seq', swapped seq' seq -> adm rules [seq'] seq) :
@@ -123,45 +80,61 @@ apply merge_ctns_singleL in mrg. cD. subst.
 apply merge_splitM in H0. cD. subst.
 apply merge_repeat in H5. cD. subst.
 
+assert (forall q, InT q (mrg ++ mrg0) -> {q' : _ & q = Query q'}).
+{ intros q inq. inversion mqr.
+apply prs in X0. destruct X0. inversion H6.
+rewrite - H10 in inq.
+apply InT_mapE in inq. cD. subst. exists inq. reflexivity. }
+
 (* cut with lh premise of merging rule *)
 inversion fpl. subst. cD. clear X0.  destruct X2.
 specialize (o H5 (leT_trans (leT_plus_l _ _) H)).
-pose (merge_assoc mrg3 (merge_sym H8)) as mal. cD.
-pose (merge_assoc mrg6 (merge_sym H1)) as mar. cD.
 destruct o. rewrite <- !app_assoc in d.
-specialize (d _ _ (mal ++ pl ++ mar) eq_refl eq_refl).
-require d.  apply (merge_app mal1).
-pose (merge_app (merge_Rnil pl) mar1). simpl in m. exact m.
 
 (* cut with rh premise of merging rule *)
-inversion X1. subst. cD. clear X0 X1 X2. destruct X3.
+inversion X1. subst. cD. clear fpl X0 X1 X2. destruct X3.
 specialize (o H7 (leT_trans (leT_plus_r _ _) H)).
-pose (merge_assoc mrg3 H8) as mbl. cD.
-pose (merge_assoc mrg6 H1) as mbr. cD.
 destruct o. rewrite <- !app_assoc in d0.
-specialize (d0 _ _ (mbl ++ pr ++ mbr) eq_refl eq_refl).
-require d0.  apply (merge_app mbl1).
-pose (merge_app (merge_Rnil pr) mbr1). simpl in m. exact m.
 
-(* so now have the result of inductive cut with both premises,
-  but applying rule to these will have context from rhs twice, 
-  so will need to do contraction *)
-clear fpl.
-(* try separate lemma from here *)
-eapply (merge_ctr_lem _ _ _ adm_exch _ rsmr X d
-  mal0 mal1 mar0 mar1 d0 mbl0 mbl1 mbr0 mbr1).
-Unshelve. 
-(* now do contraction, need to get mrg and mrg0 are all Query *)
-inversion mqr.
-unfold fmlsext in H6. simpl in H6.
-apply prs in X0. destruct X0. inversion H6.
-apply map_app_ex in H10. cD. subst.
-intros q inq2.  eapply (rsub_trans _ rsq).
+(* now use merge_assoc4, and merge_doubles for mrg and mrg0 
+  need to get versions of mrg1 amd mrg2 with formulae from mrg and mrg0
+  doubled, and show that mrg and mrg0 are Query formulae,
+  and show that contraction makes it equivalent *)
+
+eapply merge_dbl_ctr_lem' in mrg3.
+eapply merge_dbl_ctr_lem' in mrg6.  cD.
+
+pose (merge_assoc4 H8 (merge_doubles mrg) mrg4).
+pose (merge_assoc4 H1 (merge_doubles mrg0) mrg7). cD.
+
+specialize (d _ _ (s ++ pl ++ s0) eq_refl eq_refl).
+specialize (d0 _ _ (s7 ++ pr ++ s3) eq_refl eq_refl).
+
+require d.  apply (merge_app s6).  apply (merge_app (merge_Rnil _) s2).
+require d0.  apply (merge_app s8).  apply (merge_app (merge_Rnil _) s4).
+
+(* now apply contractions *)
+apply (mrg5 [] ([a] ++ mrg2)).
+eapply eq_rect.  apply (mrg8 (mrg3 ++ [a]) []).
+rewrite - app_assoc. rewrite app_nil_r.
+
+(* now apply rule to d and d0 *)
+eapply derI. apply rsmr. eapply merge_ctxtgI.
+eapply merge_ctxtI. exact X. exact s9. exact s5.
+exact (dlCons d (dersrec_singleI d0)).
+rewrite - app_assoc. rewrite app_nil_r. reflexivity.
+
+intros q inq.  eapply (rsub_trans _ rsq).
+intros q inq.  eapply (rsub_trans _ rsq).
+
 Unshelve.
 apply fmlsruleg_mono.
-intros ps0 c0 cq.
-destruct inq2 ; apply InT_mapE in i ; cD ; subst q ; exact (ctrqrules_I cq).
-Qed.
+specialize (H0 _ (InT_appR _ inq)). cD.  subst.
+intros u v. apply ctrqrules_I.
+
+apply fmlsruleg_mono.
+specialize (H0 _ (InT_appL _ inq)). cD.  subst.
+intros u v. apply ctrqrules_I. Qed.
 
 Print Implicit merge_paramL_ngl.
 
@@ -1062,4 +1035,3 @@ apply (hs2_maell_Q adm_exch_maell (get_botrule _) (get_botrule _)
  (bot_is_rule _) (bot_is_rule _)).  Qed.
 
 Print Implicit cut_adm_maell_Q.
-

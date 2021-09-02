@@ -103,11 +103,9 @@ cut_adm_mall
 
 ll_camq.v: adding exponentials - or rather the rules for them
 
-merge_ctr_lem: lemma about merging and contraction, used for merge_paramL_ngl
-
 merge_paramL_ngl: a complex lemma needed for the situation where
 the cut formulae are n copies of ?A on the left, and !A on the right,
-where the !A is principal ((Bang rule on the right)
+where the !A is principal (Bang rule on the right)
 and the n copies of ?A on the left are parametric,
 and the rule on the left is one which merges contexts;
 then after doing inductive cuts, the context on the right 
@@ -138,10 +136,9 @@ those formulae, which are all Query formulae (context of Bangrule)
 
 long proof - should try to split this up into multiple lemmas
 
-query_bang_n_ht: similar to query_bang_mQ_ht, except that this one is
-about osscang, query_bang_mQ_ht is about osscamQ
-
-similar proofs, is one redundant? query_bang_n_ht not used
+query_bang_n_ht: similar to query_bang_mQ_ht, and similar proofs,
+except that this one is about osscang, query_bang_mQ_ht is about osscamQ
+(REMOVED AS NEVER USED)
 
 reminder: osscamQ allows cut formula to be Query _ on either side
 and in that case, any number of copies of it,
