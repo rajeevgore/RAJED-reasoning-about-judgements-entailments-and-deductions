@@ -55,8 +55,7 @@ Definition merge_dbl_ctr_lem' W rules xs ys zs cc m :=
   dual and isubfml are generic *)
 
 Lemma merge_paramL_ngl V (A : LLfml V) rules dual n any prsl prsr xs ys zs
-  drsb psa psb ca cb 
-  (adm_exch : forall seq seq', swapped seq' seq -> adm rules [seq'] seq) :
+  drsb psa psb ca cb :
   rsub prsl (fun _ => sing) -> rsub prsr (fun _ => sing) ->
   merge_ctxt xs ys prsl psa ca -> leT n (length xs) ->
   fmlsrule [] (map (@Query V) zs) prsr psb cb -> 
@@ -64,8 +63,7 @@ Lemma merge_paramL_ngl V (A : LLfml V) rules dual n any prsl prsr xs ys zs
   gen_step2 (osscangl dual rules n) (Query A) any (derrec rules emptyT)
     drsb psa ca psb cb.
 Proof. intros pls prs mcp lxs mqr rsq rsmr. unfold gen_step2.
-intros sub fpl fpr dl dr. clear sub fpr.
-clear dl dr. 
+intros sub fpl fpr dl dr. clear sub fpr dl dr. 
 apply osscanglI. intros. apply osscanI.
 intros * cae cbe mrg.
 inversion mcp. clear mcp. subst.
@@ -139,8 +137,7 @@ intros u v. apply ctrqrules_I. Qed.
 Print Implicit merge_paramL_ngl.
 
 Lemma merge_paramL_ngl_QT V (A : LLfml V) rules dual n any prsr xs ys zs
-  drsb psa psb ca cb 
-  (adm_exch : forall seq seq', swapped seq' seq -> adm rules [seq'] seq) :
+  drsb psa psb ca cb :
   rsub prsr (fun _ => sing) ->
   merge_ctxt xs ys Tensrule psa ca -> 
   fmlsrule [] (map (@Query V) zs) prsr psb cb -> 
@@ -149,9 +146,9 @@ Lemma merge_paramL_ngl_QT V (A : LLfml V) rules dual n any prsr xs ys zs
     drsb psa ca psb cb.
 Proof. intros prs mcp mqr rsq rsmr.
 pose (leT_or_gt n (length xs)) as lg. destruct lg.
-eapply (merge_paramL_ngl _ _ _ adm_exch (rsubI _ _ tens_sing)
+eapply (merge_paramL_ngl _ _ _ (rsubI _ _ tens_sing)
   prs mcp l mqr rsq rsmr).
-epose (merge_paramL_ngl _ _ _ adm_exch (rsubI _ _ tens_sing) 
+epose (merge_paramL_ngl _ _ _ (rsubI _ _ tens_sing) 
   prs mcp (leT_n _) mqr rsq rsmr).
 pose (leT_trans (leT_S (leT_n _)) l) as lxn. 
 apply leT_ex_plus in lxn. cD. subst. 
@@ -465,51 +462,15 @@ cases on leT n (length Φ1), but then have fpl, fpr, saa involving osscang
 so can't use princ_paramL_n
 *)
 
-Lemma gs_ctr_ng W (A : W) rules dual any drsa drsb psa psb ca cb :
-  rsub (fmlsruleg (ctrrule A)) rules -> fmlsruleg (ctrrule A) psa ca ->
+(* gs_wcn_ng accommodates both weakening and contraction *)
+Lemma gs_wcn_ng W (A : W) ncw rules dual any drsa drsb psa psb ca cb :
+  rsub (fmlsruleg (wcnrule ncw A)) rules -> fmlsruleg (wcnrule ncw A) psa ca ->
   gen_step2 (osscang dual rules) A any drsa drsb psa ca psb cb.
 Proof. intros rsfw fwa saa fpl fpr da db.  split. intro n.
 pose (fmlsrule_g_ex fwa) as fxy. cD. clear fwa.
 pose (leT_or_gt n (length fxy)) as lg. destruct lg.
 - (* parametric case *) (* next step unfolds gen_step2 *)
-  eapply (princ_paramL_n any drsa drsb (@ctr_sing _ _) fxy1 l rsfw).
-+ intros A' aaa dl dls dr drs.  specialize (saa A' aaa dl dls dr drs).
-destruct saa.  exact (o n).
-+ fpxtac'' fpl.  destruct (snd fpxa). exact (o n).
-+ fpxtac'' fpr.  destruct (snd fpxa). exact (o n).
-+ exact da.  + exact db.
-- (* two parametric cases, excluded by n > length fxy, and principal case *)
-clear fpr saa.
-destruct fxy1. destruct c0. unfold fmlsext. simpl.
-apply osscanI. intros * cae cbe mrg.
-acacD'T2 ; subst.
-(* two parametric cases, excluded by condition n > length fxy *)
-+ rewrite app_length in l. rewrite repeat_length in l.
-destruct (leT_S_F (leT_trans l (leT_plus_l _ _))).
-+ rewrite app_nil_r in cae0. subst. rewrite repeat_length in l.
-destruct (leT_S_F l).
-+ (* principal case *)
-apply repeat_eq_app in cae0. cD. destruct cae3 ; inversion cae4.
-clear cae4. subst.
-simpl in fpl.  unfold fmlsext in fpl.  simpl in fpl.
-inversion fpl. clear fpl X0. destruct X.
-inversion o.  specialize (X (S (S (Nat.add cae0 cae3)))).  inversion X.
-simpl in X0. rewrite -> repeat_add in X0.
-specialize (X0 ls rs ms).
-require X0.  list_assoc_l.  apply (f_equal (fun a => a ++ ls)).
-clear X X0 o da d H0 l.
-induction cae0 ; simpl. reflexivity.
-exact (f_equal (cons A) IHcae0).
-exact (X0 eq_refl mrg). Qed.
-
-Lemma gs_wk_ng W (A : W) rules dual any drsa drsb psa psb ca cb :
-  rsub (fmlsruleg (wkrule A)) rules -> fmlsruleg (wkrule A) psa ca ->
-  gen_step2 (osscang dual rules) A any drsa drsb psa ca psb cb.
-Proof. intros rsfw fwa saa fpl fpr da db.  split. intro n.
-pose (fmlsrule_g_ex fwa) as fxy. cD. clear fwa.
-pose (leT_or_gt n (length fxy)) as lg. destruct lg.
-- (* parametric case *) (* next step unfolds gen_step2 *)
-  eapply (princ_paramL_n any drsa drsb (@wk_sing _ _) fxy1 l rsfw).
+  eapply (princ_paramL_n any drsa drsb (@wcn_sing _ _ _) fxy1 l rsfw).
 + intros A' aaa dl dls dr drs.  specialize (saa A' aaa dl dls dr drs).
 destruct saa.  exact (o n).
 + fpxtac'' fpl.  destruct (snd fpxa). exact (o n).
@@ -529,24 +490,29 @@ destruct (leT_S_F l).
 apply repeat_eq_app in cae0. cD. destruct cae3 ; inversion cae4.
 clear cae4. subst.
 simpl in fpl.  unfold fmlsext in fpl.  simpl in fpl.
-inversion fpl. clear fpl X0. destruct X.
-inversion o.  specialize (X (Nat.add cae0 cae3)).  inversion X.
+inversion fpl. clear fpl X0. destruct X.  inversion o.
+
+specialize (X (Nat.add ncw (Nat.add cae0 cae3))).  inversion X.
 rewrite -> repeat_add in X0.
-rewrite -> app_assoc in X0.
-exact (X0 _ _ _ eq_refl eq_refl mrg). Qed.
+rewrite -> !app_assoc in X0.
+apply (X0 ls rs ms).
+rewrite - !repeat_add.
+rewrite (PeanoNat.Nat.add_comm cae0 ncw).
+rewrite (PeanoNat.Nat.add_assoc). reflexivity.
+reflexivity. exact mrg. Qed.
 
-Check gs_wk_ng.
+Check gs_wcn_ng.
 
-Lemma ctr_neq_paramL V (A B : LLfml V) rules drsa drsb psa ca psb cb :
-  rsub (fmlsruleg (ctrrule (Query B))) rules -> 
-  fmlsruleg (ctrrule (Query B)) psa ca -> A <> Query B -> 
+Lemma wcn_neq_paramL V (A B : LLfml V) ncw rules drsa drsb psa ca psb cb :
+  rsub (fmlsruleg (wcnrule ncw (Query B))) rules -> 
+  fmlsruleg (wcnrule ncw (Query B)) psa ca -> A <> Query B -> 
   gen_step2 (osscamQ dual rules) A empty_relT drsa drsb psa ca psb cb.
 Proof. intros rscr ctra anb.
 apply fmlsrule_g_ex in ctra. cD.
 apply gs_ossca_mQ_lem.
 - eapply gs2_eq.  intro.  apply req_sym.  apply osscam_nn_eq.
 eapply princ_paramL_nn_ne.
-+ apply ctr_sing.
++ apply wcn_sing.
 + exact ctra1.
 + intros * ctrpc.  destruct ctrpc.
 eexists. reflexivity.  intro ba.  exact (anb (eq_sym ba)).
@@ -556,7 +522,7 @@ eexists. reflexivity.  intro ba.  exact (anb (eq_sym ba)).
 apply gs_osscang_Q_lem.  apply gs_osscan_g_lem.
 intro n.  apply gs2_osscann_n.
 eapply princ_paramL_nn_ne.
-+ apply ctr_sing.
++ apply wcn_sing.
 + exact ctra1.
 + intros * ctrpc.  destruct ctrpc.
 eexists. reflexivity.  intro ba.  exact (anb (eq_sym ba)).
@@ -567,7 +533,7 @@ apply gs_osscang_Q'_lem.  apply gs_osscan_g_lem.
 intro n.  apply gs2_osscann_n.
 apply gs2_osscann_dual_e'.
 eapply princ_paramL_nn_ne.
-+ apply ctr_sing.
++ apply wcn_sing.
 + exact ctra1.
 + intros * ctrpc.  destruct ctrpc.
 eexists. reflexivity. simpl. rewrite dual_dual.
@@ -575,45 +541,7 @@ intro ba.  exact (anb (eq_sym ba)).
 + exact rscr.
 Qed.
 
-Lemma wk_neq_paramL V (A B : LLfml V) rules drsa drsb psa ca psb cb :
-  rsub (fmlsruleg (wkrule (Query B))) rules -> 
-  fmlsruleg (wkrule (Query B)) psa ca -> A <> Query B -> 
-  gen_step2 (osscamQ dual rules) A empty_relT drsa drsb psa ca psb cb.
-Proof. intros rswr wka anb.
-apply fmlsrule_g_ex in wka. cD.
-apply gs_ossca_mQ_lem.
-- eapply gs2_eq.  intro.  apply req_sym.  apply osscam_nn_eq.
-eapply princ_paramL_nn_ne.
-+ apply wk_sing.
-+ exact wka1.
-+ intros * wkpc.  destruct wkpc.
-eexists. reflexivity.  intro ba.  exact (anb (eq_sym ba)).
-+ exact rswr.
-
-- apply gs_osscaQ_lem. intros. subst.
-apply gs_osscang_Q_lem.  apply gs_osscan_g_lem.
-intro n.  apply gs2_osscann_n.
-eapply princ_paramL_nn_ne.
-+ apply wk_sing.
-+ exact wka1.
-+ intros * wkpc.  destruct wkpc.
-eexists. reflexivity.  intro ba.  exact (anb (eq_sym ba)).
-+ exact rswr.
-
-- apply gs_osscaQ'_lem. intros. subst.
-apply gs_osscang_Q'_lem.  apply gs_osscan_g_lem.
-intro n.  apply gs2_osscann_n.
-apply gs2_osscann_dual_e'.
-eapply princ_paramL_nn_ne.
-+ apply wk_sing.
-+ exact wka1.
-+ intros * wkpc.  destruct wkpc.
-eexists. reflexivity. simpl. rewrite dual_dual.
-intro ba.  exact (anb (eq_sym ba)).
-+ exact rswr.
-Qed.
-
-Check ctr_neq_paramL.  Check wk_neq_paramL.
+Check wcn_neq_paramL.
 
 Lemma Q_or_not {V} A : {A' : _ & A = @Query V A'} + forall A', A <> @Query V A'.
 destruct A.
@@ -622,34 +550,36 @@ all: right ; intros A' H ; inversion H. Qed.
 
 Axiom fml_eq_or_not : forall {V} (A : LLfml V), forall B, (A = B) + (A <> B).
 
-Lemma gs2_wk_Q V (A : LLfml V) B rules any drsa drsb psa psb ca cb :
-  rsub (fmlsruleg (wkrule (Query B))) rules ->
-  fmlsruleg (wkrule (Query B)) psa ca ->
+Lemma gs2_wcn_Q V (A B : LLfml V) ncw rules any drsa drsb psa psb ca cb :
+  rsub (fmlsruleg (wcnrule ncw (Query B))) rules ->
+  fmlsruleg (wcnrule ncw (Query B)) psa ca ->
   gen_step2 (osscamQ dual rules) A any drsa drsb psa ca psb cb.
 Proof. intros rswr fwa.
 pose (fml_eq_or_not A (Query B)). sD.
 + subst.  apply gen_step2_empty.
-apply gs2_ng_mQ. exact (gs_wk_ng _ _ _ rswr fwa).
+apply gs2_ng_mQ. exact (gs_wcn_ng _ _ _ rswr fwa).
 (* where cut-formula is different from formula that is conclusion of rule,
 must be a parametric case *)
 + apply (gen_step2_sub_mono (rsub_emptyT _)).
-exact (wk_neq_paramL _ _ rswr fwa s).
+exact (wcn_neq_paramL _ _ rswr fwa s).
 Qed.
 
-Lemma gs2_ctr_Q V (A : LLfml V) B rules any drsa drsb psa psb ca cb :
-  rsub (fmlsruleg (ctrrule (Query B))) rules ->
-  fmlsruleg (ctrrule (Query B)) psa ca ->
+Lemma gs2_wc_Q V (A B : LLfml V) ncw wcrule
+  (wcreq : req (wcrule (Query B)) (wcnrule ncw (Query B)))
+  rules any drsa drsb psa psb ca cb :
+  rsub (fmlsruleg (wcrule (Query B))) rules ->
+  fmlsruleg (wcrule (Query B)) psa ca ->
   gen_step2 (osscamQ dual rules) A any drsa drsb psa ca psb cb.
-Proof. intros rswr fwa.
-pose (fml_eq_or_not A (Query B)). sD.
-+ subst.  apply gen_step2_empty.
-apply gs2_ng_mQ. exact (gs_ctr_ng _ _ _ rswr fwa).
-(* where cut-formula is different from formula that is conclusion of rule,
-must be a parametric case *)
-+ apply (gen_step2_sub_mono (rsub_emptyT _)).
-exact (ctr_neq_paramL _ _ rswr fwa s).
-Qed.
+Proof. intros rs fra. eapply gs2_wcn_Q.
+eapply rsub_trans. 2: exact rs.
+apply fmlsruleg_mono.  exact (snd wcreq).
+revert fra.  apply (fmlsruleg_mono (fst wcreq)). Qed.
 
+Definition gs2_wk_Q V (A B : LLfml V) := @gs2_wc_Q V A B _ _ (wk_wcn _).
+Definition gs2_ctr_Q V (A B : LLfml V) := @gs2_wc_Q V A B _ _ (ctr_wcn _).
+
+Check gs2_ctr_Q.  Check gs2_wk_Q.
+  
 (* cut-formula Query, mall_rules on the right *)
 Lemma gs2_Query_mall_Q V A rules drsl psl psr cl cr  
   (rsr : rsub mall_rules rules) : @mall_rules V psr cr ->
@@ -718,8 +648,7 @@ destruct llp as [psa ca ra|psa ca ra|psa ca ra|psa ca ra|psa ca ra|psa ca ra] ;
 exact (rsub_trans (rsubI _ _ princ_mallI) (rsubI _ _ mall_maellI)).
 
 ++ (* merge_ctxtg Tensrule, parametric as different formula *)
-destruct m.
-eapply merge_paramL_ngl_QT.  apply adm_exch_maell.
+destruct m.  eapply merge_paramL_ngl_QT.  
 exact (rsubI _ _ bang_sing).  exact m.
 
 eapply OSctxt_eq.  * apply Bangrule_I.  * reflexivity.

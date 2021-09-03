@@ -153,6 +153,22 @@ Inductive ctrqrules {V} : rlsT (list (LLfml V)) :=
 Inductive wcrule {W} A : rlsT (list W) :=
   | wcrule_I : forall n, wcrule A [repeat A n] [A].
   
+Inductive wcnrule {W} n A : rlsT (list W) :=
+  | wcnrule_I : wcnrule n A [repeat A n] [A].
+  
+Lemma ctr_wcn {W} A : req (@ctrrule W A) (wcnrule 2 A).
+Proof. split ; intros u v X ; destruct X.
+- pose (@wcnrule_I W 2 A).  rewrite BinInt.ZL0 in w. exact w.
+- rewrite BinInt.ZL0. apply ctrrule_I. Qed.
+
+Lemma wk_wcn {W} A : req (@wkrule W A) (wcnrule 0 A).
+Proof. split ; intros u v X ; destruct X.
+- pose (@wcnrule_I W 0 A). exact w.
+- apply wkrule_I. Qed.
+
+Lemma wcn_sing {V} n A : rsub (@wcnrule V n A) (fun _ => sing).
+Proof. apply rsubI. intros * wr.  destruct wr. apply singI. Qed.
+
 Lemma wk_sing {V} A : rsub (@wkrule V A) (fun _ => sing).
 Proof. apply rsubI. intros * wr.  destruct wr. apply singI. Qed.
 
