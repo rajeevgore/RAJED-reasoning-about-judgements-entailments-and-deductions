@@ -271,7 +271,7 @@ Proof. intro. destruct xs ; simpl in H ; inversion H.
 apply map_eq_nil in H2. subst. exists a ; reflexivity. Qed.
 
 (* lemma for Query and Bang rules, where Bang principal 
-  as with gs_ctr_ng and gs_wk_ng can't express whether Query rule principal *)
+  as with gs_wcn_ng can't express whether Query rule principal *)
 
 Lemma query_bang_mQ_ht V (A : LLfml V) zs 
   (dta dtb : derrec_fc maell_rules emptyT) psa psb ca cb 
@@ -423,14 +423,14 @@ destruct r ; simpl in H1 ; inversion H1.
 - (* llprinc, non-null left context *)
 apply (gen_step2_sub_mono (rsub_emptyT _)).  apply gs_osscang_Q_lem.
 apply gs_osscan_g_lem. intro n.
-exact (princ_paramR_n_e _ _ llprinc_sing 
+exact (princ_paramR_n _ _ _ llprinc_sing 
   (OSctxt _ _ _ _ _ X0) (rsub_trans princ_mallI rsmr)).
 - (* tensor rule *)
 inversion X. subst.  destruct cl. 
 + inversion X0. destruct X1. inversion H. 
 + apply (gen_step2_sub_mono (rsub_emptyT _)).  apply gs_osscang_Q_lem.
 apply gs_osscan_g_lem. intro n.
-exact (merge_paramR_n_e _ tens_sing X0 (rsub_trans tens_mallI rsmr)).
+exact (merge_paramR_n _ _ tens_sing X0 (rsub_trans tens_mallI rsmr)).
 - (* Onerule *) inversion X.
 - (* Idrule *) inversion X.
 - (* Idrule *) inversion X.
@@ -594,13 +594,13 @@ inversion X1. unfold fmlsext in H1. simpl in H1.
 destruct X as [ psb cb rb|psb cb rb|psb cb rb|psb cb rb|psb cb rb|psb cb rb] ; 
 (* following gets all cases of cut where formulae not duals *)
 (destruct rb ; simpl in H1 ; inversion H1).
-+ eapply princ_paramR_n_e. apply llprinc_sing. exact X1. 
++ eapply princ_paramR_n. apply llprinc_sing. exact X1. 
 exact (rsub_trans (rsubI _ _ princ_mallI) rsr).
 - (* merge_ctxtg Tensrule on right *)
 inversion X. destruct cl. subst.
 + (* no left context, so principal formula should be Bang *)
 inversion X0. destruct X1. inversion H.
-+ eapply merge_paramR_n_e.  apply tens_sing. exact X0.
++ eapply merge_paramR_n.  apply tens_sing. exact X0.
 exact (rsub_trans (rsubI _ _ tens_mallI) rsr).
 - inversion X.  - inversion X.  - inversion X. Qed.
 
@@ -886,7 +886,8 @@ destruct (s _ ae).
 apply gs_osscaQ'_lem.  intros * ae * cle. subst.
 apply gs_osscang_Q'_lem. clear s.
 apply gs_osscan_g_lem. intro n.
-exact (princ_paramR_n_e _ _ (rsubI _ _ query_sing) X2 (rsubI _ _ query_maellI)).
+exact (princ_paramR_n _ _ _ 
+  (rsubI _ _ query_sing) X2 (rsubI _ _ query_maellI)).
 Qed.
 
 Lemma hs2_maell_Q V (A : LLfml V)

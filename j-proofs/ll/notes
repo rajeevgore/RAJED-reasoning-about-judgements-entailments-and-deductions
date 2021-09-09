@@ -170,13 +170,13 @@ gs_mall_q: mall_rules on right, cut-formula is Query on left
 (so must be parametric on right)
 gs_mall_q' is symmetric version
 
-gs_ctr_ng, gs_wk_ng: contraction or weakening on A the left 
+gs_wcn_ng: contraction or weakening on A the left 
 (principal or not), cut on A
 
-ctr_neq_paramL, wk_neq_paramL: contraction or weakening on ?B,
+wcn_neq_paramL: contraction or weakening on ?B,
 cut-formula is A, different from ?B - so parametric
 
-gs2_ctr_Q, gs2_wk_Q: general, weakening or contraction on left 
+gs2_wcn_Q, gs2_ctr_Q, gs2_wk_Q: general, weakening or contraction on left 
 
 gs2_Query_mall_Q: cut formula Query _, mall_rules on right
 

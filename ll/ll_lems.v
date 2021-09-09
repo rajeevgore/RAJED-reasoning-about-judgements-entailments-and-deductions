@@ -222,10 +222,9 @@ Proof. intro hs. pose (hs2_osscamQ_dual hs).
 rewrite -> dual_dual in h. exact h. Qed.
 
 (* need different proof for empty_relT, not using dual_sub *)
-Lemma gs2_osscann_dual_e V (A : LLfml V) rules nl nr drsa drsb psa ca psb cb :
+Lemma gs2_osscann_dual_e V A rules nl nr any drsa drsb psa ca psb cb :
   gen_step2 (osscann dual rules nl nr) A empty_relT drsa drsb psa ca psb cb ->
-  gen_step2 (osscann dual rules nr nl) (dual A) empty_relT
-    drsb drsa psb cb psa ca.
+  gen_step2 (osscann dual rules nr nl) (@dual V A) any drsb drsa psb cb psa ca.
 Proof. unfold gen_step2.  intros gs sd fpl fpr db da.
 apply osscann_dual.  apply gs.
 intros A' saa dl ddl dr ddr.  inversion saa.
@@ -252,11 +251,11 @@ eapply ForallTD_forall in fpl. cD. split.
 exact fpl. exact (osscann_dual' _ fpl0).  exact inxp. }
 exact da.  exact db. Qed.
 
-Lemma gs2_osscann_dual_e' V (A : LLfml V) rules nl nr drsa drsb psa ca psb cb :
-  gen_step2 (osscann dual rules nl nr) (dual A)
+Lemma gs2_osscann_dual_e' V A rules nl nr any drsa drsb psa ca psb cb :
+  gen_step2 (osscann dual rules nl nr) (@dual V A)
     empty_relT drsa drsb psa ca psb cb ->
-  gen_step2 (osscann dual rules nr nl) A empty_relT drsb drsa psb cb psa ca.
-Proof. intro gs. pose (gs2_osscann_dual_e gs). 
+  gen_step2 (osscann dual rules nr nl) A any drsb drsa psb cb psa ca.
+Proof. intro gs. pose (gs2_osscann_dual_e any gs). 
 rewrite -> dual_dual in g. exact g. Qed.
 
 Lemma gs2_osscann_dual' V (A : LLfml V) rules nl nr drsa drsb psa ca psb cb :

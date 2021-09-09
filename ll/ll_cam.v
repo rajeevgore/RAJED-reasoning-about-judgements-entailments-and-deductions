@@ -130,17 +130,13 @@ exact ps. exact fpa. simpl. apply leT_n_S. apply leT_0_n.
 exact rsr. Qed.
 
 (* note princ_paramR is the case n=1 of this *)
-Definition princ_paramR_n V A rules n prs x xs ys
+Definition princ_paramR_n V A rules any n prs x xs ys
   drsa drsb psa psb ca cb rps fp rsr :=
-  gs2_osscann_n (gs2_osscann_dual' (gs2_osscan'_nn (@princ_paramL_n'
-  V (dual A) rules n isubfml prs x xs ys drsb drsa psb psa cb ca rps fp rsr))).
-
-(* use empty_relT rather than isubfml to get dual result *)
-Definition princ_paramR_n_e V A rules n prs x xs ys
-  drsa drsb psa psb ca cb rps fp rsr :=
-  gs2_osscann_n (gs2_osscann_dual_e' (gs2_osscan'_nn 
+  gs2_osscann_n (gs2_osscann_dual_e' any (gs2_osscan'_nn 
     (@princ_paramL_n' V (dual A)
-    rules n empty_relT prs x xs ys drsb drsa psb psa cb ca rps fp rsr))).
+    rules n _ prs x xs ys drsb drsa psb psa cb ca rps fp rsr))).
+
+Check princ_paramR_n.
 
 Lemma merge_paramL_n V (A : LLfml V) rules n any prs x xs ys
   drsb psa psb ca cb : rsub prs (fun _ => sing) ->
@@ -206,19 +202,13 @@ Definition merge_paramR V A rules prs x xs ys psa psb ca cb rps mcp rsmr :=
 
 Check merge_paramL.  Check merge_paramR.
 
-Definition merge_paramR_n V A rules prs n x xs ys 
+Definition merge_paramR_n V A rules prs n any x xs ys 
     drsa psa psb ca cb rps mcp rsmr :=
-  gs2_osscann_n (gs2_osscann_dual' (gs2_osscan'_nn 
+  gs2_osscann_n (gs2_osscann_dual_e' any (gs2_osscan'_nn 
     (@merge_paramL_n _ (dual A : LLfml V)
-  rules n isubfml prs x xs ys drsa psb psa cb ca rps mcp rsmr))).
+  rules n _ prs x xs ys drsa psb psa cb ca rps mcp rsmr))).
 
-Definition merge_paramR_n_e V A rules prs n x xs ys 
-    drsa psa psb ca cb rps mcp rsmr :=
-  gs2_osscann_n (gs2_osscann_dual_e' (gs2_osscan'_nn 
-    (@merge_paramL_n _ (dual A : LLfml V)
-  rules n empty_relT prs x xs ys drsa psb psa cb ca rps mcp rsmr))).
-
-Check merge_paramL_n.  Check merge_paramR_n.  Check merge_paramR_n_e.
+Check merge_paramL_n.  Check merge_paramR_n.
 
 Lemma plusL_wth V (A : LLfml V) rules ys zs drsa drsb psa psb ca cb :
   fmlsrule [] ys PlusLrule psa ca -> 
