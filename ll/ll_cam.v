@@ -14,6 +14,7 @@ Require Import lldefs ll_lems ll_exch.
 Require Import gstep gentree.
 
 (* dual and subformula relation are arbitrary *)
+
 Lemma princ_paramL_nn W (A : W) rules dual nl nr any prs xs ys
   drsa drsb psa psb ca cb : rsub prs (fun _ => sing) ->
   fmlsrule xs ys prs psa ca -> leT nl (length xs) ->

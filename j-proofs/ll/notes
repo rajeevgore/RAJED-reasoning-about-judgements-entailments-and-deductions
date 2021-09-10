@@ -57,11 +57,12 @@ ll_lems.v: most of this file is a massive number of lemmas relating
   two different ways of merging us and vs are admissible one from the other)
 
 ll_exch.v: proof that exchange is admissible for maell (and also mall),
-using der_trf which relies on the fact that for any rul ps/c,
+using der_trf which relies on the fact that for any rule ps/c,
 given an exchanged version c' of the conclusion,
 there is a rule ps'/c' giving c' from exchanged versions ps' of the premises
 (this property being can_trf_rules).
-This also gives height-preserving exchange using lemma der_trf_ht. 
+This also gives height-preserving exchange (needed in ll_camq.v)
+using lemma der_trf_ht (this is just one extra line). 
 
 ll_ca.v: attempt to prove admissibility of the version of cut 
 where the contexts are simply concatenated, not merged
@@ -132,9 +133,15 @@ and where it is principal, in which case the case of n=1 is covered by
 query_bang, but the case of n>1 is more difficult, it requires
 inductive cuts of n-1 copies of ?A then cut of A, and as each of these
 introduces the context of the Bangrule on the right, we need to contract
-those formulae, which are all Query formulae (context of Bangrule)
-
-long proof - should try to split this up into multiple lemmas
+those formulae, which are all Query formulae (context of Bangrule);
+it is also more difficult because we need to first do exchange to
+get the n-1 copies of ?A together at the front (which also requires
+height-preserving exchange);
+the Coq proof is more difficult because the whole lemma is to show
+height_step2_tr ... (the lemma using induction on the height),
+but in the case it turns out to be a parametric use of Queryrule on the left,
+we have to fit the lemma princ_paramL_n to the case where all the
+inductive assumptions are about height-preserving cuts
 
 query_bang_n_ht: similar to query_bang_mQ_ht, and similar proofs,
 except that this one is about osscang, query_bang_mQ_ht is about osscamQ
@@ -183,12 +190,29 @@ gs2_Query_mall_Q: cut formula Query _, mall_rules on right
 gs2_osscan0_Bang: special case of principal Bang rule on right,
 zero copies of Query A removed on left
 
+gs2_Bang_pr_mall_Q: mall_rules on left, principal Bangrule on right
+
 gs2_Bangrule_mall_Q: Bangrule on left, mall_rules on right
 
 gs2_B_B_n: Bangrule on both sides, cut-formula is Query _
+Bangrule on both sides (so Bangrule on the right is principal),
+which gives you that the context on both sides are query formulae,
+so Bangrule as last step is possible
+
+as above, but any cut-formula, but in fact cut-formula must be
+Bang _ or Query _, so is as gs2_B_B_n or dual of it
 gs2_B_B: Bangrule on both sides, any cut-formula
 
 hs2_Bangrule_maell_Q: Bangrule on the left, induction on height of derivation
+
+if Bangrule has non empty left context, then cut-formula must be Query _
+in this case the rule on the right is parametric, or is a principal
+Bangrule (when gs2_B_B applies)
+
+if Bangrule has empty left context, then cut-formula must be Bang _
+and the Bangrule on the left is principal, so the rule on the right is
+either parametric or is principal Queryrule, in which case
+query_bang_mQ_ht applies
 
 hs2_Query_maell_Q: any rules on either side, cut-formula Query _,
   induction on height of derivation
@@ -199,20 +223,35 @@ hs2_maell_Q: putting all above together
 
 cut_adm_maell_Q: the actual result
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+things to write about general methodology
+(1) derrec, derl, etc (file general/ddT.v)
+(2) derivation trees as things, the difficulties of this,
+(mentioned in emails to/from Raj below) (file general/dd_fc.v)
+(3) der_trf and der_trf_ht (file general/gstep.v)
+including issues of der_trf_derl and der_trf_rtc but not both (?)
+can_trf_rules, can_trf_rules_rc, can_trf_rules_rtc 
+(4) gen_step, gen_step', gen_step2 (file general/gstep.v) 
+gen_step_lemT, gen_step2_lemT (also versions with premises)
+also some generalized versions
+(5) inductive proofs for actual tree (file general/gentree.v)
+won't be able to discuss all of these in detail!
+gen_step_tr, gen_step_c, gf2_step_tr, and results linking these
+gs_gsc, gstr_gf2, gsc_gstr, 
+lemmas enabling inductive proofs for a tree,
+gen_step_c_lem, gen_step_tr_lem, gf2_step_tr_lem,
+and for induction on height (similarly on size),
+height_step_tr, height_step_tr_lem, gs_tr_height, 
+and gs_hs, linking gen_step to this 
+then the same for results about two trees (eg cut admissibility)
+gen_step2_tr, gen_step2_c, gf_step2_tr,
+gs2_gs2c, gs2tr_gf2, gs2c_gs2tr, 
+lemmas enabling inductive proofs for two trees
+gen_step2_c_lem, gen_step2_tr_lem, gf_step2_tr_lem,
+and for induction on heights (similarly on sizes), 
+height_step2_tr, height_step2_tr_lem, gs2_tr_height, gs2_hs2
+then induction on sum of heights
+sumh_step2_tr, sum_step2_tr_gf2, sum_step2_tr_lem, gf2_sum,
+sumh_step2_tr_lem, hs2_sumh
 
 relevant emails to/from Raj (in email folder project)
 

@@ -40,6 +40,7 @@ Lemma gen_step_def: forall (seq fml : Type) P A sub derivs ps (concl : seq),
   ForallT (fun p => prod (derivs p) (P A p)) ps -> derivs concl -> P A concl).
 Proof.  intros. unfold gen_step. reflexivity. Qed.
     
+(* same as gen_step, but defined inductively *)
 Inductive gen_step' (seq fml : Type) P A (sub : fml -> fml -> Type)
   derivs ps (concl : seq) := 
   | gsI : ((forall A', sub A' A -> (forall x, derivs x -> P A' x)) ->

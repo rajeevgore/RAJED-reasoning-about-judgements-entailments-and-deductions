@@ -249,6 +249,7 @@ Definition one_bot_q V A rules ys drsa psa psb ca cb rla rlb :=
   gs2_osscamq_dual' 
     (@bot_one_q V (dual A) rules _ ys drsa psb psa cb ca rlb rla).
 
+(* query_bang not used *)
 Lemma query_bang V (A : LLfml V) rules ys zs drsa drsb psa psb ca cb :
   fmlsrule [] ys Queryrule psa ca -> fmlsrule [] zs Bangrule psb cb -> 
   gen_step2 (osscam dual rules) A isubfml drsa drsb psa ca psb cb.
@@ -295,13 +296,14 @@ pose (fmlsrule_g_ex fqa) as fxy. cD.
 pose (leT_or_gt n (length fxy)) as lg. destruct lg.
 
 - (* parametric case *) 
-(* would be simpler to use usenX above if it is valid, and gs_osscan_g_ht_lem *)
+(* complicated to move princ_paramL_n to _ht context, for this one case,
+  especially after expanding height_step2_tr and using osscaQ_mQ *)
 epose (princ_paramL_n empty_relT (derrec maell_rules emptyT)
   (derrec maell_rules emptyT) (@query_sing _) fxy1 l (rsubI _ _ query_maellI)).
 (* eapply gs2_gs2c in g. fails *)
 epose (fst (gs2_gs2c _ _ _ d d0) g).
 eapply gs2c_gs2tr in g0.  eapply gs2_tr_height in g0.
-destruct g0. (* this does a lot! *)
+clear saa. destruct g0. (* this does a lot! *)
 + intros A' eaa. inversion eaa.
 + intros dtp m.  specialize (fpl dtp m).
 unfold dt2fun in fpl.  unfold dt2fun.  destruct fpl.  destruct p.
@@ -312,7 +314,7 @@ destruct o0.  specialize (o0 A eq_refl).  destruct o0. exact (o0 n).
 + apply osscanI.  rewrite !der_fc_concl_eq in d1.  exact d1.
 
 - (* two parametric cases, excluded by n > length fxy, and principal case *)
-destruct fxy1. destruct q. unfold fmlsext. simpl.
+destruct fxy1. destruct q. unfold fmlsext. simpl. clear fpr.
 apply osscanI. intros * cae cbe mrg.
 acacD'T2 ; subst.
 (* two parametric cases, excluded by condition n > length fxy *)
@@ -357,6 +359,7 @@ pose (eq_rect_r _ d3 H0).  apply dersrec_singleD in d4.
 specialize (saa (fcI d4) (AccT_measure _ _) (AccT_measure _ _)).
 unfold dt2fun in saa. destruct saa.
 rewrite !der_fc_concl_eq in o0.  destruct o0.  simpl in d5.
+
 epose (merge_doubles_via_der mrg) as mrgd. cD.
 require mrgd. intros q inmq.  apply InT_mapE in inmq. cD. subst.
 apply rsubI.  apply ctrqrules_I.
@@ -367,6 +370,7 @@ Qed.
 
 (* note goal for this one is osscam because of the complications
   for merge_paramL where Bang or Query involved *) 
+(* gs_tens_maell and gs_maell_tens not used *)
 Lemma gs_tens_maell V (A : LLfml V) rules psa psb ca cb
   (rs : rsub maell_rules rules)
   (adm_exch : forall seq seq' : list (LLfml V),
@@ -421,14 +425,14 @@ unfold fmlsext in H1. simpl in H1.
 destruct X0 as [ ps c r | ps c r | ps c r | ps c r | ps c r | ps c r ] ;
 destruct r ; simpl in H1 ; inversion H1.
 - (* llprinc, non-null left context *)
-apply (gen_step2_sub_mono (rsub_emptyT _)).  apply gs_osscang_Q_lem.
+apply gs_osscang_Q_lem.
 apply gs_osscan_g_lem. intro n.
 exact (princ_paramR_n _ _ _ llprinc_sing 
   (OSctxt _ _ _ _ _ X0) (rsub_trans princ_mallI rsmr)).
 - (* tensor rule *)
 inversion X. subst.  destruct cl. 
 + inversion X0. destruct X1. inversion H. 
-+ apply (gen_step2_sub_mono (rsub_emptyT _)).  apply gs_osscang_Q_lem.
++ apply gs_osscang_Q_lem.
 apply gs_osscan_g_lem. intro n.
 exact (merge_paramR_n _ _ tens_sing X0 (rsub_trans tens_mallI rsmr)).
 - (* Onerule *) inversion X.
@@ -436,8 +440,8 @@ exact (merge_paramR_n _ _ tens_sing X0 (rsub_trans tens_mallI rsmr)).
 - (* Idrule *) inversion X.
 Qed.
 
-Definition gs_mall_q' V A rules drsb psa psb ca cb rsmr ae ma :=
-  gs2_Q_Q' (@gs_mall_q V (dual A) rules _ drsb psb psa cb ca rsmr ae ma).
+Definition gs_mall_q' V A rules any drsb psa psb ca cb rsmr ae ma :=
+  gs2_Q_Q' any (@gs_mall_q V (dual A) rules _ drsb psb psa cb ca rsmr ae ma).
 
 Check gs_mall_q.  Check gs_mall_q'.
 
@@ -503,10 +507,10 @@ reflexivity. exact mrg. Qed.
 
 Check gs_wcn_ng.
 
-Lemma wcn_neq_paramL V (A B : LLfml V) ncw rules drsa drsb psa ca psb cb :
+Lemma wcn_neq_paramL V (A B : LLfml V) ncw rules any drsa drsb psa ca psb cb :
   rsub (fmlsruleg (wcnrule ncw (Query B))) rules -> 
   fmlsruleg (wcnrule ncw (Query B)) psa ca -> A <> Query B -> 
-  gen_step2 (osscamQ dual rules) A empty_relT drsa drsb psa ca psb cb.
+  gen_step2 (osscamQ dual rules) A any drsa drsb psa ca psb cb.
 Proof. intros rscr ctra anb.
 apply fmlsrule_g_ex in ctra. cD.
 apply gs_ossca_mQ_lem.
@@ -560,8 +564,7 @@ pose (fml_eq_or_not A (Query B)). sD.
 apply gs2_ng_mQ. exact (gs_wcn_ng _ _ _ rswr fwa).
 (* where cut-formula is different from formula that is conclusion of rule,
 must be a parametric case *)
-+ apply (gen_step2_sub_mono (rsub_emptyT _)).
-exact (wcn_neq_paramL _ _ rswr fwa s).
++ exact (wcn_neq_paramL _ _ _ rswr fwa s).
 Qed.
 
 Lemma gs2_wc_Q V (A B : LLfml V) ncw wcrule
@@ -581,33 +584,37 @@ Definition gs2_ctr_Q V (A B : LLfml V) := @gs2_wc_Q V A B _ _ (ctr_wcn _).
 Check gs2_ctr_Q.  Check gs2_wk_Q.
   
 (* cut-formula Query, mall_rules on the right *)
-Lemma gs2_Query_mall_Q V A rules drsl psl psr cl cr  
+Lemma gs2_Query_mall_Q V A rules any drsl psl psr cl cr  
   (rsr : rsub mall_rules rules) : @mall_rules V psr cr ->
-  gen_step2 (osscamQ dual rules) (Query A) empty_relT drsl 
+  gen_step2 (osscamQ dual rules) (Query A) any drsl 
     (derrec rules emptyT) psl cl psr cr.
 Proof. intro mr. apply gs2_ng_mQ. apply gs_osscan_g_lem.
 intro n.  apply gs2_osscan_lem. intros. subst.
 inversion mr ; subst.
-- apply fmlsrule_g_ex in X. cD. destruct X.
-+ (* no left context, so principal formula should be Bang *)
+- (* llprinc rules on right *)
+apply fmlsrule_g_ex in X. cD. destruct X.
++ (* no left context, so principal formula Bang - but no such mall_rule *)
 inversion X1. unfold fmlsext in H1. simpl in H1.
 destruct X as [ psb cb rb|psb cb rb|psb cb rb|psb cb rb|psb cb rb|psb cb rb] ; 
 (* following gets all cases of cut where formulae not duals *)
 (destruct rb ; simpl in H1 ; inversion H1).
-+ eapply princ_paramR_n. apply llprinc_sing. exact X1. 
++ (* non-trivial left context - so parametric *)
+eapply princ_paramR_n. apply llprinc_sing. exact X1. 
 exact (rsub_trans (rsubI _ _ princ_mallI) rsr).
 - (* merge_ctxtg Tensrule on right *)
 inversion X. destruct cl. subst.
 + (* no left context, so principal formula should be Bang *)
 inversion X0. destruct X1. inversion H.
-+ eapply merge_paramR_n.  apply tens_sing. exact X0.
++ (* non-trivial left context - so parametric *)
+eapply merge_paramR_n.  apply tens_sing. exact X0.
 exact (rsub_trans (rsubI _ _ tens_mallI) rsr).
+(* remaining rules don't allow context - so wrong formula *)
 - inversion X.  - inversion X.  - inversion X. Qed.
 
 Print Implicit gs2_Query_mall_Q.
 
-Lemma gs2_osscan0_Bang V A drsr psl cl cr :
-  gen_step2 (osscan dual maell_rules 0) (Query (dual A)) empty_relT
+Lemma gs2_osscan0_Bang V A any drsr psl cl cr :
+  gen_step2 (osscan dual maell_rules 0) (Query (dual A)) any
     (derrec maell_rules emptyT) drsr psl cl [A :: map (@Query V) cr]
     (Bang A :: map (@Query V) cr).
 Proof.  unfold gen_step2. intros saa fpl fpr dl dr. clear saa fpl fpr dr.
@@ -621,21 +628,17 @@ intros q inq. apply InT_mapE in inq.  cD. subst.
 apply rsubI.  apply wkqrules_I.
 exact (dersrec_singleI dl). Qed.
 
-Lemma gs2_Bangrule_mall_Q V A drsl psl psr cl cr : @mall_rules V psr cr ->
-  fmlsrulegq (@Query V) Bangrule psl cl -> 
-  gen_step2 (osscamQ dual maell_rules) A empty_relT drsl
-    (derrec maell_rules emptyT) psl cl psr cr.
-Proof. intros mr fbl. inversion fbl. subst.
+(* principal Bang rule on right, mall rules on left *)
+Lemma gs2_Bang_pr_mall_Q V A any ys drsr psl psr cl cr :
+  @mall_rules V psl cl -> fmlsrule [] (map (@Query V) ys) Bangrule psr cr -> 
+  gen_step2 (osscamQ dual maell_rules) (@Query V (dual A)) any 
+    (derrec maell_rules emptyT) drsr psl cl psr cr.
+Proof. intros ml fqbr. destruct fqbr. destruct b. sfs.
 apply gs2_osscamQ_lem ; intros * cle cre. 
-destruct cl0. 
-- (* no left context, so cut-formula is Bang or Query *)
-unfold fmlsext. simpl. destruct X.
-unfold fmlsext in cle. simpl in cle. destruct cle.
--- inversion e. (* cut formula is Bang *)
-apply gs2_osscamQ_dual_e'. (* now cut formula is Query, mall rules on left *)
-simpl. clear A' cre e fbl H0 H1 ls rs.
-apply gs2_ng_mQ.  apply gs_osscang_l_lem. intro n.
-destruct mr.
+clear cle. destruct cre ; inversion e. subst. clear e.
+rewrite !dual_dual.  apply gs2_ng_mQ.
+apply gs_osscang_l_lem. intro n.
+destruct ml. (* to get cases for mall_rules on the left *)
 ++ (* llprinc, parametric as different formula *)
 apply gs_osscan_gl_lem. intros m l. clear l.
 destruct m.  apply gs2_osscan0_Bang.  apply gs2_osscann_n.
@@ -650,7 +653,6 @@ exact (rsub_trans (rsubI _ _ princ_mallI) (rsubI _ _ mall_maellI)).
 ++ (* merge_ctxtg Tensrule, parametric as different formula *)
 destruct m.  eapply merge_paramL_ngl_QT.  
 exact (rsubI _ _ bang_sing).  exact m.
-
 eapply OSctxt_eq.  * apply Bangrule_I.  * reflexivity.
 * reflexivity.  * exact ctrq_maell.  * exact tens_maellI.
 
@@ -671,18 +673,40 @@ apply gs_osscan_gl_lem. intros m lmn.
 destruct m. apply gs2_osscan0_Bang.
 apply gs2_osscan_lem.  intros * cle.
 simpl in cle. inversion cle.
+Qed.
 
--- subst.  exact (gs2_Query_mall_Q _ (rsubI _ _ mall_maellI) mr).
+Print Implicit gs2_Bang_pr_mall_Q.
+
+Lemma gs2_Bangrule_mall_Q V A any drsl psl psr cl cr : @mall_rules V psr cr ->
+  fmlsrulegq (@Query V) Bangrule psl cl -> 
+  gen_step2 (osscamQ dual maell_rules) A any drsl
+    (derrec maell_rules emptyT) psl cl psr cr.
+Proof. intros mr fbl. inversion fbl. subst.
+apply gs2_osscamQ_lem ; intros * cle cre. 
+destruct cl0. 
+- (* no left context, so cut-formula is Bang or Query *)
+unfold fmlsext. simpl. destruct X.
+unfold fmlsext in cle. simpl in cle. destruct cle.
+-- inversion e. (* cut formula is Bang *)
+apply gs2_osscamQ_dual_e'. 
+(* now cut formula is Query, mall rules on left, principal Bangrule on right *)
+simpl. clear A' cre e fbl H0 H1 ls rs.
+eapply gs2_Bang_pr_mall_Q. exact mr. 
+eapply OSctxt_eq.  apply Bangrule_I. reflexivity. reflexivity.
+
+-- (* cut formula is Query _ *)
+subst.  exact (gs2_Query_mall_Q _ _ (rsubI _ _ mall_maellI) mr).
 - (* some left context to Bang rule, so cut-formula must be Query *)
 destruct cle.
 + unfold fmlsext in e. simpl in e. inversion e.
-exact (gs2_Query_mall_Q _ (rsubI _ _ mall_maellI) mr).
-+ subst.  exact (gs2_Query_mall_Q _ (rsubI _ _ mall_maellI) mr).
+exact (gs2_Query_mall_Q _ _ (rsubI _ _ mall_maellI) mr).
++ subst.  exact (gs2_Query_mall_Q _ _ (rsubI _ _ mall_maellI) mr).
 Qed.
 
 Print Implicit gs2_Bangrule_mall_Q.
 
-(* Bangrule on both sides *)
+(* Bangrule on both sides, which gives you that the context on both
+  sides are query formulae, so Bangrule as last step is possible *)
 Lemma gs2_B_B_n V A rules any n drsl drsr psl psr cl cr
   (rsbr : rsub (fmlsrulegq (@Query V) Bangrule) rules)
   (fgql : fmlsrulegq (@Query V) Bangrule psl cl)
@@ -726,6 +750,8 @@ apply (merge_app (merge_Lnil _)).  apply mergeLI.  apply (merge_map _ mrg0).
 require e. apply in_or_app. (* this uses In not InT *)
 right. simpl. tauto. inversion e. Qed.
 
+(* as above, but any cut-formula, but in fact cut-formula must be
+  Bang _ or Query _, so is as gs2_B_B_n or dual of it *)
 Lemma gs2_B_B V A rules any drsl drsr psl psr cl cr
   (rsbr : rsub (fmlsrulegq (@Query V) Bangrule) rules)
   (fgql : fmlsrulegq (@Query V) Bangrule psl cl)
@@ -739,10 +765,10 @@ subst. inversion e. subst. exists A0. tauto.
 destruct cl ; simpl in e0 ; inversion e0.
 subst. inversion e. subst. exists l0. tauto.
 subst. exists A'. tauto. }
-clear cle cre.  apply (gen_step2_sub_mono (rsub_emptyT _)).  sD.
+clear cle cre.    sD.
 + subst.  apply gs2_ng_mQ.  apply gs_osscan_g_lem.
 intro n.  exact (gs2_B_B_n _ _ _ rsbr fgql fgqr).
-+ subst.  apply (gen_step2_sub_mono (rsub_emptyT _)).
++ subst.  
 apply gs2_osscamQ_dual_e'. simpl.
 apply gs2_ng_mQ.  apply gs_osscan_g_lem.
 intro n.  exact (gs2_B_B_n _ _ _ rsbr fgqr fgql).
@@ -750,6 +776,7 @@ Qed.
 
 Print Implicit gs2_B_B.
 
+(* Bangrule on left, various rules on right *)
 Lemma hs2_Bangrule_maell_Q V A
   cl (dl : derrec maell_rules emptyT cl)
   cr (dr : derrec maell_rules emptyT cr) 
@@ -760,8 +787,8 @@ Lemma hs2_Bangrule_maell_Q V A
     A isubfml (fcI dl) (fcI dr).
 Proof.  intros mr fgql. destruct mr.
 - (* mall_rules *)
-apply (gs2_hs2 brl brr).  apply (gen_step2_sub_mono (rsub_emptyT _)).
-exact (gs2_Bangrule_mall_Q _ m fgql).
+apply (gs2_hs2 brl brr).  
+exact (gs2_Bangrule_mall_Q _ _ m fgql).
 - (* wkrule *)
 apply (gs2_hs2 brl brr).  apply gs2_osscamQ_dual'.
 eapply gs2_wk_Q.  apply (rsubI _ _ (@wk_maellI _ _)). eassumption.
@@ -784,10 +811,8 @@ eapply (query_bang_mQ_ht _ brr brl f).
 eapply OSctxt_eq.  apply Bangrule_I.  reflexivity.  reflexivity.
 
 ++ (* cut formula is Query, Query rule on right must be parametric *)
-(* TODO - this is duplicated below, in gs2_Query_maell_Q *)
 clear cre. subst.
 apply (gs2_hs2 brl brr). 
-apply (gen_step2_sub_mono (rsub_emptyT _)).
 apply gs2_ng_mQ.  apply gs_osscan_g_lem. intro n.
 apply gs2_osscann_n.  apply gs2_osscann_dual_e'.
 apply (princ_paramL_nn_ne' _ _ _ (rsubI _ _ query_sing) f).
@@ -802,7 +827,6 @@ apply (gs2_hs2 brl brr).
 apply gs2_osscamQ_lem. intros * cle cre.
 pose (Q_or_not A). destruct s. cD. subst A.
 destruct cre. 2: inversion e3. simpl in e3.
-apply (gen_step2_sub_mono (rsub_emptyT _)).
 apply gs2_ng_mQ.  apply gs_osscan_g_lem. intro n.
 apply gs2_osscann_n.  apply gs2_osscann_dual_e'.
 apply (princ_paramL_nn_ne' _ _ _ (rsubI _ _ query_sing) f).
@@ -832,8 +856,7 @@ pose (rsub_id (@maell_rules V)) as rsr. (* rsr was rsub maell_rules rules *)
 inversion mr ; subst.
 - (* mall_rules *)
 apply (gs2_hs2 brl brr).
-apply (gen_step2_sub_mono (rsub_emptyT _)).
-exact (gs2_Query_mall_Q _ (rsub_trans (rsubI _ _ mall_maellI) rsr) X).
+exact (gs2_Query_mall_Q _ _ (rsub_trans (rsubI _ _ mall_maellI) rsr) X).
 - (* wkrule *)
 apply (gs2_hs2 brl brr).
 apply gs2_osscamQ_dual'.  eapply gs2_wk_Q.
@@ -844,7 +867,6 @@ apply gs2_osscamQ_dual'.  eapply gs2_ctr_Q.
 apply (rsub_trans (rsubI _ _ (@ctr_maellI _ _)) rsr). eassumption.
 - (* Queryrule - must be parametric *)
 apply (gs2_hs2 brl brr).
-apply (gen_step2_sub_mono (rsub_emptyT _)).
 apply gs2_ng_mQ.  apply gs_osscan_g_lem. intro n.
 apply gs2_osscann_n.  apply gs2_osscann_dual_e'.
 apply (princ_paramL_nn_ne' _ _ _ (rsubI _ _ query_sing) X).
@@ -882,8 +904,7 @@ destruct (s  _ eq_refl).
 ** exact (princ_paramL _ (rsubI _ _ query_sing) X2 (rsubI _ _ query_maellI)).
 ** apply gs_osscaQ_lem. intros A' ae.
 destruct (s _ ae).
-** apply (gen_step2_sub_mono (rsub_emptyT _)).
-apply gs_osscaQ'_lem.  intros * ae * cle. subst.
+** apply gs_osscaQ'_lem.  intros * ae * cle. subst.
 apply gs_osscang_Q'_lem. clear s.
 apply gs_osscan_g_lem. intro n.
 exact (princ_paramR_n _ _ _ 
@@ -906,8 +927,7 @@ apply (gs2_hs2 brl brr).
 + apply gs_ossca_mQ_lem. 
 * exact (gs_mall' (rsubI _ _ mall_maellI) adm_exch X0 X).
 * exact (gs_mall_q _ _ (rsubI _ _ mall_maellI) adm_exch X).
-* apply (gen_step2_sub_mono (rsub_emptyT _)).
-  exact (gs_mall_q' _ (rsubI _ _ mall_maellI) adm_exch X0).
+* exact (gs_mall_q' _ _ (rsubI _ _ mall_maellI) adm_exch X0).
 (* will want to do the same for other cases of wkrule, ctrrule *)
 + (* wkrule *) 
 apply (gs2_hs2 brl brr).
@@ -918,14 +938,12 @@ eapply gs2_ctr_Q.  apply (rsubI _ _ (@ctr_maellI _ _)). eassumption.
 + (* Queryrule *) 
 apply (gs2_hs2 brl brr).
 pose (Q_or_not A). sD. 
-++ subst.  apply (gen_step2_sub_mono (rsub_emptyT _)).
-exact (gs2_Query_mall_Q _ (rsubI _ _ mall_maellI) X).
+++ subst.  exact (gs2_Query_mall_Q _ _ (rsubI _ _ mall_maellI) X).
 ++ exact (gs2_Q_nQ X0 s).
 
 + (* Bangrule *) 
 apply (gs2_hs2 brl brr).
-apply (gen_step2_sub_mono (rsub_emptyT _)).
-exact (gs2_Bangrule_mall_Q _ X X0).
+exact (gs2_Bangrule_mall_Q _ _ X X0).
 
 - (* wkrule on right *)
 apply (gs2_hs2 brl brr).

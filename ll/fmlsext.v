@@ -43,6 +43,13 @@ Inductive fmlsrule (W : Type) Φ1 Φ2 (pr : rlsT (list W)) : rlsT (list W) :=
   | OSctxt : forall ps c, pr ps c -> 
     fmlsrule Φ1 Φ2 pr (map (fmlsext Φ1 Φ2) ps) (fmlsext Φ1 Φ2 c).
 
+(* specialized version for Bang rule *)
+Inductive fmlsruleq (W U : Type) (f : U -> W) cl cr pr : rlsT (list W) := 
+  | fmlsruleq_I : forall (mcl mcr mc : list W) mps ps c, pr ps c -> 
+    mcl = map f cl -> mcr = map f cr ->
+    mps = map (fmlsext mcl mcr) ps -> mc = fmlsext mcl mcr c ->
+    fmlsruleq f cl cr pr (map (fmlsext mcl mcr) ps) (fmlsext mcl mcr c).
+
 Lemma OSctxt_e: forall (W : Type) (pr : rlsT (list W)) ps U Φ1 Φ2,
   pr ps U -> fmlsrule Φ1 Φ2 pr (map (fmlsext Φ1 Φ2) ps) (Φ1 ++ U ++ Φ2).
 Proof.
@@ -255,7 +262,7 @@ Proof.
   simpl in H. exact H.
 Qed.
 
-(* specialized version for fmlsextg for Bang rule *)
+(* specialized version for Bang rule *)
 Inductive fmlsrulegq W U (f : U -> W) pr : rlsT (list W) :=
   | fmlsrulegq_I : forall (cl cr : list U) (mcl mcr mc : list W) mps ps c,
     pr ps c -> mcl = map f cl -> mcr = map f cr -> 

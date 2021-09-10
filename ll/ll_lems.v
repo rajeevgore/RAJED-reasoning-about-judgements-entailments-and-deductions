@@ -186,9 +186,9 @@ Lemma gs2_osscamQ_dual' {V} (A : LLfml V) rules drsa drsb psa ca psb cb :
 Proof. intro gs. pose (gs2_osscamQ_dual gs). 
 rewrite -> dual_dual in g. exact g. Qed.
 
-Lemma gs2_osscamQ_dual_e {V} (A : LLfml V) rules drsa drsb psa ca psb cb :
+Lemma gs2_osscamQ_dual_e {V} (A : LLfml V) rules any drsa drsb psa ca psb cb :
   gen_step2 (osscamQ dual rules) A empty_relT drsa drsb psa ca psb cb ->
-  gen_step2 (osscamQ dual rules) (dual A) empty_relT drsb drsa psb cb psa ca.
+  gen_step2 (osscamQ dual rules) (dual A) any drsb drsa psb cb psa ca.
 Proof. unfold gen_step2.  intros gs sd fpl fpr db da.
 apply osscamQ_dual.  apply gs.
 intros A' saa.  destruct saa.
@@ -196,10 +196,10 @@ fpxtac'' fpr. exact (osscamQ_dual' _ (snd fpxa)).
 fpxtac'' fpl. exact (osscamQ_dual' _ (snd fpxa)).
 exact da.  exact db. Qed.
 
-Lemma gs2_osscamQ_dual_e' {V} (A : LLfml V) rules drsa drsb psa ca psb cb :
+Lemma gs2_osscamQ_dual_e' {V} (A : LLfml V) rules any drsa drsb psa ca psb cb :
   gen_step2 (osscamQ dual rules) (dual A) empty_relT drsb drsa psb cb psa ca ->
-  gen_step2 (osscamQ dual rules) A empty_relT drsa drsb psa ca psb cb.
-Proof. intro gs. pose (gs2_osscamQ_dual_e gs). 
+  gen_step2 (osscamQ dual rules) A any drsa drsb psa ca psb cb.
+Proof. intro gs. pose (gs2_osscamQ_dual_e any gs). 
 rewrite -> dual_dual in g. exact g. Qed.
 
 Lemma hs2_osscamQ_dual {V} (A : LLfml V) rules 
@@ -451,9 +451,10 @@ unfold dt2fun in X2.  unfold dt2fun.  destruct X2. exact (o n).
 - destruct (X X0 X1 X2). exact (o n).  Qed.
 
 (* version with isubfml fails because the subformula isn't Query _ *)
-Lemma gs_osscang_Q_lem {V} rules A dual dls drs psa psb ca cb:
+
+Lemma gs_osscang_Q_lem {V} rules A any dual dls drs psa psb ca cb:
   gen_step2 (osscang dual rules) (Query A) empty_relT dls drs psa ca psb cb ->
-  gen_step2 (@osscaQ V dual rules) (Query A) empty_relT dls drs psa ca psb cb.
+  gen_step2 (@osscaQ V dual rules) (Query A) any dls drs psa ca psb cb.
 Proof. unfold gen_step2. intros oqn saa fpl fpr dl dr.
 apply osscaQI.  intros A0 qe.  apply oqn ; clear oqn.
 - intros A' er. inversion er.
@@ -461,19 +462,19 @@ apply osscaQI.  intros A0 qe.  apply oqn ; clear oqn.
 - fpxtac'' fpr. pose (snd fpxa). destruct o. exact (o A eq_refl).
 - exact dl.  - exact dr. Qed.
 
-Lemma gs_osscang_Qi_lem {V} rules A dual dls drs psa psb ca cb:
+Lemma gs_osscang_Qi_lem {V} rules A dual any dls drs psa psb ca cb:
   gen_step2 (@osscaQ V dual rules) (Query A) empty_relT dls drs psa ca psb cb ->
-  gen_step2 (osscang dual rules) (Query A) empty_relT dls drs psa ca psb cb.
+  gen_step2 (osscang dual rules) (Query A) any dls drs psa ca psb cb.
 Proof. unfold gen_step2. intros oqn saa fpl fpr dl dr.
 require oqn.  intros A' er. inversion er.
 require oqn.  fpxtac'' fpl.  apply osscaQI.  intros A0 qe.  exact (snd fpxa).
 require oqn.  fpxtac'' fpr.  apply osscaQI.  intros A0 qe.  exact (snd fpxa).
 specialize (oqn dl dr). destruct oqn. exact (o A eq_refl). Qed.
 
-Lemma gs_osscang_Q'_lem {V} rules A dls drs psa psb ca cb:
+Lemma gs_osscang_Q'_lem {V} rules A any dls drs psa psb ca cb:
   gen_step2 (osscang dual rules) (Query (dual A)) empty_relT
     drs dls psb cb psa ca ->
-  gen_step2 (@osscaQ' V dual rules) (Bang A) empty_relT dls drs psa ca psb cb.
+  gen_step2 (@osscaQ' V dual rules) (Bang A) any dls drs psa ca psb cb.
 Proof. unfold gen_step2. intros oqn saa fpl fpr dl dr.
 apply osscaQI. simpl.  intros A0 qe.  clear qe.
 apply oqn ; clear oqn.
@@ -482,10 +483,9 @@ apply oqn ; clear oqn.
 - fpxtac'' fpl. pose (snd fpxa). destruct o.  simpl in o. exact (o _ eq_refl).
 - exact dr.  - exact dl. Qed.
 
-Lemma gs_osscang_Q'i_lem {V} rules A dls drs psa psb ca cb:
+Lemma gs_osscang_Q'i_lem {V} rules A any dls drs psa psb ca cb:
   gen_step2 (@osscaQ' V dual rules) (Bang A) empty_relT dls drs psa ca psb cb ->
-  gen_step2 (osscang dual rules) (Query (dual A)) empty_relT
-    drs dls psb cb psa ca.
+  gen_step2 (osscang dual rules) (Query (dual A)) any drs dls psb cb psa ca.
 Proof. unfold gen_step2. intros oqn saa fpl fpr dl dr.
 require oqn.  intros A' er. inversion er.
 require oqn.  fpxtac'' fpr.  apply osscaQI.  intros A0 qe. 
@@ -500,9 +500,9 @@ Lemma gs2_ng_m {W} rules (A : W) dual any dls drs psa psb ca cb:
   gen_step2 (osscam dual rules) A any dls drs psa ca psb cb.
 *)
 
-Lemma gs2_ng_mQ {V} rules (A : LLfml V) dls drs psa psb ca cb:
+Lemma gs2_ng_mQ {V} rules (A : LLfml V) any dls drs psa psb ca cb:
   gen_step2 (osscang dual rules) (Query A) empty_relT dls drs psa ca psb cb ->
-  gen_step2 (osscamQ dual rules) (Query A) empty_relT dls drs psa ca psb cb.
+  gen_step2 (osscamQ dual rules) (Query A) any dls drs psa ca psb cb.
 Proof. unfold gen_step2. intros oqn saa fpl fpr dl dr.
 require oqn. intros A' er. destruct er.
 require oqn. fpxtac'' fpl. exact (osscamQ_ng (snd fpxa)).
@@ -511,9 +511,9 @@ exact (osscang_mQ (oqn dl dr)). Qed.
 
 (* following must be empty_relT because osscang doesn't distinguish properly
   between Query and other cut formulae *)
-Lemma hs2_ng_mQ {V} rules (A : LLfml V) (dtl dtr : derrec_fc rules emptyT) :
+Lemma hs2_ng_mQ {V} rules A any (dtl dtr : derrec_fc rules emptyT) :
   height_step2_tr (dt2fun (osscang dual rules)) (Query A) empty_relT dtl dtr ->
-  height_step2_tr (dt2fun (osscamQ dual rules)) (Query A) empty_relT dtl dtr.
+  height_step2_tr (dt2fun (osscamQ dual rules)) (@Query V A) any dtl dtr.
 Proof. unfold height_step2_tr. unfold gf_step2_tr.
  intros hsng sd fpl fpr. 
 require hsng. intros A' er. destruct er.
@@ -634,11 +634,11 @@ apply gs_osscaQ_lem. intros A' ae rs cbe.  specialize (nq _ ae). inversion nq.
 apply gs_osscaQ'_lem. intros A' ae ls cae.  specialize (nb _ ae). inversion nb.
 Qed.
 
-Lemma gs2_Q_Q' V (A : LLfml V) rules drsa drsb psa psb ca cb :
+Lemma gs2_Q_Q' V (A : LLfml V) rules any drsa drsb psa psb ca cb :
   gen_step2 (osscaQ dual rules) (dual A) empty_relT drsb drsa psb cb psa ca ->
-  gen_step2 (osscaQ' dual rules) A empty_relT drsa drsb psa ca psb cb.
+  gen_step2 (osscaQ' dual rules) A any drsa drsb psa ca psb cb.
 Proof. intro.  apply gs_osscaQ'_lem.  intros. subst A.
-exact (gs_osscang_Q'_lem (gs_osscang_Qi_lem X)). Qed.
+exact (gs_osscang_Q'_lem _ (gs_osscang_Qi_lem _ X)). Qed.
 
 (* this fails because gen_step2 (osscaQ ...) and gen_step2 (osscang ...)
   have inductive hypotheses allowing generalised cut for all n 
@@ -654,8 +654,8 @@ Check (fun x => gs2_osscann_n (gs2_osscann_dual (gs2_osscan'_nn x))).
 Check gs_osscan_g_lem.
 Check gs_osscang_Q_lem.  Check gs_osscang_Qi_lem.
 Check gs_osscang_Q'_lem.  Check gs_osscang_Q'i_lem.
-Check (fun x => gs_osscang_Q'_lem (gs_osscang_Qi_lem x)).
-Check (fun x => gs_osscang_Q_lem (gs_osscang_Q'i_lem x)).
+Check (fun x => gs_osscang_Q'_lem _ (gs_osscang_Qi_lem _ x)).
+Check (fun x => gs_osscang_Q_lem _ (gs_osscang_Q'i_lem _ x)).
 *)
 
 Lemma merge_doubles_via_der W rules (xs qs ms : list W) (mrg : merge xs qs ms) 
