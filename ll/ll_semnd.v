@@ -45,8 +45,8 @@ Definition cmlid M m e cm x := proj2 (@cmlide M m e cm x x) eq_refl.
 Check cmass.  Check cmcomm.  Check cmrid.  Check cmlid.
 
 (*
-*)
 Section Phase_Space. (* fix a single phase space *)
+*)
 Variable M : Type.
 Variable m : M -> M -> M -> Prop.
 Variable e : M.
@@ -94,6 +94,18 @@ exact (prodI _ _ (xx _ H) (yy _ H0) H1). Qed.
 Definition tens_sem X Y := dual_sem (dual_sem (prods X Y)).
 Definition par_sem X Y := dual_sem (tens_sem (dual_sem X) (dual_sem Y)).
 
+Inductive idems : M -> Prop := | idemsI : forall x : M, m x x x -> idems x.
+
+Definition idem1 x := (m x x x) /\ dual_sem (dual_sem (eq e)) x.
+(* try idemd as alternative to idem1 *)
+Definition J x := tens_sem (eq x) (eq x) x /\ dual_sem (dual_sem (eq e)) x.
+
+Variable K : M -> Prop.
+
+Hypothesis KsubJ : forall x, K x -> J x.
+Hypothesis Kidem : forall x, tens_sem K K x -> K x.
+Hypothesis Kid : forall x, dual_sem (dual_sem (eq e)) x -> K x.
+
 Lemma tens_sem_mono (X X' Y Y' : M -> Prop) : (forall u, X u -> X' u) ->
   (forall u, Y u -> Y' u) -> (forall u, tens_sem X Y u -> tens_sem X' Y' u).
 Proof. unfold tens_sem. intros xx yy. apply dd_mono. 
@@ -115,14 +127,8 @@ exact (yy _ (xy _ _ (xx _ xv) muvw)). Qed.
 Definition lolli_sem_mono' X X' Y Y' u pxy xx yy :=
   @lolli_sem_mono X X' Y Y' xx yy u pxy.
 
-Inductive idems : M -> Prop := | idemsI : forall x : M, m x x x -> idems x.
-
-Definition idem1 x := (m x x x) /\ dual_sem (dual_sem (eq e)) x.
-(* try idemd as alternative to idem1 *)
-Definition idemd x := tens_sem (eq x) (eq x) x /\ dual_sem (dual_sem (eq e)) x.
-
-Definition query_sem X := dual_sem (fun x => dual_sem X x /\ idemd x).
-Definition bang_sem X := dual_sem (dual_sem (fun x => X x /\ idemd x)).
+Definition query_sem X := dual_sem (fun x => dual_sem X x /\ K x).
+Definition bang_sem X := dual_sem (dual_sem (fun x => X x /\ K x)).
 Definition bang_query X :
   dual_sem (query_sem X) = bang_sem (dual_sem X) := eq_refl.
 
@@ -162,7 +168,8 @@ Proof. unfold fact. intros dx dy u ddc. split.
 
 Lemma fact_tens X Y : fact (tens_sem X Y).  Proof. apply fact_dual. Qed.
 
-Axiom fact_idemd : fact idemd. (* can we prove this? *)
+Axiom fact_J : fact J. (* can we prove this? *)
+Axiom fact_K : fact K. (* can we prove this? *)
 
 Lemma fact_dd_eq X : fact X -> dual_sem (dual_sem X) = X.
 Proof. intro fx. apply iff_app_eq. intro x. split.
@@ -700,13 +707,12 @@ Proof. apply par_sem_mono. tauto. apply query_sound. Qed.
 
 Lemma bang_sound (X : M -> Prop) : X e -> bang_sem X e.
 Proof. unfold bang_sem. rewrite dual_sem_e. intro sa.
-intros u. unfold dual_sem. unfold lolli_sem. unfold idemd.
+intros u. unfold dual_sem. unfold lolli_sem.
 intros dsi. specialize (dsi e u). require dsi.
-apply (conj sa).  split ; apply dual_dual_sem.
-eapply prodI ; try reflexivity.  apply (cmlid cmM _). trivial.
+apply (conj sa). apply Kid. apply dual_dual_sem. reflexivity.
 exact (dsi (cmrid cmM _)). Qed.
 
-Lemma bang_sound' (X : M -> Prop) u : idemd u -> X u -> bang_sem X u.
+Lemma bang_sound' (X : M -> Prop) u : K u -> X u -> bang_sem X u.
 Proof. intros idu xu. unfold bang_sem.
 apply dual_dual_sem. tauto. Qed.
 
@@ -715,28 +721,32 @@ Lemma bang_ctxt_sound (X Y : M -> Prop) : fact Y ->
 Proof. unfold query_sem.
 intros fy qxy.
 apply par_sem_bwd'.
-apply fact_int. apply fact_dual. apply fact_idemd.
+apply fact_int. apply fact_dual. apply fact_K.
 apply (par_sem_fwd fy) in qxy.
 rewrite lolli_sem_e.  rewrite -> lolli_sem_e in qxy.
 intros x dsi.  exact (bang_sound' _ (proj2 dsi) (qxy _ dsi)).  Qed.
 
 Print Implicit par_sem_fwd.
 
+Lemma K_e_lem Y x : fact Y -> Y e -> K x -> Y x.
+Proof. intros fy ye kx.  pose (KsubJ kx) as jx.
+unfold J in jx.  apply (fy x).  destruct jx.
+revert H0.  apply dd_mono.  intros. subst. exact ye. Qed.
+
 Lemma wk_ctxt_sound (X Y : M -> Prop) : fact Y -> 
   Y e -> par_sem (query_sem X) Y e.
 Proof. intros fy ye.  apply par_sem_bwd'.
-apply fact_int. apply fact_dual. apply fact_idemd.
-rewrite lolli_sem_e.  intro x.  unfold idemd.
-rewrite dual_sem_eq_e'.
-apply factd_iff in fy. destruct fy.  intro cc.  eapply lolli_B.
-exact (proj2 (proj2 cc)).  exact ye.  exact (cmrid cmM _). Qed.
+apply fact_int. apply fact_dual. apply fact_K.
+rewrite lolli_sem_e.  
+intros. apply K_e_lem ; tauto. Qed.
 
 Lemma ctr_lolli_lem (X : M -> Prop) : 
   lolli_sem (bang_sem X) (tens_sem (bang_sem X) (bang_sem X)) e.
 Proof. apply lolli_sem_e. unfold bang_sem. apply ds_ds_ds.
-intros u xui. destruct xui. pose H0. destruct i. revert H1. apply dd_mono.
-apply prods_mono ; intros ; subst ; apply dual_dual_sem ; exact (conj H H0).
-Qed.
+intros u xui. destruct xui.
+pose (KsubJ H0) as ju. unfold J in ju.  destruct ju.
+revert H1. apply tens_sem_mono ; intros ; subst ; 
+  apply dual_dual_sem ; split ; assumption. Qed.
 
 (* dualizing ctr_lolli_lem is harder than the original!! *)
 Lemma ctr_lolli_lemd (X : M -> Prop) : 
@@ -779,5 +789,5 @@ Proof. intros fy pt. apply (par_sem_bot fy).
 apply (par_sem_mono' pt (tens_lolli' fact_bot)). tauto. Qed.
 
 (*
-*)
 End Phase_Space.
+*)
