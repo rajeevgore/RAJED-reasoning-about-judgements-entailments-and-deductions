@@ -56,6 +56,12 @@ exact (merge3LI _ _ _ _ _ _ (inhabits (merge_sym m0)) (inhabits (merge_sym m))).
   definition is consistent with the definitions of the semantic operations
   (corresponding to the formula connectives) *)
 
+(* the K of DLW needs to be a parameter of the semantics,
+which we choose to be the set of lists of query formulae 
+(for DLW, banged formulae)
+so soundness requires certain things like cl K ∅ and K ∘ K ⊆ K.
+and completeness requires K is lists of query formulae *)
+
 (* call this the provability semantics *)
 
 Definition pr_sem V A G := inhabited (derrec (@maell_rules V) emptyT (A :: G)).
@@ -64,6 +70,9 @@ Definition pr_seml V As G :=
 Definition pr_sv {V} v G := 
   inhabited (derrec maell_rules emptyT (@Var V v :: G)).
 Definition prb {V} G := inhabited (derrec (@maell_rules V) emptyT G).
+(* K = lists of query formulae *)
+Inductive K {V} : list (LLfml V) -> Prop := 
+  | K_I : forall G, K (map (@Query V) G). 
 
 Print Implicit sem.
 Print Implicit pr_sv.
@@ -120,8 +129,8 @@ destruct (fst (cut_adm_maell_Q A X0 X)). Qed.
 *)
 
 (* sem_dual instantiated to pr *)
-Definition sem_dual_pr {V} A := 
-  @sem_dual _ _ _ prb (comm_monoid_nd_list _) V pr_sv A fact_pr_sv.
+Definition sem_dual_pr {V} A := @sem_dual _ _ _ prb (comm_monoid_nd_list _)
+  K V pr_sv A fact_pr_sv.
 Definition sem_dual_pr_eq {V} A := iff_app_eq _ _ (@sem_dual_pr V A).
 
 Definition dual_anti_pr {V} := @dual_anti _ mergeP (@prb V).
@@ -167,8 +176,8 @@ rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
 split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
 
 Lemma bang_sem_lem' V A x : x = ([] : list (LLfml V)) -> 
-  (forall u : list (LLfml V), sem mergeP [] prb pr_sv A u -> prb u) -> 
-    dual_sem mergeP prb (sem mergeP [] prb pr_sv A) x /\ mergeP x x x /\
+  (forall u : list (LLfml V), sem mergeP [] prb K pr_sv A u -> prb u) -> 
+    dual_sem mergeP prb (sem mergeP [] prb K pr_sv A) x /\ mergeP x x x /\
     dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
 Proof. intros xe sip. rewrite mergeP_same_eq. subst.
 pose (comm_monoid_nd_list (LLfml V)) as cm.
@@ -176,9 +185,9 @@ rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
 split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
 
 Lemma bang_sem_lem V A x : (forall u : list (LLfml V),
-  sem mergeP [] prb pr_sv A u -> prb u) -> 
+  sem mergeP [] prb K pr_sv A u -> prb u) -> 
   comm_monoid_nd mergeP ([] : list (LLfml V)) -> x = [] -> 
-    dual_sem mergeP prb (sem mergeP [] prb pr_sv A) x /\ mergeP x x x /\
+    dual_sem mergeP prb (sem mergeP [] prb K pr_sv A) x /\ mergeP x x x /\
     dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
 Proof. intros sip cm xe. rewrite mergeP_same_eq. subst.
 rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
@@ -207,6 +216,9 @@ intros dav me. destruct dav. destruct me. apply inhabits.
 apply merge_singleL in H. cD. subst.
 apply (exch_maell X). swap_tac_Rc. Qed.
 
+Lemma pr_sem_prb V A w : pr_sem A w <-> @prb V (A :: w).
+Proof. reflexivity. Qed.
+
 Lemma sem_pr_par V (sema semb : _ -> Prop) A B
   (IHAa : forall X, sema X -> pr_sem A X)
   (IHAb : forall X, semb X -> pr_sem B X) X :
@@ -227,70 +239,40 @@ exact (dersrec_singleI X0). Qed.
 
 Lemma sem_pr_bang V (sema : _ -> Prop) A
   (IHA : forall X, sema X -> pr_sem A X) X :
-  bang_sem mergeP [] prb sema X -> pr_sem (@Bang V A) X.
+  bang_sem mergeP prb K sema X -> pr_sem (@Bang V A) X.
 Proof. apply ds_ds_fact_pr.
 intros u si. destruct si. specialize (IHA _ H).
-unfold idemd in H0. destruct H0.
-(* need to get that u consists of query formulae,
-  or something pretty much like query formulae *)
-rewrite (dual_sem_eq_e' (@prb V) (comm_monoid_nd_list _)) in H1.
-
-(* at this point H1 says that you can weaken u
-and H0 says you can contract u
-so u is rather like a lot of ?-formulae, but it is not necessarily one
-
-in fact the K of DLW needs to be a parameter of the semantics,
-which we choose to be the set of lists of query formulae 
-(for DLW, banged formulae)
-so soundness requires certain things like cl K ∅ and K ∘ K ⊆ K.
-and completeness requires K is lists of query formulae (?)
-
-former stuff follows 
-apply mergeP_same in H0. subst.
-unfold pr_sem.  unfold pr_sem in IHA.
-(* so here we are asked to use the Bang rule without any context *)
-destruct IHA. apply inhabits.
-eapply derI.  eapply bang_maellI. eapply (fmlsrulegq_I _ _ [] []).
+destruct H0. destruct IHA. apply inhabits.
+eapply derI.  eapply bang_maellI. eapply (fmlsrulegq_I _ _ []).
 eapply Bangrule_I. reflexivity. reflexivity. reflexivity. reflexivity.
-exact (dersrec_singleI X).
-*)
-Admitted.
+exact (dersrec_singleI X0). Qed.
 
-(* this true but no use *)
 Lemma pr_sem_query V A u : pr_sem A u -> pr_sem (@Query V A) u.
 Proof. unfold pr_sem. intro ia. destruct ia. apply inhabits.
 eapply derI.  eapply query_maellI.  eapply (OSgctxt_eq _ _ _ []).
 eapply Queryrule_I. reflexivity. reflexivity.
 exact (dersrec_singleI X). Qed.
 
+Definition dsol W bot := dual_sem_or bot (comm_monoid_nd_list W).
+Definition dsaol W bot := @dsao _ _ _ bot (comm_monoid_nd_list W).
+
 (* this is a sort of monotonicity of query *)
 Lemma sem_pr_query V (sema : _ -> Prop) A 
   (IHA : forall X, sema X -> pr_sem A X) X :
-  query_sem mergeP [] prb sema X -> pr_sem (@Query V A) X.
-Proof. intro ddi.  apply fact_pr_sem. 
-revert X ddi.  apply dual_anti.  intros u dpq.  split.
-- revert u dpq.  apply dual_anti.
-intros u su. specialize (IHA u su). exact (pr_sem_query IHA).
-- unfold idemd.
-Admitted.
+  query_sem mergeP prb K sema X -> pr_sem (@Query V A) X.
+Proof. intro ddi.  unfold query_sem in ddi.
+apply dsaol in ddi.  apply fact_pr_sem.
+revert X ddi. intro. apply dd_mono. intros u sds. destruct sds.
+specialize (IHA u H). exact (pr_sem_query IHA).
+
+apply (H [Query A] _ (K_I [A])).
+apply inhabits.  apply merge_simple_appr.
+apply fact_K.
+Qed.
 
 (*
-why would these be true??
-it seems to ask for proof that an arbitrary u is in idemd
-
-we shouldn't expect this lemma to work - if a query formula is
-semantically valid, then the appropriate rule could be weakening,
-or contraction, or query, or a rule that affects a different formula
-in the sequent
-
-Check dual_sem_or.
-
-apply bang_sem_lem3. (* which should be an equivalence *)
-at this point have goals u = [] and  
-forall u0 : list (LLfml V), sema u0 -> prb u0
-Admitted.
-
 Print Implicit lolli_sem_mono.
+Print Implicit dual_sem_or.
 Print Implicit dd_mono.
 Print Implicit dd_mono_pr.
 Print Implicit dual_anti.
@@ -307,15 +289,11 @@ Print Implicit par_sem_mono_pr.
 Check (ds_ds_fact (comm_monoid_nd_list _)).
 Check (fact_dd_eq_pr (@fact_pr_sem _ _)).
 Print Implicit dd_pr_sem_eq.
-
-SHOULD BE OK FROM HERE
-*)
-
 Print Implicit prodI.
 Print Implicit dual_sub_inv_pr.
+*)
 
-
-Lemma sem_pr V A X : sem mergeP [] prb pr_sv A X -> @pr_sem V A X.
+Lemma sem_pr V A X : sem mergeP [] prb K pr_sv A X -> @pr_sem V A X.
 Proof. revert X. induction A ; simpl.
 - unfold pr_sv. unfold pr_sem. tauto.
 - unfold dual_sem. unfold pr_sem. unfold lolli_sem.

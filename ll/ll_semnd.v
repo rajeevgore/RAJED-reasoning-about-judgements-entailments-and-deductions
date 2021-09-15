@@ -45,8 +45,8 @@ Definition cmlid M m e cm x := proj2 (@cmlide M m e cm x x) eq_refl.
 Check cmass.  Check cmcomm.  Check cmrid.  Check cmlid.
 
 (*
-Section Phase_Space. (* fix a single phase space *)
 *)
+Section Phase_Space. (* fix a single phase space *)
 Variable M : Type.
 Variable m : M -> M -> M -> Prop.
 Variable e : M.
@@ -101,10 +101,6 @@ Definition idem1 x := (m x x x) /\ dual_sem (dual_sem (eq e)) x.
 Definition J x := tens_sem (eq x) (eq x) x /\ dual_sem (dual_sem (eq e)) x.
 
 Variable K : M -> Prop.
-
-Hypothesis KsubJ : forall x, K x -> J x.
-Hypothesis Kidem : forall x, tens_sem K K x -> K x.
-Hypothesis Kid : forall x, dual_sem (dual_sem (eq e)) x -> K x.
 
 Lemma tens_sem_mono (X X' Y Y' : M -> Prop) : (forall u, X u -> X' u) ->
   (forall u, Y u -> Y' u) -> (forall u, tens_sem X Y u -> tens_sem X' Y' u).
@@ -292,6 +288,13 @@ Lemma dual_sem_or X Y v :
 Proof. unfold dual_sem. unfold lolli_sem. repeat split.
 firstorder.  firstorder.  firstorder. Qed.
 
+Lemma dsao k A z : fact k -> dual_sem 
+  (fun x => dual_sem A x /\ k x) z ->
+ dual_sem (dual_sem 
+   (fun y => A y \/ dual_sem k y)) z.
+Proof.  intro fk.  apply dual_anti. intro u.  rewrite dual_sem_or. 
+intro. destruct H. split. exact H. exact (fk _ H0). Qed.
+  
 (* this does NOT hold Lemma dual_sem_and X Y v : 
   dual_sem (fun u => X u /\ Y u) v <-> dual_sem X v \/ dual_sem Y v. *)
 
@@ -561,7 +564,7 @@ Lemma dual_sem_eq_e v : dual_sem (eq e) v <-> bot v.
 Proof. unfold dual_sem. unfold lolli_sem. 
 split. intro. exact (H e v eq_refl (cmrid cmM _)).
 intros bv v0 w ev mvw. subst. apply (cmride cmM) in mvw.
-subst. exact bv. Qed.
+subst v. (* why does subst fail ? *) exact bv. Qed.
 
 Lemma dual_sem_eq_e' : dual_sem (eq e) = bot.
 Proof. apply iff_app_eq. intro x. apply dual_sem_eq_e. Qed.
@@ -697,6 +700,10 @@ Lemma par_sem_bot Y u : fact Y -> par_sem bot Y u -> Y u.
 Proof. intros fy pby.  apply (par_sem_fwd' fy) in pby. 
 exact (pby e u dual_sem_bot (cmrid cmM _)).  Qed.
 
+Hypothesis KsubJ : forall x, K x -> J x.
+Hypothesis Kidem : forall x, tens_sem K K x -> K x.
+Hypothesis Kid : forall x, dual_sem (dual_sem (eq e)) x -> K x.
+
 Lemma query_sound (X : M -> Prop) u : X u -> query_sem X u.
 Proof. apply sub_dual_inv.
 intros v c. destruct c. exact H. Qed.
@@ -789,5 +796,5 @@ Proof. intros fy pt. apply (par_sem_bot fy).
 apply (par_sem_mono' pt (tens_lolli' fact_bot)). tauto. Qed.
 
 (*
-End Phase_Space.
 *)
+End Phase_Space.
