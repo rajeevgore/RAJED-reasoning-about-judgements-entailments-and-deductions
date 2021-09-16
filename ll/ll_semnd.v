@@ -78,6 +78,11 @@ Lemma ddd_iff (X : M -> Prop) v :
   dual_sem (dual_sem (dual_sem X)) v <-> dual_sem X v.
 Proof. split. apply dual_anti. apply dual_dual_sem. apply dual_dual_sem. Qed.
 
+Lemma ddd_iff' (X : M -> Prop) : 
+  dual_sem (dual_sem (dual_sem X)) = dual_sem X.
+apply FunctionalExtensionality.functional_extensionality.
+intro y.  apply ax_prop_ext.  apply ddd_iff. Qed.
+
 Lemma ds_ds_ds (X Y : M -> Prop) : (forall u, X u -> dual_sem Y u) -> 
   (forall u, dual_sem (dual_sem X) u -> dual_sem Y u).
 Proof. intros xdy u ddx.  eapply dd_mono in xdy.
@@ -163,6 +168,12 @@ Proof. unfold fact. intros dx dy u ddc. split.
 - apply dy. revert u ddc. apply dd_mono. tauto. Qed.
 
 Lemma fact_tens X Y : fact (tens_sem X Y).  Proof. apply fact_dual. Qed.
+
+(*
+Lemma fact_J : fact J.
+Proof. apply fact_int.
+- unfold tens_sem. unfold fact. intros u. (* doesn't work *)
+*)
 
 Axiom fact_J : fact J. (* can we prove this? *)
 Axiom fact_K : fact K. (* can we prove this? *)
@@ -288,6 +299,11 @@ Lemma dual_sem_or X Y v :
 Proof. unfold dual_sem. unfold lolli_sem. repeat split.
 firstorder.  firstorder.  firstorder. Qed.
 
+Lemma dual_sem_or' X Y : 
+  dual_sem (fun u => X u \/ Y u) = (fun v => dual_sem X v /\ dual_sem Y v).
+Proof. apply FunctionalExtensionality.functional_extensionality.
+intro x.  apply ax_prop_ext.  apply dual_sem_or. Qed.
+
 Lemma dsao k A z : fact k -> dual_sem 
   (fun x => dual_sem A x /\ k x) z ->
  dual_sem (dual_sem 
@@ -316,6 +332,8 @@ exact (dual_dual_sem (dxy v dxv)). Qed.
 Lemma bot_o x v : (forall y, m v x y -> bot y) <-> dual_sem (eq x) v.
 Proof. unfold dual_sem. unfold lolli_sem.  
 split ; intros ; subst ; firstorder. Qed.
+
+(* so dual_sem (eq v) x <-> dual_sem (eq x) v *)
 
 Lemma prods_comm X Y u : prods X Y u -> prods Y X u.
 Proof. intro pxy. destruct pxy.
@@ -703,6 +721,11 @@ exact (pby e u dual_sem_bot (cmrid cmM _)).  Qed.
 Hypothesis KsubJ : forall x, K x -> J x.
 Hypothesis Kidem : forall x, tens_sem K K x -> K x.
 Hypothesis Kid : forall x, dual_sem (dual_sem (eq e)) x -> K x.
+(* note, at this point DLW has
+  e in cl K, ie dual_sem (dual_sem K) e
+  equiv dual_sem (dual_sem (eq e)) x -> dual_sem (dual_sem K) x
+  which is a weaker condition,
+  and maybe Kidem should be prods K K x -> K x *)
 
 Lemma query_sound (X : M -> Prop) u : X u -> query_sem X u.
 Proof. apply sub_dual_inv.
@@ -739,6 +762,10 @@ Lemma K_e_lem Y x : fact Y -> Y e -> K x -> Y x.
 Proof. intros fy ye kx.  pose (KsubJ kx) as jx.
 unfold J in jx.  apply (fy x).  destruct jx.
 revert H0.  apply dd_mono.  intros. subst. exact ye. Qed.
+
+Lemma ddK_e_lem Y x : fact Y -> Y e -> dual_sem (dual_sem K) x -> Y x.
+Proof. intros fy ye kx. apply (fy x). revert x kx.
+apply dd_mono. intros u ku. exact (K_e_lem fy ye ku). Qed.
 
 Lemma wk_ctxt_sound (X Y : M -> Prop) : fact Y -> 
   Y e -> par_sem (query_sem X) Y e.

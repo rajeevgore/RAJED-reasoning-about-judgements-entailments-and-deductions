@@ -267,8 +267,7 @@ specialize (IHA u H). exact (pr_sem_query IHA).
 
 apply (H [Query A] _ (K_I [A])).
 apply inhabits.  apply merge_simple_appr.
-apply fact_K.
-Qed.
+apply fact_K.  Qed.
 
 (*
 Print Implicit lolli_sem_mono.
@@ -293,6 +292,7 @@ Print Implicit prodI.
 Print Implicit dual_sub_inv_pr.
 *)
 
+(* completeness re this particular semantics *)
 Lemma sem_pr V A X : sem mergeP [] prb K pr_sv A X -> @pr_sem V A X.
 Proof. revert X. induction A ; simpl.
 - unfold pr_sv. unfold pr_sem. tauto.
@@ -350,3 +350,9 @@ Print Implicit dual_sem_bot.
 Print Implicit dual_sem_1_eq.
 Print Implicit comm_monoid_nd_list.
 
+(* from here to completeness: and to cut-admissibility
+Check sem_pr.
+(* cut_sound - assume first tens rule is applied *)
+Check cut_sound.
+Check maell_sound. (* not yet proved *)
+*)
