@@ -746,6 +746,33 @@ Lemma bang_sound' (X : M -> Prop) u : K u -> X u -> bang_sem X u.
 Proof. intros idu xu. unfold bang_sem.
 apply dual_dual_sem. tauto. Qed.
 
+Print Implicit par_sem_eqv.
+Print Implicit fact_dual.
+
+(* try to prove this without using fact_K
+Lemma bang_ctxt_sound' (X Y : M -> Prop) : fact Y -> 
+  par_sem (query_sem X) Y e -> par_sem (query_sem X) (bang_sem Y) e.
+Proof.  intros fy.
+rewrite (fun X => par_sem_eqv X fy).
+rewrite (fun X => @par_sem_eqv X (bang_sem Y) (@fact_dual _)).
+rewrite !lolli_sem_e.
+intros dqy x dq.
+apply bang_sound'.
+unfold dual_sem in dq.
+(* this goes round in circles 
+rewrite - dual_sem_1_eq in dq.
+apply lolli_dual_inv in dq.
+unfold lolli_sem in dq.
+specialize (dq e x eq_refl (cmrid cmM _)).
+*)
+unfold lolli_sem in dq.
+unfold query_sem in dq.
+(* this would be easy if K were a fact *)
+admit.
+exact (dqy _ dq).
+Admitted.
+*)
+
 Lemma bang_ctxt_sound (X Y : M -> Prop) : fact Y -> 
   par_sem (query_sem X) Y e -> par_sem (query_sem X) (bang_sem Y) e.
 Proof. unfold query_sem.
@@ -767,12 +794,23 @@ Lemma ddK_e_lem Y x : fact Y -> Y e -> dual_sem (dual_sem K) x -> Y x.
 Proof. intros fy ye kx. apply (fy x). revert x kx.
 apply dd_mono. intros u ku. exact (K_e_lem fy ye ku). Qed.
 
+(* found a proof of this not requiring fact_K *)
+Lemma wk_ctxt_sound (X Y : M -> Prop) : fact Y -> 
+  Y e -> par_sem (query_sem X) Y e.
+Proof. intros fy ye. rewrite (fun X => par_sem_eqv X fy).
+rewrite lolli_sem_e.  intros x dq.
+unfold dual_sem in dq.
+apply (ddK_e_lem fy ye).
+revert x dq. apply dd_mono. easy. Qed.
+
+(*
 Lemma wk_ctxt_sound (X Y : M -> Prop) : fact Y -> 
   Y e -> par_sem (query_sem X) Y e.
 Proof. intros fy ye.  apply par_sem_bwd'.
 apply fact_int. apply fact_dual. apply fact_K.
 rewrite lolli_sem_e.  
 intros. apply K_e_lem ; tauto. Qed.
+*)
 
 Lemma ctr_lolli_lem (X : M -> Prop) : 
   lolli_sem (bang_sem X) (tens_sem (bang_sem X) (bang_sem X)) e.
