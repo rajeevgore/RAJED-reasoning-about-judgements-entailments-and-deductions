@@ -175,6 +175,10 @@ Proof. apply fact_int.
 - unfold tens_sem. unfold fact. intros u. (* doesn't work *)
 *)
 
+(* can do without these, in soundness proofs,
+  in fact, for specific semantics used in completeness proof,
+  not clear that they are true *)
+(* but still needed in completeness proof in ll_comp.v *)
 Axiom fact_J : fact J. (* can we prove this? *)
 Axiom fact_K : fact K. (* can we prove this? *)
 
@@ -749,8 +753,9 @@ apply dual_dual_sem. tauto. Qed.
 Print Implicit par_sem_eqv.
 Print Implicit fact_dual.
 
-(* try to prove this without using fact_K
-Lemma bang_ctxt_sound' (X Y : M -> Prop) : fact Y -> 
+(* try to prove this without using fact_K - no luck,
+  but proved commutative version below 
+Lemma bang_ctxt_sound (X Y : M -> Prop) : fact Y -> 
   par_sem (query_sem X) Y e -> par_sem (query_sem X) (bang_sem Y) e.
 Proof.  intros fy.
 rewrite (fun X => par_sem_eqv X fy).
@@ -759,12 +764,6 @@ rewrite !lolli_sem_e.
 intros dqy x dq.
 apply bang_sound'.
 unfold dual_sem in dq.
-(* this goes round in circles 
-rewrite - dual_sem_1_eq in dq.
-apply lolli_dual_inv in dq.
-unfold lolli_sem in dq.
-specialize (dq e x eq_refl (cmrid cmM _)).
-*)
 unfold lolli_sem in dq.
 unfold query_sem in dq.
 (* this would be easy if K were a fact *)
@@ -773,6 +772,22 @@ exact (dqy _ dq).
 Admitted.
 *)
 
+Print Implicit par_sem_eqv.
+Print Implicit sub_dual_inv.
+
+(* try the commutative version *)
+Lemma bang_ctxt_sound (X Y : M -> Prop) : fact Y -> 
+  par_sem Y (query_sem X) e -> par_sem (bang_sem Y) (query_sem X) e.
+Proof.  intros fy.
+pose (fun X Z => @par_sem_eqv X _ (@fact_dual Z)).
+rewrite !i.  rewrite !lolli_sem_e.
+intros dyxk x.  apply dual_anti.
+intros u cdk.  unfold bang_sem.
+pose (fy _ (sub_dual_inv (dual_sem Y) dyxk cdk)).
+apply dual_dual_sem.  exact (conj y (proj2 cdk)).
+Qed.
+
+(* this proof uses fact_K, see proof of commutative version above 
 Lemma bang_ctxt_sound (X Y : M -> Prop) : fact Y -> 
   par_sem (query_sem X) Y e -> par_sem (query_sem X) (bang_sem Y) e.
 Proof. unfold query_sem.
@@ -782,6 +797,7 @@ apply fact_int. apply fact_dual. apply fact_K.
 apply (par_sem_fwd fy) in qxy.
 rewrite lolli_sem_e.  rewrite -> lolli_sem_e in qxy.
 intros x dsi.  exact (bang_sound' _ (proj2 dsi) (qxy _ dsi)).  Qed.
+*)
 
 Print Implicit par_sem_fwd.
 
