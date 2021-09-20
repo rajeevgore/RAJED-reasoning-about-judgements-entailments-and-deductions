@@ -133,6 +133,15 @@ Definition bang_sem X := dual_sem (dual_sem (fun x => X x /\ K x)).
 Definition bang_query X :
   dual_sem (query_sem X) = bang_sem (dual_sem X) := eq_refl.
 
+Lemma query_sem_mono (X X' : M -> Prop) :
+  (forall u, X u -> X' u) -> (forall u, query_sem X u -> query_sem X' u).
+Proof. intros xx. apply dual_anti.  intros u dxk. cD. split. 
+revert dxk.  apply (dual_anti _ xx). exact dxk0. Qed.
+
+Lemma bang_sem_mono (X X' : M -> Prop) :
+  (forall u, X u -> X' u) -> (forall u, bang_sem X u -> bang_sem X' u).
+Proof. intros xx. apply dd_mono. firstorder. Qed.
+
 Fixpoint sem {V : Set} (sv : V -> M -> Prop) f := match f with 
   | Var v => sv v
   | DVar v => dual_sem (sv v)
@@ -175,12 +184,12 @@ Proof. apply fact_int.
 - unfold tens_sem. unfold fact. intros u. (* doesn't work *)
 *)
 
-(* can do without these, in soundness proofs,
+(* can do without these, 
   in fact, for specific semantics used in completeness proof,
-  not clear that they are true *)
-(* but still needed in completeness proof in ll_comp.v *)
+  not clear that they are true
 Axiom fact_J : fact J. (* can we prove this? *)
 Axiom fact_K : fact K. (* can we prove this? *)
+  *)
 
 Lemma fact_dd_eq X : fact X -> dual_sem (dual_sem X) = X.
 Proof. intro fx. apply iff_app_eq. intro x. split.

@@ -77,6 +77,8 @@ Inductive K {V} : list (LLfml V) -> Prop :=
 Print Implicit sem.
 Print Implicit pr_sv.
 Print Implicit pr_sem.
+Print Implicit fact_sem.
+
 
 (* a condition of semantics generally (forall v : V, fact m bot (sv v)) *)
 (*
@@ -256,20 +258,30 @@ exact (dersrec_singleI X). Qed.
 Definition dsol W bot := dual_sem_or bot (comm_monoid_nd_list W).
 Definition dsaol W bot := @dsao _ _ _ bot (comm_monoid_nd_list W).
 
+Lemma ds_mrg_query V A : dual_sem mergeP prb (pr_sem A) [@Query V A].
+Proof. intros v w psav mqvw.
+apply pr_sem_query in psav.
+destruct psav.  destruct mqvw.  apply inhabits.
+apply merge_singleL in H. cD. subst.
+apply (exch_maell X). swap_tac_Rc. Qed.
+
 (* this is a sort of monotonicity of query *)
+(* found, with much effort, a proof of this not requiring fact_K *)
 Lemma sem_pr_query V (sema : _ -> Prop) A 
   (IHA : forall X, sema X -> pr_sem A X) X :
   query_sem mergeP prb K sema X -> pr_sem (@Query V A) X.
-Proof. intro ddi.  unfold query_sem in ddi.
-apply dsaol in ddi.  apply fact_pr_sem.
-revert X ddi. intro. apply dd_mono. intros u sds. destruct sds.
-specialize (IHA u H). exact (pr_sem_query IHA).
+Proof. intro ddi. 
+pose (query_sem_mono IHA ddi).
+clearbody q.  clear IHA ddi.
+(* unfold query_sem in q.  unfold dual_sem in q.  unfold lolli_sem in q. 
+pose (q [Query A] (Query A :: X)).  unfold pr_sem.  unfold prb in p.  *)
+apply (q [Query A] (Query A :: X)).  split.
+- apply ds_mrg_query.
+- apply (K_I [A]).
+- apply inhabits. apply merge_simple_appr.
+Qed.
 
-apply (H [Query A] _ (K_I [A])).
-apply inhabits.  apply merge_simple_appr.
-apply fact_K.  Qed.
-
-(*
+Print Implicit query_sem_mono.
 Print Implicit lolli_sem_mono.
 Print Implicit dual_sem_or.
 Print Implicit dd_mono.
@@ -290,7 +302,6 @@ Check (fact_dd_eq_pr (@fact_pr_sem _ _)).
 Print Implicit dd_pr_sem_eq.
 Print Implicit prodI.
 Print Implicit dual_sub_inv_pr.
-*)
 
 (* completeness re this particular semantics *)
 Lemma sem_pr V A X : sem mergeP [] prb K pr_sv A X -> @pr_sem V A X.
