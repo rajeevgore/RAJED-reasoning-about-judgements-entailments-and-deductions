@@ -132,7 +132,7 @@ destruct (fst (cut_adm_maell_Q A X0 X)). Qed.
 
 (* sem_dual instantiated to pr *)
 Definition sem_dual_pr {V} A := @sem_dual _ _ _ prb (comm_monoid_nd_list _)
-  K V pr_sv A fact_pr_sv.
+  K V pr_sv fact_pr_sv A.
 Definition sem_dual_pr_eq {V} A := iff_app_eq _ _ (@sem_dual_pr V A).
 
 Definition dual_anti_pr {V} := @dual_anti _ mergeP (@prb V).
@@ -267,6 +267,7 @@ apply (exch_maell X). swap_tac_Rc. Qed.
 
 (* this is a sort of monotonicity of query *)
 (* found, with much effort, a proof of this not requiring fact_K *)
+(* previous proof of sem_pr_query involving fact_K used dual_sem_or *)
 Lemma sem_pr_query V (sema : _ -> Prop) A 
   (IHA : forall X, sema X -> pr_sem A X) X :
   query_sem mergeP prb K sema X -> pr_sem (@Query V A) X.
