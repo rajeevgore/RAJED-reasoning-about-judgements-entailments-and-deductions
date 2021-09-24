@@ -45,8 +45,8 @@ Definition cmlid M m e cm x := proj2 (@cmlide M m e cm x x) eq_refl.
 Check cmass.  Check cmcomm.  Check cmrid.  Check cmlid.
 
 (*
-*)
 Section Phase_Space. (* fix a single phase space *)
+*)
 Variable M : Type.
 Variable m : M -> M -> M -> Prop.
 Variable e : M.
@@ -607,6 +607,7 @@ Definition tens_lolli' X Y fy u := @tens_lolli X Y u fy.
 Lemma dual_sem_e X : dual_sem X e <-> (forall x, X x -> bot x).
 Proof. unfold dual_sem. apply lolli_sem_e. Qed.
 
+(*
 Lemma dual_sem_eq_e v : dual_sem (eq e) v <-> bot v.
 Proof. unfold dual_sem. unfold lolli_sem. 
 split. intro. exact (H e v eq_refl (cmrid cmM _)).
@@ -615,6 +616,7 @@ subst v. (* why does subst fail ? *) exact bv. Qed.
 
 Lemma dual_sem_eq_e' : dual_sem (eq e) = bot.
 Proof. apply iff_app_eq. intro x. apply dual_sem_eq_e. Qed.
+*)
 
 Lemma par_sem_e_bwd (X Y : M -> Prop) :
   (forall x, X x -> Y x) -> par_sem (dual_sem X) Y e.
@@ -651,6 +653,10 @@ Definition par_sem_dual_eqv X Y fx fy u : iff _ _ :=
 Definition par_sem_eqv X Y fy u : iff _ _ :=
   conj (@par_sem_fwd' X Y u fy) (@par_sem_bwd X Y u). 
   
+Lemma par_sem_e_fwd (X Y : M -> Prop) : fact Y -> 
+  par_sem (dual_sem X) Y e -> (forall x, X x -> Y x).
+Proof. intros fy pd. rewrite - lolli_sem_e.  exact (par_sem_fwd fy pd). Qed.
+ 
 Lemma par_sem_bot Y u : fact Y -> par_sem bot Y u -> Y u.
 Proof. intros fy pby.  apply (par_sem_fwd' fy) in pby. 
 exact (pby e u dual_sem_bot (cmrid cmM _)).  Qed.
@@ -826,6 +832,13 @@ apply dual_dual_sem. tauto. Qed.
 Print Implicit par_sem_eqv.
 Print Implicit fact_dual.
 
+Lemma bang_ctxt_sound_alt (X Y : M -> Prop) : 
+  lolli_sem (bang_sem X) Y e -> lolli_sem (bang_sem X) (bang_sem Y) e.
+Proof. rewrite !lolli_sem_e.  intros bxy x.
+apply ds_ds_ds.  intros u xku. destruct xku.
+pose (bxy _ (bang_sound' _ H0 H)).
+apply dual_dual_sem.  easy. Qed.
+
 (* try to prove this without using fact_K - no luck,
   but proved commutative version below 
 Lemma bang_ctxt_sound (X Y : M -> Prop) : fact Y -> 
@@ -900,6 +913,20 @@ apply fact_int. apply fact_dual. apply fact_K.
 rewrite lolli_sem_e.  
 intros. apply K_e_lem ; tauto. Qed.
 *)
+
+(* actually use these now, not wk_ctxt_sound *)
+Lemma wk_lolli_lem (X : M -> Prop) : lolli_sem (bang_sem X) (dual_sem bot) e.
+Proof. apply lolli_sem_e. unfold bang_sem. apply ds_ds_ds.
+intros u xui. destruct xui.
+pose (KsubJ H0) as ju. unfold J in ju.  destruct ju.
+revert H2. apply dual_anti. intros.
+apply dual_sem_1. exact H2. Qed.
+
+Lemma wk_lolli_lemd (X : M -> Prop) : lolli_sem bot (query_sem X) e.
+Proof. apply lolli_sem_e.  intros x bx v w mbk me.
+pose (KsubJ (proj2 mbk)) as ju. unfold J in ju.  destruct ju.
+rewrite dual_sem_1_eq in H0.
+apply (H0 _ _ bx).  apply (cmcomm cmM). exact me. Qed.
 
 Lemma ctr_lolli_lem (X : M -> Prop) : 
   lolli_sem (bang_sem X) (tens_sem (bang_sem X) (bang_sem X)) e.
@@ -987,12 +1014,12 @@ Proof. intros f pss. destruct f. destruct l.
   easy. Qed.
 
 Lemma mall_sound ps c :
-  @mall_rules V ps c -> ForallT (fun p => seml p e) ps -> seml c e.
+  mall_rules ps c -> ForallT (fun p => seml p e) ps -> seml c e.
 Proof. intros mpc pss.  destruct mpc.
 - (* llprinc *) exact (llprinc_sound f pss).
 - (* Tensrule *) exact (merge_tens_sound m0 pss).
 - (* Onerule *) destruct o. unfold seml. simpl.
-  apply par_sem_e_bwd. intro. rewrite dual_sem_eq_e. easy.
+  apply par_sem_e_bwd. intro. rewrite dual_sem_1. easy.
 - (* Id *) destruct i.  unfold seml. simpl.
   apply par_sem_bwd. rewrite lolli_sem_e. 
   intros. exact (par_sem_botic (@fact_dual _) H).
@@ -1002,18 +1029,86 @@ Proof. intros mpc pss.  destruct mpc.
 Qed.
 
 Print Implicit par_sem_botic.
-Print Implicit eq_rect.
+Print Implicit wk_ctxt_sound.
 
 (*
-Lemma maell_sound {V} sv ps c : (forall v, fact (sv v)) ->
-  @maell_rules V ps c -> ForallT (fun p => seml sv p e) ps -> seml sv c e.
-Proof. intros fsv mpc pss.  destruct mpc.
-- (* mall_rules *) admit.
-- (* weakening *) destruct f. destruct w. sfs.
-  unfold seml.
-  rewrite map_app.
-  rewrite fold_right_app.
+(* TO PROVE *)
+Hypothesis query_seml_eqv : forall clr, 
+  seml (map (Query (V:=V)) clr) = query_sem (seml clr).
+(* maybe not true *)
+
+Lemma par_qq A B : par_sem (query_sem A) (query_sem B) =
+  query_sem (fun x => A x \/ B x).
+Proof. apply iff_app_eq. intro. split ; apply dual_anti ; intros.
+- cD.
+(*
+pose (KsubJ H0) as ju. unfold J in ju.  destruct ju.
+admit.
+
+- split.
++ revert u H.  apply ds_ds_ds.  intros. exact H0.
+intros u pab. destruct pab. admit.
++ apply Kidem. revert u H. apply tens_sem_mono.
+admit. admit.
 *)
+Admitted.
+
+Lemma query_dd A : query_sem (dual_sem (dual_sem A)) = query_sem A.
+Proof. unfold query_sem.  apply f_equal.
+apply iff_app_eq. intro. rewrite ddd_iff. reflexivity. Qed.
+
+(* this one more likely than query_seml_eqv to be right *)
+Lemma query_seml_eqv_plus fs :
+  seml (map (@Query V) fs) = query_sem (sem (fold_right (@plus V) (Zero V) fs)).
+Proof. unfold seml. induction fs ; simpl.
+- unfold query_sem. 
+apply iff_app_eq.
+intro. split.
+
++ apply sub_dual_inv. intros v ddk.
+rewrite -> ddd_iff in ddk. cD.
+pose (KsubJ ddk0) as ju. unfold J in ju.  destruct ju.
+rewrite dual_sem_1_eq in H0. exact H0.
++ apply (dual_sub_inv fact_bot).
+intros v dbv.  rewrite ddd_iff. split.
+eapply (dual_anti _ _ dbv).
+apply Kid. rewrite dual_sem_1_eq. exact dbv.
+
+- simpl. rewrite IHfs. rewrite par_qq.
+rewrite query_dd. reflexivity.
+Unshelve. intros. simpl in H. destruct H. Qed.
+
+(* case of Bangrule - very difficult to get this proof right *)
+Lemma bang_sound_lem ps c (f : fmlsrulegq (Query (V:=V)) Bangrule ps c)
+  (pss : ForallT (fun p => seml p e) ps) : seml c e.
+Proof. destruct f. destruct b. subst.
+inversion pss. clear pss H2. subst.
+revert H1.  rewrite !seml_fe. rewrite !seml_single. 
+rewrite - !lolli_sem_e.  rewrite - !seml_app.  rewrite - !map_app.
+rewrite !query_seml_eqv.  apply bang_ctxt_sound_alt.  Qed.
+
+Lemma maell_sound ps c : 
+  maell_rules ps c -> ForallT (fun p => seml p e) ps -> seml c e.
+Proof. intros mpc pss.  destruct mpc.
+- (* mall_rules *) exact (mall_sound m0 pss).
+- (* weakening *) destruct f. destruct w. 
+  inversion pss. clear pss H2. subst. revert H1.
+  rewrite !seml_fe. intros sa x dp.  pose (sa _ dp). 
+  rewrite seml_single. simpl. 
+  clearbody s. clear dp. revert x s.
+  rewrite - lolli_sem_e. rewrite seml_nil.
+  apply wk_lolli_lemd.
+- (* contraction *) destruct f. destruct c0. 
+  inversion pss. clear pss H2. subst. revert H1.
+  rewrite !seml_fe. intros sa x dp.  pose (sa _ dp). 
+  clearbody s. clear dp sa. revert x s.
+  rewrite seml_cons.  rewrite !seml_single. simpl. 
+  rewrite - lolli_sem_e. apply ctr_lolli_lemd.
+- (* Queryrule *) destruct f. destruct q.
+  inversion pss. clear pss H2. subst.
+  revert H1.  rewrite !seml_fe. rewrite !seml_single. 
+  intros sa x dp.  pose (sa _ dp). simpl.  apply (query_sound s).
+- (* Bangrule *) exact (bang_sound_lem f pss). Qed.
 
 (* cut_sound - assume first tens rule is applied *)
 Lemma cut_sound X Y : fact Y -> par_sem (tens_sem (dual_sem X) X) Y e -> Y e.
@@ -1021,5 +1116,6 @@ Proof. intros fy pt. apply (par_sem_bot fy).
 apply (par_sem_mono' pt (tens_lolli' fact_bot)). tauto. Qed.
 
 (*
-*)
 End Phase_Space.
+*)
+*)
