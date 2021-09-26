@@ -45,8 +45,8 @@ Definition cmlid M m e cm x := proj2 (@cmlide M m e cm x x) eq_refl.
 Check cmass.  Check cmcomm.  Check cmrid.  Check cmlid.
 
 (*
-Section Phase_Space. (* fix a single phase space *)
 *)
+Section Phase_Space. (* fix a single phase space *)
 Variable M : Type.
 Variable m : M -> M -> M -> Prop.
 Variable e : M.
@@ -808,7 +808,10 @@ Hypothesis Kid : forall x, dual_sem (dual_sem (eq e)) x -> K x.
   e in cl K, ie dual_sem (dual_sem K) e
   equiv dual_sem (dual_sem (eq e)) x -> dual_sem (dual_sem K) x
   which is a weaker condition,
-  and maybe Kidem should be prods K K x -> K x *)
+  and maybe Kidem should be prods K K x -> K x,
+  bacause tens_sem K K x -> K x isn't true(?) in the pr_sem semantics *)
+(* something wrong here, since we have 
+  J x = dual_sem (dual_sem (eq e)) x /\ ... -> K x -> J x *)
 
 Lemma query_sound (X : M -> Prop) u : X u -> query_sem X u.
 Proof. apply sub_dual_inv.
@@ -887,6 +890,18 @@ intros x dsi.  exact (bang_sound' _ (proj2 dsi) (qxy _ dsi)).  Qed.
 
 Print Implicit par_sem_fwd.
 
+Lemma K_lolli_refl Y x : fact Y -> K x -> lolli_sem Y Y x.
+Proof. intros fy kx.
+pose (KsubJ kx) as jx.  unfold J in jx.  destruct jx.
+apply (fact_lolli fy). revert H0.  apply dd_mono.
+intros. subst u. apply lolli_same_sound. Qed.
+
+Lemma ddK_lolli_refl Y x : fact Y -> dual_sem (dual_sem K) x -> lolli_sem Y Y x.
+Proof. intros fy ddkx.
+apply (fact_lolli fy). revert ddkx.  apply dd_mono.
+intro u. exact (K_lolli_refl fy). Qed.
+
+(* can prove these from above 
 Lemma K_e_lem Y x : fact Y -> Y e -> K x -> Y x.
 Proof. intros fy ye kx.  pose (KsubJ kx) as jx.
 unfold J in jx.  apply (fy x).  destruct jx.
@@ -895,6 +910,12 @@ revert H0.  apply dd_mono.  intros. subst. exact ye. Qed.
 Lemma ddK_e_lem Y x : fact Y -> Y e -> dual_sem (dual_sem K) x -> Y x.
 Proof. intros fy ye kx. apply (fy x). revert x kx.
 apply dd_mono. intros u ku. exact (K_e_lem fy ye ku). Qed.
+*)
+Lemma K_e_lem Y x : fact Y -> Y e -> K x -> Y x.
+Proof. intros fy ye kx.  apply (K_lolli_refl fy kx ye (cmrid cmM _)). Qed.
+
+Lemma ddK_e_lem Y x : fact Y -> Y e -> dual_sem (dual_sem K) x -> Y x.
+Proof. intros fy ye kx.  apply (ddK_lolli_refl fy kx ye (cmrid cmM _)). Qed.
 
 (* found a proof of this not requiring fact_K *)
 Lemma wk_ctxt_sound (X Y : M -> Prop) : fact Y -> 
@@ -1031,7 +1052,6 @@ Qed.
 Print Implicit par_sem_botic.
 Print Implicit wk_ctxt_sound.
 
-(*
 (* TO PROVE *)
 Hypothesis query_seml_eqv : forall clr, 
   seml (map (Query (V:=V)) clr) = query_sem (seml clr).
@@ -1039,18 +1059,40 @@ Hypothesis query_seml_eqv : forall clr,
 
 Lemma par_qq A B : par_sem (query_sem A) (query_sem B) =
   query_sem (fun x => A x \/ B x).
-Proof. apply iff_app_eq. intro. split ; apply dual_anti ; intros.
-- cD.
-(*
-pose (KsubJ H0) as ju. unfold J in ju.  destruct ju.
-admit.
+Proof. apply iff_app_eq. intro. split ; apply sub_dual_inv ; intros.
+- cD. apply dual_dual_sem.
 
-- split.
-+ revert u H.  apply ds_ds_ds.  intros. exact H0.
-intros u pab. destruct pab. admit.
-+ apply Kidem. revert u H. apply tens_sem_mono.
-admit. admit.
-*)
+pose (KsubJ H0) as ju. unfold J in ju.  destruct ju.
+revert H1.  apply dual_sem_or in H. cD.
+
+apply tens_sem_mono ; intros ; subst ; rewrite bang_query.
+exact (bang_sound' _ H0 H).
+exact (bang_sound' _ H0 H1).
+
+- revert H. apply dd_mono. intros u H.  split.
++ destruct H.
+apply dual_sem_or.
+rewrite bang_query in H.
+rewrite bang_query in H0.
+unfold bang_sem in H.
+unfold bang_sem in H0.
+split.
+++ eapply dd_mono in H. 2: intros u dk ; exact (proj1 dk).
+rewrite -> ddd_iff in H.
+eapply dd_mono in H0. 2: intros u dk ; exact (proj2 dk).
+eapply (ddK_lolli_refl (@fact_dual _)) in H0.
+apply (H0 _ _ H). apply (cmcomm cmM). exact H1.
+++ eapply dd_mono in H. 2: intros u dk ; exact (proj2 dk).
+eapply dd_mono in H0. 2: intros u dk ; exact (proj1 dk).
+rewrite -> ddd_iff in H0.
+eapply (ddK_lolli_refl (@fact_dual _)) in H.
+apply (H _ _ H0 H1).
+ 
++ rewrite !bang_query in H.  destruct H.
+apply Kidem.  apply dual_dual_sem. (* could use Kidem defined using prods *)
+eapply prodI. 3: eassumption.
+unfold bang_sem in H.
+(* at this point need K to be a fact *)
 Admitted.
 
 Lemma query_dd A : query_sem (dual_sem (dual_sem A)) = query_sem A.
@@ -1116,6 +1158,5 @@ Proof. intros fy pt. apply (par_sem_bot fy).
 apply (par_sem_mono' pt (tens_lolli' fact_bot)). tauto. Qed.
 
 (*
+*)
 End Phase_Space.
-*)
-*)
