@@ -325,3 +325,6 @@ Proof. intro mx. destruct xs. reflexivity.  simpl in mx. discriminate mx. Qed.
 
 Ltac name_goal name := refine ?[name].
 
+Lemma inhabited_mono P Q : (P -> Q) -> inhabited P -> inhabited Q.
+Proof. intro pq. apply inhabited_ind. intro p. apply (inhabits (pq p)). Qed.
+

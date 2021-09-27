@@ -70,15 +70,70 @@ Definition pr_seml V As G :=
 Definition pr_sv {V} v G := 
   inhabited (derrec maell_rules emptyT (@Var V v :: G)).
 Definition prb {V} G := inhabited (derrec (@maell_rules V) emptyT G).
+
 (* K = lists of query formulae *)
+(* I think this won't work but instead choose K to be the 
+  set of lists of formula which you can always weaken in 
 Inductive K {V} : list (LLfml V) -> Prop := 
   | K_I : forall G, K (map (@Query V) G). 
 
+Problem: if K is lists of Query formulae then 
+Kid doubtful (is says that formula lists that can always be weakened in 
+are in K ; don't seem to need it
+if K is lists of formulae which you can always weaken in,
+then how do you know they can always be contracted (KsubJc)
+*)
+Inductive K {V} : list (LLfml V) -> Prop := 
+  | K_I : forall G, K (map (@Query V) G). 
+(*
+Definition K {V} := 
+  @dual_sem (list (LLfml V)) mergeP prb (dual_sem mergeP prb (eq [])).
+  *)
+Definition Kd {V} := 
+  @dual_sem (list (LLfml V)) mergeP prb (dual_sem mergeP prb (eq [])).
+
+Print Implicit maell_sound. 
 Print Implicit sem.
 Print Implicit pr_sv.
 Print Implicit pr_sem.
 Print Implicit fact_sem.
+Print Implicit prods.
+Print Implicit comm_monoid_nd_list.
 
+Lemma Kidemp V x : prods mergeP K K x -> @K V x.
+Proof. intro pmkk.  destruct pmkk. destruct H1. 
+destruct H.  destruct H0. 
+apply ll_lems.merge_map_exM in H1. cD.
+subst. apply K_I. Qed.
+
+Lemma Kdidem V x : @prods (list (LLfml V)) mergeP Kd Kd x -> Kd x.
+Proof. intro pmkk.  destruct pmkk. destruct H1.  revert H H0.
+unfold Kd. rewrite !(dual_sem_1_eq _ (comm_monoid_nd_list _)).
+unfold dual_sem.  unfold lolli_sem.
+intros mx my v w pv mz. destruct mz.
+pose (merge_assoc H H1). cD. clear H H1.
+eapply mx. 2: apply (inhabits s0).
+eapply my. 2: apply (inhabits s1). exact pv. Qed.
+
+(* TODO find a lemma about exchange and merge 
+eg two different merges is transitive closure of swapped
+and lemma can weaken a list of query formulae
+likewise can contract a list of query formulae
+Lemma KsubJw V x : @K V x -> Jw mergeP [] prb x.
+Proof. unfold Jw. intro kx. 
+rewrite (dual_sem_1_eq _ (comm_monoid_nd_list _)).
+intros v w pv me. revert pv. unfold prb. 
+destruct me.
+induction H.
+inversion kx. destruct G.
+apply inhabited_mono.
+*)
+
+(*
+Lemma KdsubJ V x : @Kd V x -> J mergeP [] prb x.
+Proof. unfold J. intro kdx. split. 2: exact kdx.
+unfold tens_sem.
+*)
 
 (* a condition of semantics generally (forall v : V, fact m bot (sv v)) *)
 (*
@@ -100,7 +155,8 @@ Proof. unfold fact.  unfold dual_sem.  unfold lolli_sem.    intros.
 specialize (H As).  apply H.
 2: apply inhabits. 2: apply merge_simple_appr.
 intros.  destruct H0.  destruct H1.  apply inhabits.
-(* need result here, two different merges is transitive closure of swapped *)
+(* TODO need result here, and above
+two different merges is transitive closure of swapped *)
 *)
 
 Lemma fact_pr_sem V A : fact mergeP prb (@pr_sem V A).
@@ -362,9 +418,8 @@ Print Implicit dual_sem_bot.
 Print Implicit dual_sem_1_eq.
 Print Implicit comm_monoid_nd_list.
 
-(* from here to completeness: and to cut-admissibility
+(* from here to completeness: and to cut-admissibility *)
 Check sem_pr.
 (* cut_sound - assume first tens rule is applied *)
 Check cut_sound.
-Check maell_sound. (* not yet proved *)
-*)
+Check maell_sound. 

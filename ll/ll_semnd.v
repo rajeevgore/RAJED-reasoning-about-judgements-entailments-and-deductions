@@ -103,7 +103,10 @@ Inductive idems : M -> Prop := | idemsI : forall x : M, m x x x -> idems x.
 
 Definition idem1 x := (m x x x) /\ dual_sem (dual_sem (eq e)) x.
 (* try idemd as alternative to idem1 *)
-Definition J x := tens_sem (eq x) (eq x) x /\ dual_sem (dual_sem (eq e)) x.
+Definition Jc x := tens_sem (eq x) (eq x) x.
+Definition Jw x := dual_sem (dual_sem (eq e)) x.
+(* these clauses say you can contract, and weaken, anything in J *)
+Definition J x := Jc x /\ Jw x.
 
 Variable K : M -> Prop.
 
@@ -193,7 +196,7 @@ Proof. apply fact_int.
 - unfold tens_sem. unfold fact. intros u. (* doesn't work *)
 *)
 
-(* can do without these, 
+(* can do without these (with a lot of extra effort),
   in fact, for specific semantics used in completeness proof,
   not clear that they are true
 Axiom fact_J : fact J. (* can we prove this? *)
@@ -740,6 +743,23 @@ Lemma lolli_B' (X Y Z : M -> Prop) :
 Proof. apply lolli_sem_e.  intros x lyz.
 intros v w. exact (lolli_B lyz). Qed.
 
+(* this is what DLW calls cl_stability *)
+Lemma prod_ddL X Y z : prods (dual_sem (dual_sem X)) Y z -> tens_sem X Y z.
+Proof. apply lolli_sem_e.  apply uncurry_prods_sem.
+apply lolli_sem_e. 
+apply (ds_ds_fact (fact_lolli (@fact_dual _))).
+intros u xu v w yv me.  apply dual_dual_sem.
+exact (prodI _ _ xu yv me). Qed.
+
+Lemma prod_ddR X Y z : prods Y (dual_sem (dual_sem X)) z -> tens_sem Y X z.
+Proof. rewrite prods_comm_eq. rewrite tens_comm_eq. apply prod_ddL. Qed.
+
+Lemma prod_dd X Y z : 
+  prods (dual_sem (dual_sem X)) (dual_sem (dual_sem Y)) z -> tens_sem X Y z.
+Proof. intro pxy. apply prod_ddL in pxy.
+revert pxy. eapply ds_ds_ds.
+intros u pxdy. exact (prod_ddR pxdy). Qed.
+
 (* soundness - in semantics, true means set contains e,
   for semantics of list of formulae, imagine them joined by par *)
 Lemma id_sound' X : par_sem X (dual_sem X) e.
@@ -802,8 +822,14 @@ revert txy. apply tens_sem_mono ; intros u dsu.
 - exact (lyb u u dsu (cmlid cmM _)).  Qed.
 
 Hypothesis KsubJ : forall x, K x -> J x.
+Hypothesis KsubJc : forall x, K x -> Jc x.
+Hypothesis KsubJw : forall x, K x -> Jw x.
 Hypothesis Kidem : forall x, tens_sem K K x -> K x.
+Hypothesis Kidemp : forall x, prods K K x -> K x.
+Hypothesis Ke : dual_sem (dual_sem K) e.
+(* not needed
 Hypothesis Kid : forall x, dual_sem (dual_sem (eq e)) x -> K x.
+*)
 (* note, at this point DLW has
   e in cl K, ie dual_sem (dual_sem K) e
   equiv dual_sem (dual_sem (eq e)) x -> dual_sem (dual_sem K) x
@@ -811,7 +837,15 @@ Hypothesis Kid : forall x, dual_sem (dual_sem (eq e)) x -> K x.
   and maybe Kidem should be prods K K x -> K x,
   bacause tens_sem K K x -> K x isn't true(?) in the pr_sem semantics *)
 (* something wrong here, since we have 
-  J x = dual_sem (dual_sem (eq e)) x /\ ... -> K x -> J x *)
+  J x = dual_sem (dual_sem (eq e)) x /\ ... -> K x -> J x 
+  where did I get this definition of Kid ?? *)
+
+(* don't otherwise need Kid
+Lemma fact_K : fact K.
+Proof. unfold fact. intros u ddk. apply Kid.
+apply (dd_mono KsubJw) in ddk.  unfold Jw in ddk.
+revert ddk. apply ds_ds_ds. easy. Qed.
+*)
 
 Lemma query_sound (X : M -> Prop) u : X u -> query_sem X u.
 Proof. apply sub_dual_inv.
@@ -820,13 +854,6 @@ intros v c. destruct c. exact H. Qed.
 Lemma query_ctxt_sound X Y u : 
   par_sem X Y u -> par_sem X (query_sem Y) u.
 Proof. apply par_sem_mono. tauto. apply query_sound. Qed.
-
-Lemma bang_sound (X : M -> Prop) : X e -> bang_sem X e.
-Proof. unfold bang_sem. rewrite dual_sem_e. intro sa.
-intros u. unfold dual_sem. unfold lolli_sem.
-intros dsi. specialize (dsi e u). require dsi.
-apply (conj sa). apply Kid. apply dual_dual_sem. reflexivity.
-exact (dsi (cmrid cmM _)). Qed.
 
 Lemma bang_sound' (X : M -> Prop) u : K u -> X u -> bang_sem X u.
 Proof. intros idu xu. unfold bang_sem.
@@ -892,8 +919,8 @@ Print Implicit par_sem_fwd.
 
 Lemma K_lolli_refl Y x : fact Y -> K x -> lolli_sem Y Y x.
 Proof. intros fy kx.
-pose (KsubJ kx) as jx.  unfold J in jx.  destruct jx.
-apply (fact_lolli fy). revert H0.  apply dd_mono.
+pose (KsubJw kx) as jx.  unfold Jw in jx.  
+apply (fact_lolli fy). clearbody jx. revert jx.  apply dd_mono.
 intros. subst u. apply lolli_same_sound. Qed.
 
 Lemma ddK_lolli_refl Y x : fact Y -> dual_sem (dual_sem K) x -> lolli_sem Y Y x.
@@ -901,16 +928,6 @@ Proof. intros fy ddkx.
 apply (fact_lolli fy). revert ddkx.  apply dd_mono.
 intro u. exact (K_lolli_refl fy). Qed.
 
-(* can prove these from above 
-Lemma K_e_lem Y x : fact Y -> Y e -> K x -> Y x.
-Proof. intros fy ye kx.  pose (KsubJ kx) as jx.
-unfold J in jx.  apply (fy x).  destruct jx.
-revert H0.  apply dd_mono.  intros. subst. exact ye. Qed.
-
-Lemma ddK_e_lem Y x : fact Y -> Y e -> dual_sem (dual_sem K) x -> Y x.
-Proof. intros fy ye kx. apply (fy x). revert x kx.
-apply dd_mono. intros u ku. exact (K_e_lem fy ye ku). Qed.
-*)
 Lemma K_e_lem Y x : fact Y -> Y e -> K x -> Y x.
 Proof. intros fy ye kx.  apply (K_lolli_refl fy kx ye (cmrid cmM _)). Qed.
 
@@ -939,22 +956,22 @@ intros. apply K_e_lem ; tauto. Qed.
 Lemma wk_lolli_lem (X : M -> Prop) : lolli_sem (bang_sem X) (dual_sem bot) e.
 Proof. apply lolli_sem_e. unfold bang_sem. apply ds_ds_ds.
 intros u xui. destruct xui.
-pose (KsubJ H0) as ju. unfold J in ju.  destruct ju.
-revert H2. apply dual_anti. intros.
-apply dual_sem_1. exact H2. Qed.
+pose (KsubJw H0) as ju. unfold Jw in ju. clearbody ju.
+revert ju. apply dual_anti. intros.
+apply dual_sem_1. exact H1. Qed.
 
 Lemma wk_lolli_lemd (X : M -> Prop) : lolli_sem bot (query_sem X) e.
 Proof. apply lolli_sem_e.  intros x bx v w mbk me.
-pose (KsubJ (proj2 mbk)) as ju. unfold J in ju.  destruct ju.
-rewrite dual_sem_1_eq in H0.
-apply (H0 _ _ bx).  apply (cmcomm cmM). exact me. Qed.
+pose (KsubJw (proj2 mbk)) as ju. unfold Jw in ju.  clearbody ju.
+rewrite dual_sem_1_eq in ju.
+apply (ju _ _ bx).  apply (cmcomm cmM). exact me. Qed.
 
 Lemma ctr_lolli_lem (X : M -> Prop) : 
   lolli_sem (bang_sem X) (tens_sem (bang_sem X) (bang_sem X)) e.
 Proof. apply lolli_sem_e. unfold bang_sem. apply ds_ds_ds.
 intros u xui. destruct xui.
-pose (KsubJ H0) as ju. unfold J in ju.  destruct ju.
-revert H1. apply tens_sem_mono ; intros ; subst ; 
+pose (KsubJc H0) as ju. unfold Jc in ju.  clearbody ju.
+revert ju. apply tens_sem_mono ; intros ; subst ; 
   apply dual_dual_sem ; split ; assumption. Qed.
 
 (* dualizing ctr_lolli_lem is harder than the original!! *)
@@ -1052,31 +1069,70 @@ Qed.
 Print Implicit par_sem_botic.
 Print Implicit wk_ctxt_sound.
 
-(* TO PROVE *)
-Hypothesis query_seml_eqv : forall clr, 
-  seml (map (Query (V:=V)) clr) = query_sem (seml clr).
-(* maybe not true *)
+Lemma dda_splitL A B u :
+  dual_sem (dual_sem (fun x => A x /\ B x)) u -> dual_sem (dual_sem A) u.
+Proof. apply dd_mono. easy. Qed.
+
+Lemma dda_splitR A B u :
+  dual_sem (dual_sem (fun x => A x /\ B x)) u -> dual_sem (dual_sem B) u.
+Proof. apply dd_mono. easy. Qed.
 
 Lemma par_qq A B : par_sem (query_sem A) (query_sem B) =
   query_sem (fun x => A x \/ B x).
 Proof. apply iff_app_eq. intro. split ; apply sub_dual_inv ; intros.
 - cD. apply dual_dual_sem.
 
-pose (KsubJ H0) as ju. unfold J in ju.  destruct ju.
-revert H1.  apply dual_sem_or in H. cD.
+pose (KsubJc H0) as ju. unfold Jc in ju.  clearbody ju.
+revert ju.  apply dual_sem_or in H. cD.
 
-apply tens_sem_mono ; intros ; subst ; rewrite bang_query.
-exact (bang_sound' _ H0 H).
-exact (bang_sound' _ H0 H1).
+apply tens_sem_mono ; intros ; subst ; rewrite bang_query ;
+  apply bang_sound' ; assumption.
+
+- revert H. apply sub_dual_inv. intro.
+unfold query_sem. rewrite dual_sem_or'.
+rewrite ddd_iff. apply sub_dual_inv.
+intros w pdd. apply prod_dd in pdd. 
+revert pdd. apply dd_mono.
+intros u pab.  destruct pab. cD.
+pose (Kidemp (prodI _ _ H3 H2 H1)).
+pose H1.  rewrite -> (cmcomm cmM) in m0.
+pose (K_lolli_refl (@fact_dual _) H2 H m0) as daz.
+pose (K_lolli_refl (@fact_dual _) H3 H0 H1) as dbz.
+repeat split ; assumption. Qed.
+
+(*
+NB got this far without using non-invertible apply 
+pose (dda_splitL _ H) as dda.  pose (dda_splitL _ H0) as ddb.
+pose (dda_splitR _ H) as ddkx.  pose (dda_splitR _ H0) as ddky.
+rewrite -> ddd_iff in dda.  rewrite -> ddd_iff in ddb.
+pose H1.  rewrite -> (cmcomm cmM) in m0.
+pose (ddK_lolli_refl (@fact_dual _) ddky dda m0) as daz.
+pose (ddK_lolli_refl (@fact_dual _) ddkx ddb H1) as dbz.
+(* now for K *)
+pose (prodI _ _ ddkx ddky H1).
+want prods K K z (tens_sem K K z will do)
+this is cl_stability of DLW 
+
+pose (ddK_lolli_refl fact_bot ddkx) as lbbx.
+pose (ddK_lolli_refl fact_bot ddky) as lbby.
+pose (lolli_B lbbx lbby H1) as lbbz.
+*)
+
+(* 
+Lemma par_qq A B : par_sem (query_sem A) (query_sem B) =
+  query_sem (fun x => A x \/ B x).
+Proof. apply iff_app_eq. intro. split ; apply sub_dual_inv ; intros.
+- cD. apply dual_dual_sem.
+
+pose (KsubJc H0) as ju. unfold Jc in ju.  clearbody ju.
+revert ju.  apply dual_sem_or in H. cD.
+
+apply tens_sem_mono ; intros ; subst ; rewrite bang_query ;
+  apply bang_sound' ; assumption.
 
 - revert H. apply dd_mono. intros u H.  split.
-+ destruct H.
-apply dual_sem_or.
-rewrite bang_query in H.
-rewrite bang_query in H0.
-unfold bang_sem in H.
-unfold bang_sem in H0.
-split.
++ rewrite !bang_query in H.  unfold bang_sem in H.
+destruct H.  apply dual_sem_or.  split.
 ++ eapply dd_mono in H. 2: intros u dk ; exact (proj1 dk).
 rewrite -> ddd_iff in H.
 eapply dd_mono in H0. 2: intros u dk ; exact (proj2 dk).
@@ -1089,11 +1145,12 @@ eapply (ddK_lolli_refl (@fact_dual _)) in H.
 apply (H _ _ H0 H1).
  
 + rewrite !bang_query in H.  destruct H.
-apply Kidem.  apply dual_dual_sem. (* could use Kidem defined using prods *)
-eapply prodI. 3: eassumption.
-unfold bang_sem in H.
-(* at this point need K to be a fact *)
-Admitted.
+apply Kidemp.  eapply prodI. 3: eassumption.
+(* at this point need fact_K - how to fix?? *)
+unfold bang_sem in H. revert H.  apply (ds_ds_fact fact_K). easy.
+unfold bang_sem in H0. revert H0.  apply (ds_ds_fact fact_K). easy.
+Qed.
+*)
 
 Lemma query_dd A : query_sem (dual_sem (dual_sem A)) = query_sem A.
 Proof. unfold query_sem.  apply f_equal.
@@ -1109,16 +1166,14 @@ intro. split.
 
 + apply sub_dual_inv. intros v ddk.
 rewrite -> ddd_iff in ddk. cD.
-pose (KsubJ ddk0) as ju. unfold J in ju.  destruct ju.
-rewrite dual_sem_1_eq in H0. exact H0.
-+ apply (dual_sub_inv fact_bot).
-intros v dbv.  rewrite ddd_iff. split.
-eapply (dual_anti _ _ dbv).
-apply Kid. rewrite dual_sem_1_eq. exact dbv.
+pose (KsubJw ddk0) as ju. unfold Jw in ju. 
+rewrite -> dual_sem_1_eq in ju. exact ju.
++ rewrite - dual_sem_1_eq. apply sub_dual_inv. intros. subst v.
+apply (@dd_mono K).  intros u ku.  rewrite ddd_iff. split. 
+intros v w em. destruct em. exact ku. exact Ke.
 
 - simpl. rewrite IHfs. rewrite par_qq.
-rewrite query_dd. reflexivity.
-Unshelve. intros. simpl in H. destruct H. Qed.
+rewrite query_dd. reflexivity. Qed.
 
 (* case of Bangrule - very difficult to get this proof right *)
 Lemma bang_sound_lem ps c (f : fmlsrulegq (Query (V:=V)) Bangrule ps c)
@@ -1127,7 +1182,7 @@ Proof. destruct f. destruct b. subst.
 inversion pss. clear pss H2. subst.
 revert H1.  rewrite !seml_fe. rewrite !seml_single. 
 rewrite - !lolli_sem_e.  rewrite - !seml_app.  rewrite - !map_app.
-rewrite !query_seml_eqv.  apply bang_ctxt_sound_alt.  Qed.
+rewrite !query_seml_eqv_plus.  apply bang_ctxt_sound_alt.  Qed.
 
 Lemma maell_sound ps c : 
   maell_rules ps c -> ForallT (fun p => seml p e) ps -> seml c e.
