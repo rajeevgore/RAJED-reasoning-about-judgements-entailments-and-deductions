@@ -5,7 +5,7 @@ Set Implicit Arguments.
 
 Add LoadPath "../general".
 Add LoadPath "../modal".
-Require Import gen genT ddT swappedT.
+Require Import gen genT ddT swappedT rtcT.
 Require Import fmlsext lldefs ll_exch ll_camq ll_semnd.
 
 From Coq Require Import ssreflect.
@@ -100,7 +100,11 @@ Print Implicit fact_sem.
 Print Implicit prods.
 Print Implicit comm_monoid_nd_list.
 
-Lemma Kidemp V x : prods mergeP K K x -> @K V x.
+Lemma Ke {V} : dual_sem mergeP prb (dual_sem mergeP prb (@K V)) [].
+Proof. apply (dual_dual_sem (comm_monoid_nd_list _)).
+apply (K_I []). Qed.
+
+Lemma Kidemp {V} x : prods mergeP K K x -> @K V x.
 Proof. intro pmkk.  destruct pmkk. destruct H1. 
 destruct H.  destruct H0. 
 apply ll_lems.merge_map_exM in H1. cD.
@@ -115,19 +119,39 @@ pose (merge_assoc H H1). cD. clear H H1.
 eapply mx. 2: apply (inhabits s0).
 eapply my. 2: apply (inhabits s1). exact pv. Qed.
 
-(* TODO find a lemma about exchange and merge 
-eg two different merges is transitive closure of swapped
-and lemma can weaken a list of query formulae
-likewise can contract a list of query formulae
-Lemma KsubJw V x : @K V x -> Jw mergeP [] prb x.
-Proof. unfold Jw. intro kx. 
+Lemma KsubJw {V} x : @K V x -> Jw mergeP [] prb x.
+Proof. unfold Jw. intro kx.  destruct kx.
 rewrite (dual_sem_1_eq _ (comm_monoid_nd_list _)).
 intros v w pv me. revert pv. unfold prb. 
 destruct me.
-induction H.
-inversion kx. destruct G.
-apply inhabited_mono.
-*)
+pose (merges_swapped (merge_simple_app _ _) H).
+apply inhabited_mono. intro dv. 
+eapply exch_maell_rtc. 2: apply c.
+clear H c.  induction G. exact dv.
+eapply derI.  eapply wk_maellI.
+eapply (OSgctxt_eq _ _ _ []). apply wkrule_I.
+simpl. reflexivity. reflexivity.
+sfs. apply (dersrec_singleI IHG). Qed.
+
+Print Implicit Jw.
+Print Implicit Jc.
+Check ll_lems.merge_doubles_via_der.
+Print Implicit merge_doubles.
+Print Implicit prodI.
+Check prodI.
+
+Lemma KsubJc {V} x : @K V x -> Jc mergeP prb x.
+Proof. unfold Jc.  intros kx v w pxx me.
+specialize (pxx (doubles x)).  destruct me.  destruct kx.
+pose (ll_lems.merge_doubles_via_der (rules := ctrqrules) (merge_sym H)).
+require s.
+{ intros q inqx. apply InT_mapE in inqx. cD. subst.
+intros a b cq.  exact (ctrqrules_I cq). }
+cD. require (pxx s). { eapply prodI.
+reflexivity. reflexivity. apply inhabits. apply merge_doubles. }
+destruct (pxx (inhabits s0)).  apply inhabits.
+apply (derl_derrec_trans (derl_mono ctrq_maell s1)).
+apply (dersrec_singleI X). Qed.
 
 (*
 Lemma KdsubJ V x : @Kd V x -> J mergeP [] prb x.
@@ -417,6 +441,12 @@ Qed.
 Print Implicit dual_sem_bot.
 Print Implicit dual_sem_1_eq.
 Print Implicit comm_monoid_nd_list.
+Print Implicit maell_sound.
+
+Definition maell_sound_pr V :=
+  @maell_sound _ mergeP [] prb (comm_monoid_nd_list _)
+  K V pr_sv fact_pr_sv KsubJc KsubJw Kidemp Ke.
+Check maell_sound_pr.
 
 (* from here to completeness: and to cut-admissibility *)
 Check sem_pr.

@@ -183,6 +183,12 @@ Definition exch_maell V := der_trf (@maell_tfr V).
 (* also have height-preserving exchange *)
 Definition exch_maell_ht V := der_trf_ht (@maell_tfr V).
 
+Lemma exch_maell_rtc V : forall concl, derrec maell_rules emptyT concl ->
+   forall concl', rtcT.clos_refl_transT (@swapped _) concl concl' ->
+     derrec (@maell_rules V) emptyT concl'.
+Proof. intros. induction X0. exact (exch_maell X r). exact X.
+exact (IHX0_2 (IHX0_1 X)). Qed.
+
 Theorem adm_exch_maell {V} concl concl' : 
   swapped concl' concl -> adm (@maell_rules V) [concl'] concl.
 Proof. intro sw. apply admI. intro drs. inversion drs.

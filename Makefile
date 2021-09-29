@@ -61,7 +61,7 @@ ll/ll_thms.vo: ll/ll_thms.v ll/ll_camq.vo general/ddT.vo
 ll/ll_exch.vo: ll/ll_exch.v ll/lldefs.vo general/swappedT.vo 
 ll/ll_lems.vo: ll/ll_lems.v ll/lldefs.vo general/swappedT.vo general/gentree.vo
 ll/lldefs.vo: ll/lldefs.v ll/fmlsext.vo general/gstep.vo
-ll/fmlsext.vo: ll/fmlsext.v general/ddT.vo general/gen_tacs.vo general/List_lemmasT.vo 
+ll/fmlsext.vo: ll/fmlsext.v general/ddT.vo general/gen_tacs.vo general/rtcT.vo 
 modal/k4_ca.vo: modal/k4_ca.v general/gen_tacs.vo general/gen_seq.vo general/gentree.vo modal/k4_ctr.vo
 modal/k4_ctr.vo: modal/k4_ctr.v general/gstep.vo modal/k4_inv.vo
 modal/k4_inv.vo: modal/k4_inv.v modal/k4_exch.vo

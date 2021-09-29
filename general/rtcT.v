@@ -194,3 +194,15 @@ Proof. intro cts. induction cts.
 apply tT_step.  apply (swapped_R _ r).
 exact (tT_trans IHcts1 IHcts2). Qed.
 
+Lemma crt_swR T (X Y Z : list T) : clos_refl_transT (@swapped T) X Y ->
+  clos_refl_transT (@swapped T) (X ++ Z) (Y ++ Z).
+Proof. intro cts. induction cts.
+apply rtT_step.  apply (swapped_R _ r). apply rtT_refl.
+exact (rtT_trans IHcts1 IHcts2). Qed.
+
+Lemma crt_swL T (X Y Z : list T) : clos_refl_transT (@swapped T) X Y ->
+  clos_refl_transT (@swapped T) (Z ++ X) (Z ++ Y).
+Proof. intro cts. induction cts.
+apply rtT_step.  apply (swapped_L _ r). apply rtT_refl.
+exact (rtT_trans IHcts1 IHcts2). Qed.
+

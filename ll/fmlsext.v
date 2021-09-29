@@ -9,9 +9,7 @@ Set Implicit Arguments.
 From Coq Require Import ssreflect.
 
 Add LoadPath "../general".
-Require Import gen.
-Require Import genT.
-Require Import ddT.
+Require Import gen genT ddT rtcT swappedT.
 Require Import List_lemmasT gen_tacs.
 
 (* fmlsext, ie next 23 lines, same as ../general/gen_seq.v *)
@@ -269,7 +267,7 @@ Inductive fmlsrulegq W U (f : U -> W) pr : rlsT (list W) :=
     mps = map (fmlsext mcl mcr) ps -> mc = fmlsext mcl mcr c ->
     @fmlsrulegq _ _ f pr mps mc.
 
-(* order-preserving merge *)
+(** order-preserving merge **)
 Inductive merge {W : Type} : list W -> list W -> list W -> Type :=
   | mergeLI : forall xs ys zs x, merge xs ys zs -> merge (x :: xs) ys (x :: zs)
   | mergeRI : forall xs ys zs y, merge xs ys zs -> merge xs (y :: ys) (y :: zs)
@@ -508,6 +506,34 @@ exists (x :: IHmrg) ; apply mergeLI ; assumption.
 exists (y :: y :: IHmrg) ; repeat (apply mergeRI || apply mergeLI) ;
   assumption.
 exists [] ; apply merge_nil. Qed.
+
+(* 
+Print clos_refl_transT.
+Print Implicit swapped_I.
+*)
+
+Lemma merges_swapped T us vs xs : merge us vs xs -> 
+  forall ys, merge us vs ys -> clos_refl_transT (@swapped T) xs ys.
+Proof. intro uvx.  induction uvx. 
+- intros ws mex.  inversion mex ; subst.
++ specialize (IHuvx _ X).  apply (crt_swL [x] IHuvx).
++ clear mex.  apply merge_consL in X. cD. subst.
+pose (merge_app (merge_Lnil (y :: X)) X2).
+specialize (IHuvx _ m).
+pose (crt_swL [x] IHuvx).
+apply (rtT_trans c). apply rtT_step.
+eapply (swapped_I [] [x] (y :: X) X1) ; reflexivity.
+
+- intros ws mex.  inversion mex ; subst.
++ clear mex.  apply merge_consR' in X. cD. subst.
+pose (merge_app (merge_Rnil (x :: X)) (merge_sym X2)).
+specialize (IHuvx _ m).
+pose (crt_swL [y] IHuvx).
+apply (rtT_trans c). apply rtT_step.
+eapply (swapped_I [] [y] (x :: X) X1) ; reflexivity.
++ specialize (IHuvx _ X).  apply (crt_swL [y] IHuvx).
+
+- intros yx me. inversion me. apply rtT_refl. Qed.
 
 Lemma get_prefix W n : forall (zs : list W), leT n (length zs) ->
   { xs : list W & length xs = n & { ys : list W & zs = xs ++ ys}}.

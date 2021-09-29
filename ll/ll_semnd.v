@@ -60,6 +60,8 @@ Definition lolli_sem (X Y : M -> Prop) u :=
 Definition dual_sem X := lolli_sem X bot.
 Print Implicit lolli_sem.
 
+(** dual_sem lemmas **)
+
 (* note - one less implicit arg than before *)
 Lemma dual_dual_sem (X : M -> Prop) u : X u -> dual_sem (dual_sem X) u.
 Proof. unfold dual_sem. unfold lolli_sem. intros.
@@ -175,6 +177,8 @@ Lemma seml_alt fs : seml fs = sem (fold_right (@par V) (@Bot V) fs).
 Proof. induction fs. reflexivity.
 unfold seml. simpl. apply f_equal. exact IHfs. Qed.
 
+(** fact lemmas  **)
+
 (* fact and factd are equivalent *)
 Definition fact X := forall u, dual_sem (dual_sem X) u -> X u.
 Inductive factd : (M -> Prop) -> Prop := 
@@ -277,12 +281,25 @@ unfold fact. intros fx fy u fxy. split.
 - apply fx.  eapply dd_mono. 2: exact fxy. firstorder.
 - apply fy.  eapply dd_mono. 2: exact fxy. firstorder. Qed.
 
-Lemma lolli_sem_1 X : forall u, iff (lolli_sem (eq e) X u) (X u).
-Proof. unfold lolli_sem.
-intro u. split.
-- intro bm. apply (bm _ _ eq_refl).  apply (cmrid cmM).
-- intros bu v w ev. subst v.  rewrite (cmride cmM). 
-intro uw. subst. exact bu. Qed.
+Lemma lolli_sem_eq_sw u v X : (lolli_sem (eq v) X u) -> (lolli_sem (eq u) X v).
+Proof. unfold lolli_sem. intros vu v' w uv' me. subst.
+apply (vu _ _ eq_refl).  apply (cmcomm cmM). exact me. Qed.
+
+Definition lolli_sem_eq_iff u v X :=
+conj (@lolli_sem_eq_sw u v X) (@lolli_sem_eq_sw v u X) : iff _ _.
+
+Lemma dual_sem_eq x v : dual_sem (eq v) x <-> dual_sem (eq x) v.
+Proof. apply lolli_sem_eq_iff. Qed.
+
+Lemma lolli_sem_e X Y : lolli_sem X Y e <-> (forall x, X x -> Y x).
+Proof. unfold lolli_sem. split.
+- intros eqv x xx. apply (eqv _ _ xx). apply (cmlid cmM).
+- intros xy v w xv mevw.  apply (cmlide cmM) in mevw.
+subst. exact (xy _ xv).  Qed.
+
+Lemma lolli_sem_1 X u : iff (lolli_sem (eq e) X u) (X u).
+Proof. rewrite lolli_sem_eq_iff. rewrite lolli_sem_e.  split.
+firstorder. intros. subst. assumption. Qed.
 
 Lemma lolli_sem_1_eq X : (lolli_sem (eq e) X) = X.
 Proof. apply iff_app_eq. apply lolli_sem_1. Qed.
@@ -292,12 +309,6 @@ Proof. apply lolli_sem_1. Qed.
 
 Lemma dual_sem_1_eq : (dual_sem (eq e)) = bot.
 Proof. apply iff_app_eq. apply dual_sem_1. Qed.
-
-Lemma lolli_sem_e X Y : lolli_sem X Y e <-> (forall x, X x -> Y x).
-Proof. unfold lolli_sem. split.
-- intros eqv x xx. apply (eqv _ _ xx). apply (cmlid cmM).
-- intros xy v w xv mevw.  apply (cmlide cmM) in mevw.
-subst. exact (xy _ xv).  Qed.
 
 Lemma lolli_same_sound X : lolli_sem X X e.
 Proof. apply lolli_sem_e. firstorder. Qed.
@@ -362,8 +373,6 @@ Lemma bot_o x v : (forall y, m v x y -> bot y) <-> dual_sem (eq x) v.
 Proof. unfold dual_sem. unfold lolli_sem.  
 split ; intros ; subst ; firstorder. Qed.
 
-(* so dual_sem (eq v) x <-> dual_sem (eq x) v *)
-
 Lemma prods_comm X Y u : prods X Y u -> prods Y X u.
 Proof. intro pxy. destruct pxy.
 rewrite -> (cmcomm cmM) in H1.  exact (prodI _ _ H0 H H1). Qed.
@@ -383,6 +392,8 @@ intro. rewrite tens_comm_eq. tauto. Qed.
 
 Lemma par_comm_eq X Y : par_sem X Y = par_sem Y X.
 Proof. apply iff_app_eq. split ; apply par_comm. Qed.
+
+(** curry and uncurry of lolli, tens_sem, prods **)
 
 Lemma curry_prods_sem X Y Z u : 
   lolli_sem (prods X Y) Z u -> lolli_sem X (lolli_sem Y Z) u.
@@ -610,17 +621,6 @@ Definition tens_lolli' X Y fy u := @tens_lolli X Y u fy.
 Lemma dual_sem_e X : dual_sem X e <-> (forall x, X x -> bot x).
 Proof. unfold dual_sem. apply lolli_sem_e. Qed.
 
-(*
-Lemma dual_sem_eq_e v : dual_sem (eq e) v <-> bot v.
-Proof. unfold dual_sem. unfold lolli_sem. 
-split. intro. exact (H e v eq_refl (cmrid cmM _)).
-intros bv v0 w ev mvw. subst. apply (cmride cmM) in mvw.
-subst v. (* why does subst fail ? *) exact bv. Qed.
-
-Lemma dual_sem_eq_e' : dual_sem (eq e) = bot.
-Proof. apply iff_app_eq. intro x. apply dual_sem_eq_e. Qed.
-*)
-
 Lemma par_sem_e_bwd (X Y : M -> Prop) :
   (forall x, X x -> Y x) -> par_sem (dual_sem X) Y e.
 Proof. intro xy. unfold par_sem.  unfold tens_sem. rewrite ddd_iff.
@@ -678,6 +678,8 @@ apply (par_sem_botc fy).  apply (par_sem_botic fy).  Qed.
 
 Definition par_sem_boti Y u fy yu := par_comm (@par_sem_botic Y u fy yu).
 
+(** seml **)
+
 Lemma seml_app' l l' : 
   seml (l ++ l') = fold_right par_sem (seml l') (map sem l).
 Proof. unfold seml. rewrite map_app. apply fold_right_app. Qed.
@@ -713,6 +715,8 @@ Proof. intro mrg. induction mrg.
 
 Print Implicit par_sem_botc_eq.
 Print Implicit fact_sem.
+
+(** lolli combinators **)
 
 Lemma lolli_C (X Y Z : M -> Prop) u :
   lolli_sem X (lolli_sem Y Z) u -> lolli_sem Y (lolli_sem X Z) u.
@@ -760,8 +764,9 @@ Proof. intro pxy. apply prod_ddL in pxy.
 revert pxy. eapply ds_ds_ds.
 intros u pxdy. exact (prod_ddR pxdy). Qed.
 
-(* soundness - in semantics, true means set contains e,
-  for semantics of list of formulae, imagine them joined by par *)
+(** soundness - in semantics, true means set contains e,
+  for semantics of list of formulae, imagine them joined by par **)
+
 Lemma id_sound' X : par_sem X (dual_sem X) e.
 Proof. apply par_sem_bwd. apply lolli_same_sound. Qed.
 
