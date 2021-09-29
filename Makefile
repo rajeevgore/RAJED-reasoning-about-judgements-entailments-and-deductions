@@ -56,7 +56,7 @@ ll/ll_cam.vo: ll/ll_cam.v ll/ll_lems.vo ll/ll_exch.vo general/gentree.vo
 ll/ll_ca.vo: ll/ll_ca.v ll/lldefs.vo general/ddT.vo
 ll/ll_comp.vo: ll/ll_comp.v ll/ll_camq.vo ll/ll_semnd.vo general/ddT.vo general/swappedT.vo
 ll/ll_sem.vo: ll/ll_sem.v ll/lldefs.vo general/genT.vo
-ll/ll_semnd.vo: ll/ll_semnd.v ll/lldefs.vo general/genT.vo
+ll/ll_semnd.vo: ll/ll_semnd.v ll/lldefs.vo general/ddT.vo
 ll/ll_thms.vo: ll/ll_thms.v ll/ll_camq.vo general/ddT.vo 
 ll/ll_exch.vo: ll/ll_exch.v ll/lldefs.vo general/swappedT.vo 
 ll/ll_lems.vo: ll/ll_lems.v ll/lldefs.vo general/swappedT.vo general/gentree.vo

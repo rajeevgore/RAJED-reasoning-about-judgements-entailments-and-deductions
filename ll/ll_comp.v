@@ -173,15 +173,14 @@ Check fact_bot.
 Lemma pr_sv_sem V v : @pr_sv V v = @pr_sem V (Var v).
 Proof. reflexivity. Qed.
 
-(* do we need this result? note, fact_pr_sem follows easily from it
+(* fact_pr_sem follows easily from this *)
 Lemma fact_pr_seml V As : fact mergeP prb (@pr_seml V As).
 Proof. unfold fact.  unfold dual_sem.  unfold lolli_sem.    intros.
 specialize (H As).  apply H.
 2: apply inhabits. 2: apply merge_simple_appr.
-intros.  destruct H0.  destruct H1.  apply inhabits.
-(* TODO need result here, and above
-two different merges is transitive closure of swapped *)
-*)
+intros.  destruct H0.  destruct H1.  apply inhabits. clear H.
+pose (merges_swapped (merge_simple_app _ _) H0).
+apply (exch_maell_rtc X c). Qed.
 
 Lemma fact_pr_sem V A : fact mergeP prb (@pr_sem V A).
 Proof. unfold fact.  unfold dual_sem.  unfold lolli_sem.    intros.
@@ -298,23 +297,38 @@ intros dav me. destruct dav. destruct me. apply inhabits.
 apply merge_singleL in H. cD. subst.
 apply (exch_maell X). swap_tac_Rc. Qed.
 
+Lemma sppl_lem V As v w : pr_seml As v -> mergeP As v w -> @prb V w.
+Proof.  unfold pr_sem.  unfold prb.
+intros dav me. destruct dav. destruct me. apply inhabits.
+pose (merges_swapped (merge_simple_app _ _) H).
+exact (exch_maell_rtc X c). Qed.
+
 Lemma pr_sem_prb V A w : pr_sem A w <-> @prb V (A :: w).
 Proof. reflexivity. Qed.
 
-Lemma sem_pr_par V (sema semb : _ -> Prop) A B
+Lemma sem_pr_par_l V (sema semb : _ -> Prop) A Bs
   (IHAa : forall X, sema X -> pr_sem A X)
-  (IHAb : forall X, semb X -> pr_sem B X) X :
-  par_sem mergeP prb sema semb X -> pr_sem (@par V A B) X.
+  (IHAb : forall X, semb X -> pr_seml Bs X) X :
+  par_sem mergeP (@prb V) sema semb X -> pr_seml (A :: Bs) X.
 Proof. intro pab.  pose (par_sem_mono_pr IHAa IHAb pab).
 unfold par_sem in p.  unfold tens_sem in p.
 rewrite -> ddd_iff_pr in p.
 clear IHAa IHAb pab.
 unfold dual_sem in p.  unfold lolli_sem in p.
-specialize (p [A ; B] ([A ; B] ++ X)).
-require p.  eapply prodI.  apply spp_lem.  apply spp_lem.
+specialize (p (A :: Bs) ((A :: Bs) ++ X)).
+require p.  eapply prodI.  apply spp_lem.  apply sppl_lem.
 apply inhabits.  apply merge_simple_app.
 require p.  apply inhabits.  apply merge_simple_appr.
-unfold prb in p. unfold pr_sem. destruct p. apply inhabits.
+unfold prb in p. unfold pr_seml. exact p. Qed.
+
+Print Implicit sem_pr_par_l.
+
+Lemma sem_pr_par V (sema semb : _ -> Prop) A B
+  (IHAa : forall X, sema X -> pr_sem A X)
+  (IHAb : forall X, semb X -> pr_sem B X) X :
+  par_sem mergeP prb sema semb X -> pr_sem (@par V A B) X.
+Proof. intro pab.  pose (sem_pr_par_l (Bs := [B]) IHAa IHAb pab).
+destruct p. apply inhabits. clear IHAa IHAb pab.
 eapply derI.  eapply princ_maellI. eapply (OSgctxt_eq _ _ _ []).
 apply Par_p.  eapply Parrule_I. reflexivity. reflexivity.
 exact (dersrec_singleI X0). Qed.
@@ -438,18 +452,66 @@ exact (dersrec_singleI X).
 - (* Query *) apply sem_pr_query ; assumption.
 Qed.
 
+Lemma seml_pr V As : forall X,
+  seml mergeP [] prb K pr_sv As X -> @pr_seml V As X.
+Proof. induction As. 
+- rewrite seml_nil. unfold pr_seml. unfold prb. easy.
+- rewrite seml_alt. intro X. simpl. apply sem_pr_par_l.
+apply sem_pr.  rewrite - seml_alt. exact IHAs. Qed.
+
+Print Implicit sem_pr_par_l.
 Print Implicit dual_sem_bot.
 Print Implicit dual_sem_1_eq.
 Print Implicit comm_monoid_nd_list.
 Print Implicit maell_sound.
+Print Implicit cut_sound.
+Print Implicit fact_pr_sem.
+Print Implicit fact_sem.
 
 Definition maell_sound_pr V :=
   @maell_sound _ mergeP [] prb (comm_monoid_nd_list _)
   K V pr_sv fact_pr_sv KsubJc KsubJw Kidemp Ke.
-Check maell_sound_pr.
+
+Definition der_maell_sound_pr V :=
+  @der_maell_sound _ mergeP [] prb (comm_monoid_nd_list _)
+  K V pr_sv fact_pr_sv KsubJc KsubJw Kidemp Ke.
+
+Check maell_sound_pr.  Check der_maell_sound_pr.
+
+Definition cut_sound_pr V X Y := 
+  @cut_sound _ mergeP [] (@prb V) (comm_monoid_nd_list _)
+  K X _ (@fact_pr_sem _ Y). 
+
+Definition cut_sound_pr_l V X Y := 
+  @cut_sound _ mergeP [] (@prb V) (comm_monoid_nd_list _)
+  K X _ (@fact_pr_seml _ Y). 
+
+Check cut_sound_pr.  Check cut_sound_pr_l.
 
 (* from here to completeness: and to cut-admissibility *)
 Check sem_pr.
 (* cut_sound - assume first tens rule is applied *)
 Check cut_sound.
-Check maell_sound. 
+Check maell_sound_pr. 
+
+Print Implicit seml_pr.
+Print Implicit cut_sound_pr_l.
+
+Theorem cut_adm_maell_sem {V} (A : LLfml V) cl cr c :
+  derrec maell_rules emptyT (dual A :: cl) ->
+  derrec maell_rules emptyT (A :: cr) ->
+  merge cl cr c -> inhabited (derrec maell_rules emptyT c).
+Proof. intros dl dr me. 
+(* first use tens rule since cut_sound assumes that done *)
+assert (derrec maell_rules emptyT (tens (dual A) A :: c)).
+eapply derI. apply tens_maellI.
+eapply merge_ctxtgI. eapply eq_rect.
+eapply (@merge_ctxtI _ _ _ _ [] []). apply Tensrule_I.
+apply merge_nil. exact me.  reflexivity. simpl.
+apply (dlCons dl). apply (dersrec_singleI dr). clear dl dr.
+apply der_maell_sound_pr in X.
+rewrite seml_cons in X. simpl in X.  rewrite sem_dual_pr_eq in X.
+epose (par_sem_mono' X). require p. intros u t. exact t.
+pose (cut_sound_pr_l (p (seml_pr _))).
+unfold pr_seml in p0.  rewrite -> app_nil_r in p0. exact p0. Qed.
+

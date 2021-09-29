@@ -15,7 +15,7 @@ Check FunctionalExtensionality.forall_extensionality. (* and P, S *)
 
 Add LoadPath "../general".
 Add LoadPath "../modal".
-Require Import gen genT.
+Require Import gen genT ddT.
 Require Import lldefs fmlsext.
 
 Lemma iff_app_eq A P Q : (forall x : A, P x <-> Q x) -> P = Q.
@@ -588,6 +588,8 @@ pose (dual_sub_inv (fact_sem _) IHA) as dsd. firstorder.
 Lemma sem_dual A : forall u, (sem (@dual V A) u) <-> (dual_sem (sem A) u).
 Proof. intros u. split.
 apply (sem_dual_fwd _).  apply (sem_dual_bwd _). Qed.
+
+Definition sem_dual_eq A := iff_app_eq _ _ (sem_dual A).
 
 Print Implicit merge3LI.
 Print Implicit prodI.
@@ -1211,6 +1213,11 @@ Proof. intros mpc pss.  destruct mpc.
   revert H1.  rewrite !seml_fe. rewrite !seml_single. 
   intros sa x dp.  pose (sa _ dp). simpl.  apply (query_sound s).
 - (* Bangrule *) exact (bang_sound_lem f pss). Qed.
+
+Lemma der_maell_sound : 
+  forall c, derrec maell_rules emptyT c -> seml c e.
+Proof. apply derrec_all_rect. intros. destruct H.
+intros ps c mr dm.  exact (maell_sound mr). Qed.
 
 (* cut_sound - assume first tens rule is applied *)
 Lemma cut_sound X Y : fact Y -> par_sem (tens_sem (dual_sem X) X) Y e -> Y e.
