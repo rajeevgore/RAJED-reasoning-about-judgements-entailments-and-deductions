@@ -119,6 +119,13 @@ pose (merge_assoc H H1). cD. clear H H1.
 eapply mx. 2: apply (inhabits s0).
 eapply my. 2: apply (inhabits s1). exact pv. Qed.
 
+(* Jw means, for the pr_sem semantics, that weakening by x is admissible *)
+Lemma Jw_pr {V} x : Jw mergeP [] prb x <-> (forall v w, 
+  inhabited (derrec maell_rules emptyT v) -> mergeP x v w -> 
+  inhabited (derrec (@maell_rules V) emptyT w)).
+Proof. unfold Jw.  rewrite (dual_sem_1_eq _ (comm_monoid_nd_list _)).
+(* unfold prb. unfold dual_sem. unfold lolli_sem. *) reflexivity. Qed.
+
 Lemma KsubJw {V} x : @K V x -> Jw mergeP [] prb x.
 Proof. unfold Jw. intro kx.  destruct kx.
 rewrite (dual_sem_1_eq _ (comm_monoid_nd_list _)).
@@ -133,12 +140,37 @@ eapply (OSgctxt_eq _ _ _ []). apply wkrule_I.
 simpl. reflexivity. reflexivity.
 sfs. apply (dersrec_singleI IHG). Qed.
 
+(* meaning of dual_sem mergeP prb (@K V), etc *)
+Lemma dK_pr {V} : dual_sem mergeP prb (@K V) = prb.
+Proof. apply iff_app_eq. intro.  split ; intros.
+apply (H []). apply (K_I []). apply inhabits. apply merge_Rnil.
+intros v w kv me.  apply KsubJw in kv.
+(* unfold Jw in kv.  unfold dual_sem in kv.  unfold lolli_sem in kv. *)
+revert me.  rewrite (cmcomm (comm_monoid_nd_list _)).
+apply kv.  intros v0 w0 ve me.  subst.  destruct me.
+apply merge_RnilE in H0. subst. exact H. Qed.
+
+Lemma ddK_pr {V} : dual_sem mergeP prb (dual_sem mergeP prb (@K V)) =
+  Jw mergeP [] prb.
+Proof. apply iff_app_eq. intro. unfold Jw.
+rewrite (dual_sem_1_eq _ (comm_monoid_nd_list _)).
+rewrite dK_pr. reflexivity. Qed.
+
 Print Implicit Jw.
 Print Implicit Jc.
 Check ll_lems.merge_doubles_via_der.
 Print Implicit merge_doubles.
 Print Implicit prodI.
 Check prodI.
+
+(* Jc means, for the pr_sem semantics, that whenever v, 
+  merged in any way with two copies of x, is provable,
+  then v, merged in any way with one copy of x, is provable *)
+Lemma Jc_pr {V} x : Jc mergeP (@prb V) x <-> (forall u xu,
+  (forall xx xxu, mergeP x x xx -> mergeP u xx xxu -> 
+  inhabited (derrec maell_rules emptyT xxu)) -> 
+  mergeP x u xu -> inhabited (derrec (@maell_rules V) emptyT xu)).
+Proof. unfold Jc.  unfold tens_sem.  rewrite prods_eq_eq. reflexivity. Qed.
 
 Lemma KsubJc {V} x : @K V x -> Jc mergeP prb x.
 Proof. unfold Jc.  intros kx v w pxx me.
@@ -514,4 +546,11 @@ rewrite seml_cons in X. simpl in X.  rewrite sem_dual_pr_eq in X.
 epose (par_sem_mono' X). require p. intros u t. exact t.
 pose (cut_sound_pr_l (p (seml_pr _))).
 unfold pr_seml in p0.  rewrite -> app_nil_r in p0. exact p0. Qed.
+
+Check cut_adm_maell_sem.
+
+(* can we get the rather interesting result that whenever we can
+  weaken by a list of formulae then we can also contract that list? 
+Check Kidemp.
+  *)
 

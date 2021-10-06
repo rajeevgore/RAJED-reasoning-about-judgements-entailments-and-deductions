@@ -93,6 +93,11 @@ rewrite -> ddd_iff in xdy. exact xdy. exact ddx. Qed.
 Inductive prods (X Y : M -> Prop) : M -> Prop :=
   | prodI : forall x y z : M, X x -> Y y -> m x y z -> prods X Y z.
 
+Lemma prods_eq_eq x y : prods (eq x) (eq y) = m x y.
+Proof. apply iff_app_eq. split ; intros.
+destruct H. subst. exact H1.
+eapply prodI. reflexivity.  reflexivity. exact H. Qed.
+
 Lemma prods_mono (X X' Y Y' : M -> Prop) : (forall u, X u -> X' u) ->
   (forall u, Y u -> Y' u) -> (forall u, prods X Y u -> prods X' Y' u).
 Proof. intros xx yy u pxy. destruct pxy.
