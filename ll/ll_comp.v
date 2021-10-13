@@ -119,7 +119,7 @@ pose (merge_assoc H H1). cD. clear H H1.
 eapply mx. 2: apply (inhabits s0).
 eapply my. 2: apply (inhabits s1). exact pv. Qed.
 
-(* Jw means, for the pr_sem semantics, that weakening by x is admissible *)
+(* Jw means, for the pr semantics, that weakening by x is admissible *)
 Lemma Jw_pr {V} x : Jw mergeP [] prb x <-> (forall v w, 
   inhabited (derrec maell_rules emptyT v) -> mergeP x v w -> 
   inhabited (derrec (@maell_rules V) emptyT w)).
@@ -163,7 +163,7 @@ Print Implicit merge_doubles.
 Print Implicit prodI.
 Check prodI.
 
-(* Jc means, for the pr_sem semantics, that whenever v, 
+(* Jc means, for the pr semantics, that whenever v, 
   merged in any way with two copies of x, is provable,
   then v, merged in any way with one copy of x, is provable *)
 Lemma Jc_pr {V} x : Jc mergeP (@prb V) x <-> (forall u xu,
@@ -549,8 +549,4 @@ unfold pr_seml in p0.  rewrite -> app_nil_r in p0. exact p0. Qed.
 
 Check cut_adm_maell_sem.
 
-(* can we get the rather interesting result that whenever we can
-  weaken by a list of formulae then we can also contract that list? 
-Check Kidemp.
-  *)
 

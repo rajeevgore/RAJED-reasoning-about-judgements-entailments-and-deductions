@@ -16,12 +16,37 @@ files up to ll_cam.v
 these do the result without exponentials, cut_adm_mall (in ll.v) 
 
 summary of files and contents
+../general/swapped.v: defines swappedT, as follows:
+
+Inductive swapped T: list T -> list T -> Type :=
+| swapped_I : forall (X Y A B C D : list T),
+    X = (A ++ B ++ C ++ D) -> Y = (A ++ C ++ B ++ D) -> swapped X Y.
+
+ie you can get from X to Y by swapping two adjacent sublists
+
+the proof that exchange is admissible is based on this definition
+(simply because when you interchange two adjacent formula in the conclusion of
+a rule, the required corresponding change in the premises maybe to
+interchange sublists of more than one formula).
+
 fmlsext.v: definitions and lemmas
   fmlsext (putting context around principal formula(e)
   fmlsrule (fmlsext for premises and conclusion of a rule)
   lemmas re fmlsrule and derl, eg derl_fmlsrule
   fmlsruleg (similar, but you can specify the context)
+
   merge (order-preserving merge)
+
+merge xs ys zs means that the list zs is made up by
+combining lists xs and ys in any way which preserves the order
+of members of xs, and of members of ys
+
+we have a lemma that says when lists us and vs can be merged in two different
+ways, then we can get between the two results by a number of swappings
+
+Lemma merges_swapped T us vs xs : merge us vs xs ->
+  forall ys, merge us vs ys -> clos_refl_transT (@swapped T) xs ys.
+
 lldefs.v: definitions and basic lemmas for linear logic
   LLfml (the type of formulae), isubfml, dual
   mall_rules, maell_rules (the rules, without and with rules for exponentials) 

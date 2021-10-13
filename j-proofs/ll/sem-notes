@@ -1,0 +1,386 @@
+
+I also formalised the semantics.
+ 
+I started out following the document 
+LINEAR LOGIC : ITS SYNTAX AND SEMANTICS, Jean-Yves Girard,
+a 42 page document with no indication of if and where it was published.
+
+Using pp 23-24, 
+2 THE SEMANTICS OF LINEAR LOGIC
+2.1 The phase semantics of linear logic
+2.1.1 Phase spaces
+
+(some quotes follow)
+A phase space is a pair (M, ⊥), where M is a commutative monoid (usually
+written multiplicatively) and ⊥ is a subset of M . Given two subsets X and Y
+of M , one can deﬁne X −◦ Y := {m ∈ M ; ∀n ∈ X mn ∈ Y }. In particular,
+we can deﬁne for each subset X of M its orthogonal X ⊥ := X −◦ ⊥. A fact
+is any subset of M equal to its biorthogonal,
+or equivalently any subset of the form Y ⊥
+
+Completeness involves the building of a speciﬁc phase space.
+In fact we can take as M the monoid of contexts (i.e. multisets of formulas 9),
+whose neutral element is the empty context,
+and we deﬁne ⊥ := {Γ ; − Γ provable}.
+If we consider the sets A∗ := {Γ ; − Γ, A provable},
+then these sets are easily shown to be facts
+
+In fact our "speciﬁc phase space", used for completeness, is
+the type of lists of formulae. If we used multisets,
+then we could make the monoid operation multiset union, 
+which is commutative.  But we are using lists of formulae,
+where the append operation is not commutative.
+
+Since our work involved the merge relation which we had defined
+(rather than more simply any combination of lists),
+we changed the definition of X −◦ Y to 
+{m ∈ M ; ∀n ∈ X ∀l, merge m n l -> l ∈ Y} 
+I don't think this change created the problem described next.
+
+The semantics in Girard's document includes
+!X := (X ∩ I)⊥⊥,
+where I is the set of idempotents of M which belong to 1
+
+I found I couldn't get this to work, and looking closely at
+Dominique Larchey-Wendling's work at 
+https://github.com/DmxLarchey/Coq-Phase-Semantics.git
+(and adapting it to right-handed sequents and to the 
+implementation I'd already done of the semantics in Girard's 
+document), I could make it work.
+
+This required following Dominique's work at several points,
+to solve problems that I couldn't solve otherwise.
+This really means that he ought to write his work up;
+to write up give full details of the semantics I've done
+would be to include significantly some of his ideas.
+
+For what he has written up, see the workshop
+
+Dominique Larchey-Wendling
+Mechanizing Cut-Elimination in Coq via Relational Phase Semantics 
+Preuves de logique linéaire sur machine, ENS-Lyon, December 2018.
+
+https://members.loria.fr/DLarchey/files/
+https://perso.ens-lyon.fr/olivier.laurent/llipido/181218_dlw.pdf
+
+So as you suggested we could invite him as co-author of what we write
+or just cite his workshop presentation for the help it has provided.
+
+Anyhow here is the stuff I've done for the semantics.
+
+file ll_semnd.v
+
+So we redefine the notion of a commutative monoid - to get a 
+"non-deterministic monoid" (or "nd-monoid").
+
+(* merge3L x y z r means that you can combine x and y to get something,
+  and combine that with z to get r ; merge3R x y z r is merge3L z y x r *)
+Definition comm_monoid_nd M (m : M -> M -> M -> Prop) e := 
+  (forall x y z r, merge3L m x y z r <-> merge3R m x y z r) /\
+  (forall (x y r : M), m x y r <-> m y x r) /\
+  (forall (x y : M), m x e y <-> x = y) /\
+  (forall (x y : M), m e x y <-> x = y).
+
+and all these are true for the operation we had defined for merging lists
+(we need this fact to apply these semantics to the specific case
+of lists of formulae, in proving completeness)
+
+We fix the following variables:
+Variable M : Type. (* the type of elements of the "non-deterministic monoid" *)
+Variable m : M -> M -> M -> Prop. (* the binary operation of the monoid,
+which is now a relation, not a function *)
+Variable e : M. (* the identity element *)
+Variable bot : M -> Prop. (* the ⊥ of the semantics *)
+Hypothesis cmM : comm_monoid_nd m e. (* as defined above *)
+  
+Definition lolli_sem (X Y : M -> Prop) u :=
+  forall (v w : M), X v -> m u v w -> Y w.
+Definition dual_sem X := lolli_sem X bot.
+
+(** dual_sem lemmas **)
+Lemma dual_dual_sem (X : M -> Prop) u : X u -> dual_sem (dual_sem X) u.
+
+Lemma dual_anti (X Y : M -> Prop) : (forall u, X u -> Y u) ->
+  forall v, dual_sem Y v -> dual_sem X v.
+
+Lemma ddd_iff (X : M -> Prop) v :
+  dual_sem (dual_sem (dual_sem X)) v <-> dual_sem X v.
+
+(this is rather like in intuitionistic logic where X -> ~~X, and ~~~X <-> ~X)
+
+and lots more we need at various points.
+Thus dual_sem (dual_sem _) satisfies the properties of a closure operator
+(DLW's definitions focus on this closure operator).
+The closed sets are then called "facts".
+
+Now we define the semantics - so the idea is that each formula
+is represented by its "semantic value",
+a set of elements of the nd-monoid M, 
+a set being represented by a function of type M -> Prop
+
+Inductive prods (X Y : M -> Prop) : M -> Prop :=
+  | prodI : forall x y z : M, X x -> Y y -> m x y z -> prods X Y z.
+
+Definition tens_sem X Y := dual_sem (dual_sem (prods X Y)).
+Definition par_sem X Y := dual_sem (tens_sem (dual_sem X) (dual_sem Y)).
+
+The idea here is that if Xs and Ys are the semantic values of formulae
+Xf and Yf, then tens_sem Xs Ys is the semantic value of the formula
+tens Xf Yf.
+
+Defining the semantics in this way requires us to specify the 
+semantic values for the atomic formulae, so the account of the semantics
+also depends on a function 
+sv : V -> M -> Prop
+and it is also assumed that the semantic values of atoms are facts:
+fsv : forall v : V, fact (sv v)
+
+Here are the definitions for ? and !
+They use a set K of elements of M
+Variable K : M -> Prop.
+K is assumed to satisfy the following:
+
+Definition Jc x := tens_sem (eq x) (eq x) x.
+Definition Jw x := dual_sem (dual_sem (eq e)) x.
+Hypothesis KsubJc : forall x, K x -> Jc x.
+Hypothesis KsubJw : forall x, K x -> Jw x.
+Hypothesis Kidemp : forall x, prods K K x -> K x.
+Hypothesis Ke : dual_sem (dual_sem K) e.
+
+Then the definitions of the semantics of ? and !  use the set K, 
+whereas the Girard document uses I (as mentioned above).
+
+Definition query_sem X := dual_sem (fun x => dual_sem X x /\ K x).
+Definition bang_sem X := dual_sem (dual_sem (fun x => X x /\ K x)).
+
+Now these definitions must seem meaningless at this point, 
+so you may like to look ahead to the Completeness section, 
+which describes the specific monoid used to prove completeness.
+
+But at the moment we are talking about soundness, which is provable
+for a more general choice of monoid, bot and K.
+
+Soundness (including cut rule) :
+
+Since the semantics talks of the semantics interpretation of a formula,
+and our deductive system is based on lists of formulae (right-handed
+sequents), we define the semantics of a list of formulae to be the
+semantics of their par.  We also prove that (semantically) the binary
+operators par and tens are commutative, eg
+
+par_sem m bot X Y u -> par_sem m bot Y X u
+
+(This is an easy result, also true of wth and plus, which we never need).
+
+We also prove par and tens are associative, which is a lot more difficult.
+
+(It is also is clearly true of wth and plus, which we never need).
+
+Then a significant lemma says that dual_sem in the semantics
+corresponds to the function dual on formulae
+(from which it follows that for any formula A, sem A is a fact).
+
+Lemma sem_dual A : forall u, (sem (@dual V A) u) <-> (dual_sem (sem A) u).
+
+Now the semantic criterion of validity is that the 
+set of elements of the monoid given by the semantic function
+contains the identity element e.
+
+This lemma was frequently used:
+
+Lemma lolli_sem_e X Y : lolli_sem X Y e <-> (forall x, X x -> Y x).
+
+So some of the soundness lemmas we obtained actually relate to sets
+containing e (as tens_mrg_sound), others are stronger than needed,
+as wth_ctxt_sound (which allows any argument u).
+
+Lemma tens_mrg_sound X Y A B : par_sem X (sem A) e ->
+  par_sem Y (sem B) e -> par_sem (par_sem X Y) (sem (@tens V A B)) e.
+  
+Lemma wth_ctxt_sound (X : M -> Prop) A B u : par_sem X (sem A) u ->
+  par_sem X (sem B) u -> par_sem X (sem (@wth V A B)) u.
+
+The corresponding lemmas for the bang, weakening and contraction rules
+were more difficult.
+
+Lemma bang_ctxt_sound_alt (X Y : M -> Prop) :
+  lolli_sem (bang_sem X) Y e -> lolli_sem (bang_sem X) (bang_sem Y) e.
+
+Lemma wk_lolli_lemd (X : M -> Prop) : lolli_sem bot (query_sem X) e.
+
+Lemma ctr_lolli_lemd (X : M -> Prop) :
+  lolli_sem (par_sem (query_sem X) (query_sem X)) (query_sem X) e.
+
+Lemma bang_sound_lem ps c (f : fmlsrulegq (Query (V:=V)) Bangrule ps c)
+  (pss : ForallT (fun p => seml p e) ps) : seml c e.
+
+This one required bang_ctxt_sound_alt (above), and the difficult lemma
+Lemma query_seml_eqv_plus fs :
+  seml (map (@Query V) fs) = query_sem (sem (fold_right (@plus V) (Zero V) fs)).
+(in effect that combining a list of ?-formulae using par 
+is semantically equivalent to combining the formula (without ?) using plus,
+and then applying ? to the result.
+
+This in turn required the lemma
+Lemma par_qq A B : par_sem (query_sem A) (query_sem B) =
+  query_sem (fun x => A x \/ B x).
+for which a lot of effort went into proof attempts that failed.
+
+Further manipulation of these into forms corresponding to the actual rules
+enable us to prove the following.
+
+Lemma llprinc_sound ps c :
+  fmlsruleg llprinc ps c -> ForallT (fun p => seml p e) ps -> seml c e.
+
+Lemma mall_sound ps c :
+  mall_rules ps c -> ForallT (fun p => seml p e) ps -> seml c e.
+
+Lemma maell_sound ps c :
+  maell_rules ps c -> ForallT (fun p => seml p e) ps -> seml c e.
+
+Lemma der_maell_sound :
+  forall c, derrec maell_rules emptyT c -> seml c e.
+
+This is the soundness of the cut rule, but assuming we first apply
+the tensor rule
+
+Lemma cut_sound X Y : fact Y -> par_sem (tens_sem (dual_sem X) X) Y e -> Y e.
+
+Completeness:
+
+For proving completeness according to the semantics, we need to select
+a particular monoid satisfying the requirements outlined above.
+
+The elements of the monoid are lists of formulae,
+and the non-deterministic binary operator is the merge relation,
+where merge xs ys zs means that the list zs is made up by 
+combining lists xs and ys in any way which preserves the order
+of members of xs, and of members of ys.
+
+We show that this nd-monoid satisfies all the assumptions made for the
+nd-monoid used in the soundness proofs.
+
+Lemma comm_monoid_nd_list X : comm_monoid_nd (@mergeP X) [].
+
+Then we define:
+
+bot - used in defining dual_sem - is the set of lists X of formulae
+such that |- X (we call it prb)
+
+Definition prb {V} G := inhabited (derrec (@maell_rules V) emptyT G).
+
+the semantics sv of an atomic formula p is the set of lists X of formulae
+such that |- p X (we call it pr_sv)
+
+Definition pr_sv {V} v G :=
+  inhabited (derrec maell_rules emptyT (@Var V v :: G)).
+
+Jw turns out to be the set of lists of formula X for which weakening works,
+ie whenever |- Y, then also |- X Y
+
+Jc is the set of lists of formula X for which contraction works,
+ie whenever |- X X Y, then also |- X Y
+(bear in mind that we have proved that exchange is admissible)
+
+In fact we are going to let K be the set of lists of query formulae.
+Kidemp says that K is closed under products,
+and Ke says that the monoid identity (which will be the empty list)
+is in the closure of K (in fact it is in K).
+
+And we prove that this choice of K satisfies all the assumptions
+made about K for the soundness proofs.
+(lemmas Ke, Kidemp, KsubJw, KsubJc)
+
+also the semantic values of atoms are facts
+
+Lemma fact_pr_sv {V} v : fact mergeP prb (@pr_sv V v).
+
+We will just call all this the pr (for "provability") semantics.
+
+We also proved certain lemmas useful only for understanding all this:
+
+(* Jw means, for the pr semantics, that weakening by x is admissible *)
+Lemma Jw_pr {V} x : Jw mergeP [] prb x <-> (forall v w,
+  inhabited (derrec maell_rules emptyT v) -> mergeP x v w ->
+  inhabited (derrec (@maell_rules V) emptyT w)).
+
+(* Jc means, for the pr semantics, that whenever v,
+  merged in any way with two copies of x, is provable,
+  then v, merged in any way with one copy of x, is provable *)
+Lemma Jc_pr {V} x : Jc mergeP (@prb V) x <-> (forall u xu,
+  (forall xx xxu, mergeP x x xx -> mergeP u xx xxu ->
+  inhabited (derrec maell_rules emptyT xxu)) ->
+  mergeP x u xu -> inhabited (derrec (@maell_rules V) emptyT xu)).
+
+For the purposes of stating and proving lemmas we also define the following:
+
+hopefully in fact the "pr" semantics, derived from the 
+foundational definitions above will correspond to the following
+(that is, in all cases, not just atoms, pr_sv above would hold):
+
+Definition pr_sem V A G := inhabited (derrec (@maell_rules V) emptyT (A :: G)).
+Definition pr_seml V As G :=
+  inhabited (derrec (@maell_rules V) emptyT (As ++ G)).
+
+In fact we need only show this in one direction, that is,
+
+Lemma sem_pr V A X : sem mergeP [] prb K pr_sv A X -> @pr_sem V A X.
+
+That says, when the "pr" semantics, as defined using the list nd_monoid
+and the definitions above of \bot (as prb) and of sv (as pr_sv),
+says that formula list X is in the semantic value of a formula A,
+then |- A :: X
+
+This is proved by induction on the formula A.
+Difficult cases are seen in the lemmas
+sem_pr_tens, sem_pr_par, sem_pr_bang and sem_pr_query,
+particularly the latter two, where my earlier unsuccessful attempts
+at proofs were considerably longer then the eventual successful attempts.
+
+For example,
+Lemma sem_pr_query V (sema : _ -> Prop) A
+  (IHA : forall X, sema X -> pr_sem A X) X :
+  query_sem mergeP prb K sema X -> pr_sem (@Query V A) X.
+
+TODO - see if more detail useful in the above (work throught the proofs)
+
+Then we get the result like sem_pr but for lists of formulae.
+
+Lemma seml_pr V As : forall X,
+  seml mergeP [] prb K pr_sv As X -> @pr_seml V As X.
+
+Recall that we get seml from sem by combining the semantic values of the
+formulae in As using par_sem, and that pr_seml V As X means that
+As ++ X is derivable.
+
+Finally we get 
+Theorem cut_adm_maell_sem {V} (A : LLfml V) cl cr c :
+  derrec maell_rules emptyT (dual A :: cl) ->
+  derrec maell_rules emptyT (A :: cr) ->
+  merge cl cr c -> inhabited (derrec maell_rules emptyT c).
+
+This uses the semantic result cut_sound,
+par_sem (tens_sem (dual_sem X) X) Y e -> Y e
+(and Y will be pr_seml c).
+
+The line of argument being that:
+- firstly the two premises can be combined using the tens rule, to get
+  derrec maell_rules emptyT (tens (dual A) A :: c)
+- then we use the soundness of derivability, applied to the pr semantics,
+  to get
+  seml mergeP [] prb K pr_sv (tens (dual A) A :: c) []
+- we expand the definition of the semantics, and use the result that
+  sem ... (dual A) = dual_sem ... (sem ... A)
+  (note how in ll_semnd.v, the result sem_dual is
+  sem (dual A) = dual_sem (sem A),
+  but outside the Coq section it is
+  sem m e bot K sv (dual A) = dual_sem m bot (sem m e bot K sv A))
+- we use the result seml_pr, which says that if the semantic value
+  of a list As of formulae (which is a set) contains X,
+  then pr_seml As X holds (that is, As ++ X is derivable)
+- we use the soundness of cut (after first applying the tens rule)
+  (that is, the semantic result that cut is sound)
+  to show that |- c is semantically valid, that is, pr_seml c
+
+
+

@@ -349,10 +349,8 @@ Lemma dual_sem_or' X Y :
   dual_sem (fun u => X u \/ Y u) = (fun v => dual_sem X v /\ dual_sem Y v).
 Proof. apply iff_app_eq.  intro x.  apply dual_sem_or. Qed.
 
-Lemma dsao k A z : fact k -> dual_sem 
-  (fun x => dual_sem A x /\ k x) z ->
- dual_sem (dual_sem 
-   (fun y => A y \/ dual_sem k y)) z.
+Lemma dsao k A z : fact k -> dual_sem (fun x => dual_sem A x /\ k x) z ->
+ dual_sem (dual_sem (fun y => A y \/ dual_sem k y)) z.
 Proof.  intro fk.  apply dual_anti. intro u.  rewrite dual_sem_or. 
 intro. destruct H. split. exact H. exact (fk _ H0). Qed.
   
@@ -466,6 +464,23 @@ rewrite -> ddd_iff in d. exact d. Qed.
 Lemma fact_lolli X Y : fact Y -> fact (lolli_sem X Y).
 Proof. intro fy. destruct (fact_imp_d fy). apply fact_lolli_dual. Qed.
 
+(* this is what DLW calls cl_stability *)
+Lemma prod_ddL X Y z : prods (dual_sem (dual_sem X)) Y z -> tens_sem X Y z.
+Proof. apply lolli_sem_e.  apply uncurry_prods_sem.
+apply lolli_sem_e. 
+apply (ds_ds_fact (fact_lolli (@fact_dual _))).
+intros u xu v w yv me.  apply dual_dual_sem.
+exact (prodI _ _ xu yv me). Qed.
+
+Lemma prod_ddR X Y z : prods Y (dual_sem (dual_sem X)) z -> tens_sem Y X z.
+Proof. rewrite prods_comm_eq. rewrite tens_comm_eq. apply prod_ddL. Qed.
+
+Lemma prod_dd X Y z : 
+  prods (dual_sem (dual_sem X)) (dual_sem (dual_sem Y)) z -> tens_sem X Y z.
+Proof. intro pxy. apply prod_ddL in pxy.
+revert pxy. eapply ds_ds_ds.
+intros u pxdy. exact (prod_ddR pxdy). Qed.
+
 Print Implicit dd_mono.
 Print Implicit uncurry_sem_bot.
 
@@ -475,6 +490,22 @@ Lemma tens_assoc_lem X Y Z u : dual_sem (tens_sem (tens_sem X Y) Z) u ->
 Proof. intros dt.  pose (curry_sem (curry_sem_bot dt)) as l.
 apply uncurry_sem_bot.
 apply (lolli_sem_mono' _ _ l). tauto. apply uncurry_sem_bot. Qed.
+
+Lemma prods_assoc X Y Z u : prods X (prods Y Z) u -> prods (prods X Y) Z u.
+Proof. intro pxyz. destruct pxyz. destruct H0.
+pose (merge3RI _ _ _ _ _ _ H3 H1) as m3eq.
+apply (cmass cmM) in m3eq. destruct m3eq.
+eapply (prodI _ _ _ H2 H5). Unshelve.
+apply (prodI _ _ H H0 H4). Qed.
+
+(* alternative proof of tens_assoc, but seems harder *)
+Lemma tens_assoc' X Y Z u : 
+  (tens_sem X (tens_sem Y Z)) u -> (tens_sem (tens_sem X Y) Z) u.
+Proof. unfold tens_sem.  apply (ds_ds_fact (@fact_dual _)).
+intros.  apply prod_ddR in H.  unfold tens_sem in H.
+revert u0 H.  apply dd_mono.  intros v pxyz.
+pose (prods_assoc pxyz).  clearbody p. clear pxyz.
+revert v p. apply prods_mono.  apply dual_dual_sem. easy. Qed.
 
 Lemma tens_assoc X Y Z u : 
   (tens_sem X (tens_sem Y Z)) u -> (tens_sem (tens_sem X Y) Z) u.
@@ -753,23 +784,6 @@ Lemma lolli_B' (X Y Z : M -> Prop) :
   lolli_sem (lolli_sem Y Z) (lolli_sem (lolli_sem X Y) (lolli_sem X Z)) e.
 Proof. apply lolli_sem_e.  intros x lyz.
 intros v w. exact (lolli_B lyz). Qed.
-
-(* this is what DLW calls cl_stability *)
-Lemma prod_ddL X Y z : prods (dual_sem (dual_sem X)) Y z -> tens_sem X Y z.
-Proof. apply lolli_sem_e.  apply uncurry_prods_sem.
-apply lolli_sem_e. 
-apply (ds_ds_fact (fact_lolli (@fact_dual _))).
-intros u xu v w yv me.  apply dual_dual_sem.
-exact (prodI _ _ xu yv me). Qed.
-
-Lemma prod_ddR X Y z : prods Y (dual_sem (dual_sem X)) z -> tens_sem Y X z.
-Proof. rewrite prods_comm_eq. rewrite tens_comm_eq. apply prod_ddL. Qed.
-
-Lemma prod_dd X Y z : 
-  prods (dual_sem (dual_sem X)) (dual_sem (dual_sem Y)) z -> tens_sem X Y z.
-Proof. intro pxy. apply prod_ddL in pxy.
-revert pxy. eapply ds_ds_ds.
-intros u pxdy. exact (prod_ddR pxdy). Qed.
 
 (** soundness - in semantics, true means set contains e,
   for semantics of list of formulae, imagine them joined by par **)

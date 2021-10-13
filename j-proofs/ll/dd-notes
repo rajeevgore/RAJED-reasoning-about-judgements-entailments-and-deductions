@@ -1,0 +1,12 @@
+
+description of the use of derrec, derl, etc
+
+there is a useful writeup of this, as used in Isabelle, in the paper
+Generic Methods for Formalising Sequent Calculi Applied to Provability Logic.
+In Logic for Programming, Artificial Intelligence and Reasoning (LPAR 2010),
+LNCS 6397, 263-277.
+which you can see at
+http://users.cecs.anu.edu.au/~jeremy/pubs/cutelim/gls/lpar-final/
+(including the appendix, not published)
+
+
