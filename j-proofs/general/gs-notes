@@ -1,0 +1,32 @@
+
+
+things to write about general methodology
+(1) derrec, derl, etc (file general/ddT.v)
+(2) derivation trees as things, the difficulties of this,
+(mentioned in emails to/from Raj below) (file general/dd_fc.v)
+(3) der_trf and der_trf_ht (file general/gstep.v)
+including issues of der_trf_derl and der_trf_rtc but not both (?)
+can_trf_rules, can_trf_rules_rc, can_trf_rules_rtc 
+(4) gen_step, gen_step', gen_step2 (file general/gstep.v) 
+gen_step_lemT, gen_step2_lemT (also versions with premises)
+also some generalized versions
+(5) inductive proofs for actual tree (file general/gentree.v)
+won't be able to discuss all of these in detail!
+gen_step_tr, gen_step_c, gf2_step_tr, and results linking these
+gs_gsc, gstr_gf2, gsc_gstr, 
+lemmas enabling inductive proofs for a tree,
+gen_step_c_lem, gen_step_tr_lem, gf2_step_tr_lem,
+and for induction on height (similarly on size),
+height_step_tr, height_step_tr_lem, gs_tr_height, 
+and gs_hs, linking gen_step to this 
+then the same for results about two trees (eg cut admissibility)
+gen_step2_tr, gen_step2_c, gf_step2_tr,
+gs2_gs2c, gs2tr_gf2, gs2c_gs2tr, 
+lemmas enabling inductive proofs for two trees
+gen_step2_c_lem, gen_step2_tr_lem, gf_step2_tr_lem,
+and for induction on heights (similarly on sizes), 
+height_step2_tr, height_step2_tr_lem, gs2_tr_height, gs2_hs2
+then induction on sum of heights
+sumh_step2_tr, sum_step2_tr_gf2, sum_step2_tr_lem, gf2_sum,
+sumh_step2_tr_lem, hs2_sumh
+
