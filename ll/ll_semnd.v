@@ -861,7 +861,7 @@ Hypothesis Kid : forall x, dual_sem (dual_sem (eq e)) x -> K x.
   equiv dual_sem (dual_sem (eq e)) x -> dual_sem (dual_sem K) x
   which is a weaker condition,
   and maybe Kidem should be prods K K x -> K x,
-  bacause tens_sem K K x -> K x isn't true(?) in the pr_sem semantics *)
+  bacause tens_sem K K x -> K x isn't true(?) in the provability semantics *)
 (* something wrong here, since we have 
   J x = dual_sem (dual_sem (eq e)) x /\ ... -> K x -> J x 
   where did I get this definition of Kid ?? *)
