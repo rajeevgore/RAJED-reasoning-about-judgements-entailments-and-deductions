@@ -326,7 +326,7 @@ In fact we need only show this in one direction, that is,
 
 Lemma sem_pr V A X : sem mergeP [] prb K pr_sv A X -> @pr_sem V A X.
 
-That says, when the "pr" semantics, as defined using the list nd_monoid
+That says, when the "pr" semantics, as defined using the list nd-monoid
 and the definitions above of \bot (as prb) and of sv (as pr_sv),
 says that formula list X is in the semantic value of a formula A,
 then |- A :: X
@@ -341,8 +341,6 @@ For example,
 Lemma sem_pr_query V (sema : _ -> Prop) A
   (IHA : forall X, sema X -> pr_sem A X) X :
   query_sem mergeP prb K sema X -> pr_sem (@Query V A) X.
-
-TODO - see if more detail useful in the above (work throught the proofs)
 
 Then we get the result like sem_pr but for lists of formulae.
 

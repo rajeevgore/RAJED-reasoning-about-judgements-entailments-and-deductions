@@ -270,42 +270,6 @@ Lemma mergeP_same_eq T x : mergeP x x x <-> x = (@nil T).
 Proof. split. apply mergeP_same. 
 intro. subst. apply inhabits. apply merge_Lnil. Qed.
 
-Lemma bang_sem_lem3 V sema x : x = ([] : list (LLfml V)) -> 
-  dual_sem mergeP prb sema [] ->
-    dual_sem mergeP prb sema x /\ mergeP x x x /\
-    dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
-Proof. intros xe sip. rewrite mergeP_same_eq. subst.
-pose (comm_monoid_nd_list (LLfml V)) as cm.
-rewrite (dual_sem_1_eq _ cm).
-split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
-
-Lemma bang_sem_lem'' V sema x : x = ([] : list (LLfml V)) -> 
-  (forall u : list (LLfml V), (sema u : Prop) -> prb u) -> 
-    dual_sem mergeP prb sema x /\ mergeP x x x /\
-    dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
-Proof. intros xe sip. rewrite mergeP_same_eq. subst.
-pose (comm_monoid_nd_list (LLfml V)) as cm.
-rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
-split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
-
-Lemma bang_sem_lem' V A x : x = ([] : list (LLfml V)) -> 
-  (forall u : list (LLfml V), sem mergeP [] prb K pr_sv A u -> prb u) -> 
-    dual_sem mergeP prb (sem mergeP [] prb K pr_sv A) x /\ mergeP x x x /\
-    dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
-Proof. intros xe sip. rewrite mergeP_same_eq. subst.
-pose (comm_monoid_nd_list (LLfml V)) as cm.
-rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
-split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
-
-Lemma bang_sem_lem V A x : (forall u : list (LLfml V),
-  sem mergeP [] prb K pr_sv A u -> prb u) -> 
-  comm_monoid_nd mergeP ([] : list (LLfml V)) -> x = [] -> 
-    dual_sem mergeP prb (sem mergeP [] prb K pr_sv A) x /\ mergeP x x x /\
-    dual_sem mergeP prb (dual_sem mergeP prb (eq [])) x.
-Proof. intros sip cm xe. rewrite mergeP_same_eq. subst.
-rewrite (dual_sem_1_eq _ cm). rewrite (dual_sem_e prb cm).
-split. apply sip. split. reflexivity. exact (dual_sem_bot prb cm). Qed.
-
 (* now we need to show that the semantics defined using pr_sv
   corresponds to pr_sem (at least, for completeness, one way) *)
 Lemma sem_pr_tens V (sema semb : _ -> Prop) A B
