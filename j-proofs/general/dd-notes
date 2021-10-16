@@ -9,4 +9,203 @@ which you can see at
 http://users.cecs.anu.edu.au/~jeremy/pubs/cutelim/gls/lpar-final/
 (including the appendix, not published)
 
+We defined a set of general predicates and theorems to deal with 
+derivations from a set of rules, where repeated application of rules
+creates a derivation tree. 
+This framework is so general that it could be applied way beyond
+the study of logical derivation calculi, for example where the rules are
+
+n m  
+--- for any natural numbers, 
+nm
+
+and the following axiom for any prime p
+
+--
+p 
+
+Then the following would be a derivation of the number 60
+
+2 5  2 3
+---  ---
+10    6
+-------
+  60
+
+The following definitions and lemmas are in the source file general/ddT.v
+
+Inductive derrec X (rules : list X -> X -> Type) (prems : X -> Type) :
+  X -> Type :=
+  | dpI : forall concl, prems concl -> derrec rules prems concl
+  | derI : forall ps concl, rules ps concl ->
+      dersrec rules prems ps -> derrec rules prems concl
+with dersrec X (rules : list X -> X -> Type) (prems : X -> Type) :
+  list X -> Type :=
+  | dlNil : dersrec rules prems []
+  | dlCons : forall seq seqs,
+    derrec rules prems seq -> dersrec rules prems seqs ->
+    dersrec rules prems (seq :: seqs).
+
+derrec rules prems concl means that conclusion concl is derivable
+from premises prems using rules rules, and
+dersrec rules prems concls means that the list concls of conclusions
+are all derivable
+
+Thus the clause dpI says that if concl is one of the given premises prems,
+then it is derivable from prems (obviously);
+the clause derI says that if there is a rule whose conclusion is concl
+and whose premises are the list ps, and if all of ps are derivable
+from prems, then so is concl.
+
+The clauses dlNil and dlCons spell out that dersrec rules prems seqs
+means that each seq in the list seqs is derivable.
+
+Then, with a focus more on the actual derivation tree, we define
+
+Inductive derl X (rules : list X -> X -> Type) : list X -> X -> Type :=
+  | asmI : forall p, derl rules [p] p
+  | dtderI : forall pss ps concl, rules ps concl ->
+    dersl rules pss ps -> derl rules pss concl
+with dersl X (rules : list X -> X -> Type) : list X -> list X -> Type :=
+  | dtNil : dersl rules [] []
+  | dtCons : forall ps c pss cs,
+    derl rules ps c -> dersl rules pss cs -> dersl rules (ps ++ pss) (c :: cs).
+
+Here, derl rules ps concl means that there is a derivation tree whose
+premises (unproved leaves) are (exactly) the list ps, and whose
+conclusion (root) is concl.
+
+Then dersl represents what you get when put a number of such trees
+side by side.
+
+You can view derl as taking as argument a set of rules and returning
+a set of derived rules.
+
+Then we proved a lot of lemmas about these predicates, for example
+
+derrec rules (derrec rules prems) = derrec rules prems
+
+(given a set prems of premises, the set of consequences of prems
+is equal to the set of things derivable from those consequences)
+
+derl (derl rules) = derl rules
+
+(a derived rule based constructed from the set of derived rules is
+also a derived rule based constructed from the set of original rules)
+
+and likewise
+
+derrec (derl rules) prems = derrec rules prems
+
+The above is the translation into Coq of work done earlier in Isabelle
+and described in the LPAR 2010 paper above.
+
+Now in Isabelle we also defined a derivation tree structure
+(which allows unproved leaves).
+We defined the criteria of validity (that each node is an instance
+of a derivation rule, and that there are no unproved leaves).
+We then proved that a conclusion is derivable (in terms of derrec)
+if and only if there exists aa valid derivation tree.
+
+This work was unnecessary in Coq, where
+the system produces a derivation tree object (the term
+of type derrec rules prems concl).
+
+However this fact proved a mixed blessing, because other problems arose.
+Notable, in Isabelle, a derivation tree consists of a root node, which is
+a conclusion and a list of derivation sub-trees (whose conclusions
+are the premises of the final rule).
+
+In Coq, what happens is that we have a "list" of subtrees, a term
+of type dersrec rules prems concls (where concls is the list of 
+premises of the final rule).  But we can't have a list of subtrees
+because they are all of different types, namely
+derrec rules prems concl (for concl a member of the list concls).
+
+The following definitions and lemmas are in the source file general/dd_fc.v
+
+We defined derrec_height to give the height of a tree, 
+with dersrec_height to give the maximum height of a "list" of trees.
+Likewise derrec_size and dersrec_size (which gives the sum of sizes of the
+trees).
+
+At various times I defined the following, but I'm not sure which
+are of any real interest, because I think the approach using derrec_fc
+is superior, I'll have to check this thoroughly.
+
+allPder - which says that all the trees in dersrec ...
+satisfy some property P (which must not involve the conclusion of a tree)
+
+in_dersrec - which says that a tree (d : derrec rules prems concl)
+is one of the trees in (ds : dersrec rules prems concls)
+
+in_nextup - which says that a tree dn is one of the trees at the 
+next level up in tree d
+
+with various lemmas which relate them
+
+allDT - which says that a property P holds at every subtree of a derivation 
+tree (here again, the type of P must not involve the conclusion of a tree)
+
+Inductive derrec_fc (X : Type) rules (prems : X -> Type) : Type :=
+  fcI : forall concl : X, derrec rules prems concl -> derrec_fc rules prems
+
+This gives a type derrec_fc rules prems to a derivation tree,
+with the type not identifying the conclusion.
+
+But we can define a function which identifies the conclusion:
+derrec_fc_concl : forall X rules (prems : X -> Type),
+  derrec_fc rules prems -> X
+  
+In the same way we have dersrec_fcs, fcsI, dersrec_fc_concls.
+
+This makes it possible to define the list of subtrees:
+dersrec_trees : forall X rules prems (concls : list X),
+  dersrec rules prems concls -> list (derrec_fc rules prems)
+nextup : forall (X : Type) rules (prems : X -> Type),
+  derrec_fc rules prems -> list (derrec_fc rules prems)
+
+We can use derrec_size and derrec_height defined above to get functions
+derrec_fc_size and derrec_fc_height because their result type does not
+involve the conclusion of the tree
+
+derrec_fc_height : forall (X : Type) rules (prems : X -> Type),
+  derrec_fc rules prems -> nat
+
+We define botRule_fc X rules prems (der : @derrec_fc X rules prems)
+to be the "bottom rule" of a tree, that is, the list of premises of the
+rule and its conclusion 
+(if the tree is simply a member of prems - so no rule is involved,
+the function returns simply [] in lieu of the list of premises of the rule).
+
+In the proofs of numerous lemmas it is necessary to use
+dependent destruction or dependent induction, which requires importing
+Coq.Program.Equality.
+
+In some cases simply using inversion gives weird assumptions of the form
+existT ... = existT ..., but in some cases these can just be ignored,
+see for example at the lemma is_nextup_derI or fcI_inj_imp.
+
+Now fcI, being a sole constructor for an inductive definition,
+should be a bijection (subject to typing issues). In fact we have
+
+this lemma may be required to make d1 = d2, in fcI_inj below, well-typed
+Lemma fcI_inj_concl: forall X rules prems c1 c2
+  (d1 : @derrec X rules prems c1) (d2 : @derrec X rules prems c2),
+  fcI d1 = fcI d2 -> c1 = c2.
+
+Lemma fcI_inj: forall X rules prems concl (d1 d2 : @derrec X rules prems concl),
+  fcI d1 = fcI d2 -> d1 = d2.
+
+Then we find that Print Assumptions fcI_inj.
+gives assumptions Eqdep.Eq_rect_eq.eq_rect_eq and JMeq.JMeq_eq
+This tends to result from any proof using dependent destruction, etc.
+
+The source code file explores these issues a bit,
+see lemmas fcI_JMinv, fcI_inj', fcI_inj_imp.
+
+
+
+
+
 

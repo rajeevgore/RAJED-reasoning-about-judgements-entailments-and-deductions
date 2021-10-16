@@ -759,10 +759,9 @@ Lemma derrec_eq_swap : forall (T : Type) rules prems G H
     derrec rules prems H.
 Proof.  intros. subst. assumption. Qed.
 
-
-
 Lemma dersrec_double: forall X rules prems c1 c2,
-  iffT (dersrec rules prems [c1;c2]) ((derrec rules prems (c1 : X)) * (derrec rules prems (c2 : X))).
+  iffT (dersrec rules prems [c1;c2])
+    ((derrec rules prems (c1 : X)) * (derrec rules prems (c2 : X))).
 Proof.
   intros. split; intros H.
   split; (eapply dersrecD_forall; [apply H |]).
@@ -774,4 +773,6 @@ Proof.
   inversion H3.
 Qed.
 
-Definition dersrec_doubleD X rs ps c1 c2 := iffT_D1 (@dersrec_double X rs ps c1 c2).
+Definition dersrec_doubleD X rs ps c1 c2 :=
+  iffT_D1 (@dersrec_double X rs ps c1 c2).
+

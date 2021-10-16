@@ -89,7 +89,13 @@ Inductive in_nextup X (rules : rlsT X) prems (concln concl : X)
 Lemma is_nextup_derI W rules prems concl ps rpc ps' 
   (ds : dersrec rules prems ps) (ds' : @dersrec W rules prems ps') :
   is_nextup ds' (derI concl rpc ds) -> JMeq ds ds' * (ps = ps').
-Proof. intro. dependent destruction X. tauto. Qed.
+Proof. intro. inversion X. tauto. Qed.
+
+(* this proof of is_nextup_derI gives a lemma where Print Assumptions
+gives Eqdep.Eq_rect_eq.eq_rect_eq and JMeq_eq
+Proof. intro. dependent destruction X. tauto. Qed. 
+the proof actually used gives funny assumptions existT ... = existT ...
+but in this case it is OK just to ignore them *)
 
 Lemma in_drs_concl_in W rules prems ps (cn : W) (drs : dersrec rules prems ps)
   (dtn : derrec rules prems cn) : in_dersrec dtn drs -> InT cn ps.
@@ -103,7 +109,10 @@ Proof. intro ind. inversion ind. inversion X. Qed.
 Lemma in_nextup_in_drs W rules prems ps (concl cn : W) rpc
   (drs : dersrec rules prems ps) (dtn : derrec rules prems cn) :
   in_nextup dtn (derI concl rpc drs) -> in_dersrec dtn drs.
-Proof. intro ind. inversion ind.  dependent induction X. exact X0. Qed.
+Proof. intro ind. inversion ind.  inversion X. exact X0. Qed. 
+
+(* see discussion at is_nextup_derI, alternative proof of in_nextup_in_drs is 
+Proof. intro ind. inversion ind.  dependent induction X. exact X0. Qed. *)
 
 Lemma in_nextup_concl_in W rules prems ps (concl cn : W) rpc
   (drs : dersrec rules prems ps) (dtn : derrec rules prems cn) :
@@ -177,7 +186,9 @@ Proof. intro apd.  destruct apd ; exact p. Qed.
 
 Lemma allDTD2 {X} rules prems ps (concl : X) P rpc ds :
   allDT P (derI concl rpc ds) -> @allPder X rules prems (allDT P) ps ds.
-Proof. intros adp.  dependent destruction adp. exact a. Qed.
+Proof. intros adp.  inversion adp. subst. inversion H4. exact X1. Qed.
+(* this proof gives a result depending on assumptions
+Proof. intros adp.  dependent destruction adp. exact a. Qed. *)
 
 Fixpoint derrec_height X rules prems concl 
   (der : @derrec X rules prems concl) :=
@@ -448,7 +459,6 @@ Fixpoint derrec_of_fc X rules prems
   end.
   *)
 
-
 (* while we can't get something of type derrec rules prems _
   from something of type derrec_fc ..., we can get it and then
   apply any function to it whose result type doesn't involve the conclusion *)
@@ -603,7 +613,7 @@ Lemma fcI_inj_concl: forall X rules prems c1 c2
 Proof. intros.  inversion H. (* gives existT equality - can ignore it *)
   reflexivity. Qed.
 
-Lemma fcI_inj: forall X rules prems concl (d1 : @derrec X rules prems concl) d2,
+Lemma fcI_inj: forall X rules prems concl (d1 d2 : @derrec X rules prems concl),
   fcI d1 = fcI d2 -> d1 = d2.
 Proof. intros.  dependent destruction H. reflexivity. Qed.
 (* or, this proof gives existT equality
@@ -625,7 +635,7 @@ Lemma fcI_JMinv X rules prems c1 c2
 Proof. intros.  inversion H. (* gives existT equality - can ignore it *)
   apply JMeq_refl. Qed.
 
-(* alternative proof of fcI_inj *)
+(* alternative proof of fcI_inj - result depends on fewer assumptions *)
 Lemma fcI_inj' X rules prems concl (d1 : @derrec X rules prems concl) d2 :
   fcI d1 = fcI d2 -> d1 = d2.
 Proof. intros.  apply (JMeq_eq (fcI_JMinv H)).  Qed.
@@ -633,7 +643,9 @@ Proof. intros.  apply (JMeq_eq (fcI_JMinv H)).  Qed.
 Lemma fcI_inj_imp X rules prems c1 c2 P
   (d1 : @derrec X rules prems c1) (d2 : @derrec X rules prems c2) :
   fcI d1 = fcI d2 -> P c1 d1 -> P c2 d2. 
-Proof. intros feq p1.  dependent destruction feq. exact p1. Qed.
+Proof. intros feq p1.  inversion feq. exact p1. Qed. 
+(* this proof gives result depending on assumptions
+Proof. intros feq p1.  dependent destruction feq. exact p1. Qed. *)
 
 Definition in_nextup_fcI_eq X rules prems c1 c2 cn 
   (dn : derrec rules prems cn) := @fcI_inj_imp X rules prems c1 c2 
@@ -666,8 +678,10 @@ Proof.
     exists d2. constructor 2. eapply Hin2.
 Qed.
 
-Lemma dersrec_double_verb: forall X rules prems c1 c2 (d : (dersrec rules prems [c1;c2])),
-    existsT2 (d1 : (derrec rules prems (c1 : X))) (d2 : (derrec rules prems (c2 : X))),
+Lemma dersrec_double_verb:
+  forall X rules prems c1 c2 (d : (dersrec rules prems [c1;c2])),
+    existsT2 (d1 : (derrec rules prems (c1 : X))) 
+        (d2 : (derrec rules prems (c2 : X))),
       (in_dersrec d1 d) * (in_dersrec d2 d).
 Proof.
   intros.
@@ -681,7 +695,8 @@ Proof.
 Qed.
 
 Definition dp {X : Type} {rules : list X -> X -> Type} {prems : X -> Type}
-  {concl : X} (der : derrec rules prems concl) := @derrec_height X rules prems concl der.
+  {concl : X} (der : derrec rules prems concl) :=
+  @derrec_height X rules prems concl der.
 Lemma dersrec_derrec_height : forall n {X : Type} {rules prems G}
                                      (D2 : dersrec rules prems [G]),
     dersrec_height D2 = n ->
@@ -755,13 +770,10 @@ Lemma dp_same : forall {T : Type} {rules prems} (l1 l2 : list T)
     dp (eq_rect _ (fun l => derrec rules prems l) D1 l2 Heq) = dp D1.
 Proof. induction D1; intros Heq; subst; reflexivity. Qed.
 
-
-Lemma dp_same_fun : forall {T T2 : Type} {rules prems} (l1 l2 : list T) (f : list T -> T2)
-     (D1 : derrec rules prems (f l1))
-    (Heq : l1 = l2),
+Lemma dp_same_fun : forall {T T2 : Type} {rules prems} (l1 l2 : list T) 
+  (f : list T -> T2) (D1 : derrec rules prems (f l1)) (Heq : l1 = l2),
     dp (eq_rect _ (fun l => derrec rules prems (f l)) D1 l2 Heq) = dp D1.
 Proof.  intros; inversion D1; subst; reflexivity. Qed.
-
 
 Lemma derrec_dp_same :
   forall {X : Type} rules (prems : X -> Type) G H (D1 : derrec rules prems G),
@@ -776,8 +788,8 @@ Lemma derrec_dp_same2 :
 Proof. intros. subst. exists D1. reflexivity. Qed.
 
 Definition get_D {X} rules prems G H D pf :=
-(let (D', HD') := (fun (X : Type) (rules : list X -> X -> Type) (prems : X -> Type) 
-  (G H : X) (D1 : derrec rules prems G) (H0 : G = H) =>
+(let (D', HD') := (fun (X : Type) (rules : list X -> X -> Type) 
+  (prems : X -> Type) (G H : X) (D1 : derrec rules prems G) (H0 : G = H) =>
 eq_rect_r
   (fun G0 : X =>
    forall D2 : derrec rules prems G0,
@@ -793,12 +805,12 @@ Parameter (X : Type) (rules : list X -> X -> Type) (prems : X -> Type)
   (G H : X) (D : derrec rules prems G) (pf : G = H).
 Compute (get_D rules prems G H D pf).
 *)
-Lemma dp_get_D : forall (X : Type) (rules : list X -> X -> Type) (prems : X -> Type) 
+Lemma dp_get_D : forall (X : Type) rules (prems : X -> Type) 
                       (G H : X) (D : derrec rules prems G) (pf : G = H),
     dp D = dp (get_D D pf).
 Proof. intros. subst. reflexivity. Qed.
 
-Definition get_dpD {X : Type} (rules : list X -> X -> Type) (prems : X -> Type) (G H : X) 
+Definition get_dpD {X : Type} rules (prems : X -> Type) (G H : X) 
   (D : derrec rules prems G) (pf : G = H) :=
  EqdepFacts.internal_eq_rew_r_dep
    (fun (G0 : X) (pf0 : G0 = H) =>
