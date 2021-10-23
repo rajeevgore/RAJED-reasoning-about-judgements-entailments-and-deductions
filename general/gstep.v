@@ -385,15 +385,14 @@ intros. destruct H.
 intros ps concl rpc dpss fall concl' Rcc.
 apply X in rpc.  unfold can_trf_rules_rc in rpc.
 apply rpc in Rcc. cD. clear rpc X.
-(* here, weaker results by using derI or adm_derrec_trans
+(* here, weaker results by using derI or derl_derrec_trans
   instead of adm_derrec_trans *)
 eapply adm_derrec_trans.  exact Rcc0.
 apply dersrecI_forall. intros.
 eapply ForallTD_forall in Rcc1. 2: eassumption.  cD.
-inversion Rcc3. subst.
-eapply ForallTD_forall in fall. 2: eassumption. 
-apply fall. assumption.
-subst.  eapply dersrecD_forall in dpss. exact dpss. assumption. Qed.
+inversion Rcc3 ; subst. 
+- exact (ForallTD_forall fall Rcc2 _ X0).
+- exact (dersrecD_forall dpss Rcc2).  Qed.
 
 Check der_trf_rc_adm.
 
@@ -419,6 +418,7 @@ apply rsub_adm. apply rpc. Qed.
 
 Check der_trf_rc.  
 
+(* or can do like der_trf_adm below *)
 Lemma der_trf_derl: forall (sty : Type) R rules, 
   (forall ps c, rules ps c -> can_trf_rules R (derl rules) ps c) ->
   forall concl, derrec rules (@emptyT sty) concl -> 
@@ -427,12 +427,15 @@ Proof. intros *. intro.
 apply der_trf_rc_derl. intros. apply can_trf_rules_imp_rc.
 exact (X ps c X0). Qed.
 
-(* or can do the following *)
-Definition der_trf_derl' sty R rules ct :=
-  @der_trf_rc_derl sty R rules 
+Definition der_trf_adm sty R rules ct :=
+  @der_trf_rc_adm sty R rules 
     (fun ps c rpc => can_trf_rules_imp_rc (ct ps c rpc)).
   
-Check der_trf_derl.
+(* alternative to proof of der_trf below *)
+Definition der_trf' sty R rules ct :=
+  @der_trf_rc sty R rules (fun ps c rpc => can_trf_rules_imp_rc (ct ps c rpc)).
+  
+Check der_trf_derl.  Check der_trf_adm.
 
 Lemma can_trf_derl X rules R ps (c : X): can_trf_rules R rules ps c ->
     can_trf_rules R (derl rules) ps c.
@@ -479,68 +482,63 @@ Lemma trf_rules_rtc: forall (sty : Type) R rules (c : sty),
     rules ps' c' -> can_trf_rules_rtc R rules ps' c') ->
   forall ps, rules ps c -> can_trf_rules (clos_refl_transT_n1 R) rules ps c.
 Proof. intros. unfold can_trf_rules. intro. intro rtc.
-induction rtc. exists ps. split. assumption.
+induction rtc. 
+- exists ps. split. assumption.
 apply ForallTI_forall. intros. exists x. split. assumption.
 apply rtn1T_refl.
-cD. eapply X in rtc.
-unfold can_trf_rules_rtc in rtc. apply rtc in r. clear rtc. cD.
+- cD. specialize (X _ _ rtc IHrtc0 _ r). cD.
 eexists. split. eassumption.  
 apply ForallTI_forall. intros.
-eapply ForallTD_forall in r1. 2: eassumption. cD.
-eapply ForallTD_forall in IHrtc1. 2: eassumption. cD.
+destruct (ForallTD_forall X2 X3). destruct p.
+destruct (ForallTD_forall IHrtc1 i). destruct p.
 eexists. split. eassumption.  
 (* now need transitivity of clos_refl_transT_n1 *)
-apply clos_rtn1_rtT in r3.
-apply clos_rtn1_rtT in IHrtc3.
 apply clos_rt_rtn1T.
-eapply rtT_trans ; eassumption. assumption. Qed.
+apply (rtT_trans (clos_rtn1_rtT c1) (clos_rtn1_rtT c0)).
+Qed.
 
 Check trf_rules_rtc.
 
-(* try to adapt proof of trf_rules_derl to also do _rtc 
-Lemma trf_rules_rtc_derl: forall (sty : Type) R (rules : rlsT sty), 
-  (forall ps c, rules ps c -> can_trf_rules_rtc R (derl rules) ps c) ->
-  (forall ps c, derl rules ps c -> 
-    can_trf_rules (clos_refl_transT_n1 R) (derl rules) ps c).
-NOT ACTUALLY SURE THIS IS VALID
-Check trf_rules_rtc_derl.
-*)
+Lemma trf_rules_asm sty R rules p : can_trf_rules R (derl rules) [p : sty] p.
+Proof. intro. unfold can_trf_rules. intros. exists [c'].
+split. apply asmI. apply ForallTI_forall. intros.
+exists p. split. apply InT_eq. inversion X0 ; subst. assumption.
+eapply InT_nilE in X1. eassumption. Qed.
+
+Lemma trf_rules_rtc_asm sty R rules p :
+  can_trf_rules_rtc R (derl rules) [p : sty] p.
+Proof. intro. unfold can_trf_rules_rtc. intros. exists [c'].
+split. apply asmI. apply ForallTI_forall. intros.
+exists p. split. apply InT_eq. inversion X0 ; subst. 
+apply (rtn1T_trans _ X). apply rtn1T_refl.  inversion X1. Qed.
+
+Lemma trf_rules_lem sty R (rules : rlsT sty) pss ps qs
+  (fcd : Forall2T (can_trf_rules R (derl rules)) pss ps)
+  (qsps : ForallT (fun p' : sty => {p : sty & InT p ps * R p p'}) qs) :
+  {qss : list sty & (dersl rules qss qs * ForallT (fun p' : sty =>
+    {p : sty & InT p (concat pss) * R p p'}) qss)%type}.
+Proof. induction qsps.
+- exists []. simpl. split. apply dtNil. apply ForallT_nil.
+- cD.  destruct (Forall2T_ex_r fcd p0).
+destruct (c _ p1). cD.
+eexists. split.  eapply dtCons ; eassumption.
+apply ForallTI_forall. simpl. intros.
+apply InT_appE in X. sD.
++ destruct (ForallTD_forall p3 X). cD.
+eexists. split. 2: eassumption. 
+eapply InT_concat ; eassumption.
++ destruct (ForallTD_forall IHqsps1 X). eexists. exact p4. Qed.
 
 Lemma trf_rules_derl: forall (sty : Type) R (rules : rlsT sty), 
   (forall ps c, rules ps c -> can_trf_rules R (derl rules) ps c) ->
   (forall ps c, derl rules ps c -> can_trf_rules R (derl rules) ps c).
-Proof. intros *.  intro rctd.
-eapply derl_all_rect.
-{ intro. unfold can_trf_rules. intros. exists [c'].
-split. apply asmI. apply ForallTI_forall. intros.
-exists p. split. apply InT_eq. inversion X0 ; subst. assumption.
-eapply InT_nilE in X1. eassumption. }
-
-{ intros *. intros rpc drsl fcd qcp.
-apply rctd in rpc.  subst. clear rctd.
-unfold can_trf_rules. intros c' Rcc.
-unfold can_trf_rules in rpc. apply rpc in Rcc. cD. clear rpc. 
-
-assert {cqss : list sty &
-  (dersl rules cqss Rcc * ForallT (fun p' : sty =>
-    {p : sty & InT p (concat pss) * R p p'}) cqss)%type}.
-
-{ clear Rcc0. induction Rcc1.
-exists []. simpl. split. apply dtNil. apply ForallT_nil.
-cD.
-eapply Forall2T_ex_r in fcd. 2: eassumption. destruct fcd.
-unfold can_trf_rules in c. eapply c in p1. clear c.
-destruct p1. cD. 
-eexists. split.  eapply dtCons ; eassumption.
-apply ForallTI_forall. simpl. intros.
-apply InT_appE in X. sD.
-eapply ForallTD_forall in p2. 2: eassumption. cD.
-eexists. split. 2: eassumption. 
-eapply InT_concat ; eassumption.
-eapply ForallTD_forall in IHRcc2. 2: eassumption. assumption. }
-
-{ cD. eexists. split. 2: eassumption.
-eapply derl_trans ; eassumption.  } } Qed.
+Proof. intros * rctd.
+eapply derl_all_rect. apply trf_rules_asm.
+intros * rpc drsl fcd qcp c' Rcc.  subst.
+pose (rctd _ _ rpc _ Rcc). cD.
+pose (trf_rules_lem fcd s1). cD.
+eexists. split. 2: eassumption.
+eapply derl_trans ; eassumption. Qed.
 
 Check trf_rules_derl.
 
@@ -555,13 +553,75 @@ intros until 1. apply X. Qed.
 
 Check der_trf_rtc.
 
-(* how to do this - maybe need to try _rtc variant of trf_rules_derl 
+(* this proposed lemma combines the effect of using can_trf_rules_rtc
+  (as in extending der_trf to der_trf_rtc) and allowing derl
+  (as in extending der_trf to der_trf_derl), but we have a counterexample
 Lemma der_trf_rtc_derl: forall (sty : Type) R rules, 
   (forall ps c, rules ps c -> can_trf_rules_rtc R (derl rules) ps c) ->
   forall concl, derrec rules (@emptyT sty) concl -> 
     forall concl', clos_refl_transT_n1 R concl concl' ->
       derrec rules (@emptyT sty) concl'.
-*)
+      *)
+
+Inductive CEfml : Type :=
+  | Qce : nat -> CEfml
+  | Rce : nat -> CEfml
+  | Lce : nat -> CEfml
+  | Pce : nat -> CEfml
+.
+
+Inductive CErls : rlsT CEfml :=
+  | pq : forall i, CErls [Pce (S i)] (Qce i)
+  | lp : forall i, CErls [Lce (S i)] (Pce (S i))
+  | rr : forall i, CErls [Rce (S i)] (Rce i)
+  | lax : forall i, CErls [] (Lce (S i))
+.
+
+Inductive CER : relationT CEfml :=
+  | Rpq : forall i, CER (Pce (S i)) (Qce (S i))
+  | Rqr : forall i, CER (Qce i) (Rce i)
+  | Rll : forall i, CER (Lce i) (Lce (S i))
+.
+
+Lemma derl_R_R : forall ps c, derl CErls ps c -> (forall i, c = Rce i -> 
+  sigT (fun j => ps = [Rce j])).
+Proof. apply (derl_all_rect (Q := fun ps c => 
+  forall i : nat, c = Rce i -> {j : nat & ps = [Rce j]})) ; intros ; subst.
+- exists i. reflexivity.
+- inversion X. subst. clear X0.
+inversion H. subst.  inversion H4. subst. clear H H4.
+specialize (H3 _ eq_refl). cD. subst. simpl.
+eexists. reflexivity. Qed.
+
+Lemma der_trf_rtc_derl_CE: (forall (sty : Type) R rules, 
+  (forall ps c, rules ps c -> can_trf_rules_rtc R (derl rules) ps c) ->
+  forall concl, derrec rules (@emptyT sty) concl -> 
+    forall concl', clos_refl_transT_n1 R concl concl' ->
+      derrec rules (@emptyT sty) concl') -> False.
+Proof. intro dtrd.
+specialize (dtrd CEfml CER CErls).  require dtrd. 
+{ clear dtrd. intros ps c rpc.
+destruct rpc ; intros c' cer ; inversion cer ; subst.
+- exists [Rce (S i)]. split.
++ apply in_derl. apply rr.
++ apply ForallT_singleI. eexists. split. apply InT_eq.
+eapply rtn1T_trans. apply Rqr.
+eapply rtn1T_trans. apply Rpq. apply rtn1T_refl.
+- exists [Lce (S (S i))]. split.
++ eapply dtderI. apply pq.
+apply derl_dersl_single. apply in_derl. apply lp.
++ apply ForallT_singleI. eexists. split. apply InT_eq.
+eapply rtn1T_trans. apply Rll. apply rtn1T_refl.
+- exists []. split. 
++ apply in_derl. apply lax. + apply ForallT_nil. }
+specialize (dtrd (Qce 0)). require dtrd.
+- eapply derI. apply pq.  apply dersrec_singleI.
+eapply derI. apply lp.  apply dersrec_singleI.
+eapply derI. apply lax.  apply dlNil.
+- specialize (dtrd (Rce 0)). require dtrd.
+{ eapply rtn1T_trans. apply Rqr. apply rtn1T_refl. }
+apply derrec_nil_derl in dtrd.
+eapply derl_R_R in dtrd.  cD. inversion dtrd0. reflexivity. Qed.
 
 Lemma der_trf_ht: forall (sty : Type) R rules, 
   (forall ps c, rules ps c -> can_trf_rules R rules ps c) ->

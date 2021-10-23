@@ -1,9 +1,6 @@
 
 
 things to write about general methodology
-(1) derrec, derl, etc (file general/ddT.v)
-(2) derivation trees as things, the difficulties of this,
-(mentioned in emails to/from Raj below) (file general/dd_fc.v)
 (3) der_trf and der_trf_ht (file general/gstep.v)
 including issues of der_trf_derl and der_trf_rtc but not both (?)
 can_trf_rules, can_trf_rules_rc, can_trf_rules_rtc 
@@ -29,4 +26,127 @@ height_step2_tr, height_step2_tr_lem, gs2_tr_height, gs2_hs2
 then induction on sum of heights
 sumh_step2_tr, sum_step2_tr_gf2, sum_step2_tr_lem, gf2_sum,
 sumh_step2_tr_lem, hs2_sumh
+
+general methodology for doing inductive proofs of meta-theory
+like admissibility of exchange, cut, etc
+
+first see file dd-notes, Coq code files general/ddT.v, general/dd_fc.v
+
+the approach is quite general, things at the root of a tree
+could be sequents, formulae, or anything; where we need to find a
+word to use I'll say "conclusion" (preferably) or "sequent" 
+
+the first approach to admissibility of things like exchange,
+invertibility of some rule (properties of just one conclusion;
+but cut-admissibility is a property of two conclusions).
+
+We have a relation, R, which could be some sort of exchange property,
+which we wish to show is admissible.
+
+Then the idea is that for each rule the inductive hypothesis is that
+the relation R is admissible for the premises of that rule, and using that
+we need to show that then R is admissible for the conclusion of that rule.
+
+Then if we can do that then clearly we could transform a whole derivation
+to get another valid derivation.
+
+The lemma expressing this is 
+
+der_trf : forall (sty : Type)
+    (R : sty -> sty -> Type) (rules : list sty -> sty -> Type),
+   (forall ps c, rules ps c -> can_trf_rules R rules ps c) ->
+   forall concl : sty, derrec rules emptyT concl ->
+   forall concl' : sty, R concl concl' -> derrec rules emptyT concl'
+
+where the property we need to prove of all rules is 
+
+Definition can_trf_rules (sty : Type) R rules (ps : list sty) (c : sty) :=
+  forall c' : sty, R c c' ->
+  (sigT (fun ps' : list sty => prod (rules ps' c')
+    (ForallT (fun p' => sigT (fun p => prod (InT p ps) (R p p'))) ps'))).
+
+can_trf_rules needs a bit of explanation:
+ps/c will be a rule, and if we are given a "R-variant" c' of the conclusion c
+(ie R c c'), then we require that there exists a rule ps'/c',
+such that every p' in ps' is an R-variant of some p in ps.
+(usually ps' is a list of R-variants of the premises ps).
+
+Then of course the logic behind der_trf is that you proceed upwards from 
+the root of the tree, changing each rule to the variant whose existence
+is stated by the property can_trf_rules.
+
+In fact we get a variant tree of the same height, see lemma der_trf_ht.
+
+We have the following variants of the above result 
+
+der_trf_derl : forall (sty : Type)
+    (R : sty -> sty -> Type) (rules : list sty -> sty -> Type),
+   (forall ps c, rules ps c -> can_trf_rules R (derl rules) ps c) ->
+   forall concl : sty, derrec rules emptyT concl ->
+   forall concl' : sty, R concl concl' -> derrec rules emptyT concl'
+
+where ps'/c' need not be a rule but is a derived rule
+
+For any relation R we get a more powerful result by using the
+reflexive closure of R, expressed using the following
+
+der_trf_rc : forall (sty : Type)
+    (R : sty -> sty -> Type) (rules : list sty -> sty -> Type),
+   (forall ps c, rules ps c -> can_trf_rules_rc R rules ps c) ->
+   forall concl : sty, derrec rules emptyT concl ->
+   forall concl' : sty, R concl concl' -> derrec rules emptyT concl'
+
+where 
+Definition can_trf_rules_rc (sty : Type) R rules (ps : list sty) (c : sty) :=
+  forall c' : sty, R c c' ->
+  (sigT (fun ps' : list sty => prod (rules ps' c')
+    (ForallT (fun p' => sigT (fun p => prod (InT p ps)
+      (clos_reflT R p p'))) ps'))).
+
+Following from der_trf_derl, we actually only need ps'/c' to be
+an admissible rule, thus the following result:
+
+der_trf_rc_adm : forall (sty : Type)
+    (R : sty -> sty -> Type) (rules : list sty -> sty -> Type),
+   (forall ps c, rules ps c -> can_trf_rules_rc R (adm rules) ps c) ->
+   forall concl : sty, derrec rules emptyT concl ->
+   forall concl' : sty, R concl concl' -> derrec rules emptyT concl'
+
+Now the next question is what if the relation between a given p' in ps'
+and some p in ps is not R, or its reflexive closure, but its
+reflexive transitive closure? 
+
+Lemma der_trf_rtc: forall (sty : Type) R rules,
+  (forall ps c, rules ps c -> can_trf_rules_rtc R rules ps c) ->
+  forall concl, derrec rules (@emptyT sty) concl ->
+    forall concl', clos_refl_transT_n1 R concl concl' ->
+    derrec rules (@emptyT sty) concl'.
+
+Definition can_trf_rules_rtc (sty : Type) R rules (ps : list sty) (c : sty) :=
+  forall c' : sty, R c c' ->
+  (sigT (fun ps' : list sty => prod (rules ps' c')
+    (ForallT (fun p' => sigT (fun p => prod (InT p ps)
+      (clos_refl_transT_n1 R p p'))) ps'))).
+
+Here clos_refl_transT_n1 is a definition of reflexive transitive closure.
+
+We tried to combine the extensions of der_trf, ie
+which extend it to der_trf_rtc and also to der_trf_derl, to get a result like
+
+(forall (sty : Type) R rules,
+  (forall ps c, rules ps c -> can_trf_rules_rtc R (derl rules) ps c) ->
+  forall concl, derrec rules (@emptyT sty) concl ->
+    forall concl', clos_refl_transT_n1 R concl concl' ->
+      derrec rules (@emptyT sty) concl')
+
+After quite some effort to prove this we instead found a counterexample,
+checked in the lemma der_trf_rtc_derl_CE.
+
+[I think this is quite interesting - it certainly took some effort -
+and it is general, not about a specific logic; if it is to be included
+in a paper I can give all the details].
+
+
+
+
 
