@@ -1,32 +1,6 @@
 
 
-things to write about general methodology
-(3) der_trf and der_trf_ht (file general/gstep.v)
-including issues of der_trf_derl and der_trf_rtc but not both (?)
-can_trf_rules, can_trf_rules_rc, can_trf_rules_rtc 
-(4) gen_step, gen_step', gen_step2 (file general/gstep.v) 
-gen_step_lemT, gen_step2_lemT (also versions with premises)
-also some generalized versions
-(5) inductive proofs for actual tree (file general/gentree.v)
-won't be able to discuss all of these in detail!
-gen_step_tr, gen_step_c, gf2_step_tr, and results linking these
-gs_gsc, gstr_gf2, gsc_gstr, 
-lemmas enabling inductive proofs for a tree,
-gen_step_c_lem, gen_step_tr_lem, gf2_step_tr_lem,
-and for induction on height (similarly on size),
-height_step_tr, height_step_tr_lem, gs_tr_height, 
-and gs_hs, linking gen_step to this 
-then the same for results about two trees (eg cut admissibility)
-gen_step2_tr, gen_step2_c, gf_step2_tr,
-gs2_gs2c, gs2tr_gf2, gs2c_gs2tr, 
-lemmas enabling inductive proofs for two trees
-gen_step2_c_lem, gen_step2_tr_lem, gf_step2_tr_lem,
-and for induction on heights (similarly on sizes), 
-height_step2_tr, height_step2_tr_lem, gs2_tr_height, gs2_hs2
-then induction on sum of heights
-sumh_step2_tr, sum_step2_tr_gf2, sum_step2_tr_lem, gf2_sum,
-sumh_step2_tr_lem, hs2_sumh
-
+this file (gs-notes) discusses
 general methodology for doing inductive proofs of meta-theory
 like admissibility of exchange, cut, etc
 
@@ -34,14 +8,22 @@ first see file dd-notes, Coq code files general/ddT.v, general/dd_fc.v
 
 the approach is quite general, things at the root of a tree
 could be sequents, formulae, or anything; where we need to find a
-word to use I'll say "conclusion" (preferably) or "sequent" 
+word to use I'll say "conclusion" or "sequent".
 
-the first approach to admissibility of things like exchange,
-invertibility of some rule (properties of just one conclusion;
-but cut-admissibility is a property of two conclusions).
+Further, we will describe results that are useful to show
+contraction admissibility or cut-admissibility of a particular formula A
+which appears in a sequent. It will be clearest to use the terms
+"formula" and "sequent", but we emphasize that the results are much more
+general than this suggests.
 
-We have a relation, R, which could be some sort of exchange property,
-which we wish to show is admissible.
+FIRST APPROACH - related conclusion -> related rule
+
+the first approach to admissibility of things like exchange or
+invertibility of some rule (these are properties of just one conclusion;
+whereas cut-admissibility is a property of two conclusions).
+
+We have a relation, R (eg, that two sequents are related by 
+an exchange property), which we wish to show is admissible.
 
 Then the idea is that for each rule the inductive hypothesis is that
 the relation R is admissible for the premises of that rule, and using that
@@ -77,7 +59,7 @@ is stated by the property can_trf_rules.
 
 In fact we get a variant tree of the same height, see lemma der_trf_ht.
 
-We have the following variants of the above result 
+We have the following more general versions of the above result 
 
 der_trf_derl : forall (sty : Type)
     (R : sty -> sty -> Type) (rules : list sty -> sty -> Type),
@@ -85,7 +67,7 @@ der_trf_derl : forall (sty : Type)
    forall concl : sty, derrec rules emptyT concl ->
    forall concl' : sty, R concl concl' -> derrec rules emptyT concl'
 
-where ps'/c' need not be a rule but is a derived rule
+where ps'/c' need not be a give rule of the calculus but is a derived rule
 
 For any relation R we get a more powerful result by using the
 reflexive closure of R, expressed using the following
@@ -146,7 +128,220 @@ checked in the lemma der_trf_rtc_derl_CE.
 and it is general, not about a specific logic; if it is to be included
 in a paper I can give all the details].
 
+SECOND APPROACH - gen_step
 
+In this approach we prove some property of a derivable conclusion
+by induction on the derivation.
 
+The property is often something like admissibility of exchange,
+or invertibility of some rule, which are cases where the first approach
+would also usually work.
+
+But often it is something like admissibility of contraction of a formula A,
+which is proved by induction on, first the size or structure of A,
+then on the derivation.  That is, the inductive hypothesis is that you
+can always contract subformulae of A, and you can contract A in
+the conclusions of subderivations.
+
+So, where P fml seq is the desired property of formula fml and sequent seq, 
+sub is the subformula relation, and derivs concl means that concl is derivable, 
+
+gen_step P A sub derivs ps concl 
+
+means that if 
+(H1) for all (sub-)smaller formulae A', and derivable sequents seq,
+P A seq holds, and
+(H2) forall p in ps, p is derivable and P A p holds, and
+(H3) concl is derivable, then
+(C) P A concl holds.
+
+This will be used where ps/concl is the final rule of a derivation of concl.
+
+Then the key result is gen_step_lemT which says that if the condition
+gen_step holds for every rule, and if A is in the "accessible part" of
+the subformula relation sub (ie, starting at A you can't get an infinite chain
+of successively smaller formulae), then P A concl holds for every derivable
+sequent concl.
+
+There is also a variant, called gen_step_lem_psT,
+which applies to a conclusion concl which is derivable from premises prems,
+where the premises in prems satisfy P A (for all A).
+
+This framework is particularly useful because it permits proving
+the gen_step condition as separate lemmas for the various
+final rules ps/c. These lemmas can easily be adapted for reuse
+for a similar admissibility proof for a different calculus.
+
+We extend this approach to the situation where
+we may want to prove by induction that a property of a pair
+of derivable sequents holds, such as cut-admissibility of a cut-formula A.
+So where P fml seql seqr is a property of a formula fml and a pair of 
+derivable sequents seql and seqr, sub is as before,
+dls cl and drs cr say that cl and cr are derivable, we have defined
+
+gen_step2 P A sub dls drs psl cl psr cr
+
+to mean that if 
+(H1) for all (sub-)smaller formulae A', and derivable sequents seql and seqr,
+P A seql seqr holds, and
+(H2) forall pl in psl, pl is derivable and P A pl cr holds, and
+(H3) forall pr in psr, pr is derivable and P A cl pr holds, and
+(H4) cl and cr are derivable, then
+(C) P A cl cr holds.
+
+As for gen_step, the idea is that psl/cl and psr/cr are the final
+rules in derivations of cl and cr.
+
+Then the key result is gen_step2_lemT which says that if the condition
+gen_step2 holds for every pair of rules, and if A is in the "accessible part" 
+of sub, then P A seql seqr holds for every pair of derivable
+sequents seql and seqr.
+
+The result is general enough to permit the sequent type and the rules
+to be different on the left and right, though we have never used this.
+(Thus separate variables dls and drs in the definition of gen_step2.)
+
+This result combines 3 inductions, on the derivations on the left and right,
+and on the formula A.  Since it is complicated to work out the proof,
+it is convenient to have this result.
+It also permits proving gen_step2 as separate lemmas for the various
+possibilities for the final rules psl/cl and psr/cr.
+
+But what of proofs where this is not sufficient?  For example,
+in some cases we may require to use cut-admissibility not for pl and cr,
+but for some pl' and cr (P A pl' cr in the description above),
+where for example pl' is an exchanged version of pl.
+
+Then we need to have proved height-preserving admissibility of exchange,
+and to do the cut-admissibility proof by induction on the height of the 
+derivation, not on the structure of the derivation.  Ie we need
+to assume P A pl' cr where pl' is derivable by a derivation of the same or
+smaller height than that of pl.
+
+File gentree.v deals with inductive proofs involving actual derivation trees
+(eg, looking at their height, or size).
+
+We have two properties defined: (not sure if we want to discuss both
+of these in a paper, I'll have to figure that out)
+
+gen_step_tr involves P, a property of formula A and derivation tree dt
+(dt of the derrec_fc type, where the type does not involve the conclusion).
+It says that if P holds generally for smaller formulae, and holds for
+each immediate subtree dtn of dt, then it holds for dt.
+
+Definition gen_step_tr W rules fty P (A : fty) sub
+  (dt : @derrec_fc W rules emptyT) :=
+  (forall A' : fty, sub A' A -> forall d, P A' d) ->
+  (forall dtn, in_nextup_fc dtn dt -> P A dtn) -> P A dt.
+
+gen_step_c involves P, a property of formula A and derivable conclusion c:
+it says that if P holds generally for smaller formulae, and holds for
+conclusions of the immediate subtrees of the derivation tree of c,
+then it holds for c.
+
+Definition gen_step_c W rules fty (P : fty -> W -> Type) A sub c
+  (dt : derrec rules emptyT c) :=
+  (forall A' : fty, sub A' A ->
+    forall c (d : derrec rules emptyT c), P A' c) ->
+  (forall cn (dtn : derrec rules emptyT cn),
+    in_nextup dtn dt -> P A cn) -> P A c.
+
+Results gs_gsc and gsc_gstr link these concepts to gen_step.
+
+We then have lemmas showing that if these properties hold for 
+derivation trees or their conclusions generally,
+and A is in the accessible part of sub,
+then P holds for trees or their conclusions generally.
+
+Lemma gen_step_c_lem W rules fty (P : fty -> W -> Type) A sub : AccT sub A ->
+  (forall A c dt, @gen_step_c W rules fty P A sub c dt) ->
+  forall c (dt : derrec rules emptyT c), P A c.
+
+Lemma gen_step_tr_lem W rules fty P A sub : AccT sub A ->
+  (forall A dt, @gen_step_tr W rules fty P A sub dt) -> forall dt, P A dt.
+
+For doing induction on the height or size of derivation trees,
+we first define gf_step_tr, which allows an arbitrary relation
+for which trees of interest are in the accessible part;
+this is true for height or size which are well-founded.
+
+Definition gf_step_tr W fty (P : fty -> W -> Type) A sub dtsr dts :=
+    ((forall A', sub A' A -> (forall dts, AccT dtsr dts -> P A' dts)) ->
+    (forall dts', dtsr dts' dts -> P A dts') -> P A dts).
+
+and we get the lemma saying P holds:
+
+Lemma gf_step_tr_lem W fty (P : fty -> W -> Type) A sub dtsr :
+  (forall A dts, gf_step_tr P A sub dtsr dts) ->
+     AccT sub A -> (forall dts, AccT dtsr dts -> P A dts).
+
+A lemma gstr_gf links gf_step_tr to gen_step_tr.
+
+These can be applied to height or size of a derivation:
+
+Definition height_step_tr U fty rules P (A : fty) sub :=
+    gf_step_tr P A sub (measure (@derrec_fc_height U rules emptyT)).
+
+Lemma height_step_tr_lem U fty (rules : rlsT U)
+  (P : fty -> derrec_fc rules emptyT -> Type)
+  A sub dt: AccT sub A -> (forall A dt, height_step_tr P A sub dt) -> P A dt.
+
+A result gs_tr_height links gen_step_tr to height_step_tr,
+and putting together all the linking results mentioned gives gs_hs,
+which says that if the gen_step condition holds then the 
+height_step_tr condition holds: this is because if we assume
+some property holds for all shorter derivations then we can assume
+that it holds for sub-derivations.
+
+Definition dtfun fty U rls (P : fty -> U -> Type) (A : fty)
+  (dt : @derrec_fc U rls emptyT) := P A (derrec_fc_concl dt).
+
+Lemma gs_hs (U fty : Type) rls (P : fty -> U -> Type) A sub c
+  (dt : derrec rls emptyT c) ps (br : botRule_fc (fcI dt) ps c):
+  gen_step P A sub (derrec rls emptyT) ps c ->
+  height_step_tr (dtfun P) A sub (fcI dt).
+
+This has been useful for complex admissibility proofs,
+which requires induction on the height of a derivation: 
+most cases could be dealt with by proving the gen_step
+condition (which is simpler than the height_step_tr condition),
+but it is then immediate to deduce that the height_step_tr condition holds.
+
+In fact the majority of the file gentree.v consists of doing the same as
+above for inductive proofs of a property of two derivation trees,
+that is, definitions and results enabling induction on height or size of 
+trees. 
+
+Thus we have definitions and results 
+gen_step2_tr, gen_step2_c, gen_step2_tr_lem, gen_step2_c_lem, 
+gs2_gs2c, gs2c_gs2tr, corresponding to similar results for one tree.
+
+To allow for induction on some quantity like height or size,
+we have gf_step2_tr (analogous to gf_step_tr for a single tree),
+with the linking result gs2tr_gf2, and lemma gf_step2_tr_lem.
+
+As for one tree, we have height_step2_tr, height_step2_tr_lem, etc
+and the result gs2_hs2 permitting mixing cases where inductive hypotheses
+involving sub-derivations and ones involving smaller derivations.
+
+We also enable induction on the sum of some measure (height, size, etc)
+of the left derivation plus measure of the right derivation.
+
+So we define sum_step2_tr to say that for a property P of a formula A
+and a pair of trees dta dtb, and measures gsl and gsr, if
+(H1) for all (sub-)smaller formulae A', and trees dta' and dtb',
+P A dta' dtb' holds, and
+(H2) forall trees dta' and dtb', if gsl dta' + gsr dtb' < gsl dta + gsr dtb,
+then P A dta' dtb' holds, then
+(C) P A dta dtb holds.
+
+Then the lemma sum_step2_tr_lem says that 
+if A is in the accessible part of sub,
+then sum_step2_tr is enough to prove that P holds generally.
+
+This is instantiated for height (for both trees) in 
+sumh_step2_tr and sumh_step2_tr_lem.
+
+The lemma gf2_sum relates the conditions gf_step2_tr and sum_step2_tr.
 
 

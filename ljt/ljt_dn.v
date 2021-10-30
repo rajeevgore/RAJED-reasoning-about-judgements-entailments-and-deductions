@@ -574,7 +574,7 @@ Check gs_LJX_ImpL_sr.  Check gs_LJA_ImpL_sr.  Check gs_LJT_ImpL_sr.
 (*
 
 Check gen_step_lemT.
-Check gen_step_c_lem.  Check gen_step_tr_lem. Check gf2_step_tr_lem.
+Check gen_step_c_lem.  Check gen_step_tr_lem. Check gf_step_tr_lem.
 Check height_step_tr_lem.
 
 (* proof using gen_step_lemT, don't think we want this *)
