@@ -7,6 +7,44 @@
 \newcommand{\raj}[1]{\textcolor{blue}{#1}}
 \newcommand{\jed}[1]{\textcolor{green}{#1}}
 
+\usepackage{bussproofs}
+\usepackage{proof}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{xcolor}
+
+\definecolor{backcolour}{rgb}{0.9,0.9,0.9}
+
+\lstdefinestyle{mystyle}{
+	basicstyle=\ttfamily\scriptsize,
+    keepspaces=true,  	
+	language=Haskell,
+	backgroundcolor=\color{backcolour}, 
+	mathescape=true,
+}
+
+\lstset{style=mystyle}
+
+\newcommand{\code}{\lstinline[mathescape=true,breaklines=true,basicstyle=\ttfamily\footnotesize]}
+
+\newcommand{\atm}{\textit{Atm}}
+\newcommand{\wbx}{\Box}
+\newcommand{\wdi}{\Diamond}
+\newcommand{\bbx}{\blacksquare}
+\newcommand{\bdi}{\blacklozenge}
+
+\newcommand{\sa}{\Rightarrow}
+
+\newcommand{\fwd}{\nearrow}
+\newcommand{\bwd}{\swarrow}
+\newcommand{\upd}{\updownarrow}
+
+\newcommand{\omitraj}[1]{}
+\newcommand{\omitcaitlin}[1]{}
+\newcommand{\omitjeremy}[1]{}
+\newcommand{\omitreview}[1]{}
 
 \title{VRAJED: Verified Reasoning About Judgements, Entailments and Deductions}
 \author{Jeremy E Dawson \and Rajeev Gor\'e}
@@ -64,6 +102,124 @@ in a list.
 \section{Deep and Shallow Embeddings}
 
 \section{Deep Embedding of Formulae, Rule-skeletons, Closure Under Contexts}
+
+\section{Encoding Formulae, Sequents and LNSs}
+
+Having seen the pen-and-paper definition of the calculus, we turn to our Coq formalisation. We start with a set of proposition variables, \code|V : Set|, which corresponds to $\atm$, over which we build our formulae, \code|PropF V|:
+\begin{lstlisting}
+Inductive PropF (V : Set) : Type :=
+  | Bot  : PropF V      
+  | Var  : V -> PropF V
+  | WBox : PropF V -> PropF V      
+  | BBox : PropF V -> PropF V
+  | Imp  : PropF V -> PropF V -> PropF V.
+\end{lstlisting}
+
+Here we are creating a new type called \code|PropF|, and so we would encode, for example, the infix formula
+$\wbx (p \to q) \to (\wbx p \to \wbx q)$ using prefix notation by the term
+\code|Imp (WBox (Imp (Var p) (Var q))) (Imp (WBox (Var p)) (WBox (Var q)))|.
+
+% We encode a sequent $\seq{\Gamma}{\Delta}$ as a pair of lists of formulae, \code|rel (list (PropF V))|, where \code|Definition rel (W : Type) : Type := prod W W.| Recall that our sequents are comprised of multisets. To model this we chose lists and later proved exchange lemmas that enable us to move formulae around in any order without compromising derivability. See Section ?? (TODO: add later).
+
+%\raj{Recall that our sequents are comprised of multisets. To model this we chose lists and later proved exchange lemmas that enable us to move formulae around in any order without compromising derivability. See Section ?? (TODO: add later). Thus the multiset
+%  $\Gamma$ of formulae is encoded as the term \code|(list (PropF V))| while the sequent
+%  $\Gamma \sa \Delta$ is encoded as a pair
+%  \code|rel (list (PropF V))| of
+%lists of formulae, where \code|Definition rel (W : Type) : Type := prod W W.| 
+%}
+
+Recall our sequents consist of multisets. To model this we chose lists and later proved exchange lemmas that enable us to move formulae around in any order without compromising derivability. See Section~\ref{s:proof-theoretic-properties} for further details. 
+Thus the multiset $\Gamma$ of formulae is encoded as a term with type \code|list (PropF V)| and sequents, which have the form $\Gamma\sa\Delta$, have type \code|seq|:
+\begin{lstlisting}
+Definition rel (W : Type) : Type := W * W. (* ie, prod W W *)
+Definition seq {V : Set} := rel (list (PropF V)).
+\end{lstlisting}
+
+Here, \code|prod W W|, also written \code|W * W|,
+is the Cartesian product $W\times
+W$, and so an \code|s| of type \code|seq| is a pair of lists of formulae
+such as \code|pair| $\Gamma$ $\Delta$, also written ($\Gamma, \Delta$).
+We use braces as in \{\code|V : Set|\}
+as opposed to parentheses as in \code|(W : Type)| above in
+order to tell Coq to consider the enclosed argument as implicit. When
+we want to feed the implicit argument we can use an \code|@| symbol as
+in \code|@seq V|, like in the definition of \code|LNS| below.
+
+We defined the type \code|LNS| to encode LNSs as lists of pairs of sequents and directions, where the latter is defined to have two inhabitants corresponding to the $\fwd$ and $\bwd$ arrows:
+\begin{lstlisting}
+Inductive dir : Type :=   | fwd : dir  | bac : dir.
+Definition LNS {V : Set} := list ((@seq V) * dir).
+\end{lstlisting}
+
+\omitcaitlin{[Reviewer 2 says: ``Why do you use sometimes prod, other times *, and other times pair?
+	For example, sequents are (prod (list A) (list A)), while linear
+	nested sequents are list (seq * dir). Why aren't sequents list A *	list A?''
+	
+	The answer to this is:
+\begin{itemize}
+	\item \code|*| is just notation for \code|prod| so they can be used entirely interchangeably;
+	\item \code|pair| is the constructor for \code|prod|, and \code|(A, B)| is just notation for \code|pair A B|;
+	\item My understanding of why we defined a separate \code|rel| instead of just always using \code|W * W| is because of how Jeremy defined some tactics to intentionally work with \code|rel| but not \code|W * W| and vice versa. Is this correct, Jeremy?
+\omitjeremy{no - it's just that rel W is shorter than W * W, if W is long;
+tactics should work exactly the same}
+\end{itemize}
+	
+If so, I suggest we just replace \code|prod W W| in the
+definition of \code|rel| with \code|W * W| and replace any
+occurence of \code|pair A B| with \code|(A, B)|. Even though
+that technically differs from our formalisation, I think it
+minimises confusion. Thoughts?]}
+
+\omitjeremy{maybe, but either way a brief note of the point would make sense}
+\omitraj{It is dangerous to veer from our actual formalisation so I suggest just making a comment somewhere to explain this.}
+%Thus the multiset 
+%$\Gamma$ of formulae is encoded as a term with type \code|(list (PropF V))| while the sequent
+%$\Gamma \sa \Delta$ is encoded as  a pair
+%\code|rel (list (PropF V))| of
+%lists of formulae, where \code|Definition rel (W : Type) : Type := prod W W.| 
+
+% TODO
+%\raj{Could we just change rel to seq uniformly so that the constructor is seq rather than rel?}
+%\caitlin{[From a formalisation point of view, we wouldn't want to simply change \code|rel| to \code|seq| because it clouds the meaning in the sense that a seq is a rel but a rel isn't a seq. The way to do this I think would be to add a 'seq' wrapper: in addition to the \code|rel| definition also have \code|Definition seq (W : Type) : Type := rel W.| The con of doing that at this late stage is that I would need to make a lot of changes/additions. I think it could be as straightforward as adding in \code|unfold| tactics everywhere which isn't difficult but just a lot to do for what I'm not sure is worth it. Maybe we can add this to the to-do list to be done once the other more pressing things are done?
+%
+%Related, actually, is that I was thinking that it probably would have been a good idea to define a wrapper so that we don't have to keep carrying around the info that \code|prems| is empty and maybe even not specifying the rule system every time. E.g. we define \code|der| in terms of \code|derrec| so that instead of always having to write \code|derrec (@LNSKt_rules V) (fun _ => False) ns| we can just write \code|der (@LNSKt_rules V) ns| or even \code|der_LNSKt ns| to say that \code|ns| is derivable. Or maybe use \code|pf| instead of \code|der| to indicate proof rather than derivation. Again, I think this is not urgent but maybe something to think about later if we have time.]}
+%\raj{This is fine with me. Jeremy, do you have any objections to implementing Caitlin's suggestions at a later date?} \caitlin{[I think both the \code|seq| and \code|der_LNSKt| can just be added in the ``tense-lns'' directory without touching the ``general'' directory. In that case, I'll do it (eventually).]}
+%\jeremy{no objection at all, it would be convenient shorthand.
+%The theory of derrec, derl, etc, needs those arguments to express the results
+%that derivable from rules is equiv to derivable from derived rules,
+%and derivable from listed premises is equiv to derivable using derivable things
+%as premises, but I agree, mostly we are interested in a fixed set of rules and
+%empty premise set.
+%Note here, and a previous comment, in a Coq proof,
+%it's surprisingly common that you can skip an unfold step, and Coq will
+%do that automatically} \caitlin{On that last sentence: true, although I would add that I don't think matches in ltac unfold things which is what I had in mind.}
+%\raj{Okay, I think this discussion is done but I am leaving it to Caitlin to delete it.}
+
+% We encode a sequent $\seq{\Gamma}{\Delta}$ as a pair of lists of formulae, \code|rel (list (PropF V))|, where \code|Definition rel (W : Type) : Type := prod W W.| 
+
+%We then capture LNS by a list
+%of pairs
+%\code|list (rel (list (PropF V)) * dir)| of
+%sequents
+%\code|(rel (list (PropF V))| and directions
+%\code|dir| where the type for directions, \code|dir|, is defined via:
+%\begin{lstlisting}
+%Inductive dir : Type := | fwd : dir | bac : dir.
+%\end{lstlisting}
+% \begin{lstlisting}
+% Inductive dir : Type :=
+% | fwd : dir
+% | bac : dir.
+% \end{lstlisting}
+
+
+There is an extra direction in the type for LNS: for $n$ components there should only be $n-1$
+directions. We ignore the first direction: so $\Gamma \sa \Delta \fwd \Sigma \sa \Pi$
+is encoded by 
+\code|[($\Gamma$, $\Delta$, fwd), ($\Sigma$, $\Pi$, fwd)]|
+and
+\code|[($\Gamma$, $\Delta$, bac), ($\Sigma$, $\Pi$, fwd)].|
+
 
 \section{Manipulating Derivations as First-Class Citizens}
 
