@@ -1,0 +1,111 @@
+\documentclass[a4paper]{article}
+
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{color}
+
+\newcommand{\raj}[1]{\textcolor{blue}{#1}}
+\newcommand{\jed}[1]{\textcolor{green}{#1}}
+
+
+\title{VRAJED: Verified Reasoning About Judgements, Entailments and Deductions}
+\author{Jeremy E Dawson \and Rajeev Gor\'e}
+\begin{document}
+\maketitle
+\begin{abstract}
+  We present a Coq formalisation for reasoning about purely syntactic derivations in a genuinely substructural setting.  By a
+  suitably general abstraction of ``judgement'', we can instantiate this framework to reason about Hilbert-calculi,
+  Natural-Deduction calci, Tableaux Calculi or Sequent Calculi. By couching all judgements as lists of formulae, we are able to
+  reason about genuinely substructural logics where both exchange and contraction are missing. By building rules from skeletons
+  and enabling their closure under arbitrary contexts, we provide modularity by which we can prove certain theorems for all rules
+  that meet some particular criteria. We can also easily encode more exotic structures such as nested sequents or even display
+  calculi.  By using a deep embedding, every derivation is a first-class object, which can be manipulated and transformed
+  explicitly. Indeed, we can not only extract a fully verified computer program for performing backward proof-search, but we can
+  even extract a fully verified computer program for performing cut-elimination! We know of no framework which offers all of these
+  features simultaneously. We give numerous examples of how to utilise our framework for fully verified reasoning in such
+  substructural logics.
+\end{abstract}
+
+\section{Introduction}
+Structural proof-theory is notorious for requiring the analysis of a huge number of similar cases.  Page restrictions usually mean
+that we cannot give the full proofs and so authors regularly resort to the adage that ``the other cases are similar''. Of course,
+the devil is always in the detail, and there are numerous examples of ``false proofs'', although the theorems themselves tend to
+survive a more detailed analysis~\cite{mints-src}. A well-established solution is to formalise the required definitions inside a
+proof-assistant and to utilise its pedantic nature to ensure that the other cases are indeed
+similar~\cite{pfenning-lics,dawson-gore-generalised,chaudury-reis,pimmentel-et-al}.
+
+A very common approach for modularisation is to use Linear Logic as a meta-logic and to embed our elementary structures (sequents
+say) as formulae of the meta-logic~\cite{pfenning,pimmentel-et-al}. Then, sequent rules can be encoded as rewrite rules in the
+meta-logic and we can reason about the absence or presence of contraction and or weakening by using the ``resource''
+interpretation of linear logic. Adding modalities or other non-classical connectives is also possible by using ``subexponentials''
+to remove the S4-like behaviour of the usual ``?'' and ``!'' connectives of linear logic. We can even identify notions such as
+``cut coherence'' which guarantee that the object deduction systems obey cut-admissibility~\cite{pimmentel-et-al}.
+
+But there are two main disadvantages to this approach:
+\begin{enumerate}
+\item Derivations are not first-class citizens because we never actually represent a derivation as a formula of the meta-logic.
+  Thus we can reason formally about derivability, but we cannot manipulate derivations explicitly;
+\item The conjunctions and disjunctions in linear logic are commutative by default and so the encoded structures immediately
+  inherit exchange as a built-in structural rule. Thus we cannot handle genuinely substructural logics,
+  such as the Lambek Calculus, where
+  structures are not commutative (and sometimes not even associative).
+\end{enumerate}
+
+Over the past twenty years, we have developed a framework that avoids these deficiencies by utilising a deep embeddings into the
+proof-assistants Isabelle/HOL, HOL4 and Coq~\cite{dawson-gore-generalised,dawson-gore-dual-tableaux,dawson-gore-display}.  That
+is, we build explicit structures out of lists or trees of formulae, and we reason explicitly about exchange or
+non-associativity. Here, we provide a comprehensive account of our work to enable others to follow in our footsteps.  Of course,
+as usual, there is no such thing as a free lunch, so we have work much harder to achieve our results with many subtle cases to
+handle the myriad combinations that arise from the presence of multiple occurrences of formulae in any permutation of their order
+in a list.
+
+\raj{Hi Jeremy, what do you think of this outline? Could you please add any other explicit sections or subsections that you would like to include?}
+
+\section{Deep and Shallow Embeddings}
+
+\section{Deep Embedding of Formulae, Rule-skeletons, Closure Under Contexts}
+
+\section{Manipulating Derivations as First-Class Citizens}
+
+\section{Formalising Derivability, Recursive Derivability and Admissiblity}
+
+\section{Structural Cut-admissibility}
+
+\section{From Cut-admissibility to Cut-elimination}
+
+\section{Formally Verified Backward Proofs Search}
+
+\section{Formally Verified Cut-elimination}
+
+\section{Examples}
+
+\subsection{Cut-elimination for the Associative Lambek Calculus}
+
+\subsection{Cut-elimination for Full Linear Logic}
+
+\subsection{Cut-elimination for Full Bi-Intuitionistic Linear Logic}
+
+\subsection{Cut-elimination for Full Linear Logic with Subexponentials}
+
+\subsection{Cut-elimination for Contraction-free Calculi}
+
+\subsection{Cut-elimination for Classical Modal Logics}
+
+\subsection{Cut-elimination for Nested Sequents}
+
+\subsection{Cut-elimination for Linear Nested Sequents}
+
+\subsection{Cut-elimination for Display Calculi}
+
+\subsection{Strong Normalisation for Natural Deduction}
+
+\subsection{Reasoning About Dual Tableaux}
+
+\section{Discussion}
+
+\subsection{The difference between using Isabelle/HOL, HOL4 and Coq}
+
+\subsection{Encoding commutativity as an (admitted) axiom?}
+
+\section{Further Work and Conclusions}
+\end{document}
