@@ -1,0 +1,15 @@
+\documentclass[a4paper]{article}
+
+\usepackage{url}
+\usepackage{amsmath}
+
+\title{VRAJED: Verified Reasoning About Judgements, Entailments and Deductions}
+\author{Rajeev Gor\'e \and Jeremy E Dawson}
+\begin{document}
+\maketitle
+\begin{abstract}
+  We present a Coq formalisation for reasoning about purely syntactic derivations in a genuinely substructural setting.  By a
+  suitably general abstraction of ``judgement'', we can instantiate this framework to reason about Hilbert-calculi,
+  Natural-Deduction calci, Tableaux Calculi or Sequent Calculi.
+\end{abstract}
+\end{document}
