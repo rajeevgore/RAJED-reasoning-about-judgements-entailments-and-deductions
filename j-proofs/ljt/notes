@@ -1,5 +1,92 @@
 
-proof writeup notes, started July 2021, based on code at that time,
+proof writeup notes, started Nov 2021, based on code at that time,
 (for ljt, commit 7af8c80959b2955f36654965be17c61bed0a8acf 14 May 2021)
 which would run on Coq 8.11.2 
+
+history:
+
+original paper uses "sensible proofs"
+Contraction-Free Sequent Calculi for Intuitionistic Logic,
+Roy Dyckhoff, JSL 57 (1992), 795-807 
+
+simpler version, on which my proofs are based
+Contraction-Free Sequent Calculi for Intuitionistic Logic,
+Roy Dyckhoff & Sara Negri, JSL 65 (2000), 1499-1518
+
+this is a correction/simplification to the 1992 paper, not used here
+Contraction-Free Sequent Calculi for Intuitionistic Logic: A Correction,
+Roy Dyckhoff, JSL 83 (2018), 1680-1682
+
+thus references to lemma numbers in what follows and the code are
+to the Dyckhoff & Negri 2000 paper (D&N)
+
+General approach:
+
+The standard system (with rule ImpLrule shown below) is called LJ.
+Dyckhoff's system is called LJT.
+
+We defined an alternative system which we called LJA, which consists
+of Dyckhoff's LJT system, omitting his left Imp-atom rule ImpL_atom_rule
+and replacing it by ImpLrule_p, which is the standard ImpL rule ImpLrule,
+restricted to A being an atom.
+Also for LJA (as for LJ) we omit the left-exchange rule.
+
+ImpL_atom_rule [[B; Var p]] [Imp (Var p) B; Var p]
+ImpLrule [([Imp A B], A); ([B], G)] ([Imp A B], G)
+ImpLrule_p [([Imp (Var p) B], Var p); ([B], G)] ([Imp (Var p) B], G)
+
+The reason for doing the is that his ImpL_atom_rule as shown above 
+(without context) has two principal formulae, which makes many of our
+generally useful lemmas inapplicable. 
+For example, for LJA we do not need to include left-exchange as an explicit
+rule, but for LJT we do.
+We discuss the other consequences of this choice later.
+But then we did it all for LJT as well, so three calculi studied.
+
+In each system we restrict the axiom rule (Idrule) to atoms.
+
+Description of file contents
+
+NEED TO LOOK AT 
+files ljt ljt_inv ljt_ctr ljt_dn ljt_dncc ljt_dnca
+
+ALSO THESE
+ljt_ca ljt_fp ljt_dnterm
+
+file ljt.v: definitions, basic lemmas
+
+PropF: formulae - constructors Var (atoms), Bot, Imp, And, Or
+dnsubfml: a definition of subformula corresponding to the weight defined by D&N
+
+dnfw, dnlw, dnsw - weights of formula, list of formulae, sequent,
+noting that dnfw differs from D&N, having Bot -> 1, Var v -> 0
+
+srseq, srseqf: the type of singleton-on-the-right sequent
+
+LJsrrules, LJslrules: classes of rules (without context) according
+to where context is added to make a rule of the system
+
+LJTilrules, LJAilrules: some of Dyckhoff's special rules 
+
+LJncrules, LJTSncrules, LJTncrules, LJAncrules: various sets of rules
+(without left context)
+
+LJrules, LJTSrules, LJTrules, LJArules: adding left context to the above
+
+lemmas:
+idrule_der_lj: the axiom rule (Idrule) for any formula is derivable 
+
+Lemmas helping to prove Dyckhoff's rules are derivable 
+lemmas LJ_ImpL_Or1, LJ_ImpL_Or2, LJ_ImpL_And, LJ_II
+
+exchange admissible for LJ and LJA: exchL_lj, exchL_lja
+these are easy using the lemma gen_seq.exchL_std_rule, 
+which relies on the fact that each rule has at most one principal formula
+on each side (so allows Idrule),
+similar theorem for LJT (immediate due to exchange rule) exchL_ljt
+
+weakening admissible for each system: LJweakening, LJAweakening, LJTweakening
+and in a different form, insL_lj, insL_lja, insL_ljt
+
+file ljt_inv.v
 
