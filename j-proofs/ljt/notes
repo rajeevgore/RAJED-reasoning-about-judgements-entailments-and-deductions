@@ -88,5 +88,28 @@ similar theorem for LJT (immediate due to exchange rule) exchL_ljt
 weakening admissible for each system: LJweakening, LJAweakening, LJTweakening
 and in a different form, insL_lj, insL_lja, insL_ljt
 
-file ljt_inv.v
+file ljt_inv.v invertibility of various rules
+first define the relation between conclusion and the premise of interest, eg
+
+Inductive AndRinv1 {V} : relationT (PropF V) :=
+  | AndRinv1_I : forall C D, AndRinv1 (And C D) C.
+
+Inductive AndLinvs {V} : PropF V -> list (PropF V) -> Type :=
+  | AndLinvs_I : forall C D, AndLinvs (And C D) ([C ; D]).
+
+These are of varying types, we give them appropriate contexts to 
+get relations applying to actual sequents.
+
+We have a lot of lemmas which aren't very illuminating but capture
+frequently used combinations or proof steps, eg lr_gen..., fcr..., 
+and lemmas which are trivial but useful for automating proofs,
+eg ser... and rreer..., and tactics which use these, eg apser.... 
+
+Then we have general invertibility results, eg
+
+can_trf_genLinv_exch: if there is an exchange rule, then a rule of a certain
+form is invertible, for rules with a single principal formula on the left
+of the conclusion, which is replaced by a list of formulae in the premise in
+question, and where the rule allows general contexts on left and right
+
 
