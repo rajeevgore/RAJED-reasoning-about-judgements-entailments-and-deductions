@@ -100,10 +100,26 @@ Inductive AndLinvs {V} : PropF V -> list (PropF V) -> Type :=
 These are of varying types, we give them appropriate contexts to 
 get relations applying to actual sequents.
 
+For example, using functions such as
+
+Inductive fslr (U W : Type) (R : U -> W -> Type) : list U -> W -> Type :=
+    fslr_I : forall (u : U) (w : W), R u w -> fslr R [u] w
+
+Inductive ant_rel (W Y : Type) (R : Y -> Y -> Type) : relationT (list W * Y) :=
+    ant_relI : forall (ant : list W) (suc suc' : Y),
+               R suc suc' -> ant_rel R (ant, suc) (ant, suc')
+
+Others of the same nature are srs_ext_rel, rr_ext_rel.
+
+Lemmas such as LJAIAE, LJAE, give the uniqueness of rules with a certain
+form of conclusion, eg
+
+Lemma LJAE V ps A B G : LJncrules ps ([@And V A B], G) -> ps = [([A ; B], G)].
+
 We have a lot of lemmas which aren't very illuminating but capture
 frequently used combinations or proof steps, eg lr_gen..., fcr..., 
-and lemmas which are trivial but useful for automating proofs,
-eg ser... and rreer..., and tactics which use these, eg apser.... 
+ncgen..., and lemmas which are trivial but useful for automating proofs,
+eg ser... and rre..., and tactics which use these, eg apser.... 
 
 Then we have general invertibility results, eg
 
@@ -111,5 +127,21 @@ can_trf_genLinv_exch: if there is an exchange rule, then a rule of a certain
 form is invertible, for rules with a single principal formula on the left
 of the conclusion, which is replaced by a list of formulae in the premise in
 question, and where the rule allows general contexts on left and right
+
+There are numerous variants of this, for example can_trf_genLinv_leml,
+for the case where a rule may have a list of principal formulae.
+
+Question: can_trf_genLinv_genl seems weird, how can the condition 
+involving X and Y0 be satisfied?? Similarly can_trf_genLinv_leml.
+
+We then use all these to get a large number of results
+about the invertibility of various rules in the systems.
+
+Much of the second half of the file is repeating similar proofs for the
+systems LJA and LJT. 
+Possibly more could be done by way of trying to find lemmas identifying 
+common parts of two very similar proofs.
+
+
 
 
