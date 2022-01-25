@@ -1,5 +1,8 @@
-.*.aux
+*.aux
 *.glob
 *.vo
 *.vok
 *.vos
+*.dvi
+*.log
+*.pdf

@@ -121,12 +121,46 @@ frequently used combinations or proof steps, eg lr_gen..., fcr...,
 ncgen..., and lemmas which are trivial but useful for automating proofs,
 eg ser... and rre..., and tactics which use these, eg apser.... 
 
-Then we have general invertibility results, eg
-
-can_trf_genLinv_exch: if there is an exchange rule, then a rule of a certain
-form is invertible, for rules with a single principal formula on the left
+Then we have general invertibility results: the following lemmas
+give conditions when the predicate can_trf_rules_rc 
+(used in .. for proving an invertibility result) holds,
+where the rule to be inverted has a single principal formula on the left
 of the conclusion, which is replaced by a list of formulae in the premise in
-question, and where the rule allows general contexts on left and right
+question, and where the rule allows general contexts on left and right.
+
+can_trf_genLinv_exch: if there is an exchange rule in the system,
+then can_trf_rules_rc holds for the exchange rule itself
+
+can_trf_genLinv_leml: can_trf_rules_rc holds for the rule whose
+invertibility we want to prove
+
+can_trf_genLinv_lem: can_trf_rules_rc holds for the rule which cannot
+be inverted in the way in question
+
+can_trf_genLinv_geni: can_trf_rules_rc holds when the only rule
+(without context) applying to to an conclusion is the rule whose
+invertibility we want to prove
+
+there are further variations on the theme of these
+
+Then we apply these results to prove invertibility of specific rules
+for specific calculi LJ, LJA, LJT
+
+Then some invertibility results need proving specifically, eg
+can_trf_ImpRinv_lja and can_trf_ImpRinv_ljt
+(invertibility of ImpR in LJA and LJT) 
+
+Then, similarly, a general lemma for invertibility of right rules
+(for which premises also have formula(e) on the right): can_trf_genRinv_lja.
+
+Then we adapt previous proofs to LJT, first getting results for LJTSrules,
+(which are the rules of LJT which have a single principal formula),
+then extending them to LJTrules (noting that we can combine results
+showing that can_trf_rules_rc holds, using the monotonicity
+of can_trf_rules_rc, lemma can_trf_rules_rc_mono).
+
+
+
 
 There are numerous variants of this, for example can_trf_genLinv_leml,
 for the case where a rule may have a list of principal formulae.
