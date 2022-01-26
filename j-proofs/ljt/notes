@@ -132,7 +132,8 @@ can_trf_genLinv_exch: if there is an exchange rule in the system,
 then can_trf_rules_rc holds for the exchange rule itself
 
 can_trf_genLinv_leml: can_trf_rules_rc holds for the rule whose
-invertibility we want to prove
+invertibility (for one of its premises) we want to prove,
+for the case where a rule may have a list of principal formulae 
 
 can_trf_genLinv_lem: can_trf_rules_rc holds for the rule which cannot
 be inverted in the way in question
@@ -159,23 +160,9 @@ then extending them to LJTrules (noting that we can combine results
 showing that can_trf_rules_rc holds, using the monotonicity
 of can_trf_rules_rc, lemma can_trf_rules_rc_mono).
 
-
-
-
-There are numerous variants of this, for example can_trf_genLinv_leml,
-for the case where a rule may have a list of principal formulae.
-
-Question: can_trf_genLinv_genl seems weird, how can the condition 
-involving X and Y0 be satisfied?? Similarly can_trf_genLinv_leml.
-
-We then use all these to get a large number of results
-about the invertibility of various rules in the systems.
-
 Much of the second half of the file is repeating similar proofs for the
 systems LJA and LJT. 
 Possibly more could be done by way of trying to find lemmas identifying 
 common parts of two very similar proofs.
-
-
 
 
