@@ -325,65 +325,15 @@ Lemma gs_ljg_rrules V A rules any Γ1 Γ2 ps c
     (fun fml' : PropF V => srs_ext_rel (sctr_rel fml'))) A
     any (derrec (fst_ext_rls rules) emptyT) (map (apfst (fmlsext Γ1 Γ2)) ps)
     (apfst (fmlsext Γ1 Γ2) c).
-Proof.  intro r. destruct r.  unfold gen_step.
-simpl. unfold fmlsext. simpl.
+Proof.  intro r. destruct r.  unfold gen_step.  sfs.
 intros sub fp dc seq' sc. clear sub.
-inversion sc. destruct X. clear sc. subst.
-acacD'T2 ; subst.
-- eapply derI. eapply fextI_eqc'. exact (rr_gnc' _ _ l).
-simpl. unfold fmlsext. simpl.
-list_assoc_r'. reflexivity.
+destruct seq' as [ccl cr].
+inversion sc. clear sc. subst.
+eapply derI. eapply (fextI_eqc' _ []). exact (rr_gnc' _ _ l).
+sfs. reflexivity.
 eapply usefmm. exact fp.
 clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr).
-simpl. unfold fmlsext. simpl.  rewrite ?app_nil_r.
-apser'. apply sctr_relI.
-
-- eapply derI. eapply fextI_eqc'. exact (rr_gnc' _ _ l).
-simpl. unfold fmlsext. simpl.
-list_assoc_r'. reflexivity.
-eapply usefmm. exact fp.
-clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr).
-simpl. unfold fmlsext. simpl.  rewrite ?app_nil_r.
-apser'. apply sctr_relI.
-
-- eapply derI. eapply fextI_eqc'. exact (rr_gnc' _ _ l).
-simpl. unfold fmlsext. simpl.
-assoc_mid H6.
-reflexivity.
-eapply usefmm. exact fp.
-clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr).
-simpl. unfold fmlsext. simpl.  rewrite ?app_nil_r.
-apser'.  eapply arg1_cong_imp.
-2: apply sctr_relI.  list_eq_assoc.
-
-- eapply derI. eapply fextI_eqc'. exact (rr_gnc' _ _ l).
-simpl. unfold fmlsext. simpl.
-list_assoc_l'. reflexivity.
-eapply usefmm. exact fp.
-clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr).
-simpl. unfold fmlsext. simpl.  rewrite ?app_nil_r.
-eapply (srs_ext_relI_eq _ _ _ Φ1 Φ2).
-apply (sctr_relI A S).
-list_eq_assoc.  list_eq_assoc.
-
-- list_eq_ncT. cD. subst.
-eapply derI. eapply fextI_eqc'. exact (rr_gnc' _ _ l).
-simpl. unfold fmlsext. simpl.
-list_assoc_l'. reflexivity.
-eapply usefmm. exact fp.
-clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr).
-simpl. unfold fmlsext. simpl.  rewrite ?app_nil_r.
-apser'.  apply (sctr_relI A S).
-
-- eapply derI. eapply fextI_eqc'. exact (rr_gnc' _ _ l).
-simpl. unfold fmlsext. simpl.
-list_assoc_l'. reflexivity.
-eapply usefmm. exact fp.
-clear fp. simpl.  intros p fpdcr.  apply (snd fpdcr).
-simpl. unfold fmlsext. simpl.  rewrite ?app_nil_r.
-apser'.  apply (sctr_relI A S).
-
-Qed.
+sfs.  rewrite <- H0.  apser. exact X. Qed.
 
 Check gs_ljg_rrules.
 

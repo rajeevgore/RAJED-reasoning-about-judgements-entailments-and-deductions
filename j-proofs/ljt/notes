@@ -88,7 +88,8 @@ similar theorem for LJT (immediate due to exchange rule) exchL_ljt
 weakening admissible for each system: LJweakening, LJAweakening, LJTweakening
 and in a different form, insL_lj, insL_lja, insL_ljt
 
-file ljt_inv.v invertibility of various rules
+file ljt_inv.v invertibility of various rules 
+
 first define the relation between conclusion and the premise of interest, eg
 
 Inductive AndRinv1 {V} : relationT (PropF V) :=
@@ -164,5 +165,55 @@ Much of the second half of the file is repeating similar proofs for the
 systems LJA and LJT. 
 Possibly more could be done by way of trying to find lemmas identifying 
 common parts of two very similar proofs.
+
+ljt_ctr.v - admissibility of contraction 
+
+definitions: sctr_rel fml and lsctr_rel fmls define relations between two lists
+of formulae, the second got by removing the second of two copies of
+formula fml (for sctr_rel) or list of formulae fmls (for lsctr_rel)
+
+for the above, fml or fmls appear at the start and end of the first list
+so we need to use something like srs_ext_rel to supply the context
+
+lemmas: 
+gen_sctrL_And: if A and B are contractible, and the AndL rule is invertible,
+and the AndL rule is in the calculus, then (And A B) is contractible 
+gen_sctrL_Or is similar
+
+then these are applied for the calculi LJ, LJA, LJT,
+and results stated in terms of gen_step (see file gs-notes)
+
+gs_ljg_rrules: the result in terms of gen_step where the last rule
+is a right rule for And or Or (this should be pretty obvious since
+we are doing contraction on the left, why is it so long to prove?)
+
+lj[a/t]_ctr_lrls: where the last rule is a simple left rule and the subformulae
+of the principal formula can be contracted, then the principal formula can
+be contracted
+
+gs_ljg_glrules: under appropriate conditions on the final rule,
+the gen_step condition for contraction holds
+
+gs_ljg_ImpR: the gen_step result for contraction where the last rule is ImpR
+(for any of the calculi)
+
+gs_lj[a]_ImpL: the gen_step result for contraction where the last rule is ImpL
+for the calculus LJ[A]
+
+ctr_adm_lj: admissibility of contraction for LJ
+
+gs_ljg_exch: gen_step result for contraction where the last rule is exchange
+
+gs_ljt_ImpL_atom: the gen_step result for contraction, for LJT,
+where the last rule is the ImpL_atom_rule
+
+lctr_adm_gen: extending contraction of one formula to 
+contraction of a list of formulae
+
+note, admissibility of contraction for LJT and LJA, 
+  ctr_adm_ljt and ctr_adm_lja, are in ljt_dncc.v
+
+ljt_dn.v: this file does not use contraction admissibility
+
 
 
