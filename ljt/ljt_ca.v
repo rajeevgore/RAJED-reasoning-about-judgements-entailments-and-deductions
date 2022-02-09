@@ -20,7 +20,7 @@ Require Import Coq.Program.Basics.
   being derivable *) 
 
 (* but note we are going to need to allow A to be anywhere, not just at the
-front, because rule my cause that to happen in the premises *)
+front, because rule may cause that to happen in the premises *)
 
 (* note that a pair of end-sequents not of the form
   (_, A) (_ ++ A :: _, _) satisfies cut_adm *)
@@ -34,6 +34,7 @@ Inductive cedc X rules (C : X) cl cr : Type :=
       derrec rules emptyT (ra ++ la ++ ra', D)) ->
       @cedc X rules C cl cr.
 
+(* never used
 Inductive cut_adm X rules (C : X) : Type :=  
   | cadmI : (forall cl cr la ra ra' D, 
     cl = (la, C) -> cr = (ra ++ C :: ra', D : X) ->
@@ -45,6 +46,7 @@ Definition cedcD X rules A cl cr (c : @cedc X rules A cl cr) :=
 
 Definition cadmD X rules A (c : @cut_adm X rules A) :=
   match c with | cadmI d => d end.
+*)
 
 Ltac sfea := simpl ;  unfold fmlsext ;  list_eq_assoc.
 
@@ -436,8 +438,7 @@ require X. list_eq_assoc.
 apply (eq_rect _ _ X). list_eq_assoc.  Qed.
 
 Lemma lj_gs2_rp {V} fml la lc rc G1 G2 (D : PropF V) psl psr 
-  (ljl : LJncrules psl (la, fml))
-  (ljr : LJncrules psr ([fml], D))
+  (ljl : LJncrules psl (la, fml)) (ljr : LJncrules psr ([fml], D))
   (dl : derrec (fst_ext_rls LJncrules) emptyT (G1 ++ la ++ G2, fml))
   (dr : derrec (fst_ext_rls LJncrules) emptyT (lc ++ fml :: rc, D)) :
   gs2_sr_princ LJncrules isubfml fml la lc rc G1 G2 D psl psr.

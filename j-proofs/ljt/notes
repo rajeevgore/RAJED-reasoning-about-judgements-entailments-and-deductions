@@ -213,6 +213,45 @@ contraction of a list of formulae
 note, admissibility of contraction for LJT and LJA, 
   ctr_adm_ljt and ctr_adm_lja, are in ljt_dncc.v
 
+ljt_ca.v: lemmas about cut-admissibility, 
+  mostly easy ones that apply to each calculus
+
+cedc : the property that the outcome of a cut is derivable
+  (not depending on premises being derivable)
+
+generally the lemmas prove the gen_step2 property (see file gs-notes)
+
+examples:
+gs2_lrlsL_gen: where the last rule for the left premise is a left rule
+gs2_ImpLL_gen: for a specific pattern of rule, 
+  useful for various Imp-left rules
+gs2_rrlsR_gen: where the last rule for the right premise is a right rule
+gs2_ImpRR_gen: where the ImpR rule is the last rule deriving the right premise
+gs2_idL_gen: where the Id rule gives the left premise
+gs2_idR_gen: where the Id rule gives the right premise
+gs2_idR_gen': as above for where the Id rule is not given, but derivable
+
+gs2_sr_princ[2]: defining special cases of gen_step2, where
+  the last rule for the left premise is principal
+
+ljg_ImpR_ImpL: where ImpR and ImpL rules on left and right respectively
+
+gen_lrlsR_rrlsL: where principal on both sides, simple right rule on left,
+left rule on right
+
+gs2_rp[2]: linking gen_step2 to gs2_sr_princ[2]
+
+lj_gs2_rp: showing gs2_sr_princ holds generally, where the last rule on the
+right operates on the cut-formula or the succedent, for LJ
+
+ljg_gs2: for right principal cases, showing gs2_sr_princ gives gen_step2
+
+lj_cut_adm: cut-admissibility for LJ
+
+lj[t/a]_adm_lj: using lj_cut_adm for LJ, LJ[T/A]rules are admissible in LJ
+
+der_lj[t/a]_lj: anything derivable in LJ[T/A] is derivable in LJ 
+
 ljt_dn.v: this file does not use contraction admissibility
 
 
