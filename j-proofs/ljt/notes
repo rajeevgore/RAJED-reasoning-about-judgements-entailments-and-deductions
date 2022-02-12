@@ -252,7 +252,93 @@ lj[t/a]_adm_lj: using lj_cut_adm for LJ, LJ[T/A]rules are admissible in LJ
 
 der_lj[t/a]_lj: anything derivable in LJ[T/A] is derivable in LJ 
 
-ljt_dn.v: this file does not use contraction admissibility
+ljt_dn.v: lemmas found in Dyckhoff & Negri JSL 2000
+this file does not use contraction admissibility
+
+LJX_der_id_lem: lemma used in the following
+LJT_der_id, LJA_der_id: Lemma 3.2(1) of Dyckhoff & Negri JSL 2000
+the axiom sequent is derivable (whether or not the formula is an atom)
+
+LJT_der_mp, LJA_der_mp: Lemma 3.2(2) of Dyckhoff & Negri JSL 2000
+
+note that LJT_der_id, LJA_der_id, LJT_der_mp, LJA_der_mp
+do not seem to be used subsequently
+
+then we prove Lemma 4.1 of Dyckhoff & Negri JSL 2000,
+first defining l41prop (for LJA) and l41prop_t (for LJT)
+which are the properties to be proved by induction, ie
+
+l41prop D seq = forall G1 G2 : list (PropF V), seq = (G1 ++ G2, D) ->
+forall B E : PropF V, derrec LJArules emptyT (fmlsext G1 G2 [B], E) ->
+derrec LJArules emptyT (apfst (fmlsext G1 G2) ([Imp D B], E))
+
+then follow some lemmas re-expressing some invertibility results
+
+then the lemmas stating gen_step ... for l41prop[_t]
+gs_LJA_ImpL_Ail, gs_LJT_ImpL_Ail: where last rule is ImpL_And or ImpL_Or
+gs_LJA_ImpL_sl, gs_LJT_ImpL_sl: where last rule is an ordinary left rule
+gs_LJA_ImpL_Imp_p: the atom ImpL rule of LJA
+gs_LJX_ImpL_sr: where last rule is an ordinary left rule, for LJT or LJA
+gs_LJX_ImpL_ImpL: where last rule is ImpL_Imp
+
+LJT_41_atom_cases: proof of the theorem where D is an atom
+  which is contained in the context 
+
+gs_LJT_ImpL_adm: the gen_step result for any case of the last rule,
+gs_LJA_ImpL_adm: the same for LJA (much shorter proof)
+
+These give LJA_ImpL_adm, LJT_ImpL_adm: Lemma 4.1 of Dyckhoff & Negri JSL 2000
+
+idrule_der_ljx, idrule_der_lja, idrule_der_ljt: the rule A |- A
+is derivable in each system, for an implication, this uses LJ[T/A]_ImpL_adm
+
+lja_der_atom: the ImpL_atom rule is derivable in LJA
+
+then we prove Lemma 4.2 of Dyckhoff & Negri JSL 2000,
+LJA_dn42_princ, LJT_dn42_princ:
+  lemma for when the last rule is principal on the left, or a right rule
+
+can_rel_dn42inv_ljt, can_rel_dn42inv_lja: the result for LJT or LJA
+
+ljt_dncc.v: more lemmas from Dyckhoff & Negri JSL 2000
+
+gen_sctrL_ImpL_And: if contraction of (Imp C (Imp D B)) is admissible,
+then so is contraction of (Imp (And C D) B)),
+assuming the ImpL_And rule is present and invertible (as for LJA and LJT)
+
+gen_sctrL_ImpL_Or: a similar result for the ImpL_Or rule (used for LJA and LJT)
+
+ljt_ctr_il: assuming contraction admissibility for any smaller formula than s
+(according to the relation dnsubfml), then contraction of s is admissible,
+provided s is of the form Imp (And C D) B or Imp (Or C D) B
+(that is, the conclusions of the ImpL_And or ImpL_Or rules
+
+the difficult case for Lemma 5.1 (which is contraction generally) 
+(see the top of pg 1505 of Dyckhoff & Negri JSL 2000)
+
+gs_ljx_ImpL_Imp: where Lemma 4.2 holds, and where the ImpL_Imp rule is
+invertible (for its second premise), and where the ImpL_Imp rule is
+in the calculus, and the last rule in a derivation is the ImpL_Imp rule,
+then gen_step for contraction holds
+(where the last rule in the derivation is principal, this is the case
+shown at the top of pg 1505 of Dyckhoff & Negri JSL 2000)
+
+ctr_adm_lj[a/t]: Proposition 5.1, contraction admissibility for LJ[A/T]
+
+lj_ImpL_adm_lj[a/t]: Proposition 5.2, admissibility of LJ in LJ[A/T]
+
+der_lj_lj[a/t]: LJ[A/T] are complete wrt LJ
+
+lj[a/t]_cut_adm_alt: cut admissibility in LJ[A/T] proved via equivalence to LJ
+
+for proving Proposition 5.3 of Dyckhoff & Negri JSL 2000, we define
+the relevant property, to be proved by induction, that Imp A B can be
+replaced by B in a sequent, the result being derivable
+
+
+
+ljt_dnca.v:
+
 
 
 

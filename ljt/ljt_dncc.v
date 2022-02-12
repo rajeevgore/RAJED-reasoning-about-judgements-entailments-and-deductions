@@ -491,8 +491,6 @@ unfold l53propg in dl ; specialize (dl _ _ eq_refl) ;
 unfold fmlsext ; assoc_single_mid' B ; apply dl ;
 unfold fmlsext ; list_eq_assoc ].
 
-(* done for LJT to here *)
-
 Lemma gs_LJX_53_sl V (D : PropF V) rules any ps c Γ1 Γ2 G 
   (lrls_xnc : forall G ps c, rlsmap (flip pair G) LJslrules ps c -> rules ps c)
   (r : rlsmap (flip pair G) (@LJslrules V) ps c) :

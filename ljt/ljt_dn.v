@@ -21,7 +21,7 @@ Require Import gen_seq gstep gentree rtcT.
 Require Import ljt ljt_inv.
 Require Import Coq.Program.Basics.
 
-(* don't seem to use LJA_der_id, LJT_der_id
+(* don't seem to use LJA_der_id, LJT_der_id *)
 (* lemma for use in LJA_der_id and LJT_der_id *)
 Lemma LJX_der_id_lem {V} rules A
   (IH : forall y : PropF V, dnsubfml y A ->
@@ -182,7 +182,6 @@ apply (IH _ H).
 - apply il_anc'.  - apply lrls_anc'.  - apply rrls_anc'.
 - apply exchL_lja.  - apply LJA_rel_adm_ImpR.
 Qed.
-*)
 
 (*
 don't do this - wrong, follow proof in paper, just do Lemma 3.2 (1) first
@@ -192,7 +191,7 @@ Lemma LJA_der_id_mp {V} :
   (forall B H, derrec LJArules emptyT (A :: Imp A B :: H, B)).
 *)
 
-(* don't seem to use LJA_der_mp, LJT_der_mp 
+(* don't seem to use LJA_der_mp, LJT_der_mp *)
 (* Lemma 3.2(2) of Dyckhoff & Negri JSL 2000 *)
 Lemma LJA_der_mp {V} (A B : PropF V) H :
   derrec LJArules emptyT (A :: Imp A B :: H, B).
@@ -211,7 +210,6 @@ pose (LJT_rel_adm_ImpR V).  destruct r.  erequire r.  erequire r.  require r.
 eapply (rr_ext_relI_eqc _ _ _ [] _).
 apply ImpRinv_I. reflexivity. clear r.
 apply LJT_der_id. apply AccT_dnsubfml. Qed.
-*)
 
 (* Lemma 4.1 of Dyckhoff & Negri JSL 2000 *)
 (* relevant property of sequent to be proved by induction *)
@@ -949,45 +947,6 @@ eapply rrls_xnc'.  apply OrR2_sr'.  sfs. reflexivity.
 Qed.
 
 Print Implicit idrule_der_ljx.
-
-(*
-Lemma idrule_der_lja {V} A : derrec LJArules emptyT ([A : PropF V], A).
-Proof. induction A.
-- eapply derI. apply rsub_fer.  eapply Id_anc'. apply dlNil.
-- eapply derI. apply rsub_fer.  eapply lrls_anc'. apply Bot_sl'.  apply dlNil.
-- (* Imp - apply ImpR rule *)
-eapply derI. eapply (@fextI _ _ _ _ []).
-eapply rmI_eqc.  apply ImpR_anc'.  
-sfs. rewrite !app_nil_r.  reflexivity.
-apply dersrec_singleI.  sfs.
-(* use Lemma 4.1 *)
-pose (@LJA_ImpL_adm _ A1 _ IHA1 [] [A1] eq_refl A2 A2).
-simpl in d. unfold fmlsext in d.  apply d. clear d.
-apply (fer_der [] [A1] IHA2). 
-
-- (* And *) eapply derI. 
-+ apply rsub_fer.  eapply lrls_anc'.  apply AndL_sl'.
-+ simpl.  apply dersrec_singleI. eapply derI.
-++ eapply (@fextI _ _ _ [A1 ; A2] []).  eapply rmI_eqc.
-eapply rrls_anc'.  apply AndR_sr'.  reflexivity.  
-++ sfs.  apply dlCons.
-+++ apply (fer_der [] [A2] IHA1).
-+++ apply dersrec_singleI.
-apply (fer_der [A1] []) in IHA2. exact IHA2.
-
-- (* Or *) eapply derI. 
-+ apply rsub_fer.  eapply lrls_anc'.  apply OrL_sl'.  
-+ simpl. apply dlCons.
-++ eapply derI.
-+++ eapply (@fextI _ _ _ [A1] []).  eapply rmI_eqc.
-eapply rrls_anc'.  apply OrR1_sr'.  sfs. reflexivity.
-+++ sfs. apply dersrec_singleI. apply IHA1.
-++ apply dersrec_singleI.  eapply derI.
-+++ eapply (@fextI _ _ _ [A2] []).  eapply rmI_eqc.
-eapply rrls_anc'.  apply OrR2_sr'.  sfs. reflexivity.
-+++ sfs. apply dersrec_singleI. apply IHA2.
-Qed.
-*)
 
 Lemma idrule_der_lja {V} A : derrec LJArules emptyT ([A : PropF V], A).
 Proof. apply idrule_der_ljx.  apply Id_anc'.  apply ImpR_anc'.
