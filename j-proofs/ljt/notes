@@ -335,10 +335,60 @@ for proving Proposition 5.3 of Dyckhoff & Negri JSL 2000, we define
 the relevant property, to be proved by induction, that Imp A B can be
 replaced by B in a sequent, the result being derivable
 
+then the various gen_step results are
 
+gs_LJX_53_sl: last rule is a simple left rule
+gs_LJX_53_Ail: last rule is ImpL_And_rule or ImpL_Or_rule
+(this one requires contraction admissibility)
+gs_LJX_53_Imp: last rule is ImpL_Imp_rule
+gs_LJA_53_ImpL_p: last rule is ImpLrule_p (for LJA only)
+gs_LJT_53_ImpL_atom: last rule is ImpL_atom_rule (for LJT only)
+gs_LJX_53_sr: last rule is a simple right rule
+gs_LJX_53_Id: last rule is axiom (Id) rule
+gs_LJX_53_ImpR: last rule is ImpR rule
+gs_LJT_53_exch: last rule is exchange rule (LJT only)
+gs_LJT_53, gs_LJA_53: for any last rule
 
-ljt_dnca.v:
+thus giving us
 
+ImpL_inv_adm_ljt, ImpL_inv_adm_lja: Proposition 5.3 for LJT, LJA
+
+ljt_dnca.v: cut admissibility for LJT and LJA
+
+a lot of the cases are proved in ljt_ca.v, generally (for LJ or LJT or LJA)
+
+these lemmas use gs2_sr_princ, where the rule on the right is either
+a right rule or a left rule with just one principal formula,
+which is the cut formula
+
+ljg_ImpR_IIL: for ImpL_Imp_rule, principal, on the right, and ImpRrule on the
+left, with assumption of Prop 5.3 and
+of contraction admissibility
+
+ljg_ImpR_Ail: for ImpL_And or ImpL_Or, principal, on the right,
+and ImpRrule on the left, with assumption that ImpL_And and ImpL_Or rules
+are invertible, and of contraction admissibility
+
+ljt_gs2_rp: collecting all cases for the last rule on the right principal,
+for LJT
+
+following lemmas use gs2_sr_princ2,
+which allows for rules with two principal formulae, as we have in LJT
+(this is the complexity which was avoided by using LJA instead of LJT)
+
+gs2_sr_exch: for exchange on the right
+
+ljt_gs2_ImpR_atom: for cut-formula Imp (Var p) B, with ImpR rule on the left,
+a special case
+
+ljt_gs2_rp2: collecting all cases for gs2_sr_princ2 (allowing left rules
+with multiple principal formulae), for LJT
+
+lja_gs2_rp: as ljt_gs2_rp, but for LJA
+
+ljg_gs2_2: for right principal cases, showing gs2_sr_princ2 gives gen_step2
+
+lja_cut_adm, ljt_cut_adm: cut admissibility for LJA, LJT
 
 
 
