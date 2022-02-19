@@ -221,7 +221,7 @@ Lemma lja_prems_dn V ps cl cr pl pr :
 *)
 
 (* the property we need of a derivation tree -
-  no repeated entries of the same "size" *)
+  no repeated entries of the same "size", going 2 levels up *)
 Definition no_rpt_same U R rules prems (c0 : U) (d0 : derrec rules prems c0) :=
   forall c1 c2 (d1 : derrec rules prems c1) (d2 : derrec rules prems c2),
     in_nextup d1 d0 -> in_nextup d2 d1 -> clos_transT R c2 c0.
@@ -686,7 +686,7 @@ Qed.
 
 Print Implicit can_nspc.
 
-(* wrong - in cansm, require seq to be derivable *)
+(* need two versions of this, according to order of the two implications *)
 Lemma nrs_Imp_rpt_diff V Γ0 Γ1 Γ2 B C G p q cpbqc cbqc cpbc 
   (dab : dersrec LJArules emptyT [(cpbqc, Var q); (cpbc, Var p)])
   (ljpc : @LJArules V [(cpbqc, Var p); (cbqc, G)] (cpbqc, G))
@@ -1028,12 +1028,11 @@ Qed.
 
 Print Implicit lja_dd_ImpL_p.
 
-
 Lemma lja_dd_so V prems ps concl (ds : dersrec LJArules prems ps) 
   (ljpc : @LJArules V ps concl)
   (apd : allPder (allDT (no_rpt_same seq_ord (prems:=prems))) ds) :
   can_nspc prems concl + fst_ext_rls ImpLrule_p ps concl.
-inversion ljpc. subst. destruct X. destruct l.
+Proof. inversion ljpc. subst. destruct X. destruct l.
 + (* LJAilrules *) left. 
 exists (derI _ ljpc ds).  destruct c.  apply all_nrs.  apply ForallTI_forall.
 intros q inps.  apply InT_mapE in inps. cD. subst.

@@ -390,5 +390,123 @@ ljg_gs2_2: for right principal cases, showing gs2_sr_princ2 gives gen_step2
 
 lja_cut_adm, ljt_cut_adm: cut admissibility for LJA, LJT
 
+As noted above we devised the system LJA as an alternative to LJT,
+for the reason that the proof was easier because there are no rules
+with more than one principal formula.
 
+Recall (these rules allow context in the antecedent):
+ImpL_atom_rule [[B; Var p]] [Imp (Var p) B; Var p] (in LJT)
+ImpLrule [([Imp A B], A); ([B], G)] ([Imp A B], G) (in LJ)
+ImpLrule_p [([Imp (Var p) B], Var p); ([B], G)] ([Imp (Var p) B], G) (in LJA)
+
+LJT gives a terminating calculus (because for each rule each premise is smaller
+than the conclusion, using a suitable measure).
+On the other hand, for LJ, the premise [Imp A B], A) is not in general
+smaller than ([Imp A B], G)
+For the ImpLrule_p rule of LJA, 
+the first premise may be the same size as the conclusion, 
+otherwise premises are smaller than conclusions.
+
+This means that LJA has a problem only for repeated (consecutive)
+applications of the ImpLrule_p rule.
+One possibility is repeated applications of the ImpLrule_p
+for the same atom p. Then the first premise is the same as the conclusion,
+so we obviously don't want to do that.  
+
+Otherwise, two consecutive applications of the ImpLrule_p look like this
+(further context in the antecedents not shown)
+(W), (X), etc are labels of sequents
+
+q->C p->B |- q (W)     C p->B |- p (X)
+--------------------------------------
+	      q->C p->B |- p              q->C B |- G (Y)
+	      -------------------------------------------
+			  q->C p->B |- G
+
+We can transform this proof as follows:
+
+from (Y) we have that C B |- G (Z) 
+(Prop 5.3, or, now, simply that cut is admissible)
+
+		C p->B |- p (X)     C B |- G (Z)
+		--------------------------------
+q->C p->B |- q (W)	  C p->B |- p 
+-------------------------------------
+	     q->C p->B |- G
+
+This construction enables us to get a derivation with no two
+consecutive uses of the ImpLrule_p rule: thus it has the property
+that each rule has premises no larger than the conclusion,
+and that for every two successive rules the "premises" 
+(ie, two levels up from the conclusion) are actually smaller
+than the conclusion. 
+
+So clearly the search for all such potential derivations satisfying
+this restriction is finite, thus giving a terminating calculus for LJ.
+
+Now this is quite complicated to prove, to the extent I think 
+that the idea of "simplifying" things by using LJA instead of LJT
+wasn't worthwhile.  But that is machine-assisted proof, no reason not
+to write about what we've done.
+
+ljt_dnterm.v: the file where all this is done
+
+ms_ord: definition of a sort of multiset ordering on lists - where
+an element is replaced by a list of smaller elements
+
+ms_ord_sw: as ms_ord, but also allowing reordering (transitive closure
+of swapped)
+
+wfT_ms_ord[_sw]: assumed as an axiom, not proved: that these orderings 
+are well-founded (assuming the underlying relation is well-founded)
+
+wfT_ctmso: so the transitive closure of ms_ord_sw is well-founded
+
+ail_prems_dn, lrls_prems_dn, rrls_prems_dn, ImpR_prems_dn, Imp_prems_dn,
+Imp_p_rprem_dn, Imp_p_lprem_dn:
+premises are smaller (or, for left premise of ImpLrule_p, same size)
+than conclusion, for various rules
+
+Note that the measure we use for size of a formula is like
+that of Dyckhoff & Negri JSL 2000, page 1500, but changed as follows:
+dnfw (Bot) = 1, dnfw (Var _) = 0
+
+no_rpt_same: the definition of the property of a derivation tree that
+going two levels up gives you a smaller sequent than the conclusion
+
+no_rpt_same_fc, no_rpt_same_nu: different ways of expressing the same thing
+
+nrs_imp_nu, nrs_nu_imp: relate the above properties
+
+can_nspc: an abbreviation saying that something is derivable using
+a derivation satisfying no_rpt_same
+
+nrs_Imp_rpt: the construction where two consecutive occurrences of
+  ImpLrule_p on the same implication, so with the same left premise,
+  so we can simply skip the lower occurrence 
+
+nrs_Imp_rpt_diff:
+then main lemma, nrs_Imp_rpt_diff encodes the construction shown above
+
+nrs_Imp_rpt_diff': we need a version of nrs_Imp_rpt_diff with the two
+implications appearing in the opposite order
+(note we have admissibility of exchange, but we don't have
+admissibility of no_rpt_same-preserving exchange!)
+so we need to repeat the proof, although it is very similar
+
+lja_dd_ImpL_p: puts these lemmas together, stating that, given a 
+derivable sequent, under appropriate inductive hypotheses,
+when the last rule is ImpLrule_p,
+we can get a derivation satisfying no_rpt_same
+
+lja_dd_so: given a  derivable sequent,
+under appropriate inductive hypotheses, either the last rule
+is ImpLrule_p or we can get a derivation satisfying no_rpt_same
+(which is of course the given derivation)
+
+lja_dd_gs, lja_dd_gs': the gen_step condition for the main result
+
+can_nsp: the main result: for a derivable sequent,
+there is a derivation satisfying allDT (no_rpt_same ...) 
+(ie, the tree and every subtree satisfies no_rpt_same)
 
