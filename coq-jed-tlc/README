@@ -1,0 +1,51 @@
+
+Sat 04 Feb 2023 
+this directory, ie coq-jed-tlc, contains the results of pushing
+the branch jeremy-dev (only) of the ANU gitlab repo tense-logic-in-Coq
+https://gitlab.anu.edu.au/u8413080/tense-logic-in-Coq.git
+A files in this directory, eg coq-jed-tlc/xxx/yyy/zzz, is from 
+the file xxx/yyy/zzz in the repo tense-logic-in-Coq.
+
+That repo has 5 branches, namely 
+  Iandev, caitlin_dev, jeremy-dev, master, paper-LNSKt 
+The reason for this was so that each individual did not need
+to continuously keep his/her work consistent with the others,
+and this happened to some extent but not completely.
+In particular, as some of the branches contain over 1GB of output
+(much of it Haskell code extracted from Coq code), these other 
+branches, to the extent they are not already merged with jeremy-dev,
+are not included in this repository at this time.
+
+Its contents are as follows:
+directories general, modal, ll, ljt consist of Coq proofs done by
+Jeremy Dawson, with, in the case of directory general, some additional
+proofs from Caitlin d'Abrera and Ian Shillito.
+The directory general contained material which it was thought might
+be useful for any of us.
+
+The directory j-proofs contains write-ups by Jeremy Dawson of his proofs.
+
+The directory tense-lns is work of Caitlin about linear nested sequents
+for tense logic.   The directory Paper contains a very early stage
+of the write-up of this work for a conference paper, eventually
+published in Tableaux 2021.
+As at Sat 04 Feb 2023 these directories are not at all up-to-date,
+the up-to-date versions would be found in the branch caitlin_dev of
+the ANU gitlab repository tense-logic-in-Coq
+
+The directory Coq-Workshop contains preliminary material intended
+possibly for a Coq Workshop.
+
+This was all done as follows:
+git clone --single-branch --branch jeremy-dev /home/jeremy/coq/lnt/tense-logic-in-Coq tlcjd
+and then, in the repo tlcjd (whose only branch was jeremy-dev)
+git push /home/jeremy/pubs/RAJED-reasoning-about-judgements-entailments-and-deductions
+Oddly, after the clone, tlcjd was 63MB (no doubt because of the size of some
+of the other branches of tense-logic-in-Coq),
+but after the push, RAJED... was 4MB
+
+
+
+
+
+
