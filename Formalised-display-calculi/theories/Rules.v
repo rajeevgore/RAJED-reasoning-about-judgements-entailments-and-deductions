@@ -7,7 +7,7 @@ Require Import ListSetNotations.
 Require Import EqDec.
 Require Import Tactics.
 Require Import Utils.
-Require Import Llang.
+Require Import Lang.
 Require Import Sequents.
 Require Import Substitutions.
 Require Import Derivation.
@@ -17,18 +17,21 @@ Require Import Derivability.
 
 Section CommonRules.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
 
   (* Reflexivity axioms *)
   Definition atrefl : rule := ([],
-                              £p"p" ⊢ £p"p").
+                               FS (Atm "p") ⊢ FS (Atm "p")).
 
   Definition frefl (A : formula) : rule := ([],
-                                            £A ⊢ £A).
+                                            FS A ⊢ FS A).
 
-  Definition refl  : @rule formula := ([],
-                                        £?"A" ⊢ £?"A").
+  Definition refl  : rule := ([],
+                              FS (FV "A") ⊢ FS (FV "A")).
 
+End CommonRules.
+
+(*
   (* Structural Rules *)
   Definition Isl   : @rule formula := ([I ⊢ $"Y"],       (* special case of Iwl *)
                                         ∗ I ⊢ $"Y").
@@ -309,3 +312,4 @@ Section CommonRulesDC.
   Defined.
 
 End CommonRulesDC.
+*)

@@ -1,6 +1,6 @@
 Require Import String.
-Require Import Relations.
-Require Import List ListDec Decidable.
+Require Import Relations Datatypes.
+Require Import List ListDec SetoidList Decidable.
 Import ListNotations.
 Require Import ListSetNotations.
 Require Import Arith.
@@ -9,7 +9,7 @@ Require Import Tactics.
 Require Import EqDec.
 Require Import Utils.
 Require Import FunAgree.
-Require Import Llang.
+Require Import Lang.
 Require Import Sequents.
 Require Import Substitutions.
 Require Import Derivation.
@@ -20,22 +20,22 @@ Open Scope list.
 
 Section Cuts.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
 
   (* The cut rule *)
-  Definition CUT : rule := ([$"X" ⊢ £?"A" ; £?"A" ⊢ $"Y"],
-                             $"X" ⊢ $"Y").
+  Definition CUT : rule := ([SV "X" ⊢ FS (FV "A") ; FS (FV "A") ⊢ SV "Y"],
+                             SV "X" ⊢ SV "Y").
 
   Definition CUT_spec (A : formula) (X Y : structr) :=
     afs_spec [] [("A", A)] [("X", X); ("Y", Y)].
 
-  Definition rootIsAntP (dt : @dertree formula) : Prop :=
+  Definition rootIsAntP (dt : dertree) : Prop :=
     match dt with
     | Unf s     => False
     | Der s r l => strIsFml (antec (conclRule r))
     end.
 
-  Definition rootIsSucP (dt : @dertree formula) : Prop :=
+  Definition rootIsSucP (dt : dertree) : Prop :=
     match dt with
     | Unf s     => False
     | Der s r l => strIsFml (succ (conclRule r))
@@ -54,7 +54,7 @@ Section Cuts.
     match dt with
     | Unf s     => True
     | Der s r l => r <> CUT \/
-        (exists pl pr Y A, P A /\ l = [pl; pr] /\ conclDT pr = £A ⊢ Y)
+        (exists pl pr Y A, P A /\ l = [pl; pr] /\ conclDT pr = FS A ⊢ Y)
     end.
 
   Definition nocut (dt : dertree) : Prop :=
@@ -69,7 +69,7 @@ Section Cuts.
     match dt with
     | Unf s     => True
     | Der s r l => r <> CUT \/
-        (exists X r' l' pr, l = [Der (X ⊢ £A) r' l'; pr] /\ strIsFml (succ (conclRule r')))
+        (exists X r' l' pr, l = [Der (X ⊢ FS A) r' l'; pr] /\ strIsFml (succ (conclRule r')))
     end.
 
   (* conclusion of dt is either not obtained by cut or
@@ -78,7 +78,7 @@ phi is principal in the right premisses *)
     match dt with
     | Unf s     => True
     | Der s r l => r <> CUT \/
-        (exists Y pl r' l', l = [pl ; Der (£A ⊢ Y) r' l'] /\ strIsFml (antec (conclRule r')))
+        (exists Y pl r' l', l = [pl ; Der (FS A ⊢ Y) r' l'] /\ strIsFml (antec (conclRule r')))
     end.
 
   Definition cutIsLRP (A : formula) (dt : dertree) : Prop :=
@@ -86,59 +86,61 @@ phi is principal in the right premisses *)
 
 
   Lemma LP_dec : forall (l : list dertree) (A : formula),
-    {ant & {r' & {l' & {pr | l = [Der (ant ⊢ £A) r' l'; pr] /\ strIsFml (succ (conclRule r'))} } } } +
-    {forall ant r' l' pr, l <> [Der (ant ⊢ £A) r' l'; pr] \/ ~ strIsFml (succ (conclRule r'))}.
+    {ant & {r' & {l' & {pr | l = [Der (ant ⊢ FS A) r' l'; pr] /\ strIsFml (succ (conclRule r'))} } } } +
+    {forall ant r' l' pr, l <> [Der (ant ⊢ FS A) r' l'; pr] \/ ~ strIsFml (succ (conclRule r'))}.
   Proof.
     intros l A. destruct (list_2_elems_dec l) as [Hl|Hnl];
       try (right; intros; left; apply Hnl).
     destruct Hl as (pl & pr & Heql). destruct pl as [|s' r' l'];
       try (right; intros; left; intro H; rewrite H in Heql; discriminate).
-    destruct s' as [X Y]. destruct (structr_eq_dec Y (£A)) as [HeqY|HneqY];
+    destruct s' as [X Y]. destruct (eqdec Y (FS A)) as [HeqY|HneqY];
       try (right; intros; left; intro H; contradict HneqY;
            rewrite Heql in H; injection H; tauto).
     rewrite HeqY in Heql. destruct (strIsFml_dec (succ (conclRule r'))) as [Hfml|Hnfml].
     - left. exists X, r', l', pr. tauto.
     - right. intros.
-        destruct (list_eq_dec dertree_eq_dec l [Der (ant ⊢ £ A) r'0 l'0; pr0]) as [H|];
+        destruct (list_eq_dec dertree_eq_dec l [Der (ant ⊢ FS A) r'0 l'0; pr0]) as [H|];
         try (now left). rewrite H in Heql. injection Heql. intros _ _ Heqr'0 _.
         rewrite Heqr'0. right. assumption.
   Qed.
 
 
   Lemma RP_dec : forall (l : list dertree) (A : formula),
-    {suc & {pl & {r' & {l' | l = [pl ; Der (£A ⊢ suc) r' l'] /\ strIsFml (antec (conclRule r'))} } } } +
-    {forall suc pl r' l', l <> [pl ; Der (£A ⊢ suc) r' l'] \/ ~ strIsFml (antec (conclRule r'))}.
+    {suc & {pl & {r' & {l' | l = [pl ; Der (FS A ⊢ suc) r' l'] /\
+                               strIsFml (antec (conclRule r'))}}}} +
+    {forall suc pl r' l', l <> [pl ; Der (FS A ⊢ suc) r' l'] \/ ~ strIsFml (antec (conclRule r'))}.
   Proof.
     intros l A. destruct (list_2_elems_dec l) as [Hl|Hnl];
       try (right; intros; left; apply Hnl).
     destruct Hl as (pl & pr & Heql). destruct pr as [|s' r' l'];
       try (right; intros; left; intro H; rewrite H in Heql; discriminate).
-    destruct s' as [X Y]. destruct (structr_eq_dec X (£A)) as [HeqX|HneqX];
+    destruct s' as [X Y]. destruct (eqdec X (FS A)) as [HeqX|HneqX];
       try (right; intros; left; intro H; contradict HneqX;
            rewrite Heql in H; injection H; tauto).
     rewrite HeqX in Heql. destruct (strIsFml_dec (antec (conclRule r'))) as [Hfml|Hnfml].
     - left. exists Y, pl, r', l'. tauto.
     - right. intros.
-        destruct (list_eq_dec dertree_eq_dec l [pl0; Der (£ A ⊢ suc) r'0 l'0]) as [H|];
+        destruct (list_eq_dec dertree_eq_dec l [pl0; Der (FS A ⊢ suc) r'0 l'0]) as [H|];
         try (now left). rewrite H in Heql. injection Heql. intros _ Heqr'0 _ _.
         rewrite Heqr'0. right. assumption.
   Qed.
 
 
-  Lemma right_cut_dec : forall l : list (@dertree formula),
-    {pl & {pr & {suc & {A | l = [pl; pr] /\ conclDT pr = £A ⊢ suc} } } } +
-    {forall pl pr suc A, l <> [pl; pr] \/ conclDT pr <> £A ⊢ suc}.
+  Lemma right_cut_dec : forall l : list (dertree),
+    {pl & {pr & {suc & {A | l = [pl; pr] /\ conclDT pr = FS A ⊢ suc}}}} +
+    {forall pl pr suc A, l <> [pl; pr] \/ conclDT pr <> FS A ⊢ suc}.
   Proof.
     intro l. destruct (list_2_elems_dec l) as [Hl|Hnl]; try (right; intros; left; apply Hnl).
     destruct Hl as (pl & pr & Heql). destruct (conclDT pr) eqn:Heqconcpr.
     destruct (strIsFml_dec X) as [HXfml|HnXfml].
-    - left. destruct X; try contradiction. exists pl, pr, Y, A. tauto.
+    - left. destruct (strIsFml_sig _ HXfml) as [A HA].
+      rewrite HA in Heqconcpr. exists pl, pr, Y, A. tauto.
     - right. intros pl0 pr0 suc A.
       destruct (list_eq_dec dertree_eq_dec [pl0; pr0] [pl; pr]) as [Heqplpr|Hneqplpr];
         try (left; rewrite Heql; intro H; rewrite H in Hneqplpr; contradiction).
       injection Heqplpr. intros Heqpr0 Heqpl0. rewrite Heqpr0, Heqpl0.
-      right. rewrite Heqconcpr. intro Hctr. contradict HnXfml. destruct X; try discriminate.
-      simpl. tauto.
+      right. rewrite Heqconcpr. intro Hctr. contradict HnXfml.
+      injection Hctr. intros _ HeqX. rewrite HeqX. constructor.
   Qed.
 
   Proposition nocut_dec : forall dt : dertree, {nocut dt} + {~ nocut dt}.
@@ -183,7 +185,7 @@ phi is principal in the right premisses *)
 
   Inductive deriv_cofseq (DC : DISPCALC) (P : formula -> Prop) : sequent -> Type :=
   | deriv_cofseq_ext : forall ps c r, r ∈ DC -> ruleInst r (ps, c)
-                         -> r <> CUT \/ (exists sl sr Y A, P A /\ ps = [sl; sr] /\ sr = £A ⊢ Y)
+                         -> r <> CUT \/ (exists sl sr Y A, P A /\ ps = [sl; sr] /\ sr = FS A ⊢ Y)
                          -> deriv_cofseqs DC P ps -> deriv_cofseq DC P c
   with
     deriv_cofseqs (DC : DISPCALC) (P : formula -> Prop) : list sequent -> Type :=
@@ -195,7 +197,7 @@ phi is principal in the right premisses *)
   Inductive deriv_cofprseq (DC : DISPCALC) (P : formula -> Prop) (prems : list sequent) : sequent -> Type :=
   | deriv_cofprseq_prem : forall c, c ∈ prems -> deriv_cofprseq DC P prems c
   | deriv_cofprseq_ext : forall ps c r, r ∈ DC -> ruleInst r (ps, c)
-                         -> r <> CUT \/ (exists sl sr Y A, P A /\ ps = [sl; sr] /\ sr = £A ⊢ Y)
+                         -> r <> CUT \/ (exists sl sr Y A, P A /\ ps = [sl; sr] /\ sr = FS A ⊢ Y)
                          -> deriv_cofprseqs DC P prems ps -> deriv_cofprseq DC P prems c
   with
     deriv_cofprseqs (DC : DISPCALC) (P : formula -> Prop) (prems : list sequent) : list sequent -> Type :=
@@ -369,8 +371,8 @@ phi is principal in the right premisses *)
     -> deriv_cofseqs DC P (map (seqSubst afs) ps) -> deriv_cofseq DC P (seqSubst afs c).
   Proof.
     intros Hder Hders. revert c Hder.
-    apply (deriv_cofprseq_mut_rect _ _ _ (deriv_cofseq DC P ∘ seqSubst afs)
-             (deriv_cofseqs DC P ∘ map (seqSubst afs))).
+    apply (deriv_cofprseq_mut_rect _ _ _ (comp (deriv_cofseq DC P) (seqSubst afs))
+             (comp (deriv_cofseqs DC P) (map (seqSubst afs)))).
     - intros c Hc. apply ForallT_deriv_cofseqs_iff in Hders.
       rewrite ForallT_forall in Hders.
       apply Hders. apply in_map. assumption.
@@ -391,36 +393,36 @@ phi is principal in the right premisses *)
 
     Variable DC : DISPCALC.
 
-    Definition isipsubfml (A B : formula) : Prop := B ∈ (ipsubfmls A).
+    Definition isipsubfml (A B : formula) : Prop := B ∈ (ipse A).
 
-    Definition C1_one (r : @rule formula) : Prop :=
-      Forall (fun s => incl (seqFmls s) (listsubfmls (seqFmls (conclRule r))) /\
+    Definition C1_one (r : rule) : Prop :=
+      Forall (fun s => incl (seqFmls s) (listsubexprs (seqFmls (conclRule r))) /\
                     incl (seqSVs s) (seqSVs (conclRule r))) (premsRule r).
 
-    Definition C3_one (r : @rule formula) : Prop := NoDup (seqSVs (conclRule r)).
+    Definition C3_one (r : rule) : Prop := NoDup (seqSVs (conclRule r)).
 
     (* what about a same structure variable that is in two different premisses? *)
-    Definition C4_one (r : @rule formula) : Prop :=
-      forall prem b s, List.In prem (premsRule r) ->
-                  List.In s (seqSVs' b (conclRule r)) ->
-                  ~ List.In s (seqSVs' (negb b) prem).
+    Definition C4_one (r : rule) : Prop :=
+      forall p b s, p ∈ premsRule r ->
+               s ∈ seqSVsSgn (conclRule r) b ->
+               s ∉ seqSVsSgn p (negb b).
 
-    Definition C5_one (r : @rule formula) : Prop := seqNoSSF (conclRule r).
+    Definition C5_one (r : rule) : Prop := seqNoSSF (conclRule r).
 
     Definition bprops (r : rule) : Prop := C3_one r /\ C4_one r /\ C5_one r.
 
-    Definition C345 (rls : list rule) : Prop := forall r, List.In r rls -> bprops r.
+    Definition C345 : Prop := forall r, r ∈ DC -> bprops r.
 
     Definition C1 : Prop :=
       forall r, r ∈ DC ->
-      Forall (fun s => seqFmls s ⊆ listsubfmls (seqFmls (conclRule r)) /\
+      Forall (fun s => seqFmls s ⊆ listsubexprs (seqFmls (conclRule r)) /\
                     seqSVs s ⊆ seqSVs (conclRule r)) (premsRule r).
     Definition C3 : Prop := forall r, r ∈ DC -> NoDup (seqSVs (conclRule r)).
     Definition C4 : Prop :=
       forall r, r ∈ DC ->
-      forall prem b s, prem ∈ premsRule r ->
-                  s ∈ seqSVs' b (conclRule r) ->
-                  s ∉ seqSVs' (negb b) prem.
+      forall p b s, p ∈ premsRule r ->
+               s ∈ seqSVsSgn (conclRule r) b ->
+               s ∉ seqSVsSgn p (negb b).
     Definition C5 : Prop :=
       forall r, r ∈ DC ->
       match (conclRule r) with
@@ -433,31 +435,61 @@ phi is principal in the right premisses *)
  
   End BelnapConditions.
   
-  Lemma str_fmls_subst_iff : forall X pfs A,
-    In A (strFmls (strSubst pfs X)) <->
-      (In A (map (fmlSubst (fst pfs)) (strFmls X)) \/
-       In A (fold_right (fun x => app (strFmls (snd pfs x))) [] (strSVs X))).
+  Lemma str_fmls_subst_iff : forall X afs A,
+    A ∈ strFmls (strSubst afs X) <->
+      A ∈ map (fmlSubst (fst afs)) (strFmls X) \/
+      A ∈ fold_right (fun x => app (strFmls (snd afs x))) [] (strSVs X).
   Proof.
-    induction X; intros; simpl; try tauto.
-    - rewrite app_nil_r. tauto.
-    - apply IHX.
-    - repeat rewrite map_app. repeat rewrite in_app_iff.
-      rewrite IHX1, IHX2. repeat rewrite In_fold_right_app_iff.
-      repeat setoid_rewrite in_app_iff.
+    intro X. pattern X. revert X. apply ipse_rect.
+    intros X IH afs A. rewrite strSubst_eq, (strFmls_eq X), (strSVs_eq X).
+    destruct (Var_dec SV X) as [[v Hv]|HnSV];
+      destruct (Var_dec FS X) as [[B HB]|HnFS].
+    - rewrite Hv in HB. contradict HB. apply SV_FS_disc.
+    - simpl. rewrite app_nil_r. rewrite Hv.
+      rewrite (Var_ipse SV). simpl. tauto.
+    - rewrite strFmls_FS, HB, (Var_ipse FS). simpl. tauto.
+    - rewrite strFmls_eq. rewrite Var_dec_not_Var.
+      2:{ apply (not_Var_conn FS); try assumption. apply map_length. }
+      rewrite ipse_conn; try apply map_length.
       split.
-      + intros [[H|H]|[H|H]]; try tauto;
-          try (destruct H as [V [H H0]]; right; exists V; tauto).
-      + intros [[H|H]|H]; try tauto.
-        destruct H as [V [[H|H] H0]]. left. right. exists V. tauto.
-        right. right. exists V. tauto.
+      + intro H. apply In_fold_right_app in H.
+        destruct H as [Y' [HinY' HY']].
+        apply in_map_iff in HinY'. destruct HinY' as [X' [HeqY' HX']].
+        rewrite <- HeqY' in HY'. apply IH in HY'.
+        destruct HY' as [HY'|HY'].
+        * left. apply in_map_iff in HY'.
+          destruct HY' as [B [HeqA HB]].
+          apply in_map_iff. exists B. split; [assumption|].
+          apply In_fold_right_app_iff. exists X'. tauto.
+        * right. apply In_fold_right_app_iff in HY'.
+          destruct HY' as [v [Hinv Hv]].
+          apply In_fold_right_app_iff. exists v. split; [|assumption].
+          apply In_fold_right_app_iff. exists X'. tauto.
+        * assumption.
+      + intros [H|H].
+        * apply in_map_iff in H. destruct H as [B [HeqA HB]].
+          apply In_fold_right_app_iff in HB. destruct HB as [X' [HX' HB]].
+          apply In_fold_right_app_iff. exists (strSubst afs X'). split.
+         -- apply in_map_iff. exists X'. tauto.
+         -- apply IH; try assumption.
+            left. apply in_map_iff. exists B. tauto.
+        * apply In_fold_right_app_iff in H.
+          destruct H as [v [Hv HA]].
+          apply In_fold_right_app_iff in Hv.
+          destruct Hv as [X' [HX' Hv]].
+          apply In_fold_right_app_iff.
+          exists (strSubst afs X'). split.
+         -- apply in_map_iff. exists X'. tauto.
+         -- apply IH; try assumption.
+            right. apply In_fold_right_app_iff. exists v. tauto.
   Qed.
 
-  Lemma seq_fmls_subst_iff : forall s pfs A,
-    In A (seqFmls (seqSubst pfs s)) <->
-      (In A (map (fmlSubst (fst pfs)) (seqFmls s)) \/
-       In A (fold_right (fun x => app (strFmls (snd pfs x))) [] (seqSVs s))).
+  Lemma seq_fmls_subst_iff : forall s afs A,
+    A ∈ seqFmls (seqSubst afs s) <->
+      A ∈ map (fmlSubst (fst afs)) (seqFmls s) \/
+      A ∈ fold_right (fun x => app (strFmls (snd afs x))) [] (seqSVs s).
   Proof.
-    intros s pfs v. destruct s. unfold seqFmls, seqSVs. simpl.
+    intros s afs v. destruct s. unfold seqFmls, seqSVs. simpl.
     rewrite in_app_iff. repeat rewrite str_fmls_subst_iff.
     repeat rewrite map_app. repeat rewrite In_fold_right_app_iff.
     repeat setoid_rewrite in_app_iff.
@@ -469,23 +501,43 @@ phi is principal in the right premisses *)
       right. right. exists V. tauto.
   Qed.
 
-  Lemma str_SVs_subst_iff : forall X pfs v,
-    In v (strSVs (strSubst pfs X)) <->
-    In v (fold_right (fun x => app (strSVs (snd pfs x))) [] (strSVs X)).
+  Lemma str_SVs_subst_iff : forall X afs v,
+    v ∈ strSVs (strSubst afs X) <->
+    v ∈ fold_right (fun x => app (strSVs (snd afs x))) [] (strSVs X).
   Proof.
-    induction X; intros pfs w; simpl; try tauto.
-    - rewrite app_nil_r. tauto.
-    - apply IHX.
-    - rewrite in_app_iff. rewrite IHX1, IHX2.
-      repeat rewrite In_fold_right_app_iff.
-      setoid_rewrite in_app_iff. split.
-      + intro H. destruct H; destruct H as [x Hx]; exists x; tauto.
-      + intro H. destruct H as [x [[Hx|Hx] Hw]]; [left | right]; exists x; tauto.
+    intro X. pattern X. revert X. apply ipse_rect.
+    intros X IH afs v. rewrite strSubst_eq, (strSVs_eq X).
+    destruct (Var_dec SV X) as [[w Hw]|HnSV];
+      destruct (Var_dec FS X) as [[A HA]|HnFS].
+    - rewrite Hw in HA. contradict HA. apply SV_FS_disc.
+    - simpl. rewrite app_nil_r. tauto.
+    - rewrite strSVs_FS, HA, (Var_ipse FS). simpl. tauto.
+    - rewrite strSVs_eq. rewrite Var_dec_not_Var.
+      2:{ apply (not_Var_conn SV); [apply map_length|assumption]. }
+      rewrite ipse_conn; try apply map_length.
+      split.
+      + intro H. apply In_fold_right_app_iff in H.
+        destruct H as [Y' [HY' Hv]].
+        apply in_map_iff in HY'. destruct HY' as [X' [HeqY' HX']].
+        rewrite <- HeqY' in Hv. apply IH in Hv; try assumption.
+        apply In_fold_right_app_iff in Hv.
+        destruct Hv as [w [Hw Hv]].
+        apply In_fold_right_app_iff. exists w. split; try assumption.
+        apply In_fold_right_app_iff. exists X'. tauto.
+      + intro H. apply In_fold_right_app_iff in H.
+        destruct H as [w [Hw Hv]].
+        apply In_fold_right_app_iff in Hw.
+        destruct Hw as [X' [Hx' Hw]].
+        apply In_fold_right_app_iff.
+        exists (strSubst afs X'). split.
+        * apply in_map_iff. exists X'. tauto.
+        * apply IH; try assumption.
+          apply In_fold_right_app_iff. exists w. tauto.
   Qed.
 
   Lemma seq_SVs_subst_iff : forall s pfs v,
-    In v (seqSVs (seqSubst pfs s)) <->
-    In v (fold_right (fun x => app (strSVs (snd pfs x))) [] (seqSVs s)).
+    v ∈ seqSVs (seqSubst pfs s) <->
+    v ∈ fold_right (fun x => app (strSVs (snd pfs x))) [] (seqSVs s).
   Proof.
     intros s pfs v. destruct s. unfold seqSVs. simpl.
     rewrite in_app_iff.
@@ -505,21 +557,21 @@ phi is principal in the right premisses *)
     destruct Hins as [t [Heqs Hint]]. rewrite <- Heqs.
     specialize (HC1 t Hint). destruct HC1 as [Hfmls HSVs]. split.
     - intros A HinA. apply seq_fmls_subst_iff in HinA.
-      unfold listsubfmls. apply In_fold_right_app_iff.
+      unfold listsubexprs. apply In_fold_right_app_iff.
       destruct HinA as [HinA|HinA].
       + rewrite in_map_iff in HinA. destruct HinA as [B [HeqA HinB]].
-        apply Hfmls in HinB. unfold listsubfmls in HinB.
+        apply Hfmls in HinB. unfold listsubexprs in HinB.
         apply In_fold_right_app_iff in HinB.
         destruct HinB as [C [HinC HinB]].
         set (D := fmlSubst (fst pfs) C). exists D. split.
         * apply seq_fmls_subst_iff. left. apply in_map. assumption.
-        * rewrite <- HeqA. apply In_subfmls_subst. assumption.
+        * rewrite <- HeqA. apply In_subexprs_subst. assumption.
       + rewrite In_fold_right_app_iff in HinA.
         destruct HinA as [v [Hinv HinA]].
         apply HSVs in Hinv. exists A. split.
         * apply seq_fmls_subst_iff. right.
           rewrite In_fold_right_app_iff. exists v. tauto.
-        * apply subfmls_refl.
+        * apply subexprs_refl.
     - intro v. repeat (rewrite seq_SVs_subst_iff, In_fold_right_app_iff).
       intro Hinv. destruct Hinv as [w [Hinw Hinv]].
       apply HSVs in Hinw. exists w. tauto.
@@ -528,51 +580,93 @@ phi is principal in the right premisses *)
   
   (* strrep X Y b X' Y' iff Y' can be obtained from X' by replacing some instances of
      X with sign b in X' by Y (possibly 0, possibly all of them) *)
-  Inductive strrep (X Y : @structr formula) : bool -> structr -> structr -> Prop :=
-  | strrep_same : forall pn X0, strrep X Y pn X0 X0
+  Inductive strrep (X Y : structr) : bool -> structr -> structr -> Prop :=
+  | strrep_same : forall b Z, strrep X Y b Z Z
   | strrep_two : strrep X Y true X Y
-  | strrep_Star : forall pn X0 Y0, strrep X Y pn X0 Y0 -> strrep X Y (negb pn) (∗X0) (∗Y0)
-  | strrep_Comma : forall pn X0l Y0l X0r Y0r, strrep X Y pn X0l Y0l -> strrep X Y pn X0r Y0r ->
-                                     strrep X Y pn (X0l,,X0r) (Y0l,,Y0r).
+  | strrep_conn : forall b Z l, length (ipse Z) = length l ->
+                           (forall t, t ∈ zip pair (zip pair (sgnips Z) (ipse Z)) l ->
+                           strrep X Y (nxorb b (fst (fst t))) (snd (fst t)) (snd t)) ->
+                           strrep X Y b Z (conn Z l).
+(*  | strrep_conn : forall b Z l, Forall2 (fun Z'b' W' => strrep X Y (nxorb b (snd Z'b')) (fst Z'b') W')
+                    (zip pair (ipse Z) (sgnips Z)) l -> strrep X Y b Z (conn Z l).*)
 
-  Inductive seqrep (X Y : structr) (sa : bool) : sequent -> sequent -> Prop :=
-  | seqrep_intr : forall X0a Y0a X0s Y0s, strrep X Y (negb sa) X0a Y0a -> strrep X Y sa X0s Y0s ->
-                                 seqrep X Y sa (X0a ⊢ X0s) (Y0a ⊢ Y0s).
+  Inductive seqrep (X Y : structr) (b : bool) : sequent -> sequent -> Prop :=
+  | seqrep_intr : forall X0a Y0a X0s Y0s, strrep X Y (negb b) X0a Y0a -> strrep X Y b X0s Y0s ->
+                                 seqrep X Y b (X0a ⊢ X0s) (Y0a ⊢ Y0s).
 
-  Inductive seqreps (X Y : structr) (sa : bool) : list sequent -> list sequent -> Prop :=
-  | seqreps_nil  : seqreps X Y sa [] []
-  | seqreps_cons : forall X0 Y0 X0l Y0l, seqrep X Y sa X0 Y0 -> seqreps X Y sa X0l Y0l ->
-                                seqreps X Y sa (X0 :: X0l) (Y0 :: Y0l).
+  Inductive seqreps (X Y : structr) (b : bool) : list sequent -> list sequent -> Prop :=
+  | seqreps_nil  : seqreps X Y b [] []
+  | seqreps_cons : forall X0 Y0 X0l Y0l, seqrep X Y b X0 Y0 -> seqreps X Y b X0l Y0l ->
+                                seqreps X Y b (X0 :: X0l) (Y0 :: Y0l).
+
+
+  Lemma strrep_conn_inv (X Y Z W : structr) (b : bool) :
+    strrep X Y b Z W -> Z <> W -> (Z, W) <> (X, Y) ->
+    conn Z = conn W /\ length (ipse Z) = length (ipse W) /\
+      forall t, t ∈ zip pair (zip pair (sgnips Z) (ipse Z)) (ipse W) ->
+           strrep X Y (nxorb b (fst (fst t))) (snd (fst t)) (snd t).
+  Proof.
+    intros Hrep HneqZ HneqZW. inversion Hrep; [| |split; [|split]].
+    - contradiction.
+    - rewrite H0, H1 in HneqZW. contradiction.
+    - rewrite conn_conn; [reflexivity|].
+      apply eq_sym. assumption.
+    - rewrite ipse_conn; try (apply eq_sym; assumption). assumption.
+    - rewrite ipse_conn; try (apply eq_sym; assumption). assumption.
+  Qed.
 
 
   Lemma seqrep_same_ant [A Y UA VA UY VY] :
-    seqrep (£A) Y true (UA ⊢ VA) (UY ⊢ VY) -> UA = £ A -> UA = UY.
+    seqrep (FS A) Y true (UA ⊢ VA) (UY ⊢ VY) -> UA = FS A -> UA = UY.
   Proof.
     intros Hseqrep HeqUA. rewrite HeqUA in Hseqrep.
     inversion Hseqrep. inversion H2. assumption.
+    rewrite HeqUA.
+    rewrite (conn_ipse (FS A)) at 1.
+    rewrite (Var_ipse FS) in H5 |- *. destruct l;
+      try discriminate. reflexivity.
   Qed.
 
   Lemma seqrep_trans_suc [A Y UA VA UY VY] :
-    seqrep (£A) Y true (UA ⊢ VA) (UY ⊢ VY) -> VA = £ A -> VA <> VY -> VY = Y.
+    seqrep (FS A) Y true (UA ⊢ VA) (UY ⊢ VY) -> VA = FS A -> VA <> VY -> VY = Y.
   Proof.
     intros Hsrep HeqVA HneqVA. rewrite HeqVA in Hsrep.
-    inversion Hsrep. inversion H4. rewrite HeqVA, <- H7 in HneqVA. contradiction.
-    reflexivity.
+    inversion Hsrep. inversion H4. rewrite HeqVA, <- H7 in HneqVA.
+    contradiction. reflexivity. contradict HneqVA.
+    rewrite HeqVA, <- H9.
+    rewrite (conn_ipse (FS A)) at 1.
+    rewrite (Var_ipse FS) in H5 |- *. destruct l;
+      try discriminate. reflexivity.
+(*
+    apply Forall2_length in H5.
+    rewrite zip_pair_eq_length in H5; [|now rewrite sgnips_length].
+    rewrite (conn_ipse (FS A)) at 1.
+    rewrite (Var_ipse FS) in H5 |- *. destruct l;
+      try discriminate. reflexivity.
+*)
   Qed.
 
   Lemma seqrep_same_suc [A Y UA VA UY VY] :
-    seqrep (£A) Y false (UA ⊢ VA) (UY ⊢ VY) -> VA = £ A -> VA = VY.
+    seqrep (FS A) Y false (UA ⊢ VA) (UY ⊢ VY) -> VA = FS A -> VA = VY.
   Proof.
     intros Hseqrep HeqVA. rewrite HeqVA in Hseqrep.
     inversion Hseqrep. inversion H4. assumption.
+    rewrite HeqVA.    
+    rewrite (conn_ipse (FS A)) at 1.
+    rewrite (Var_ipse FS) in H5 |- *. destruct l;
+      try discriminate. reflexivity.
   Qed.
 
   Lemma seqrep_trans_ant [A Y UA VA UY VY] :
-    seqrep (£A) Y false (UA ⊢ VA) (UY ⊢ VY) -> UA = £ A -> UA <> UY -> UY = Y.
+    seqrep (FS A) Y false (UA ⊢ VA) (UY ⊢ VY) -> UA = FS A -> UA <> UY -> UY = Y.
   Proof.
     intros Hsrep HeqUA HneqUA. rewrite HeqUA in Hsrep.
-    inversion Hsrep. inversion H2. rewrite HeqUA, <- H7 in HneqUA. contradiction.
-    reflexivity.
+    inversion Hsrep. inversion H2. rewrite HeqUA, <- H7 in HneqUA.
+    contradiction. reflexivity. contradict HneqUA.
+    rewrite HeqUA, <- H9.
+    rewrite (conn_ipse (FS A)) at 1.
+    rewrite (Var_ipse FS) in H5 |- *. destruct l;
+      try discriminate. reflexivity.
   Qed.
 
   Lemma seqreps_forall {A : Type} {l : list A} {X Y pn f g} :
@@ -595,22 +689,27 @@ phi is principal in the right premisses *)
     intro H. inversion H. tauto.
   Qed.
 
-  Lemma strrepFmlEq {pn A Y B Z} :
-    strrep (£A) Y pn (£B) Z ->
-    (B = A /\ Z = Y /\ pn = true) \/ Z = £B.
+  Lemma strrepFmlEq {b A Y B Z} :
+    strrep (FS A) Y b (FS B) Z ->
+    (B = A /\ Z = Y /\ b = true) \/ Z = FS B.
   Proof.
-    intro H. destruct pn; destruct (eqdec B A) as [Heq|Hneq];
-    inversion H; ((now right) || (now left)).
+    intro H. inversion H.
+    - right. reflexivity.
+    - left. apply (Var_inj FS), eq_sym in H2. tauto.
+    - right.
+      rewrite (conn_ipse (FS B)) at 2.
+      rewrite (Var_ipse FS) in H0 |- *. destruct l;
+      try discriminate. reflexivity.
   Qed.
 
 
-  Definition defSubs (ls : list string) (sub1 sub2 : @sSubst formula) : sSubst :=
+  Definition defSubs (ls : list string) (sub1 sub2 : @sSubst structr) : sSubst :=
     fun s => if (in_dec string_dec s ls) then sub1 s else sub2 s.
 
-  Lemma defSubs_norm {pf sub1 sub2 seq} :
-    seqSubst (pf, defSubs (seqSVs seq) sub1 sub2) seq = seqSubst (pf, sub1) seq.
+  Lemma defSubs_norm {af : @afSubst formula} {s1 s2 : @sSubst structr} {seq : sequent} :
+    seqSubst (af, defSubs (seqSVs seq) s1 s2) seq = seqSubst (af, s1) seq.
   Proof.
-    destruct pf as [p f]. apply seqSubst_fun_agree_iff. repeat split.
+    destruct af as [a f]. apply seqSubst_fun_agree_iff. repeat split.
     intros x Hx. unfold defSubs.
     destruct (in_dec string_dec x (seqSVs seq)); [reflexivity | contradiction].
   Qed.
@@ -628,6 +727,11 @@ phi is principal in the right premisses *)
     intros x Hx. unfold defSubs.
     destruct (in_dec string_dec x l); [contradiction | reflexivity].
   Qed.
+
+(*
+  Definition defSubsn (lv : list string) (ls : list sSubst) : sSubst :=
+    fun v => 
+*)
 
   Definition sSubstfor (af : afSubst) (concl conclY : sequent) :=
   {sub : sSubst | seqSubst (af, sub) concl = conclY}.
@@ -661,47 +765,119 @@ phi is principal in the right premisses *)
     - intros V HV. apply defSubs_agree_sub2. contradict HV. apply empty. assumption.
   Qed.
 
-  Lemma SF_str_sub [phi : formula] [pat Z : structr] [af : afSubst] [suba : sSubst] :
-    ~ strCtnsFml pat -> NoDup (strSVs pat) ->
-    forall pn stry, strrep (£phi) Z pn (strSubst (af, suba) pat) stry ->
-      {suby | strSubst (af, suby) pat = stry}.
-  Proof.
-    induction pat.
-    - intros. exists (fun _ => stry). reflexivity.
-    - intros. exists suba. inversion H1. reflexivity.
-    - simpl. tauto.
-    - intros. destruct (structr_eq_dec stry (strSubst (af, suba) (∗pat))) as [Heq|Hneq];
-      try (exists suba; now rewrite Heq).
-      destruct stry; try (exfalso; inversion H1; fail).
-      assert (strrep (£phi) Z (negb pn) (strSubst (af, suba) pat) stry) as Hrep.
-      { inversion H1; try (contradict Hneq; now rewrite <- H5).
-        rewrite Bool.negb_involutive. assumption. }
-      simpl in H, H0. destruct (IHpat H H0 (negb pn) _ Hrep) as [sub Hsub].
-      exists sub. simpl. rewrite Hsub. reflexivity.
-    - remember (pat1,, pat2) as pat. rewrite Heqpat. intros. simpl in H1.
-      destruct (structr_eq_dec stry (strSubst (af, suba) pat)) as [Heq|Hneq];
-      try (exists suba; now rewrite Heq, Heqpat).
-      destruct stry; try (exfalso; inversion H1; fail).
-      assert (strrep (£phi) Z pn (strSubst (af, suba) pat1) stry1 /\
-                strrep (£phi) Z pn (strSubst (af, suba) pat2) stry2) as [Hrep1 Hrep2].
-      { inversion H1. rewrite <- H5, <- H6, Heqpat in Hneq.
-        contradiction. tauto. }
-      simpl in H, H0. apply not_or in H. destruct H as [nofml1 nofml2].
-      pose proof (NoDup_app_remove_r _ _ H0) as nodup1.
-      pose proof (NoDup_app_remove_l _ _ H0) as nodup2.
-      apply NoDup_app_distinct in H0.
-      specialize (IHpat1 nofml1 nodup1 pn stry1 Hrep1).
-      specialize (IHpat2 nofml2 nodup2 pn stry2 Hrep2).
-      destruct IHpat1 as [sub1 Hsub1]. destruct IHpat2 as [sub2 Hsub2].
-      destruct (comSub_ie H0 Hsub1 Hsub2) as [sub [Hsubl Hsubr] ].
-      exists sub. simpl. rewrite Hsubl, Hsubr. reflexivity.
-  Qed.
+  Lemma NoDupA_cons_inv {A : Type} (eqA : A -> A -> Prop) (x : A) (l : list A) :
+    NoDupA eqA (x :: l) -> ~ InA eqA x l /\ NoDupA eqA l.
+  Proof. intro H. inversion H. tauto. Qed.
 
+  Lemma comSubn (lXY : list (structr * structr)) (ls : list sSubst) (af : afSubst) :
+    distinct_all (map (comp strSVs fst) lXY) ->
+    Forall2 (fun XY s => strSubst (af, s) (fst XY) = (snd XY)) lXY ls ->
+      {S : sSubst | Forall (fun XY => strSubst (af, S) (fst XY) = (snd XY)) lXY}.
+  Proof.
+    revert ls. induction lXY as [|XY lXY];
+      [exists (fun _ => SV ""); apply Forall_nil|].
+    intros ls Hdist Hall2. simpl in Hdist.
+    unfold comp in Hdist at 1. simpl in Hdist.
+    apply NoDupA_cons_inv in Hdist.
+    destruct Hdist as [HnInA Hdist].
+    pose proof (Forall2_length Hall2) as Hlen.
+    destruct ls as [|s ls]; try discriminate.
+    apply Forall2_cons_iff in Hall2.
+    destruct Hall2 as [Heq Hall2].
+    destruct XY as [X' Y']. simpl in *.
+    destruct (IHlXY ls) as [s' Hs']; try assumption.
+    exists (fun x => if in_dec eqdec x (list_union lXY (comp strSVs fst))
+             then s' x else s x).
+    apply Forall_cons.
+    - simpl. destruct af as [a f].
+      rewrite <- Heq. apply strSubst_fun_agree_iff.
+      split; [|split]; try apply fun_agree_refl.
+      intros x Hx. destruct (in_dec string_dec x
+        (list_union lXY (comp strSVs fst))) as [Hin|Hnin]; try reflexivity.
+      rewrite union_map in Hin. apply In_union in Hin.
+      destruct Hin as [l [Hl Hxl]].
+      contradict HnInA. apply InA_alt.
+      exists l. split; try assumption. exists x. tauto.
+    - apply Forall_forall. intros [X Y] HinXY. simpl.
+      rewrite Forall_forall in Hs'.
+      specialize (Hs' (X, Y) HinXY). simpl in Hs'.
+      rewrite <- Hs'. destruct af as [a f].
+      apply strSubst_fun_agree_iff.
+      split; [|split]; try apply fun_agree_refl.
+      intros x Hx. destruct (in_dec string_dec x
+        (list_union lXY (comp strSVs fst))) as [Hin|Hnin]; try reflexivity.
+      contradict Hnin. apply In_union_iff.
+      exists (X, Y). split; assumption.
+  Defined.
+                          
+
+  Lemma SF_str_sub [A : formula] [X Y : structr] [af : afSubst] [s : sSubst] :
+    ~ strCtnsFml X -> NoDup (strSVs X) ->
+    forall b Z, strrep (FS A) Y b (strSubst (af, s) X) Z ->
+      {s' | strSubst (af, s') X = Z}.
+  Proof.
+    pattern X. revert X. apply ipse_rect.
+    intros X IH HnoFml HND b Z Hrep.
+    destruct (eqdec (strSubst (af, s) X) Z) as [HeqZ|HneqZ];
+      [|destruct (eqdec (strSubst (af, s) X, Z) (FS A, Y)) as [HeqXZ|HneqXZ];
+        [rewrite strSubst_eq in Hrep, HeqXZ;
+         destruct (Var_dec SV X) as [[v Hv]|HnSV];
+         [|destruct (Var_dec FS X) as [[B HB]|HnFS]] |
+        rewrite strSubst_eq in Hrep, HneqZ, HneqXZ;
+        rewrite strSVs_eq in HND;
+         destruct (Var_dec SV X) as [[v Hv]|HnSV];
+         [|destruct (Var_dec FS X) as [[B HB]|HnFS]]]].
+    - exists s. assumption.
+    - exists (fun _ => Z). rewrite Hv, strSubst_eq.
+      rewrite Var_dec_Var. reflexivity.
+    - contradict HnoFml. rewrite HB. apply CtnsVar_isVar.
+    - injection HeqXZ. intros HeqZ HeqX.
+      rewrite conn_ipse in HeqX.
+      apply conn_inj in HeqX; try apply map_length; try reflexivity.
+      destruct HeqX as [Heqconn Heqipse].
+      rewrite (Var_ipse FS) in Heqipse.
+      contradict HnoFml. rewrite conn_ipse.
+      rewrite Heqconn. destruct (ipse X); try discriminate.
+      rewrite <- (Var_ipse FS A), <- conn_ipse. apply CtnsVar_isVar.
+    - exists (fun _ => Z). rewrite Hv, strSubst_eq.
+      rewrite Var_dec_Var. reflexivity.
+    - contradict HnoFml. rewrite HB. apply CtnsVar_isVar.
+    - apply strrep_conn_inv in Hrep; try assumption.
+      destruct Hrep as [Heqconn [Hlen Hrep]].
+      rewrite conn_conn in Heqconn; try apply map_length.
+      rewrite ipse_conn in Hlen; try apply map_length.
+      rewrite map_length in Hlen.
+      rewrite sgnips_conn, ipse_conn in Hrep; try apply map_length.
+      assert (ForallT (fun X'Z' => {s' | strSubst (af, s') (fst X'Z') = snd X'Z'})
+                      (zip pair (ipse X) (ipse Z))) as Hall.
+      { apply ForallT_forall. intros [X' Z'] HinX'Z'.
+        pose proof (in_zip_pair_fst HinX'Z') as HinX'. simpl in HinX'.
+        apply (zip_pair_in_map_l (strSubst (af, s))) in HinX'Z'.
+        apply (in_zip_pair_23_sig_1 (sgnips X)) in HinX'Z';
+          try rewrite map_length; try apply sgnips_length; try assumption.
+        destruct HinX'Z' as [b' Hin].
+        specialize (Hrep _ Hin). simpl in Hrep.
+        simpl. apply IH with (nxorb b b').
+        - assumption.
+        - contradict HnoFml. apply (CtnsVar_inips _ _ X'); assumption.
+        - apply (NoDup_union _ _ X') in HND; assumption.
+        - assumption. }        
+      apply ForallT_sig_elim in Hall.
+      destruct Hall as [ls Hls]. apply comSubn in Hls.
+      + destruct Hls as [S HS]. exists S. rewrite strSubst_eq.
+        rewrite (Var_dec_not_Var SV), (Var_dec_not_Var FS); try assumption.
+        rewrite Heqconn. rewrite conn_ipse. apply f_equal.
+        apply Forall_zip_pair_map_fst, Forall_eq_zip_pair in HS;
+          try apply map_length; try assumption;
+          try (rewrite map_length; assumption).
+      + unfold comp. rewrite <- map_map, map_fst_zip_pair; try assumption.
+        apply NoDup_union_distinct. assumption.
+  Defined.
 
   Lemma exSub [A : formula] [pat Y stra stry : structr] [af : afSubst] [suba : sSubst] [pn : bool] :
       ~ (strCtnsFml pat) ->
       strSubst (af, suba) pat = stra -> NoDup (strSVs pat) ->
-      strrep (£A) Y pn stra stry ->
+      strrep (FS A) Y pn stra stry ->
         {suby | strSubst (af, suby) pat = stry}.
   Proof.
     intros. rewrite <- H0 in H2. apply (SF_str_sub H H1 _ _ H2).
@@ -709,7 +885,7 @@ phi is principal in the right premisses *)
 
   Lemma seqExSub1 {pat seqa seqy af suba pn A Y} :
     ~ (seqCtnsFml pat) -> seqSubst (af, suba) pat = seqa ->
-    NoDup (seqSVs pat) -> seqrep (£A) Y pn seqa seqy ->
+    NoDup (seqSVs pat) -> seqrep (FS A) Y pn seqa seqy ->
       sSubstfor af pat seqy.
   Proof.
     intros Hnctsfml Hsubst Hnodup Hseqrep.
@@ -729,7 +905,7 @@ phi is principal in the right premisses *)
       intros S HS. unfold defSubs. destruct (in_dec string_dec S (strSVs pant));
       try reflexivity. exfalso. contradict HS.
       apply (NoDup_app_distinct _ _ Hnodup). assumption.
-  Qed.
+  Defined.
 
   Lemma seqExSub2 [pant psuc aant asuc yant ysuc : structr] [pat seqa seqy : sequent]
     [af : afSubst] [suba : sSubst] (A : formula) (Y : structr) (pn : bool) :
@@ -737,10 +913,10 @@ phi is principal in the right premisses *)
     seqa = aant ⊢ asuc -> seqy = yant ⊢ ysuc ->
     (strCtnsFml pant -> strIsFml pant) ->
     (strCtnsFml psuc -> strIsFml psuc) ->
-    (strIsFml pant -> aant = £A -> aant = yant) ->
-    (strIsFml psuc -> asuc = £A -> asuc = ysuc) ->
+    (strIsFml pant -> aant = FS A -> aant = yant) ->
+    (strIsFml psuc -> asuc = FS A -> asuc = ysuc) ->
     seqSubst (af, suba) pat = seqa ->
-    NoDup (seqSVs pat) -> seqrep (£A) Y pn seqa seqy ->
+    NoDup (seqSVs pat) -> seqrep (FS A) Y pn seqa seqy ->
       sSubstfor af pat seqy.
   Proof.
     intros Heqpat Heqseqa Heqseqy Hfmlpant Hfmlpsuc Hant Hsuc Hsubpat Hnodup Hseqrep.
@@ -757,8 +933,7 @@ phi is principal in the right premisses *)
       rewrite Heqpat, Heqseqy, Hsubpat.
       pose proof (subst_strIsFml Hsubpant Hfmlpant) as Hfmlaant.
       pose proof (subst_strIsFml Hsubpsuc Hfmlpsuc) as Hfmlasuc.
-      destruct aant as [ | | |B| ]; try contradiction.
-      destruct asuc as [ | | |C| ]; try contradiction.
+      destruct Hfmlaant as [B]. destruct Hfmlasuc as [C].
       apply strrepFmlEq in Hrepant, Hrepsuc.
       destruct Hrepant as [ [HeqB _] | Heqyant];
         [rewrite (Hant (f_equal FS HeqB)) | rewrite Heqyant].
@@ -769,7 +944,7 @@ phi is principal in the right premisses *)
       rewrite Heqpat, Heqseqy. simpl.
       rewrite Hsuby, (strSubst_fml suby suba Hfmlpant), Hsubpant.
       pose proof (subst_strIsFml Hsubpant Hfmlpant) as Hfmlaant.
-      destruct aant as [ | | |B| ]; try contradiction.
+      destruct Hfmlaant as [B].
       destruct (strrepFmlEq Hrepant) as [ [HeqB _] | Heqyant];
         [rewrite <- (Hant (f_equal FS HeqB)) |
          rewrite Heqyant]; reflexivity.
@@ -778,16 +953,16 @@ phi is principal in the right premisses *)
       rewrite Heqpat, Heqseqy. simpl.
       rewrite Hsuby, (strSubst_fml suby suba Hfmlpsuc), Hsubpsuc.
       pose proof (subst_strIsFml Hsubpsuc Hfmlpsuc) as Hfmlasuc.
-      destruct asuc as [ | | |B| ]; try contradiction.
+      destruct Hfmlasuc as [B].
       destruct (strrepFmlEq Hrepsuc) as [ [HeqB _] | Heqysuc];
         [rewrite <- (Hsuc (f_equal FS HeqB)) |
          rewrite Heqysuc]; reflexivity.
-  Qed.
+  Defined.
 
 End Cuts.
 
 
-Class BELNAP `{SL : SUBSTLLANG} (DC : @DISPCALC _ _ _ SL) := {
+Class BELNAP `{SL : STRLANG} (DC : DISPCALC) := {
     has_CUT : CUT ∈ DC;
     C3_holds : C3 DC;
     C4_holds : C4 DC;

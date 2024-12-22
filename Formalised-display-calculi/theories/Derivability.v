@@ -10,7 +10,7 @@ Require Import Bool.
 Require Import EqDec.
 Require Import Utils.
 Require Import Tactics.
-Require Import Llang.
+Require Import Lang.
 Require Import Sequents.
 Require Import Substitutions.
 Require Import Derivation.
@@ -20,10 +20,10 @@ Open Scope list_scope.
 
 Section Derivability.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
   Context (DC : DISPCALC).
 
-  Class Deriv (s : @sequent formula) := {
+  Class Deriv (s : sequent) := {
     der_dt : dertree;
     der_proper : proper DC der_dt;
     der_concl : conclDT der_dt = s }.
@@ -81,7 +81,7 @@ Section Derivability.
   Defined.
 
   Lemma ForallT_DerivRule_sig_gen :
-    forall {l : list (@dertree formula)} {f g}, ForallT (fun d => DerivRule (f d, g d)) l ->
+    forall {l : list dertree} {f g}, ForallT (fun d => DerivRule (f d, g d)) l ->
     {ldt | Forall (semiproper DC) ldt /\
            Forall2 (fun d1 d2 => incl (premsDT d2) (f d1) /\ conclDT d2 = g d1) l ldt}.
   Proof.
@@ -346,14 +346,14 @@ End Derivability.
 
 Section DerivRule.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
   Context (DC : DISPCALC).
 
   #[export] Instance dernc_derremcut (r : rule) :
     DerivRuleNC DC r -> DerivRule (remove_rule CUT DC) r.
   Proof.
     intro H. constructor 1 with (derr_dt DC); try apply derrnc_derr.
-    split. apply (@allDT_impl _ (fun dt => exr DC dt /\ nocut dt)).
+    split. apply (allDT_impl (fun dt => exr DC dt /\ nocut dt)).
     intros dt [Hfrb Hnocut]. destruct dt; try tauto. apply in_in_remove; assumption.
     apply allDT_and. split. apply derrnc_derr. apply derrnc_nocut. apply derrnc_derr.
   Defined.
@@ -405,7 +405,7 @@ Section DerivRule.
 
   Lemma deriv_cofseq_rule_bw_inDC (P : formula -> Prop) (ss : list sequent) (c : sequent) (afs : afsSubst) :
     (ss, c) ∈ DC ->
-    (ss, c) <> CUT \/ (exists sl sr Y A, P A /\ map (seqSubst afs) ss = [sl; sr] /\ sr = £A ⊢ Y) ->
+    (ss, c) <> CUT \/ (exists sl sr Y A, P A /\ map (seqSubst afs) ss = [sl; sr] /\ sr = FS A ⊢ Y) ->
     deriv_cofseqs DC P (map (seqSubst afs) ss) -> deriv_cofseq DC P (seqSubst afs c).
   Proof.
     intros Hexr Hcof Hders.
@@ -425,7 +425,7 @@ End DerivRule.
 
 Section DerivRuleNC.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
   Context (DC : DISPCALC).
 
   Lemma DerivRuleNC_rule_bw_Inst (ps ss : list sequent) (c : sequent) (afs : afsSubst)
@@ -466,7 +466,7 @@ End DerivRuleNC.
 
 Section SubDisp.
   
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
   Variables DC1 DC2 DC3 : DISPCALC.
 
   Definition SubDer := forall r, DerivRule DC1 r -> DerivRule DC2 r.
@@ -513,7 +513,7 @@ Section SubDisp.
     intro H. apply SubDer_SubDerDC, SubDC_SubDer. assumption.
   Defined.
 
-  Lemma SubDC_DerivRule (r : rule) `{dr : @DerivRule _ _ _ SL DC1 r} :
+  Lemma SubDC_DerivRule (r : rule) {dr : DerivRule DC1 r} :
     incl DC1 DC2 -> DerivRule DC2 r.
   Proof.
     intro H. apply SubDC_SubDer; assumption.
@@ -530,7 +530,7 @@ End SubDisp.
 
 Section MoreSubDisp.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
 
   Lemma DerivDC_SubDer (DC1 DC2 : DISPCALC) : DerivDC DC2 DC1 -> SubDer DC1 DC2.
   Proof.
@@ -584,7 +584,7 @@ Section MoreSubDisp.
   Defined.
 
   Theorem Extend_DerivRule (DC : DISPCALC) (r : rule)
-    `{dr : @DerivRule _ _ _ SL DC r} : SubDer (DC ++ [r]) DC.
+    {dr : DerivRule DC r} : SubDer (DC ++ [r]) DC.
   Proof.
     apply Extend_DerivDC, DerivDC_one. assumption.
   Defined.
@@ -597,7 +597,7 @@ Section MoreSubDisp.
   Defined.
 
   Theorem Extend_DerivRuleNC (DC : DISPCALC) (r : rule)
-    `{dr : @DerivRuleNC _ _ _ SL DC r} : SubDerNC (DC ++ [r]) DC.
+    {dr : DerivRuleNC DC r} : SubDerNC (DC ++ [r]) DC.
   Proof.
     intros rho Hder.
     apply dernc_derremcut_iff in dr.
@@ -617,6 +617,7 @@ Section MoreSubDisp.
   Defined.
 
 End MoreSubDisp.  
+
 
 (* Tactics to simplify proofs within the object logic *)
 
@@ -653,13 +654,19 @@ Ltac confirm_derrnc dt :=
     try reflexivity; try auto_incl; try discriminate.
 
 
-(* suspect this unfold-rewrite-simpl is not sufficient for the general case *)
-Ltac simpl_Subst :=
+(* This makes sure eq_rect_r is always unfolded by the simpl tactic.
+   Without it, the tactics below end up reducing terms to something huge. *)
+Arguments eq_rect_r /.
+
+
+Ltac simpl_Subst := simpl.
+(*  rewrite <- seqSubst_cust_ok; simpl.*)
+(*
   unfold seq_matchsub, seq_matchsub_Atm, seq_matchsub_FV, seq_matchsub_SV;
   simpl conclRule; cbv match;
   unfold str_matchsub_Atm, str_matchsub_FV, str_matchsub_SV;
   try (rewrite fml_matchsub_Atm_eq, fml_matchsub_FV_eq); simpl.
-
+*)
 
 Ltac apply_DR_inst r :=
   match goal with
@@ -731,8 +738,8 @@ Ltac apply_cof_CUT A :=
         change (X ⊢ Y) with (seqSubst (CUT_spec A X Y) (conclRule CUT));
         apply (deriv_cofseq_rule_bw_inDC _ _ (premsRule CUT) (conclRule CUT) (CUT_spec A X Y));
         [auto_in|right;
-        exists (seqSubst (CUT_spec A X Y) ($"X" ⊢ £?"A")),
-          (seqSubst (CUT_spec A X Y) (£?"A" ⊢ $"Y")), Y, A;
+        exists (seqSubst (CUT_spec A X Y) (SV "X" ⊢ FS (FV "A"))),
+          (seqSubst (CUT_spec A X Y) (FS (FV "A") ⊢ SV "Y")), Y, A;
           repeat split; try (compute; tauto; fail)|simpl];
         apply ForallT_deriv_cofseqs;
         repeat (apply ForallT_cons); try (apply ForallT_nil)

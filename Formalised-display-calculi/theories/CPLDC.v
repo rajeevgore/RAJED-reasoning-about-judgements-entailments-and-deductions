@@ -7,7 +7,7 @@ Require Import ListSetNotations.
 Require Import EqDec.
 Require Import Tactics.
 Require Import Utils.
-Require Import Llang.
+Require Import Lang.
 Require Import Sequents.
 Require Import Substitutions.
 Require Import Derivation.
@@ -16,7 +16,7 @@ Require Import CutElim.
 Require Import Derivability.
 Require Import BelnapAid.
 Require Import PL.
-Import PLNotations.
+Import CPLNotations.
 Require Import Rules.
 Require Import CPLRules.
 
@@ -28,46 +28,112 @@ Definition cpldc : DISPCALC :=
    Mlrn; Mrrslln; Mrls; Snn; Sns; DSEr; Mrrn; Mlrsrln; Mlls].
 
 
-Lemma MinDC_cpldc : incl MinDC cpldc.
-Proof. forall_list_tauto. Qed.
-
 Module CPLDeriv.
 
-  Definition PLfml := PL.formula.
-  Definition derPL := @dertree PLfml.
-  Definition strPL := @structr PLfml.
-
-  #[export] Instance dernc_Ssn : DerivRuleNC cpldc Ssn.
-  Proof. apply (SubDC_dernc MinDC _ MinDC_cpldc _ dernc_Ssn). Defined.
-
-  #[export] Instance dernc_Mrrs : DerivRuleNC cpldc Mrrs.
-  Proof. apply (SubDC_dernc MinDC _ MinDC_cpldc _ dernc_Mrrs). Defined.
+  Ltac set_XYZW :=
+    set (X := $"X" : structr); set (Y := $"Y" : structr);
+    set (Z := $"Z" : structr); set (W := $"W" : structr).
 
   #[export] Instance dernc_Sss : DerivRuleNC cpldc Sss.
-  Proof. apply (SubDC_dernc MinDC _ MinDC_cpldc _ dernc_Sss). Defined.
+  Proof.
+    unfold Sss.
+    apply_DRNC_inDC DSEr.
+    apply_DRNC_inDC Sns.
+    apply DerivRuleNC_refl.
+  Defined.
 
   #[export] Instance dernc_DSEl : DerivRuleNC cpldc DSEl.
-  Proof. apply (SubDC_dernc MinDC _ MinDC_cpldc _ dernc_DSEl). Defined.
+  Proof.
+    set_XYZW.
+    apply (Extend_DerivRuleNC _ Sss).
+    set (d := Der (X ⊢ Y) Sss
+             [Der (∗Y ⊢ ∗X) DSEr
+             [Der (∗Y ⊢ ∗∗∗X) Snn
+             [Unf ((∗∗X) ⊢ Y)]]]).
+    confirm_derrnc d.
+  Defined.
+
+  #[export] Instance dernc_Ssn : DerivRuleNC cpldc Ssn.
+  Proof.
+    set (d := Der (∗ $"Y" ⊢ $"X") DSEr
+             [Der (∗ $"Y" ⊢ ∗ ∗ $"X") Snn
+             [Unf (∗ $"X" ⊢ $"Y")]]).
+    confirm_derrnc d.
+  Defined.
 
   #[export] Instance dernc_Sns : DerivRuleNC cpldc Sns.
-  Proof. apply (SubDC_dernc MinDC _ MinDC_cpldc _ dernc_Sns). Defined.
+  Proof.
+    set_XYZW.
+    apply (Extend_DerivRuleNC _ DSEl).
+    set (d := Der (Y ⊢ ∗ X) DSEl
+             [Der ((∗∗Y) ⊢ ∗X) Snn
+             [Unf (X ⊢ ∗Y)]]).
+    confirm_derrnc d.
+  Defined.
+
+  #[export] Instance dernc_Mrrs : DerivRuleNC cpldc Mrrs.
+  Proof.
+    set_XYZW.
+    set (d := Der (X,, Z ⊢ Y) Mrls [Der (Z ⊢ ∗X,, Y) Mrrslln [Unf (X ⊢ Y,, ∗Z)] ]).
+    confirm_derrnc d.
+  Defined.
 
   #[export] Instance dernc_Commr : DerivRuleNC cpldc Commr.
-  Proof. apply (SubDC_dernc MinDC _ MinDC_cpldc _ dernc_Commr). Defined.
+  Proof.
+    set_XYZW.
+    set (d := Der (X ⊢ Z,, Y) Mlls
+             [Der (∗Z,, X ⊢ Y) Comml
+             [Der (X,, ∗Z ⊢ Y) Mrrn
+             [Unf (X ⊢ Y,, Z)]]]).
+    confirm_derrnc d.
+  Defined.
 
   #[export] Instance dernc_Mlln : DerivRuleNC cpldc Mlln.
-  Proof. apply (SubDC_dernc MinDC _ MinDC_cpldc _ dernc_Mlln). Defined.
+  Proof.
+    set_XYZW.
+    apply (Extend_DerivRuleNC _ Commr).
+    set (d := Der (Y ⊢ ∗X,, Z) Commr
+             [Der (Y ⊢ Z,, ∗X) Mlrn
+             [Der (Y,, X ⊢ Z) Comml
+             [Unf (X,, Y ⊢ Z)]]]).
+    confirm_derrnc d.
+  Defined.
 
+  #[export] Instance dernc_Assolinv : DerivRuleNC cpldc Assolinv.
+  Proof.
+    unfold Assolinv. set_XYZW.
+    apply_DRNC_inDC Comml.
+    apply_DRNC_inst Mrrs.
+    apply_DRNC_inDC Comml.
+    apply_DRNC_inDC Mlrn.
+    apply_DRNC_inDC Assol.
+    apply_DRNC_inDC Comml.
+    apply_DRNC_inst Mrrs.
+    apply_DRNC_inDC Comml.
+    apply_DRNC_inDC Mlrn.
+    apply DerivRuleNC_refl.
+  Defined.
+
+  #[export] Instance derr_Wkl : DerivRule cpldc Wkl.
+  Proof.
+    set_XYZW.
+    apply (Extend_DerivRule _ Mrrs).
+    confirm_derr (Der (Z,, X ⊢ Y) Mrrs
+                 [Der (Z ⊢ Y,, ∗X) Iwl
+                 [Der (I ⊢ Y,, ∗X) Mlrn
+                 [Der (I,, X ⊢ Y) Iaddl
+                 [Unf (X ⊢ Y)]]]]).
+  Defined.
 
   #[export] Instance dernc_frefl : forall A : PL.formula, fmlNoFV A -> DerivRuleNC cpldc (frefl A).
   Proof.
-    intros A H. induction A; try contradiction.
-    all: try (apply fmlNoFV_ipsubfmls in H; try (intros; discriminate)).
+    intros A H. induction A; try (contradict H; apply isVar_not_noVar; constructor).
+    all: try (apply fmlNoFV_ipse in H; try (intros; discriminate)).
     all: try (specialize (IHA (Forall_inv H))).
     all: try (specialize (IHA1 (Forall_inv H));
               specialize (IHA2 (Forall_inv (Forall_inv_tail H)))).
     all: unfold frefl.
-    - set (d := Der (£p p ⊢ £p p) atrefl []). confirm_derrnc d.
+    - set (d := Der (£% p ⊢ £% p) atrefl []). confirm_derrnc d.
     - set (d := Der (£ PL.Top ⊢ £ PL.Top) Topl
                [Der (I ⊢ £ PL.Top) Topr []]).
       confirm_derrnc d.
@@ -76,11 +142,11 @@ Module CPLDeriv.
       confirm_derrnc d.
     - apply_DRNC_inDC Negr.
       apply_DRNC_inDC Negl.
-      apply_DRNC_inDC (@Snn PLfml).
+      apply_DRNC_inDC Snn.
       assumption.
     - apply_DRNC_inDC Impr.
-      apply_DRNC_inDC (@Comml PLfml).
-      apply_DRNC_inDC (@Mrls PLfml).
+      apply_DRNC_inDC Comml.
+      apply_DRNC_inDC Mrls.
       apply_DRNC_inDC Impl; assumption.
     - apply_DRNC_inDC Disr.
       apply_DRNC_inDC Disl; assumption.
@@ -110,14 +176,13 @@ Module CPLBelnap.
   Theorem C5_holds : C5 cpldc.
   Proof. auto_C5. Qed.
 
-
   Theorem C8_Neg {X Y A} : C8_case cpldc X Y [X ⊢ ∗ £A; ∗ £A ⊢ Y] (isipsubfml (¬ A)).
   Proof.
     prep_C8_case.
-    apply_cof_inst (@Sss PLfml).
+    apply_cof_inst Sss.
     apply_cof_CUT A.
-    - apply_cof_inst (@Ssn PLfml). assumption.
-    - apply_cof_inst (@Sns PLfml). assumption.
+    - apply_cof_inst Ssn. assumption.
+    - apply_cof_inst Sns. assumption.
   Defined.
 
 
@@ -126,12 +191,12 @@ Module CPLBelnap.
                                  (isipsubfml (A ∧ B)).
   Proof.
     prep_C8_case.
-    apply_cof_inst (@Mrrs PLfml).
+    apply_cof_inst Mrrs.
     apply_cof_CUT A; [assumption|].
-    apply_cof_inDC (@Mlrn PLfml).
-    apply_cof_inDC (@Mrls PLfml).
+    apply_cof_inDC Mlrn.
+    apply_cof_inDC Mrls.
     apply_cof_CUT B; [assumption|].
-    apply_cof_inst (@Mlln PLfml).
+    apply_cof_inst Mlln.
     assumption.
   Defined.
 
@@ -140,11 +205,11 @@ Module CPLBelnap.
                                        (isipsubfml (A ∨ B)).
   Proof.
     prep_C8_case.
-    apply_cof_inDC (@Mlls PLfml).
+    apply_cof_inDC Mlls.
     apply_cof_CUT B; [|assumption].
-    apply_cof_inDC (@Mlrsrln PLfml).
+    apply_cof_inDC Mlrsrln.
     apply_cof_CUT A; [|assumption].
-    apply_cof_inDC (@Mrrn PLfml).
+    apply_cof_inDC Mrrn.
     assumption.
   Defined.
 
@@ -152,28 +217,29 @@ Module CPLBelnap.
     C8_case cpldc X (∗Y,, Z) [Y ⊢ £A; X,, £A ⊢ £B; £B ⊢ Z] (isipsubfml (A → B)).
   Proof.
     prep_C8_case.
-    apply_cof_inst (@Mlln PLfml).
+    apply_cof_inst Mlln.
     apply_cof_CUT B; [|assumption].
-    apply_cof_inst (@Mrrs PLfml).
+    apply_cof_inst Mrrs.
     apply_cof_CUT A; [assumption|].
-    apply_cof_inDC (@Mlrn PLfml).
-    apply_cof_inDC (@Comml PLfml).
+    apply_cof_inDC Mlrn.
+    apply_cof_inDC Comml.
     assumption.
   Defined.
+
   
   Theorem C8_holds : C8 cpldc.
   Proof.
-    auto_C8 PL.formula.
+    auto_C8.
     - remember (fst (fst afsR) "p") as p. rewrite HeqipsA in *.
       exists (Der (£ PL.Atf p ⊢ £ PL.Atf p) atrefl []). split.
       try (repeat (split; try auto_in; try auto_wfr)).
       rewrite HeqX, HeqY. split; try reflexivity.
       simpl. split; [left; discriminate|constructor].
     - exists dR. rewrite HeqX, HeqY. split; [|split]; try assumption.
-      apply (allDT_impl (@nocut_impl_cut _ _ pl _ (@isipsubfml _ _ pl A))).
+      apply (allDT_impl _ _ (nocut_impl_cut (@isipsubfml _ _ f_pl A))).
       assumption.
     - exists dL. rewrite HeqX, HeqY. split; [|split]; try assumption.
-      apply (allDT_impl (@nocut_impl_cut _ _ pl _ (@isipsubfml _ _ pl A))).
+      apply (allDT_impl _ _ (nocut_impl_cut (@isipsubfml _ _ f_pl A))).
       assumption.
     - rewrite HeqX, HeqY, HeqAR. rewrite H1 in *.
       apply (C8_Neg [dL; dR]); try auto_Forall.

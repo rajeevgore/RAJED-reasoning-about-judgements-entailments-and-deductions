@@ -34,10 +34,11 @@ Proof.
 Qed.
 
 Lemma fun_agree_multi_Union_iff {A B : Type} (f g : A -> B) (U : list (list A)) :
-  (forall E, E ∈ U -> fun_agree f g E) <-> fun_agree f g (fold_right (@app A) [] U).
+  (forall E, E ∈ U -> fun_agree f g E) <-> fun_agree f g (list_union U id).
 Proof.
   induction U as [|E U]. simpl. rewrite fun_agree_Empty_iff. tauto.
-  simpl fold_right. rewrite <- fun_agree_Union_iff, <- IHU. split.
+  unfold list_union. simpl fold_right.
+  rewrite <- fun_agree_Union_iff, <- IHU. split.
   - intro H. split.
     + apply H. now left.
     + intros F HF. apply H. now right.

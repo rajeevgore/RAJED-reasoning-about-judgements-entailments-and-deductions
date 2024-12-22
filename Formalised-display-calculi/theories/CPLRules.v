@@ -6,12 +6,15 @@ Import ListNotations.
 
 Require Import Tactics.
 Require Import Utils.
-Require Import Llang.
+Require Import Lang.
 Require Import Sequents.
 Require Import PL.
-Import PLNotations.
+Import CPLNotations.
 
 Module CPLRules.
+
+  (* Logical rules *)
+
   Definition Topl  : rule := ([I ⊢ $"X"],   (* special case of Iwl *)
                                £⊤ ⊢ $"X").
 
@@ -19,7 +22,7 @@ Module CPLRules.
                                I ⊢ £⊤).
 
   Definition Botl  : rule := ([],
-                               £⊥ ⊢ I).
+                               £⊥ ⊢ I). 
   
   Definition Botr  : rule := ([$"X" ⊢ I],    (* X ⊢ I / ∗I ⊢ ∗X / I ⊢ ∗X / ∗⊥ ⊢ ∗X / X ⊢ ⊥ *)
                                $"X" ⊢ £⊥).
@@ -70,5 +73,102 @@ Module CPLRules.
 
   Definition Impsl  : rule := ([∗ £?"A" ⊢ $"X"   ;   £?"B" ⊢ $"X"],
                                 £(?"A" → ?"B") ⊢ $"X").
+
+
+
+  (* Structural Rules *)
+  Definition Isl   : rule := ([I ⊢ $"Y"],       (* special case of Iwl *)
+                               ∗ I ⊢ $"Y").
+
+  Definition Iul   : rule := ([∗ I ⊢ $"Y"],
+                               I ⊢ $"Y").
+
+  Definition Iaddl  : rule := ([$"X" ⊢ $"Y"],
+                                I,, $"X" ⊢ $"Y").
+
+  Definition Idell  : rule := ([I,, $"X" ⊢ $"Y"],
+                                $"X" ⊢ $"Y").
+
+  Definition Iwl   : rule := ([I ⊢ $"Y"],
+                               $"X" ⊢ $"Y").
+
+  Definition Iwr   : rule := ([$"X" ⊢ I],
+                               $"X" ⊢ $"Y").
+
+  Definition Comml : rule := ([$"X",, $"Y" ⊢ $"Z"],
+                               $"Y",, $"X" ⊢ $"Z").
+
+  Definition Contl : rule := ([$"X",, $"X" ⊢ $"Y"],
+                               $"X" ⊢ $"Y").
+
+  Definition Assol : rule := ([$"X",, ($"Y",, $"Z") ⊢ $"W"],
+                               ($"X",, $"Y"),, $"Z" ⊢ $"W").
+
+
+
+  (* Display rules *)
+
+  Definition Mlrn : rule := ([$"X",, $"Y" ⊢ $"Z"],
+                              $"X" ⊢ $"Z",, ∗ $"Y").
+
+  Definition Mrrslln : rule := ([$"X" ⊢ $"Y",, ∗ $"Z"],
+                                 $"Z" ⊢ ∗ $"X",, $"Y").
+
+  Definition Mrls : rule := ([$"X" ⊢ ∗ $"Y",, $"Z"],
+                              $"Y",, $"X" ⊢ $"Z").
+
+
+  Definition Snn : rule := ([$"X" ⊢ $"Y"],
+                             ∗ $"Y" ⊢ ∗ $"X").
+
+  Definition Sns : rule := ([$"X" ⊢ ∗ $"Y"],
+                             $"Y" ⊢ ∗ $"X").
+
+  Definition DSEr : rule := ([$"X" ⊢ ∗ ∗ $"Y"],
+                              $"X" ⊢ $"Y").
+
+  
+  Definition Mrrn : rule := ([$"X" ⊢ $"Y",, $"Z"],
+                              $"X",, ∗ $"Z" ⊢ $"Y").
+
+  Definition Mlrsrln : rule := ([$"X",, ∗ $"Y" ⊢ $"Z"],
+                                 ∗ $"Z",, $"X" ⊢ $"Y").
+
+  Definition Mlls : rule := ([∗ $"X",, $"Y" ⊢ $"Z"],
+                              $"Y" ⊢ $"X",, $"Z").
+
+
+
+
+
+  Definition Ssn : rule := ([∗ $"X" ⊢ $"Y"],
+                             ∗ $"Y" ⊢ $"X").
+
+  Definition Sss : rule := ([∗ $"X" ⊢ ∗ $"Y"],
+                             $"Y" ⊢ $"X").
+
+  Definition DSEl : rule := ([(∗ ∗ $"X") ⊢ $"Y"],
+                              $"X" ⊢ $"Y").
+
+  Definition Commr : rule := ([$"X" ⊢ $"Y",, $"Z"],
+                               $"X" ⊢ $"Z",, $"Y").
+
+  Definition Mlln : rule := ([$"X",, $"Y" ⊢ $"Z"],
+                              $"Y" ⊢ ∗ $"X",, $"Z").
+
+  Definition Mrrs : rule := ([$"X" ⊢ $"Y",, ∗$"Z"],
+                              $"X",, $"Z" ⊢ $"Y").
+  
+  Definition Assolinv : rule := ([($"X",, $"Y"),, $"Z" ⊢ $"W"],
+                                  $"X",, ($"Y",, $"Z") ⊢ $"W").
+
+  Definition Wkl : rule := ([$"X" ⊢ $"Y"],
+                             $"Z",, $"X" ⊢ $"Y").
+
+  Definition Wkr : rule := ([$"X" ⊢ $"Y"],
+                             $"X" ⊢ $"Y",, $"Z").
+
+  Definition ContIl : rule := ([$"X",, $"X" ⊢ $"Y"],
+                                I,, $"X" ⊢ $"Y").
 
 End CPLRules.

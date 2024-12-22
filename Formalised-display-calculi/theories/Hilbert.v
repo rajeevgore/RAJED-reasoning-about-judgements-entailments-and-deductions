@@ -3,9 +3,10 @@ Require Import Ensembles.
 Require Import List.
 Import ListNotations.
 
+Require Import EqDec.
 Require Import Tactics.
 Require Import Utils.
-Require Import Llang.
+Require Import Lang.
 Require Import Sequents.
 Require Import Substitutions.
 Require Import Derivation.
@@ -13,7 +14,6 @@ Require Import Cuts.
 Require Import Derivability.
 Require Import Rules.
 Require Import PL.
-Import PLNotations.
 Require Import CPLDC.
 Require Import CPLRules.
 Import CPLRules.
@@ -29,7 +29,7 @@ Close Scope nat_scope.
 
 Section BasicCalc.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{LL : LOGLANG}.
 
   Definition HCrule := list formula * formula.
   Definition HCpremsRule (r : HCrule) : list formula := fst r.
@@ -38,7 +38,9 @@ Section BasicCalc.
 End BasicCalc.
 
 
-Definition HILBCALC `{SL : SUBSTLLANG} := list (@HCrule formula).
+Definition HILBCALC `{LL : LOGLANG} := list (@HCrule formula).
+
+Import CPLNotations.
 
 Definition MP : HCrule := ([?"A"; ?"A" → ?"B"],
                             ?"B").
@@ -48,16 +50,14 @@ Definition CPLHC2 : HCrule := ([], (¬ ?"A" → ¬ ?"B") → (?"B" → ?"A")).
 Definition CPLHC3 : HCrule := ([], (?"A" → (?"B" → ?"C")) →
                                      ((?"A" → ?"B") → (?"A" → ?"C"))).
 
-Definition cplHC : @HILBCALC _ _ _ substpl := [MP; CPLHC1; CPLHC2; CPLHC3].
+Definition cplHC : @HILBCALC _ _ _ pl := [MP; CPLHC1; CPLHC2; CPLHC3].
 
 
 Section HC_TO_DC.
 
-  Context `{SL : SUBSTLLANG}.
+  Definition fmltoseq (A : PL.formula) : sequent := I ⊢ FS A.
 
-  Definition fmltoseq (A : formula) : @sequent formula := I ⊢ £A.
-
-  Definition HCtoDC_rule (r : @HCrule formula) : @rule formula := 
+  Definition HCtoDC_rule (r : HCrule) : rule := 
     (map fmltoseq (HCpremsRule r), fmltoseq (HCconclRule r)).
 
   Definition HCtoDC (HC : HILBCALC) : DISPCALC := map HCtoDC_rule HC.
@@ -68,6 +68,7 @@ Definition cplHilbComp (DC : DISPCALC) := SubDer (HCtoDC cplHC) DC.
 
 Definition cplLr : DISPCALC := (cpldc ++ [refl]).
 
+Definition ExtraDC : DISPCALC := [Ssn; Sns; Sss; DSEl; Commr; Mlln; Mrrs; Assolinv; Wkl].
 
 #[export] Instance cplLr_MP : DerivRule cplLr (HCtoDC_rule MP).
 Proof.
@@ -84,7 +85,12 @@ Defined.
 
 Theorem cplLr_ExtraDC : DerivDC cplLr ExtraDC.
 Proof.
-  apply (SubDC_SubDerDC MinDC). forall_list_tauto. apply MinDC_ExtraDC.
+  Import CPLDeriv.
+  intros r Hr; dec_destruct_List_In (@eqdec rule _) r;
+  rewrite Heq;
+  apply (SubDC_DerivRule cpldc cplLr);
+  try (unfold cplLr; apply incl_appl, incl_refl);
+  apply (alr_DerivRule _ _).
 Defined.
 
 #[export] Instance cplLr_CPLHC1 : DerivRule cplLr (HCtoDC_rule CPLHC1).

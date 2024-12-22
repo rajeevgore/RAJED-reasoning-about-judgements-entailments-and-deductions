@@ -23,16 +23,10 @@ Require Import Substitutions.
 Open Scope nat_scope.
 
 
-(* Application of our framework to PL (propositional logic).
-   At this point, nothing forces us to clarify whether we want
-   CPL (classical PL) or IPL (intuitionistic PL) or something else
-   as we are doing pure syntax for now.
-
-   We can use this same syntax to later define display calculi
-   for both CPL and IPL. *)
+(* Application of our framework to Kt (Tense logic). *)
 
 
-Module PL.
+Module Kt.
   Inductive formula : Set :=
     | Atf (p : string)
     | FVf (A : string)
@@ -41,12 +35,48 @@ Module PL.
     | Neg (phi : formula)
     | Imp (phi psi : formula)
     | Dis (phi psi : formula)
-    | Con (phi psi : formula).
-End PL.
+    | Con (phi psi : formula)
+    | Boxn (phi : formula)
+    | Dian (phi : formula)
+    | Boxp (phi : formula)
+    | Diap (phi : formula).
 
-Module PL_LOG.
+  Inductive structr : Set :=
+    | SVf (X : string)
+    | FSf (A : formula)
+    | I
+    | Star (X : structr)
+    | Comma (X Y : structr)
+    | BCirc (X : structr).
+End Kt.
 
-  Import PL.
+Module KtNotations.
+  
+  Export Kt.
+  
+  Notation "% p" := (Kt.Atf p) (at level 10).
+  Notation "? A" := (Kt.FVf A) (at level 10).
+  Notation "¬ phi" := (Kt.Neg phi) (at level 20).
+  Notation "⊤" := (Kt.Top) (at level 20).
+  Notation "⊥" := (Kt.Bot) (at level 20).
+  Notation "phi → psi" := (Kt.Imp phi psi) (at level 30).
+  Notation "phi ∨ psi" := (Kt.Dis phi psi) (at level 30).
+  Notation "phi ∧ psi" := (Kt.Con phi psi) (at level 30).
+  Notation "◻ phi" := (Kt.Boxn phi) (at level 20).
+  Notation "◊ phi" := (Kt.Dian phi) (at level 20).
+  Notation "◼ phi" := (Kt.Boxp phi) (at level 20).
+  Notation "⧫ phi" := (Kt.Diap phi) (at level 20).
+  
+  Notation "$ X" := (Kt.SVf X) (at level 35).
+  Notation "£ A" := (Kt.FSf A) (at level 35).
+  Notation "∗ X" := (Kt.Star X) (at level 40).
+  Notation "X ,, Y" := (Kt.Comma X Y) (at level 50).
+  Notation "● X" := (Kt.BCirc X) (at level 40).
+End KtNotations.
+
+Module Kt_LOG.
+
+  Import Kt.
 
   Theorem fml_eq_dec : eq_dec formula.
   Proof. unfold eq_dec. decide equality; apply string_dec. Defined.
@@ -57,6 +87,10 @@ Module PL_LOG.
     | Imp A1 A2   => [A1; A2]
     | Dis A1 A2   => [A1; A2]
     | Con A1 A2   => [A1; A2]
+    | Boxn A0     => [A0]
+    | Dian A0     => [A0]
+    | Boxp A0     => [A0]
+    | Diap A0     => [A0]
     | _           => []
     end.
     
@@ -85,15 +119,8 @@ Module PL_LOG.
           destruct C as [Heq|Hneq]
     end;
     try (rewrite Heq; unfold eq_rect_r; simpl; reflexivity);
-    exfalso.
-    repeat match goal with H : B <> _ |- _ => apply not_eq_sym in H end;
-    repeat destruct HB as [HB|HB]; tauto.
-    repeat match goal with H : B <> _ |- _ => apply not_eq_sym in H end;
-    repeat destruct HB as [HB|HB]; tauto.
-    repeat match goal with H : B <> _ |- _ => apply not_eq_sym in H end;
-    repeat destruct HB as [HB|HB]; tauto.
-    repeat match goal with H : B <> _ |- _ => apply not_eq_sym in H end;
-    repeat destruct HB as [HB|HB]; tauto.
+    exfalso;
+    repeat destruct HB as [HB|HB]; contradict HB; apply not_eq_sym; assumption.
   Qed.
 
   Definition fml_df : formula := Atf "".
@@ -104,6 +131,10 @@ Module PL_LOG.
     | Imp A1 A2   => fun l => match l with B1 :: B2 :: _ => Imp B1 B2 | _ => fml_df end
     | Dis A1 A2   => fun l => match l with B1 :: B2 :: _ => Dis B1 B2 | _ => fml_df end
     | Con A1 A2   => fun l => match l with B1 :: B2 :: _ => Con B1 B2 | _ => fml_df end
+    | Boxn A0     => fun l => match l with B0 :: _ => Boxn B0 | _ => fml_df end
+    | Boxp A0     => fun l => match l with B0 :: _ => Boxp B0 | _ => fml_df end
+    | Dian A0     => fun l => match l with B0 :: _ => Dian B0 | _ => fml_df end
+    | Diap A0     => fun l => match l with B0 :: _ => Diap B0 | _ => fml_df end
     | A0          => fun _ => A0
     end.
 
@@ -119,7 +150,7 @@ Module PL_LOG.
     repeat (let B := fresh "B" in destruct l as [|B l]; try discriminate);
     repeat (let C := fresh "C" in destruct l' as [|C l']; try discriminate);
     injection Heq; intros; all_rewrite; split; reflexivity.
-  Qed.    
+  Qed.
 
   Definition Atm := Atf.
   Definition FV := FVf.
@@ -151,70 +182,47 @@ Module PL_LOG.
   Lemma FV_ipse : forall V : string, ipse (FV V) = [].
   Proof. reflexivity. Qed.
 
-End PL_LOG.
+End Kt_LOG.
 
-#[export] Instance EqDec_formula : EqDec PL.formula := {| eqdec := PL_LOG.fml_eq_dec |}.
+#[export] Instance EqDec_formula : EqDec Kt.formula := {| eqdec := Kt_LOG.fml_eq_dec |}.
 
-#[export] Instance f_pl : @FLANG PL.formula _ := {|
-  ipse   := PL_LOG.ipse;
-  ipse_rect := PL_LOG.ipse_rect;
-  ipse_rect_cmp := PL_LOG.ipse_rect_cmp;
-  conn := PL_LOG.conn;
-  conn_ipse := PL_LOG.conn_ipse;
-  conn_inj := PL_LOG.conn_inj |}.
+#[export] Instance f_Kt_log : @FLANG Kt.formula _ := {|
+  ipse   := Kt_LOG.ipse;
+  ipse_rect := Kt_LOG.ipse_rect;
+  ipse_rect_cmp := Kt_LOG.ipse_rect_cmp;
+  conn := Kt_LOG.conn;
+  conn_ipse := Kt_LOG.conn_ipse;
+  conn_inj := Kt_LOG.conn_inj |}.
 
-#[export] Instance pl_Atm : @IXEXP _ _ f_pl string PL_LOG.Atm := {|
-  Var_dec := PL_LOG.Atm_dec;
-  Var_inj := PL_LOG.Atm_inj;
-  Var_ipse := PL_LOG.Atm_ipse; |}.
+#[export] Instance Kt_Atm : @IXEXP _ _ f_Kt_log string Kt_LOG.Atm := {|
+  Var_dec := Kt_LOG.Atm_dec;
+  Var_inj := Kt_LOG.Atm_inj;
+  Var_ipse := Kt_LOG.Atm_ipse; |}.
 
-#[export] Instance pl_FV : @IXEXP _ _ f_pl string PL_LOG.FV := {|
-  Var_dec := PL_LOG.FV_dec;
-  Var_inj := PL_LOG.FV_inj;
-  Var_ipse := PL_LOG.FV_ipse; |}.
+#[export] Instance Kt_FV : @IXEXP _ _ f_Kt_log string Kt_LOG.FV := {|
+  Var_dec := Kt_LOG.FV_dec;
+  Var_inj := Kt_LOG.FV_inj;
+  Var_ipse := Kt_LOG.FV_ipse; |}.
 
-#[export] Instance pl : @LOGLANG _ _ f_pl := {|
-  Atm := PL.Atf;
-  FV := PL.FVf;
-  ATMVAR := pl_Atm;
-  FVVAR := pl_FV;
-  Atm_FV_disc := PL_LOG.Atm_FV_disc; |}.
+#[export] Instance Kt_log : @LOGLANG _ _ f_Kt_log := {|
+  Atm := Kt.Atf;
+  FV := Kt.FVf;
+  ATMVAR := Kt_Atm;
+  FVVAR := Kt_FV;
+  Atm_FV_disc := Kt_LOG.Atm_FV_disc; |}.
 
-Module PLNotations.
-(*  Export PL.*)
+Module Kt_STR.
   
-  Notation "% p" := (PL.Atf p) (at level 10).
-  Notation "? A" := (PL.FVf A) (at level 10).
-  Notation "¬ phi" := (PL.Neg phi) (at level 20).
-  Notation "⊤" := (PL.Top) (at level 20).
-  Notation "⊥" := (PL.Bot) (at level 20).
-  Notation "phi → psi" := (PL.Imp phi psi) (at level 30).
-  Notation "phi ∨ psi" := (PL.Dis phi psi) (at level 30).
-  Notation "phi ∧ psi" := (PL.Con phi psi) (at level 30).
-End PLNotations.
-
-
-Module CPL.
-  Inductive structr : Set :=
-    | SVf (X : string)
-    | FSf (A : PL.formula)
-    | I
-    | Star (X : structr)
-    | Comma (phi psi : structr).
-
-End CPL.
-
-Module CPL_STR.
-  
-  Import CPL.
+  Import Kt.
 
   Theorem str_eq_dec : eq_dec structr.
   Proof. unfold eq_dec. decide equality; apply eqdec. Defined.
 
   Definition ipse (X : structr) : list structr :=
     match X with
-    | Star X      => [X]
+    | Star X0     => [X0]
     | Comma X1 X2 => [X1; X2]
+    | BCirc X0    => [X0]
     | _           => []
     end.
     
@@ -243,11 +251,8 @@ Module CPL_STR.
           destruct C as [Heq|Hneq]
     end;
     try (rewrite Heq; unfold eq_rect_r; simpl; reflexivity);
-    exfalso.
-    repeat match goal with H : B <> _ |- _ => apply not_eq_sym in H end;
-    repeat destruct HB as [HB|HB]; tauto.
-    repeat match goal with H : B <> _ |- _ => apply not_eq_sym in H end;
-    repeat destruct HB as [HB|HB]; tauto.
+    exfalso;
+    repeat destruct HB as [HB|HB]; contradict HB; apply not_eq_sym; assumption.
   Qed.
 
   Definition str_df : structr := SVf "".
@@ -256,6 +261,7 @@ Module CPL_STR.
     match X with
     | Star X0     => fun l => match l with Y0 :: _ => Star Y0 | _ => str_df end
     | Comma X1 X2 => fun l => match l with Y1 :: Y2 :: _ => Comma Y1 Y2 | _ => str_df end
+    | BCirc X0    => fun l => match l with Y0 :: _ => BCirc Y0 | _ => str_df end
     | X0          => fun _ => X0
     end.
 
@@ -282,7 +288,7 @@ Module CPL_STR.
     left. exists X. reflexivity.
   Defined.
 
-  Lemma FS_dec : forall X : structr, {A : PL.formula | X = FS A} + {forall A : PL.formula, X <> FS A}.
+  Lemma FS_dec : forall X : structr, {A : formula | X = FS A} + {forall A : formula, X <> FS A}.
   Proof.
     destruct X; try (right; intro; discriminate).
     left. exists A. reflexivity.
@@ -294,19 +300,20 @@ Module CPL_STR.
   Lemma SV_inj : forall v w : string, SV v = SV w -> v = w.
   Proof. intros v w H. injection H. tauto. Qed.
 
-  Lemma FS_inj : forall A B : PL.formula, FS A = FS B -> A = B.
+  Lemma FS_inj : forall A B : formula, FS A = FS B -> A = B.
   Proof. intros A B H. injection H. tauto. Qed.
 
   Lemma SV_ipse : forall v : string, ipse (SV v) = [].
   Proof. reflexivity. Qed.
 
-  Lemma FS_ipse : forall A : PL.formula, ipse (FS A) = [].
+  Lemma FS_ipse : forall A : formula, ipse (FS A) = [].
   Proof. reflexivity. Qed.
   
   Definition sgnips (X : structr) : list bool :=
     match X with
     | Star X0     => [false]
     | Comma X1 X2 => [true; true]
+    | BCirc X0    => [true]
     | _           => []
     end.
 
@@ -320,44 +327,34 @@ Module CPL_STR.
     all: destruct_list_easy l X.
   Qed.
   
-End CPL_STR.
+End Kt_STR.
 
-#[export] Instance EqDec_structr : EqDec CPL.structr := {| eqdec := CPL_STR.str_eq_dec |}.
+#[export] Instance EqDec_structr : EqDec Kt.structr := {| eqdec := Kt_STR.str_eq_dec |}.
 
-#[export] Instance f_cpl : @FLANG CPL.structr _ := {|
-  ipse   := CPL_STR.ipse;
-  ipse_rect := CPL_STR.ipse_rect;
-  ipse_rect_cmp := CPL_STR.ipse_rect_cmp;
-  conn := CPL_STR.conn;
-  conn_ipse := CPL_STR.conn_ipse;
-  conn_inj := CPL_STR.conn_inj |}.
+#[export] Instance f_Kt : @FLANG Kt.structr _ := {|
+  ipse   := Kt_STR.ipse;
+  ipse_rect := Kt_STR.ipse_rect;
+  ipse_rect_cmp := Kt_STR.ipse_rect_cmp;
+  conn := Kt_STR.conn;
+  conn_ipse := Kt_STR.conn_ipse;
+  conn_inj := Kt_STR.conn_inj |}.
 
-#[export] Instance cpl_SV : @IXEXP _ _ f_cpl string CPL_STR.SV := {|
-  Var_dec := CPL_STR.SV_dec;
-  Var_inj := CPL_STR.SV_inj;
-  Var_ipse := CPL_STR.SV_ipse; |}.
+#[export] Instance Kt_SV : @IXEXP _ _ f_Kt string Kt_STR.SV := {|
+  Var_dec := Kt_STR.SV_dec;
+  Var_inj := Kt_STR.SV_inj;
+  Var_ipse := Kt_STR.SV_ipse; |}.
 
-#[export] Instance cpl_FS : @IXEXP _ _ f_cpl PL.formula CPL_STR.FS := {|
-  Var_dec := CPL_STR.FS_dec;
-  Var_inj := CPL_STR.FS_inj;
-  Var_ipse := CPL_STR.FS_ipse; |}.
+#[export] Instance Kt_FS : @IXEXP _ _ f_Kt Kt.formula Kt_STR.FS := {|
+  Var_dec := Kt_STR.FS_dec;
+  Var_inj := Kt_STR.FS_inj;
+  Var_ipse := Kt_STR.FS_ipse; |}.
 
-#[export] Instance cpl : @STRLANG _ CPL.structr _ _ pl _ f_cpl := {|
-  SV := CPL.SVf;
-  FS := CPL.FSf;
-  SVVAR := cpl_SV;
-  FSVAR := cpl_FS;
-  SV_FS_disc := CPL_STR.SV_FS_disc;
-  sgnips := CPL_STR.sgnips;
-  sgnips_length := CPL_STR.sgnips_length;
-  sgnips_conn := CPL_STR.sgnips_conn |}.
-
-Module CPLNotations.
-  Export CPL.
-  Export PLNotations.
-  
-  Notation "$ X" := (CPL.SVf X) (at level 35).
-  Notation "£ A" := (CPL.FSf A) (at level 35).
-  Notation "∗ X" := (CPL.Star X) (at level 40).
-  Notation "X ,, Y" := (CPL.Comma X Y) (at level 50).
-End CPLNotations.
+#[export] Instance Kt : @STRLANG _ Kt.structr _ _ Kt_log _ f_Kt := {|
+  SV := Kt.SVf;
+  FS := Kt.FSf;
+  SVVAR := Kt_SV;
+  FSVAR := Kt_FS;
+  SV_FS_disc := Kt_STR.SV_FS_disc;
+  sgnips := Kt_STR.sgnips;
+  sgnips_length := Kt_STR.sgnips_length;
+  sgnips_conn := Kt_STR.sgnips_conn |}.

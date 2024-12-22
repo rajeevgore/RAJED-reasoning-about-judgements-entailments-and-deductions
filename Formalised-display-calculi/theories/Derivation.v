@@ -7,14 +7,14 @@ Require Import Arith.
 Require Import EqDec.
 Require Import Tactics.
 Require Import Utils.
-Require Import Llang.
+Require Import Lang.
 Require Import Sequents.
 Require Import Substitutions.
 
 
 Section Derivation.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
 
 
   (* Code adjusted from https://github.com/uwplse/cheerios/blob/master/theories/Core/Tree.v *)
@@ -25,8 +25,8 @@ Section Derivation.
   Local Unset Elimination Schemes.
 
   Inductive dertree :=
-  | Unf : @sequent formula -> dertree
-  | Der : @sequent formula -> @rule formula -> list dertree -> dertree.
+  | Unf : sequent -> dertree
+  | Der : sequent -> rule -> list dertree -> dertree.
 
   Section dertree_rect_gen.
     Variable P : dertree -> Type.
@@ -100,15 +100,17 @@ Section Derivation.
         destruct (rule_eq_dec  r1 r2) as [Hreq|Hrneq];
         destruct (IH l2) as [Hleq|Hlneq]; try (right; injection; contradiction).
       rewrite Hseq, Hreq, Hleq. now left.
-  Qed.
+  Defined.
 
   #[export] Instance EqDec_dertree : EqDec dertree := {| eqdec := dertree_eq_dec |}.
 
+(*
   Definition dtNoV (dt : dertree) : Prop :=
     match dt with
     | Unf s     => seqNoV s
     | Der s r l => seqNoV s
     end.
+*)
 
   Definition botRule (dt : dertree) : option rule :=
     match dt with
@@ -239,7 +241,7 @@ Section Derivation.
     intros dt H H0. destruct dt; try auto. apply H. assumption.
   Qed.
 
-  Lemma allDT_impl {P Q : dertree -> Prop} :
+  Lemma allDT_impl (P Q : dertree -> Prop) :
     (forall dt, P dt -> Q dt) -> forall dt, allDT P dt -> allDT Q dt.
   Proof.
     intros PimpQ dt allPdt. apply (dertree_ind (fun t => allDT P t -> allDT Q t));
@@ -283,7 +285,7 @@ Section Derivation.
 
 
   Lemma Forall_incl_premsDTs :
-    forall ldt (prems : list (@sequent formula)),
+    forall ldt (prems : list (sequent)),
       Forall (fun dt => incl (premsDT dt) prems) ldt -> incl (premsDTs ldt) prems.
   Proof.
     induction ldt as [|dt ldt].
@@ -701,7 +703,7 @@ End Derivation.
 
 Section Deriv_Mut.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
   Context (DC : DISPCALC).
 
   (* A bunch of mutually inductive definitions expressing derivability.
@@ -823,8 +825,8 @@ Section Deriv_Mut.
                    deriv_prseqs ps (map (seqSubst afs) ss) -> deriv_prseq ps (seqSubst afs c).
   Proof.
     intros ps ss c afs Hder Hders. revert c Hder.
-    apply (deriv_prseq_mut_rect _ (deriv_prseq ps ∘ seqSubst afs)
-             (deriv_prseqs ps ∘ map (seqSubst afs))).
+    apply (deriv_prseq_mut_rect _ (comp (deriv_prseq ps) (seqSubst afs))
+             (comp (deriv_prseqs ps) (map (seqSubst afs)))).
     - intros c Hc. apply ForallT_deriv_prseqs_iff in Hders.
       rewrite ForallT_forall in Hders.
       apply Hders. apply in_map. assumption.
@@ -865,7 +867,7 @@ End Deriv_Mut.
 
 Section Deriv_Mut_More.
 
-  Context `{SL : SUBSTLLANG}.
+  Context `{SL : STRLANG}.
 
   Lemma deriv_rule_replace (DC1 DC2 : DISPCALC) (r : rule) :
     ForallT (deriv_rule DC2) DC1 -> deriv_rule DC1 r -> deriv_rule DC2 r.

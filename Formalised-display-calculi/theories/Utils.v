@@ -15,8 +15,8 @@ From AAC_tactics Require Import AAC.
 Require Import Tactics.
 Require Import EqDec.
 
-Definition compose {A B C : Type} (g : B -> C) (f : A -> B) : A -> C := fun x => g (f x).
-Notation "g ∘ f" := (compose g f).
+Definition comp {A B C : Type} (g : B -> C) (f : A -> B) : A -> C := fun x => g (f x).
+(*Notation "g ∘ f" := (compose g f).*)
 
 
 
@@ -41,7 +41,7 @@ Section list_biind.
     - intros l2 H. apply eq_sym, length_zero_iff_nil in H. rewrite H. assumption.
     - intros l2 H. destruct l2; try discriminate.
       apply IH. apply IHl1. injection H. tauto.
-  Qed.
+  Defined.
 
 End list_biind.
 
@@ -63,6 +63,19 @@ Proof.
       * rewrite <- Hx. assumption.
       * apply H. assumption.
 Defined.
+
+
+
+Definition nxorb (b1 b2 : bool) : bool := if b1 then b2 else negb b2.
+
+Lemma eqb_nxorb : forall b1 b2 b3, eqb (nxorb b1 b2) (nxorb b3 b2) = eqb b1 b3.
+Proof. intros [|] [|] [|]; reflexivity. Qed.
+
+Lemma eqb_nxorb_swap : forall b1 b2 b3, eqb (nxorb b1 b2) b3 = eqb b1 (nxorb b3 b2).
+Proof. intros [|] [|] [|]; reflexivity. Qed.
+
+Lemma nxorb_invol : forall b1 b2, nxorb (nxorb b1 b2) b2 = b1.
+Proof. intros [|] [|]; reflexivity. Qed.
 
 
 Section ListMore.
@@ -232,6 +245,9 @@ Section ListMore.
     | _, _ => []
     end.
 
+  Lemma zip_nil_r {E : Type} (f : A -> B -> E) (l : list A) : zip f l [] = [].
+  Proof. destruct l; reflexivity. Qed.
+
   Lemma in_zip_pair_fst {lA : list A} {lB : list B} {p : A * B} :
     p ∈ zip pair lA lB -> fst p ∈ lA.
   Proof.
@@ -242,13 +258,54 @@ Section ListMore.
     - right. apply (IHlA lB). assumption.
   Qed.
 
-  Lemma zip_pair_eq_length {lA : list A} {lB : list B} :
+  Lemma in_zip_pair_snd {lA : list A} {lB : list B} {p : A * B} :
+    p ∈ zip pair lA lB -> snd p ∈ lB.
+  Proof.
+    revert lA. induction lB; try now setoid_rewrite zip_nil_r.
+    intros lA H. destruct lA; try contradiction.
+    destruct H as [H|H].
+    - rewrite <- H. now left.
+    - right. apply (IHlB lA). assumption.
+  Qed.
+
+  Lemma zip_pair_in_map_l (f : A -> A)  (lA : list A) (lB : list B) (a : A) (b : B) :
+    (a, b) ∈ zip pair lA lB -> (f a, b) ∈ zip pair (map f lA) lB.
+  Proof.
+    revert lB. induction lA as [|a' lA]; intro lB;
+      [simpl; contradiction|].
+    destruct lB as [|b' lB]; try contradiction.
+    simpl. intros [H|H].
+    - injection H. intros Heqb Heqa. left. rewrite Heqa, Heqb. reflexivity.
+    - right. apply IHlA. assumption.
+  Qed.
+
+  Lemma zip_pair_in_map_r (f : B -> B)  (lA : list A) (lB : list B) (a : A) (b : B) :
+    (a, b) ∈ zip pair lA lB -> (a, f b) ∈ zip pair lA (map f lB).
+  Proof.
+    revert lA. induction lB as [|b' lB]; intro lA;
+      [simpl; rewrite zip_nil_r; contradiction|].
+    destruct lA as [|a' lA]; try contradiction.
+    simpl. intros [H|H].
+    - injection H. intros Heqb Heqa. left. rewrite Heqa, Heqb. reflexivity.
+    - right. apply IHlB. assumption.
+  Qed.
+
+  Lemma zip_pair_bij_fst (lA : list A) (lB : list B) :
     length lA = length lB -> forall a, a ∈ lA -> exists p, p ∈ zip pair lA lB /\ fst p = a.
   Proof.
     intro H. pattern lA, lB. revert lA lB H. apply list_biind; try contradiction.
     intros a lA b lB IH a' Ha'. destruct Ha' as [Ha'|Ha'].
     - exists (a, b). simpl. tauto.
     - destruct (IH a' Ha') as [p Hp]. exists p. simpl. tauto.
+  Qed.
+
+  Lemma zip_pair_bij_snd (lA : list A) (lB : list B) :
+    length lA = length lB -> forall b, b ∈ lB -> exists p, p ∈ zip pair lA lB /\ snd p = b.
+  Proof.
+    intro H. pattern lA, lB. revert lA lB H. apply list_biind; try contradiction.
+    intros a lA b lB IH b' Hb'. destruct Hb' as [Hb'|Hb'].
+    - exists (a, b). simpl. tauto.
+    - destruct (IH b' Hb') as [p Hp]. exists p. simpl. tauto.
   Qed.
 
   Lemma map_eq_zip_pair {lA : list A} {lB : list B} {f : A -> B} :
@@ -262,6 +319,12 @@ Section ListMore.
     - apply IH. injection H. tauto. assumption.
   Qed.
 
+  Lemma zip_pair_eq_length (lA : list A) (lB : list B) :
+    length lA = length lB -> length (zip pair lA lB) = length lA.
+  Proof.
+    revert lA lB. apply list_biind; [reflexivity|].
+    intros a lA b lB Hlen. simpl. apply f_equal. assumption.
+  Qed.
 
   
 (* SET EQUALITY *)
@@ -956,7 +1019,8 @@ Module ListSetNotations.
 End ListSetNotations.
 
 
-Section ForallMore.
+
+Section FoldRight.
   
   Context {A B C D : Type}.
   Context `{AED : EqDec A}.
@@ -976,7 +1040,7 @@ Section ForallMore.
     destruct l as [|b l]; try (right; intros; intro; discriminate).
     destruct l;try (right; intros; intro; discriminate).
     left. exists a, b. reflexivity.
-  Qed.
+  Defined.
 
   Lemma map_id (l : list A) : map id l = l.
   Proof.
@@ -1028,7 +1092,7 @@ Section ForallMore.
     induction l; try reflexivity. simpl. rewrite IHl. reflexivity.
   Qed.
 
-  Lemma fold_right_map {f : B -> C -> C} {g : A -> B} {c : C} {l : list A} :
+  Lemma fold_right_map (f : B -> C -> C) (g : A -> B) (c : C) (l : list A) :
     fold_right (fun x => f (g x)) c l = fold_right (fun x => f x) c (map g l).
   Proof.
     induction l; try reflexivity. simpl. rewrite IHl. reflexivity.
@@ -1114,6 +1178,35 @@ Section ForallMore.
     fold_right f a0 (b :: l) = f b (fold_right f a0 l).
   Proof. reflexivity. Qed.
 
+End FoldRight.
+
+Definition list_union {A B : Type} (l : list A) (f : A -> list B) : list B :=
+  fold_right (fun x => app (f x)) [] l.
+
+Lemma list_union_alt {A B : Type} (l : list A) (f : A -> list B) :
+  list_union l f = fold_right (@app B) [] (map f l).
+Proof. unfold list_union. apply fold_right_map. Qed.
+
+Section ListUnion.
+
+  Context {A B C D : Type}.
+
+  Lemma union_map (l : list A) (f : A -> list B) :
+    list_union l f = list_union (map f l) id.
+  Proof.
+    unfold list_union. unfold id. apply fold_right_map.
+  Qed.
+
+  Lemma In_union {l : list A} {f : A -> list B} {b : B} :
+    In b (list_union l f) -> exists x, In x l /\ In b (f x).
+  Proof. apply In_fold_right_app. Qed.
+  
+  Lemma In_union_iff {l : list A} {f : A -> list B} {b : B} :
+    In b (list_union l f) <-> exists x, In x l /\ In b (f x).
+  Proof. apply In_fold_right_app_iff. Qed.
+
+End ListUnion.
+
 (*
   Lemma in_if_in_dec_eq (a : A) (l : list A) (b b' : B) :
     a ∈ l -> (if in_dec eqdec a l then b else b') = b.
@@ -1121,6 +1214,12 @@ Section ForallMore.
     intro H. destruct (in_dec eqdec a l). reflexivity. contradiction.
   Qed.
 *)
+
+
+Section ForallMore.
+  
+  Context {A B C D : Type}.
+  Context `{AED : EqDec A}.
 
   Lemma sing_incl_in (x : A) (l : list A) : [x] ⊆ l -> x ∈ l.
   Proof.
@@ -1163,10 +1262,10 @@ Section ForallMore.
   | ForallT_cons : forall {x l}, P x -> ForallT P l -> ForallT P (x::l).
 
   Lemma ForallT_inv {P : A -> Type} {a : A} {l : list A} : ForallT P (a :: l) -> P a.
-  Proof. intro H. inversion H. assumption. Qed.
+  Proof. intro H. inversion H. assumption. Defined.
 
   Lemma ForallT_inv_tail {P : A -> Type} {a : A} {l : list A} : ForallT P (a :: l) -> ForallT P l.
-  Proof. intro H. inversion H. assumption. Qed.
+  Proof. intro H. inversion H. assumption. Defined.
 
   Lemma ForallT_forall {P : A -> Type} :
     forall l : list A, ForallT P l <+> (forall x, List.In x l -> P x).
@@ -1180,7 +1279,7 @@ Section ForallMore.
     - intro H. induction l; try constructor.
       + apply H. now left.
       + apply IHl. intros x Hx. apply H. now right.
-  Qed.
+  Defined.
 
   Lemma ForallT_mp {P Q : A -> Type} {l : list A} :
     ForallT P l -> ForallT (fun x => P x -> Q x) l -> ForallT Q l.
@@ -1221,14 +1320,14 @@ Section ForallMore.
     inversion H. clear H2 H1 l0 x. destruct X as [b Rab]. rename X0 into Hl.
     destruct (IHl Hl) as [l' Rll']. exists (b :: l').
     constructor; assumption.
-  Qed.
+  Defined.
 
   Lemma Forall_ForallT {P : A -> Prop} : forall l : list A, Forall P l <+> ForallT P l.
   Proof.
     split.
     - intro H. apply ForallT_forall, Forall_forall. assumption.
     - intro H. apply Forall_forall, ForallT_forall. assumption.
-  Qed.
+  Defined.
 
   Lemma Forall2_and_inv {R1 R2 : A -> B -> Prop} {l : list A} {l' : list B} :
     Forall2 (fun x y => R1 x y /\ R2 x y) l l' -> Forall2 R1 l l' /\ Forall2 R2 l l'.
@@ -1340,6 +1439,10 @@ Proof.
   - apply incl_tl, incl_refl.
 Qed.
 
+Lemma union_in_dec  {A B : Type} {EDA : EqDec A} (f g : A -> list B) (l : list A) :
+  list_union l (fun x => if in_dec eqdec x l then f x else g x) = list_union l f.
+Proof. apply fold_right_in_dec. Qed.
+
 Lemma fold_right_in_dec_map {A B : Type} {EDA : EqDec A} (f : A -> B) (l : list A) :
   fold_right (fun x => app (if (in_dec eqdec x l) then [f x] else [])) [] l
   = map f l.
@@ -1351,6 +1454,238 @@ Proof.
   - apply incl_tl, incl_refl.
 Qed.
 
+Lemma union_in_dec_map  {A B : Type} {EDA : EqDec A} (f : A -> B) (l : list A) :
+  list_union l (fun x => if in_dec eqdec x l then [f x] else []) = map f l.
+Proof. apply fold_right_in_dec_map. Qed.
+
+Lemma in_zip_pair_23_sig_1 {A B C : Type} {BED : EqDec B} {CED : EqDec C} (lA : list A) (lB : list B) (lC : list C) (b : B) (c : C) :
+  length lA = length lB -> length lB = length lC ->
+  (b, c) ∈ zip pair lB lC -> {a | (a, b, c) ∈ zip pair (zip pair lA lB) lC}.
+Proof.
+  revert lA lC. induction lB as [|b' lB]; try contradiction.
+  intros lA lC HlenAB HlenBC Hbc.
+  destruct lA as [|a' lA]; try discriminate.
+  destruct lC as [|c' lC]; try discriminate.
+  simpl in Hbc. destruct (eqdec (b', c') (b, c)) as [Heq|Hneq];
+    [|destruct (in_dec eqdec (b, c) (zip pair lB lC)) as [Hin|Hnin]].
+  - exists a'. injection Heq. intros Heqc Heqb. rewrite <- Heqc, <- Heqb.
+    simpl. left. reflexivity.
+  - simpl in HlenAB, HlenBC.
+    injection HlenAB. intro HlenAB'.
+    injection HlenBC. intro HlenBC'.
+    destruct (IHlB lA lC) as [a Habc]; try assumption.
+    exists a. simpl. right. assumption.
+  - exfalso. destruct Hbc; contradiction.
+Defined.
+
+(*
+Lemma rfez {A B C : Type} (lA : list A) (lB : list B) (lC : list C) (a : A) (b : B) (c : C) :
+  (a, b) ∈ zip pair lA lB -> (b, c) ∈ zip pair lB lC -> 
+  (a, b, c) ∈ zip pair (zip pair lA lB) lC.
+Proof.
+  revert lA lC. induction lB as [|b' lB]; try contradiction.
+  intros lA lC Hab Hbc. destruct lA as [|a' lA]; try contradiction.
+  destruct lC as [|c' lC]; try (rewrite zip_nil_r in Hbc; contradiction).
+  simpl in Hab, Hbc |- *. destruct Hab as [Hab|Hab].
+*)
+
+Lemma zip_pair_bij_fst_sig {A B : Type} {AED : EqDec A} (lA : list A) (lB : list B) :
+  length lA = length lB -> forall a, a ∈ lA -> {p | p ∈ zip pair lA lB /\ fst p = a}.
+Proof.
+  intro H. pattern lA, lB. revert lA lB H. apply list_biind; try contradiction.
+  intros a lA b lB IH a' Ha'.
+  destruct (eqdec a a') as [Heqa|Hneqa];
+    [|destruct (in_dec eqdec a' lA) as [Hin|Hnin]].
+  - exists (a, b). simpl. tauto.
+  - destruct (IH a' Hin) as [p Hp]. exists p. simpl. tauto.
+  - exfalso. destruct Ha'; contradiction.
+Qed.
+
+Lemma zip_pair_bij_snd_sig {A B : Type} {BED : EqDec B} (lA : list A) (lB : list B) :
+  length lA = length lB -> forall b, b ∈ lB -> {p | p ∈ zip pair lA lB /\ snd p = b}.
+Proof.
+  intro H. pattern lA, lB. revert lA lB H. apply list_biind; try contradiction.
+  intros a lA b lB IH b' Hb'.
+  destruct (eqdec b b') as [Heqb|Hneqb];
+    [|destruct (in_dec eqdec b' lB) as [Hin|Hnin]].
+  - exists (a, b). simpl. tauto.
+  - destruct (IH b' Hin) as [p Hp]. exists p. simpl. tauto.
+  - exfalso. destruct Hb'; contradiction.
+Qed.
+  
+Lemma Forall_eq_zip_pair {A : Type} (l l' : list A) :
+  length l = length l' -> Forall (fun xy => fst xy = snd xy) (zip pair l l') -> l = l'.
+Proof.
+  intro Hlen. pattern l, l'. revert l l' Hlen.
+  apply list_biind; [reflexivity|].
+  intros a l a' l' IH Hall. simpl in Hall.
+  apply Forall_cons_iff in Hall. destruct Hall as [Ha Hl].
+  simpl in Ha. rewrite Ha. apply f_equal.
+  apply IH. assumption.
+Qed.  
+
+Lemma Forall_zip_pair_map_fst {A B C : Type} (R : C -> B -> Prop) (f : A -> C) (l : list A) (l' : list B) :
+  Forall (fun xy => R (f (fst xy)) (snd xy)) (zip pair l l') ->
+  Forall (fun xy => R (fst xy) (snd xy)) (zip pair (map f l) l').
+Proof.
+  revert l'. induction l; intros l' H; [|destruct l' as [|a' l']];
+    try apply Forall_nil.
+   simpl in H |- *. apply Forall_cons_iff in H.
+   destruct H as [Ha Hl]. apply Forall_cons; try assumption.
+   apply IHl. assumption.
+Qed.   
+
+
+Lemma zip_pair_in_map_23 {A B B1 B2 : Type} (f : B -> B1) (g : B -> B2) (lA : list A) (lB : list B) (a : A) (b : B) :
+  (a, b) ∈ zip pair lA lB -> (a, f b, g b) ∈ zip pair (zip pair lA (map f lB)) (map g lB).
+Proof.
+  revert lA. induction lB as [|b' lB]; intro lA;
+    [simpl; rewrite zip_nil_r; contradiction|].
+  destruct lA as [|a' lA]; try contradiction.
+  simpl. intros [H|H].
+  - injection H. intros Heqb Heqa. left. rewrite Heqa, Heqb. reflexivity.
+  - right. apply IHlB. assumption.
+Qed.
+
+Lemma zip_pair_map_in_23_inv {A B B1 B2 : Type} (f : B -> B1) (g : B -> B2) (lA : list A) (lB : list B) (a : A) (b1 : B1) (b2 : B2) :
+  (a, b1, b2) ∈ zip pair (zip pair lA (map f lB)) (map g lB) ->
+  exists b, b1 = f b /\ b2 = g b /\ (a, b) ∈ zip pair lA lB.
+Proof.
+  revert lA. induction lB as [|b lB]; intro lA;
+    [simpl; rewrite zip_nil_r; contradiction|].
+  destruct lA as [|a' lA]; try contradiction.
+  simpl. intros [H|H].
+  - injection H. intros Heqg Heqf Heqa. exists b.
+    repeat split; try (apply eq_sym; assumption).
+    left. rewrite Heqa. reflexivity.
+  - specialize (IHlB lA H). destruct IHlB as [b' Hb'].
+    exists b'. repeat split; tauto.
+Qed.
+  
+
+Lemma fold_right_in_dec_incl_zip_pair_fst {A A' B C : Type} {EDA : EqDec A}
+(op : B -> C -> C) (f g : A * A' -> B) (c0 : C) (l l0 : list A) (l' : list A') :
+  l ⊆ l0 ->
+  fold_right (fun x => op (if in_dec eqdec (fst x) l0 then f x else g x)) c0 (zip pair l l')
+  = fold_right (fun x => op (if in_dec eqdec (fst x) l then f x else g x)) c0 (zip pair l l').
+Proof.
+  revert l0 l'. induction l; try reflexivity.
+  intros l0 l' H.
+  destruct l' as [|a' l']; try reflexivity. simpl zip.
+  rewrite ! fold_right_cons_eq.
+  rewrite ! in_if_in_dec_eq.
+  rewrite IHl. rewrite <- (IHl (a :: l)). reflexivity.
+  - apply incl_tl, incl_refl.
+  - eapply incl_tran; try apply H. apply incl_tl, incl_refl.
+  - now left.
+  - apply H. now left.
+Qed.
+
+Lemma fold_right_in_dec_incl_zip_pair_snd {A A' B C : Type} {EDA : EqDec A'}
+(op : B -> C -> C) (f g : A * A' -> B) (c0 : C) (l : list A) (l' l0 : list A') :
+  l' ⊆ l0 ->
+  fold_right (fun x => op (if in_dec eqdec (snd x) l0 then f x else g x)) c0 (zip pair l l')
+  = fold_right (fun x => op (if in_dec eqdec (snd x) l' then f x else g x)) c0 (zip pair l l').
+Proof.
+  revert l0 l. induction l' as [|a' l' IHl'];
+    try (intros; rewrite zip_nil_r; reflexivity).
+  intros l0 l H.
+  destruct l as [|a l]; try reflexivity. simpl zip.
+  rewrite ! fold_right_cons_eq.
+  rewrite ! in_if_in_dec_eq.
+  rewrite IHl'. rewrite <- (IHl' (a' :: l')). reflexivity.
+  - apply incl_tl, incl_refl.
+  - eapply incl_tran; try apply H. apply incl_tl, incl_refl.
+  - now left.
+  - apply H. now left.
+Qed.
+
+Lemma fold_right_in_dec_zip_pair_fst {A A' B C : Type} {EDA : EqDec A}
+(op : B -> C -> C) (f g : A * A' -> B) (c0 : C) (l : list A) (l' : list A') :
+  fold_right (fun x => op (if (in_dec eqdec (fst x) l) then f x else g x)) c0 (zip pair l l')
+  = fold_right (fun x => op (f x)) c0 (zip pair l l').
+Proof.
+  revert l'. induction l; try reflexivity.
+  destruct l' as [|a' l']; try reflexivity. simpl zip.
+  rewrite fold_right_cons_eq.
+  rewrite fold_right_in_dec_incl_zip_pair_fst.
+  rewrite IHl. rewrite in_if_in_dec_eq. reflexivity.
+  - now left.
+  - apply incl_tl, incl_refl.
+Qed.
+
+Lemma fold_right_in_dec_zip_pair_snd {A A' B C : Type} {EDA : EqDec A'}
+(op : B -> C -> C) (f g : A * A' -> B) (c0 : C) (l : list A) (l' : list A') :
+  fold_right (fun x => op (if (in_dec eqdec (snd x) l') then f x else g x)) c0 (zip pair l l')
+  = fold_right (fun x => op (f x)) c0 (zip pair l l').
+Proof.
+  revert l'. induction l; try reflexivity.
+  destruct l' as [|a' l']; try reflexivity. simpl zip.
+  rewrite fold_right_cons_eq.
+  rewrite fold_right_in_dec_incl_zip_pair_snd.
+  rewrite IHl. rewrite in_if_in_dec_eq. reflexivity.
+  - now left.
+  - apply incl_tl, incl_refl.
+Qed.
+
+Lemma union_in_dec_zip_pair_fst {A A' B : Type} {EDA : EqDec A}
+  (f g : A * A' -> list B) (l : list A) (l' : list A') :
+  list_union (zip pair l l') (fun x => if in_dec eqdec (fst x) l then f x else g x)
+  = list_union (zip pair l l') f.
+Proof. apply fold_right_in_dec_zip_pair_fst. Qed.
+
+Lemma union_in_dec_zip_pair_snd {A A' B : Type} {EDA' : EqDec A'}
+  (f g : A * A' -> list B) (l : list A) (l' : list A') :
+  list_union (zip pair l l') (fun x => if in_dec eqdec (snd x) l' then f x else g x)
+  = list_union (zip pair l l') f.
+Proof. apply fold_right_in_dec_zip_pair_snd. Qed.
+
+Lemma map_fst_zip_pair {A B : Type} (l : list A) (l' : list B) :
+  length l = length l' -> map fst (zip pair l l') = l.
+Proof.
+  revert l'. induction l; try reflexivity.
+  intros l' Hlen. destruct l' as [|a' l']; try discriminate.
+  simpl. apply f_equal. apply IHl.
+  simpl in Hlen. injection Hlen. tauto.
+Qed.
+
+Definition distinct_all {A : Type} (ll : list (list A)) :=
+  NoDupA (fun l l' => exists x, x ∈ l /\ x ∈ l') ll.
+
+Lemma NoDup_union_distinct {A B : Type} (l : list A) (f : A -> list B) :
+  NoDup (list_union l f) -> distinct_all (map f l).
+Proof.
+  intro H. induction l; [apply NoDupA_nil|].
+  simpl. apply NoDupA_cons.
+  - simpl in H. apply NoDup_app_distinct in H.
+    intro Hctr. apply InA_alt in Hctr.
+    destruct Hctr as [l' [[b [Hin1 Hin2]] Hinl']].
+    apply (H _ Hin1). rewrite union_map.
+    apply In_union_iff. exists l'. tauto.
+  - apply IHl. simpl in H. apply NoDup_app_remove_l in H.
+    assumption.
+Qed.
+
+Lemma union_empty {A B : Type} (l : list A) (f : A -> list B) (a : A) :
+  a ∈ l -> list_union l f = [] -> f a = [].
+Proof.
+  induction l as [|a' l]; try contradiction.
+  intros Ha H. simpl in H. apply app_eq_nil in H. destruct Ha as [Ha|Ha].
+  - rewrite Ha in H. tauto.
+  - apply IHl; tauto.
+Qed.
+
+Lemma NoDup_union {A B : Type} (l : list A) (f : A -> list B) (a : A) :
+  a ∈ l -> NoDup (list_union l f) -> NoDup (f a).
+Proof.
+  intros Ha HND. induction l as [|a' l]; try contradiction.
+  destruct Ha as [Ha|Ha].
+  - rewrite Ha in HND. simpl in HND.
+    apply NoDup_app_remove_r in HND.
+    assumption.
+  - simpl in HND. apply NoDup_app_remove_l in HND.
+    apply IHl; assumption.
+Qed.
 
 Close Scope nat_scope.
 
@@ -1414,6 +1749,20 @@ Section ForallMore'.
       + right. constructor; assumption.
   Defined.
 
+  
+  Lemma ForallT_dec_E_sumbool {P Q : A -> Prop} (l : list A) :
+    ForallT (fun x => {P x} + {Q x}) l -> ExistsT P l + ForallT Q l.
+  Proof.
+    intros Hdec. induction l; try (right; constructor; fail).
+    pose proof (ForallT_inv Hdec) as Hdeca.
+    pose proof (ForallT_inv_tail Hdec) as Hdecl.
+    specialize (IHl Hdecl). destruct Hdeca as [HPa|HQa].
+    - left. constructor 1. assumption.
+    - destruct IHl as [HPl|HQl].
+      + left. constructor; assumption.
+      + right. constructor 2; assumption.
+  Defined.
+
 End ForallMore'.
 
 
@@ -1431,7 +1780,7 @@ Proof.
   - intro H. induction l; constructor; inversion H; try assumption.
     apply IHl. assumption.
   - intro H. induction H; constructor; assumption.
-Qed.
+Defined.
 
 
 Lemma all_msets_len {A : Type} (la : list A) (n : nat) :
@@ -1546,3 +1895,6 @@ Lemma eqb_true_r : forall b, eqb b true = b.
 Proof.
   intro b. destruct b; reflexivity.
 Qed.
+
+Lemma eq_sym_iff {A : Type} : forall x y : A, x = y <-> y = x.
+Proof. split; apply eq_sym; assumption. Qed.
