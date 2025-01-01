@@ -25,7 +25,7 @@ Section Structr.
     SVVAR :: IXEXP SV;
     FSVAR :: IXEXP FS;
     SV_FS_disc : forall X A, SV X <> FS A;
-    sgnips : structr -> list bool; (* sign of each immediate proper substructr *)
+    sgnips : structr -> list bool; (* sign of each immediate proper substructure *)
     sgnips_length : forall X, length (sgnips X) = length (ipse X);
     sgnips_conn : forall X l, length l = length (ipse X) -> sgnips (conn X l) = sgnips X}.
 
@@ -34,20 +34,6 @@ End Structr.
 Inductive sequent `{SL : STRLANG} := Sequent (X Y : structr).
 Definition rule `{SL : STRLANG} := list sequent * sequent.
 Definition DISPCALC `{SL : STRLANG} := list rule.
-
-
-(* Notations for the basic datatypes *)
-(*
-Notation "X ,, Y" := (Comma X Y) (at level 50).
-Notation "∗ X" := (Star X) (at level 40).
-Notation "$ X" := (SV X) (at level 30).
-Notation "£ A" := (FS A) (at level 30).
-Notation "? A" := (FV A) (at level 15).
-
-
-Notation "£? A" := (£ ? A) (at level 30).
-Notation "£p p" := (£ Atm p) (at level 30).
-*)
 
 Notation "X ⊢ Y" := (Sequent X Y) (at level 60).
 
@@ -91,38 +77,6 @@ Section Sequents.
 
   Definition remove_seq := remove sequent_eq_dec.
   Definition remove_rule := remove rule_eq_dec.
-
-(*
-  Inductive strCtnsV : structr -> Prop :=
-  | strCtnsV_isSV : forall X, strCtnsV (SV X)
-  | strCtnsV_isFV : forall A, strCtnsV (FS (FV A))
-  | strCtnsV_inips : forall X X', X' ∈ ipse X -> strCtnsV X' -> strCtnsV X.  
-
-  (* strNoV X iff X has no FV and no SV *)
-  Definition strNoV : structr -> Prop :=
-    ipse_rect _ (fun X IH =>
-      match Var_dec SV X with
-        inleft (exist _ V _) => False | inright _ =>
-      match Var_dec FS X with
-        inleft (exist _ A _) => fmlNoFV A | inright _ =>
-      fold_right (fun B => and
-                          (match in_dec eqdec B (ipse A) with
-                         left Hin => IH B Hin | right _  => True end))
-                               True (ipse A)
-      end).
-
-  Fixpoint strNoV (Z : structr) : Prop :=
-    match Z with
-    | X,,Y => strNoV X /\ strNoV Y
-    | ∗Y   => strNoV Y
-    | I    => True
-    | $X   => False
-    | £A   => fmlNoFV A
-    end.
-
-  Definition seqNoV (U : sequent) : Prop :=
-    match U with X ⊢ Y => strNoV X /\ strNoV Y end.
-*)
 
   Definition strIsFml : structr -> Prop := isVar FS.
   Definition strCtnsFml : structr -> Prop := CtnsVar FS.
@@ -170,6 +124,7 @@ Section Sequents.
   Definition seqNoSSF (seq : sequent) :=
     match seq with X ⊢ Y => (strIsFml X \/ ~ strCtnsFml X) /\ (strIsFml Y \/ ~ strCtnsFml Y) end.
 
+  (* List of atomic formulae *)
   Definition strAtms : structr -> list string :=
     ipse_rect _ (fun X IH =>
       match Var_dec FS X with

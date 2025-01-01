@@ -67,17 +67,7 @@ Section CutElim.
           rewrite In_union_iff. exists (b', Z').
           split; [assumption|]. rewrite nxorb_invol. assumption.
   Qed.
-(*
-    induction Z; intros pn H; try (constructor; fail).
-    - simpl. rewrite <- (eqb_true_r pn). apply H. simpl. now left.
-    - simpl. rewrite <- (negb_involutive pn). apply strrep_Star.
-      apply IHZ. intros x b Hxb. rewrite eqb_swap_negb. apply H.
-      simpl. rewrite negb_involutive. assumption.
-    - simpl. constructor.
-      + apply IHZ1. intros x b Hxb. apply H. simpl. apply in_app_iff. now left.
-      + apply IHZ2. intros x b Hxb. apply H. simpl. apply in_app_iff. now right.
-  Qed.
-*)
+
 
   Lemma seqSubrep {pf sub1 sub2 X Y pn seq} :
     (forall x b, x ∈ seqSVsSgn seq b ->

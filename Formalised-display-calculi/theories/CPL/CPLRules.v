@@ -45,6 +45,7 @@ Module CPLRules.
   Definition Disr  : rule := ([$"X" ⊢ £?"A",, £?"B"],
                                $"X" ⊢ £(?"A" ∨ ?"B")).
 
+
   Definition Impl  : rule := ([$"X" ⊢ £?"A"   ;   £?"B" ⊢ $"Y"],
                                £(?"A" → ?"B") ⊢ ∗ $"X",, $"Y").
 
@@ -84,9 +85,9 @@ Module CPLRules.
                                I ⊢ $"Y").
 
   Definition Iaddl  : rule := ([$"X" ⊢ $"Y"],
-                                I,, $"X" ⊢ $"Y").
+                                $"X",, I ⊢ $"Y").
 
-  Definition Idell  : rule := ([I,, $"X" ⊢ $"Y"],
+  Definition Idell  : rule := ([$"X",, I ⊢ $"Y"],
                                 $"X" ⊢ $"Y").
 
   Definition Iwl   : rule := ([I ⊢ $"Y"],
@@ -170,5 +171,41 @@ Module CPLRules.
 
   Definition ContIl : rule := ([$"X",, $"X" ⊢ $"Y"],
                                 I,, $"X" ⊢ $"Y").
+
+  Definition Mlrs : rule := ([$"X",, ∗ $"Y" ⊢ $"Z"],
+                              $"X" ⊢ $"Z",, $"Y").
+
+  Definition Mrln : rule := ([$"X" ⊢ $"Y",, $"Z"],
+                              ∗ $"Y",, $"X" ⊢ $"Z").
+
+  Definition Iaddr : rule := ([$"X" ⊢ $"Y"],
+                               $"X" ⊢ I,, $"Y").
+
+  Definition Idelr : rule := ([$"X" ⊢ I,, $"Y"],
+                               $"X" ⊢ $"Y").
+  
+  Definition ContWkls : rule := ([∗ $"X" ⊢ $"X"],
+                                  $"Y" ⊢ $"X").
+  
+  Definition ContWkln : rule := ([$"X" ⊢ ∗ $"X"],
+                                  $"Y" ⊢ ∗ $"X").
+
+  Definition DSIl : rule := ([$"X" ⊢ $"Y"],
+                              (∗ ∗ $"X") ⊢ $"Y").
+
+  Definition DSIr : rule := ([$"X" ⊢ $"Y"],
+                              $"X" ⊢ (∗ ∗ $"Y")).
+
+  Definition Distl : rule := ([∗ ($"X",, $"Y") ⊢ $"Z"],
+                               ∗ $"X",, ∗ $"Y" ⊢ $"Z").
+
+  Definition Factl : rule := ([∗ $"X",, ∗ $"Y" ⊢ $"Z"],
+                               ∗ ($"X",, $"Y") ⊢ $"Z").
+  
+  Definition Distr : rule := ([$"X" ⊢ ∗ ($"Y",, $"Z")],
+                               $"X" ⊢ ∗ $"Y",, ∗ $"Z").
+
+  Definition Factr : rule := ([$"X" ⊢ ∗ $"Y",, ∗ $"Z"],
+                               $"X" ⊢ ∗ ($"Y",, $"Z")).
 
 End CPLRules.

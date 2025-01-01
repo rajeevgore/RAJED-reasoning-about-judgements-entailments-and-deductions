@@ -7,7 +7,9 @@ Require Import Permutation.
 Require Import Arith.
 Require Import Wellfounded.
 Require Import Datatypes.
+Require Import ssrbool.
 
+Require Import Recdef.
 Require Import Lia.
 Require Import Ring.
 From AAC_tactics Require Import AAC.
@@ -86,6 +88,21 @@ Section ListMore.
 
 (* MISCELLANEOUS *)
 
+  Lemma NoDup_single : forall a : A, NoDup [a].
+  Proof.
+    intro a. constructor; [apply in_nil|constructor].
+  Qed.
+
+  Lemma NoDupA_cons_inv (eqA : A -> A -> Prop) (x : A) (l : list A) :
+    NoDupA eqA (x :: l) -> ~ InA eqA x l /\ NoDupA eqA l.
+  Proof. intro H. inversion H. tauto. Qed.
+
+  Lemma in_singleton_eq : forall (x a : A), In x [a] -> a = x.
+  Proof.
+    intros x a H. destruct H as [H|H].
+    - assumption.
+    - contradiction.
+  Qed.
 
   Lemma incl_cons_cons (l l' : list A) (a : A) : incl l l' -> incl (a :: l) (a :: l').
   Proof.
@@ -157,6 +174,23 @@ Section ListMore.
       exists x. split; try assumption. now right.
     - exists a0. split; try assumption. now left.
   Defined.
+
+  Lemma count_ge_length_ge :
+    forall (l : list A) x n, count l x >= n -> length l >= n.
+  Proof.
+    intros l x n H. eapply Nat.le_trans; try eassumption. apply count_bound.
+  Qed.
+
+  Lemma count_map_inj {EDB : EqDec B} :
+    forall (l : list A) (f : A -> B) a, ssrfun.injective f -> count (map f l) (f a) = count l a.
+  Proof.
+    intros l f a Hinj. induction l; [reflexivity|].
+    simpl. rewrite IHl.
+    destruct (eqdec (f a0) (f a)) as [Heqf|Hneqf];
+    destruct (eqdec a0 a) as [Heq|Hneq]; try reflexivity.
+    - contradict Hneq. apply Hinj. assumption.
+    - contradict Hneqf. rewrite Heq. reflexivity.
+  Qed.
 
   Lemma erase_cons_eq (l : list A) (a : A) : erase a (a :: l) = l.
   Proof. simpl. destruct (eqdec a a); tauto. Qed.
@@ -879,6 +913,32 @@ Section ListMore.
         left. apply in_listminus_iff. tauto.
   Qed.
 
+  Lemma listminus_nil_l : forall F : list A, listminus [] F = [].
+  Proof.
+    induction F.
+    - reflexivity.
+    - simpl. rewrite IHF. reflexivity.
+  Qed.
+
+  Lemma listminus_remove_comm : forall (E F : list A) (a : A),
+      remove eqdec a (listminus E F) = listminus (remove eqdec a E) F.
+  Proof.
+    intros E F. revert E. induction F.
+    - simpl. intros E a. reflexivity.
+    - simpl. intros E x. rewrite <- IHF.
+      rewrite remove_remove_comm. reflexivity.
+  Qed.
+
+  Lemma listminus_empty : forall E F : list A, listminus E F = [] -> E ⊆ F.
+  Proof.
+    intros E F. revert E. induction F.
+    - intros E H. simpl in H. rewrite H. apply incl_refl.
+    - intros E H. simpl in H. rewrite listminus_remove_comm in H.
+      intros x Hx. destruct (eqdec x a) as [Heq|Hneq].
+      + rewrite Heq. left. reflexivity.
+      + right. apply (IHF _ H). apply in_in_remove; assumption.
+  Qed.
+
 
   Fixpoint find_dup (l : list A) : option A :=
     match l with
@@ -1005,7 +1065,7 @@ End MsetMore.
   
   
 
-
+(*
 Module ListSetNotations.
 
   Notation "x ∈ S" := (In x S) (at level 75).
@@ -1017,7 +1077,7 @@ Module ListSetNotations.
   Notation "S ∖ T" := (listminus S T) (at level 60).
 
 End ListSetNotations.
-
+*)
 
 
 Section FoldRight.
@@ -1206,14 +1266,6 @@ Section ListUnion.
   Proof. apply In_fold_right_app_iff. Qed.
 
 End ListUnion.
-
-(*
-  Lemma in_if_in_dec_eq (a : A) (l : list A) (b b' : B) :
-    a ∈ l -> (if in_dec eqdec a l then b else b') = b.
-  Proof.
-    intro H. destruct (in_dec eqdec a l). reflexivity. contradiction.
-  Qed.
-*)
 
 
 Section ForallMore.
@@ -1477,17 +1529,6 @@ Proof.
     exists a. simpl. right. assumption.
   - exfalso. destruct Hbc; contradiction.
 Defined.
-
-(*
-Lemma rfez {A B C : Type} (lA : list A) (lB : list B) (lC : list C) (a : A) (b : B) (c : C) :
-  (a, b) ∈ zip pair lA lB -> (b, c) ∈ zip pair lB lC -> 
-  (a, b, c) ∈ zip pair (zip pair lA lB) lC.
-Proof.
-  revert lA lC. induction lB as [|b' lB]; try contradiction.
-  intros lA lC Hab Hbc. destruct lA as [|a' lA]; try contradiction.
-  destruct lC as [|c' lC]; try (rewrite zip_nil_r in Hbc; contradiction).
-  simpl in Hab, Hbc |- *. destruct Hab as [Hab|Hab].
-*)
 
 Lemma zip_pair_bij_fst_sig {A B : Type} {AED : EqDec A} (lA : list A) (lB : list B) :
   length lA = length lB -> forall a, a ∈ lA -> {p | p ∈ zip pair lA lB /\ fst p = a}.
@@ -1858,7 +1899,13 @@ Ltac specialize_Forall2_H HF2 :=
       end
   end.
 
-Theorem not_and_iff_or_not [A B : Prop] : decidable A -> ~ (A /\ B) <-> ~ A \/ ~ B.
+Ltac NoDup_two :=
+  let H := fresh in 
+  apply NoDup_cons; [|apply NoDup_single];
+  simpl; intros [H|H]; [discriminate|assumption].
+
+
+Theorem not_and_iff_or_not [A B : Prop] : Decidable.decidable A -> ~ (A /\ B) <-> ~ A \/ ~ B.
 Proof. intro dec. split; [now apply not_and | tauto]. Qed.
 
 

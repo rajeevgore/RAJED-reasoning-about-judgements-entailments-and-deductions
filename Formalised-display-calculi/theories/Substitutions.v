@@ -25,7 +25,7 @@ Section Substitutions.
   Definition sSubst : Type := string -> (structr).
   Definition afsSubst : Type := (@afSubst formula) * sSubst.
 
-
+  (* Function applying a substitution on a structure *) 
   Definition strSubst (afs : afsSubst) : structr -> structr :=
     ipse_rect _ (fun X IH =>
       match Var_dec SV X with
@@ -118,6 +118,7 @@ Section Substitutions.
     conclRule (ruleSubst pfs r) = seqSubst pfs (conclRule r).
   Proof. destruct r. simpl. reflexivity. Qed.
 
+  (* Identity substitutions *)
   Definition I_s : sSubst := fun x => SV x.
   Definition I_afs : afsSubst := (I_af, I_s).
 
@@ -150,6 +151,7 @@ Section Substitutions.
     intro r. destruct r. simpl. rewrite I_afs_id_listseq, I_afs_id_seq. reflexivity.
   Qed.
 
+  (* Composition of substitutions *)
   Definition s_comp (afs1 afs2 : afsSubst) : sSubst :=
     fun x => strSubst afs1 (snd afs2 x).
   Definition afs_comp (afs1 afs2 : afsSubst) : afsSubst :=
@@ -338,7 +340,8 @@ Section Substitutions.
   Definition rule_matchsub (r r' : rule) : afsSubst :=
     listseq_matchsub (conclRule r :: premsRule r) (conclRule r' :: premsRule r').
 
-  Lemma strSubst_fun_agree_iff (a1 : aSubst) (f1 : fSubst) (s1 : sSubst) (a2 : aSubst) (f2 : fSubst) (s2 : sSubst) (X : structr) :
+  Lemma strSubst_fun_agree_iff (a1 : aSubst) (f1 : fSubst) (s1 : sSubst)
+    (a2 : aSubst) (f2 : fSubst) (s2 : sSubst) (X : structr) :
     strSubst (a1, f1, s1) X = strSubst (a2, f2, s2) X <->
       fun_agree a1 a2 (strAtms X) /\
       fun_agree f1 f2 (strFVs X) /\
@@ -379,7 +382,6 @@ Section Substitutions.
     rewrite strSubst_eq in Hafs |- *.
     destruct (Var_dec SV X) as [[v Hv]|HXnSV];
       [destruct (Var_dec FS Y) as [[A' HA']|HYnFS] |
-(*        destruct (Var_dec FS Y) as [[A' HA']|HYnFS];*)
         destruct (Var_dec FS X) as [[A HA]|HXnFS]];
       simpl; try reflexivity; [destruct (Var_dec FS Y) as [[A' HA']|HYnFS]|].
     - rewrite HA' in Hafs |- *. apply f_equal.
@@ -553,6 +555,27 @@ Section Substitutions.
     - left. destruct yes as [afs Hafs]. apply eq_sym in Hafs. exists afs. assumption.
     - right. intros [afs Hafs]. apply (no afs). apply eq_sym. assumption.
   Defined.
+
+  Definition bisruleInst (r r' : rule) : bool := if ruleInst_dec r r' then true else false.
+
+  Lemma bisruleInst_true (r r' : rule) : bisruleInst r r' = true -> ruleInst r r'.
+  Proof.
+    intro H. unfold bisruleInst in H.
+    destruct (ruleInst_dec r r'); try assumption. discriminate.
+  Qed.
+
+  Lemma bisruleInst_false (r r' : rule) : bisruleInst r r' = false -> ~ ruleInst r r'.
+  Proof.
+    intro H. unfold bisruleInst in H.
+    destruct (ruleInst_dec r r'); try assumption. discriminate.
+  Qed.
+
+  Lemma bisruleInst_true_iff (r r' : rule) : bisruleInst r r' = true <-> ruleInst r r'.
+  Proof.
+    split; try apply bisruleInst_true. intro H.
+    destruct (bisruleInst r r') eqn:Heq; try reflexivity.
+    contradict H. apply bisruleInst_false. assumption.
+  Qed.
 
 
   (* An easy way of specifying a substitution *)

@@ -104,14 +104,6 @@ Section Derivation.
 
   #[export] Instance EqDec_dertree : EqDec dertree := {| eqdec := dertree_eq_dec |}.
 
-(*
-  Definition dtNoV (dt : dertree) : Prop :=
-    match dt with
-    | Unf s     => seqNoV s
-    | Der s r l => seqNoV s
-    end.
-*)
-
   Definition botRule (dt : dertree) : option rule :=
     match dt with
     | Unf _     => None
@@ -224,9 +216,12 @@ Section Derivation.
   Definition dtFmls (dt : dertree) := seqFmls (conclDT dt).
   Definition dtSVs (dt : dertree) := seqSVs (conclDT dt).
 
+  (* Ensure the derivation tree is legal and does not rely on
+     assumptions outside of the axioms *)
   Definition proper (DC : DISPCALC) (dt : dertree) : Prop :=
     allDT (exr DC) dt /\ allDT wfr dt /\ premsDT dt = [].
 
+  (* Relax proper by allowing arbitrary assumptions *)
   Definition semiproper (DC : DISPCALC) (dt : dertree) : Prop :=
     allDT (exr DC) dt /\ allDT wfr dt.
 
@@ -274,15 +269,23 @@ Section Derivation.
     intro H. apply allDT_Next in H. apply proj2 in H. apply Forall_fold_right. destruct dt; tauto.
   Qed.
 
-  Lemma premsDTUp {dt : dertree} (ls : list sequent) :
-    incl (premsDT dt) ls -> Forall (fun d => incl (premsDT d) ls) (nextUp dt).
+  Lemma premsDTUp (dt : dertree) (ls : list sequent) :
+    premsDT dt ⊆ ls -> forall d, d ∈ nextUp dt -> premsDT d ⊆ ls.
   Proof.
-    intro H. destruct dt as [|s r l]; try constructor.
-    induction l; try constructor.
-    - intros x Hx. apply H. apply in_app_iff. now left.
-    - apply IHl. intros x Hx. apply H. apply in_app_iff. now right.
+    intro H. destruct dt as [|s r l]; try contradiction.
+    induction l as [|d0 l]; try constructor.
+    - contradiction.
+    - intros d Hd. simpl in H. apply incl_app_inv in H.
+      destruct Hd as [Hd|Hd].
+      + rewrite <- Hd. tauto.
+      + apply IHl; try assumption. tauto.
   Qed.
 
+  Lemma premsDTUp_Forall (dt : dertree) (ls : list sequent) :
+    premsDT dt ⊆ ls -> Forall (fun d => premsDT d ⊆ ls) (nextUp dt).
+  Proof.
+    intro H. apply Forall_forall. apply premsDTUp. assumption.
+  Qed.
 
   Lemma Forall_incl_premsDTs :
     forall ldt (prems : list (sequent)),
@@ -302,7 +305,7 @@ Section Derivation.
   Proof.
     intro H. rewrite <- (Forall_map premsDT (fun s => s = [])).
     apply (Forall_impl _ (@incl_l_nil sequent)).
-    rewrite Forall_map. apply premsDTUp. rewrite H. apply incl_refl.
+    rewrite Forall_map. apply Forall_forall, premsDTUp. rewrite H. apply incl_refl.
   Qed.
 
   Lemma premsDTs_incl {ldt : list dertree} {l : list (list sequent)} :
@@ -451,6 +454,7 @@ Section Derivation.
 
   Lemma allDT_nextUp {P dt} : allDT P dt <-> P dt /\ allDTs P (nextUp dt).
   Proof. rewrite allDT_Next. destruct dt; tauto. Qed.
+
 
   (* Expressing a "subtree" relation *)
   Definition isUp (d1 d2 : dertree) : Prop :=
@@ -728,8 +732,30 @@ Section Deriv_Mut.
   | deriv_prseqs_cons : forall c cs, deriv_prseq prems c -> deriv_prseqs prems cs
                                       -> deriv_prseqs prems (c :: cs).
 
+  Inductive deriv_prseq_P (P : sequent -> Prop) (prems : list sequent) : sequent -> Type :=
+  | deriv_prseq_P_prem : forall c, c ∈ prems -> P c -> deriv_prseq_P P prems c
+  | deriv_prseq_P_ext : forall ps c r, r ∈ DC -> ruleInst r (ps, c) -> P c -> deriv_prseqs_P P prems ps
+                              -> deriv_prseq_P P prems c
+  with
+    deriv_prseqs_P (P : sequent -> Prop) (prems : list sequent) : list sequent -> Type :=
+  | deriv_prseqs_P_nil  : deriv_prseqs_P P prems []
+  | deriv_prseqs_P_cons : forall c cs, deriv_prseq_P P prems c -> deriv_prseqs_P P prems cs
+                                      -> deriv_prseqs_P P prems (c :: cs).
+
+  Inductive deriv_seq_P (P : sequent -> Prop) : sequent -> Type :=
+  | deriv_seq_P_ext : forall ps c r, r ∈ DC -> ruleInst r (ps, c) -> P c -> deriv_seqs_P P ps
+                              -> deriv_seq_P P c
+  with
+    deriv_seqs_P (P : sequent -> Prop) : list sequent -> Type :=
+  | deriv_seqs_P_nil  : deriv_seqs_P P []
+  | deriv_seqs_P_cons : forall c cs, deriv_seq_P P c -> deriv_seqs_P P cs
+                                      -> deriv_seqs_P P (c :: cs).
+
   Definition deriv_rule (r : rule) :=
     match r with (ps, c) => deriv_prseq ps c end.                                                
+
+  Definition deriv_rule_P (P : sequent -> Prop) (r : rule) :=
+    match r with (ps, c) => deriv_prseq_P P ps c end.
 
   Scheme deriv_seq_mut_ind := Minimality for deriv_seq Sort Prop
       with deriv_seqs_mut_ind := Minimality for deriv_seqs Sort Prop.
@@ -742,6 +768,18 @@ Section Deriv_Mut.
 
   Scheme deriv_prseq_mut_rect := Minimality for deriv_prseq Sort Type
       with deriv_prseqs_mut_rect := Minimality for deriv_prseqs Sort Type.
+
+  Scheme deriv_seq_P_mut_ind := Minimality for deriv_seq_P Sort Prop
+      with deriv_seqs_P_mut_ind := Minimality for deriv_seqs_P Sort Prop.
+
+  Scheme deriv_seq_P_mut_rect := Minimality for deriv_seq_P Sort Type
+      with deriv_seqs_P_mut_rect := Minimality for deriv_seqs_P Sort Type.
+
+  Scheme deriv_prseq_P_mut_ind := Minimality for deriv_prseq Sort Prop
+      with deriv_prseqs_P_mut_ind := Minimality for deriv_prseqs Sort Prop.
+
+  Scheme deriv_prseq_P_mut_rect := Minimality for deriv_prseq_P Sort Type
+      with deriv_prseqs_P_mut_rect := Minimality for deriv_prseqs_P Sort Type.
 
 
   Lemma ForallT_deriv_seqs : forall cs, ForallT deriv_seq cs -> deriv_seqs cs.
@@ -805,10 +843,15 @@ Section Deriv_Mut.
       eapply deriv_prseqs_cons; assumption.
   Defined.
 
-  Lemma deriv_prseq_tran :
-    forall ps ss c, deriv_prseq ss c -> deriv_prseqs ps ss -> deriv_prseq ps c.
+  Lemma deriv_prseq_refl : forall c, deriv_prseq [c] c.
   Proof.
-    intros ps ss c Hder Hders. revert c Hder.
+    intro c. apply deriv_prseq_prem. simpl. tauto.
+  Qed.
+
+  Lemma deriv_prseq_tran :
+    forall ps ss c, deriv_prseqs ps ss -> deriv_prseq ss c -> deriv_prseq ps c.
+  Proof.
+    intros ps ss c Hders Hder. revert c Hder.
     apply (deriv_prseq_mut_rect _ (deriv_prseq ps) (deriv_prseqs ps)).
     - intros c Hc. apply ForallT_deriv_prseqs_iff in Hders.
       rewrite ForallT_forall in Hders.
@@ -821,10 +864,10 @@ Section Deriv_Mut.
   Defined.
 
   Lemma deriv_prseq_tran_afs :
-    forall ps ss c afs, deriv_prseq ss c ->
-                   deriv_prseqs ps (map (seqSubst afs) ss) -> deriv_prseq ps (seqSubst afs c).
+    forall ps ss c afs, deriv_prseqs ps (map (seqSubst afs) ss)
+                   -> deriv_prseq ss c -> deriv_prseq ps (seqSubst afs c).
   Proof.
-    intros ps ss c afs Hder Hders. revert c Hder.
+    intros ps ss c afs Hders Hder. revert c Hder.
     apply (deriv_prseq_mut_rect _ (comp (deriv_prseq ps) (seqSubst afs))
              (comp (deriv_prseqs ps) (map (seqSubst afs)))).
     - intros c Hc. apply ForallT_deriv_prseqs_iff in Hders.
@@ -837,6 +880,27 @@ Section Deriv_Mut.
     - apply deriv_prseqs_nil.
     - intros c cs Hssder Hpsder Hssders Hpsders.
       apply deriv_prseqs_cons; assumption.
+  Defined.
+
+  Lemma deriv_prseqs_prem : forall ps ss, ss ⊆ ps -> deriv_prseqs ps ss.
+  Proof.
+    intros ps ss Hincl. apply ForallT_deriv_prseqs_iff.
+    rewrite ForallT_forall. intros s Hs.
+    apply deriv_prseq_prem. apply Hincl. assumption.
+  Defined.
+
+  Lemma deriv_prseqs_refl : forall ps, deriv_prseqs ps ps.
+  Proof.
+    intro ps. apply deriv_prseqs_prem. apply incl_refl.
+  Defined.
+
+
+  Lemma deriv_rule_inDC : forall r, r ∈ DC -> deriv_rule r.
+  Proof.
+    intros r Hr. destruct r as [ps c].
+    apply (deriv_prseq_ext _ ps c (ps, c)); try assumption.
+    - exists I_afs. rewrite I_afs_id_rule. reflexivity.
+    - apply deriv_prseqs_refl.
   Defined.
 
   Lemma deriv_rule_Inst (r r' : rule) :
@@ -862,6 +926,156 @@ Section Deriv_Mut.
       apply deriv_prseqs_cons; assumption.
   Defined.
 
+  Lemma ForallT_deriv_seqs_P (P : sequent -> Prop) :
+    forall cs, ForallT (deriv_seq_P P) cs -> deriv_seqs_P P cs.
+  Proof.
+    induction cs as [|c cs]; intro Hall; try apply deriv_seqs_P_nil.
+    apply deriv_seqs_P_cons.
+    - apply ForallT_inv in Hall. assumption.
+    - apply IHcs. apply ForallT_inv_tail in Hall. assumption.
+  Defined.
+
+  Lemma ForallT_deriv_seqs_P_iff (P : sequent -> Prop) :
+    forall cs, ForallT (deriv_seq_P P) cs <+> deriv_seqs_P P cs.
+  Proof.
+    intros cs. split; try apply ForallT_deriv_seqs_P.
+    revert cs. apply (deriv_seqs_P_mut_rect _ (deriv_seq_P P)
+                        (ForallT (deriv_seq_P P))).
+    - intros ps c r Hexr Hwfr HPc Hders Hallders.
+      eapply deriv_seq_P_ext; eassumption.
+    - apply ForallT_nil.
+    - intros c cs Hder _ Hders Hallders.
+      apply ForallT_cons; assumption.
+  Defined.
+
+  Lemma deriv_seq_P_concl_P (P : sequent -> Prop) : forall c, deriv_seq_P P c -> P c.
+  Proof. intros c Hder. inversion Hder; assumption. Qed.
+
+  Lemma deriv_seqs_P_concl_P (P : sequent -> Prop) :
+    forall cs, deriv_seqs_P P cs -> forall c, c ∈ cs -> P c.
+  Proof.
+    intro ps. apply (deriv_seqs_P_mut_rect _ (fun c => P c) (fun cs => forall c, c ∈ cs -> P c));
+      try tauto; try contradiction.
+    intros c cs Hderc HPc Hdercs HPcs c' Hc'.
+    destruct Hc' as [Hc'|Hc'].
+    - rewrite <- Hc'. assumption.
+    - apply HPcs. assumption.
+  Qed.
+
+  Lemma deriv_seq_P_imp (P Q : sequent -> Prop) :
+    (forall s, P s -> Q s) -> forall c, deriv_seq_P P c -> deriv_seq_P Q c.
+  Proof.
+    intros HPQ c. revert c.
+    apply (deriv_seq_P_mut_rect _ (fun c => deriv_seq_P Q c)
+                                  (fun cs => deriv_seqs_P Q cs)).
+    - intros ss c r Hexr Hwfr HPc Hder IH.
+      apply (deriv_seq_P_ext _ ss c r); try assumption.
+      apply HPQ. assumption.
+    - apply deriv_seqs_P_nil.
+    - intros. apply deriv_seqs_P_cons; assumption.
+  Defined.
+
+  Lemma deriv_seq_P_tran (P : sequent -> Prop) :
+    forall ps c, deriv_seqs_P P ps -> deriv_prseq_P P ps c -> deriv_seq_P P c.
+  Proof.
+    intros ps c Hders Hder. revert c Hder.
+    apply (deriv_prseq_P_mut_rect _ _ (deriv_seq_P P) (deriv_seqs_P P)).
+    - intros c Hc HPc. apply ForallT_deriv_seqs_P_iff in Hders.
+      rewrite ForallT_forall in Hders.
+      apply Hders. assumption.
+    - intros ts c r Hexr Hwfr HPc Hssders Hpsders.
+      eapply deriv_seq_P_ext; eassumption.
+    - apply deriv_seqs_P_nil.
+    - intros c cs Hssder Hpsder Hssders Hpsders.
+      apply deriv_seqs_P_cons; assumption.
+  Defined.
+
+  Lemma ForallT_deriv_prseqs_P (P : sequent -> Prop) :
+    forall ps cs, ForallT (deriv_prseq_P P ps) cs -> deriv_prseqs_P P ps cs.
+  Proof.
+    induction cs as [|c cs]; intro Hall; try apply deriv_prseqs_P_nil.
+    apply deriv_prseqs_P_cons.
+    - apply ForallT_inv in Hall. assumption.
+    - apply IHcs. apply ForallT_inv_tail in Hall. assumption.
+  Defined.
+
+  Lemma ForallT_deriv_prseqs_P_iff (P : sequent -> Prop) :
+    forall ps cs, ForallT (deriv_prseq_P P ps) cs <+> deriv_prseqs_P P ps cs.
+  Proof.
+    intros ps cs. split; try apply ForallT_deriv_prseqs_P.
+    revert cs. apply (deriv_prseqs_P_mut_rect _ _ (deriv_prseq_P P ps)
+                        (ForallT (deriv_prseq_P P ps))).
+    - apply deriv_prseq_P_prem.
+    - intros ss c r Hexr Hwfr HPc Hders Hallders.
+      eapply deriv_prseq_P_ext; eassumption.
+    - apply ForallT_nil.
+    - intros c cs Hder _ Hders Hallders.
+      apply ForallT_cons; assumption.
+  Defined.
+
+  Lemma deriv_prseq_P_refl (P : sequent -> Prop) : forall c, P c -> deriv_prseq_P P [c] c.
+  Proof.
+    intro c. apply deriv_prseq_P_prem. simpl. tauto.
+  Qed.
+
+  Lemma deriv_prseq_P_tran (P : sequent -> Prop) :
+    forall ps ss c, deriv_prseqs_P P ps ss -> deriv_prseq_P P ss c -> deriv_prseq_P P ps c.
+  Proof.
+    intros ps ss c Hders Hder. revert c Hder.
+    apply (deriv_prseq_P_mut_rect _ _ (deriv_prseq_P P ps) (deriv_prseqs_P P ps)).
+    - intros c Hc HPc. apply ForallT_deriv_prseqs_P_iff in Hders.
+      rewrite ForallT_forall in Hders.
+      apply Hders. assumption.
+    - intros ts c r Hexr Hwfr HPc Hssders Hpsders.
+      eapply deriv_prseq_P_ext; eassumption.
+    - apply deriv_prseqs_P_nil.
+    - intros c cs Hssder Hpsder Hssders Hpsders.
+      apply deriv_prseqs_P_cons; assumption.
+  Defined.
+
+  Lemma deriv_prseq_P_weak (P : sequent -> Prop) (ps ps' : list sequent) (c : sequent) :
+    ps ⊆ ps' -> deriv_prseq_P P ps c -> deriv_prseq_P P ps' c.
+  Proof.
+    intro Hinc. revert c.
+    apply (deriv_prseq_P_mut_rect _ _ (deriv_prseq_P P ps') (deriv_prseqs_P P ps')).
+    - intros c Hc. apply deriv_prseq_P_prem. apply Hinc. assumption.
+    - intros cs c r Hexr Hwfr HPc Hders Hders'.
+      eapply deriv_prseq_P_ext; eassumption.
+    - apply deriv_prseqs_P_nil.
+    - intros c cs Hder Hder' Hders Hders'.
+      eapply deriv_prseqs_P_cons; assumption.
+  Defined.
+
+  Lemma deriv_prseq_P_concl_P (P : sequent -> Prop) : forall ps c, deriv_prseq_P P ps c -> P c.
+  Proof. intros ps c Hder. inversion Hder; assumption. Qed.
+
+  Lemma deriv_prseqs_P_concl_P (P : sequent -> Prop) :
+    forall ps cs, deriv_prseqs_P P ps cs -> forall c, c ∈ cs -> P c.
+  Proof.
+    intro ps. apply (deriv_prseqs_P_mut_rect _ _ (fun c => P c) (fun cs => forall c, c ∈ cs -> P c));
+      try tauto; try contradiction.
+    intros c cs Hderc HPc Hdercs HPcs c' Hc'.
+    destruct Hc' as [Hc'|Hc'].
+    - rewrite <- Hc'. assumption.
+    - apply HPcs. assumption.
+  Qed.
+
+  Lemma deriv_prseq_P_imp (P Q : sequent -> Prop) :
+    (forall s, P s -> Q s) -> forall ps c, deriv_prseq_P P ps c -> deriv_prseq_P Q ps c.
+  Proof.
+    intros HPQ ps c. revert c.
+    apply (deriv_prseq_P_mut_rect _ _ (fun c => deriv_prseq_P Q ps c)
+                                  (fun cs => deriv_prseqs_P Q ps cs)).
+    - intros c Hc HPc. apply deriv_prseq_P_prem; [assumption|].
+      apply HPQ. assumption.
+    - intros ss c r Hexr Hwfr HPc Hder IH.
+      apply (deriv_prseq_P_ext _ _ ss c r); try assumption.
+      apply HPQ. assumption.
+    - apply deriv_prseqs_P_nil.
+    - intros. apply deriv_prseqs_P_cons; assumption.
+  Defined.
+      
+
 End Deriv_Mut.
 
 
@@ -884,6 +1098,31 @@ Section Deriv_Mut_More.
     - intros c cs Hder1 Hder2 Hders1 Hders2.
       apply deriv_prseqs_cons; assumption.
   Defined.
+
+  Lemma deriv_rule_incl_DC (DC1 DC2 : DISPCALC) (r : rule) :
+    DC1 ⊆ DC2 -> deriv_rule DC1 r -> deriv_rule DC2 r.
+  Proof.
+    intro Hincl. apply deriv_rule_replace. clear r.
+    apply ForallT_forall. intros r Hr.
+    apply deriv_rule_inDC. apply Hincl. assumption.
+  Defined.
+
+  Lemma deriv_rule_P_incl_DC (P : sequent -> Prop) (DC1 DC2 : DISPCALC) (r : rule) :
+    DC1 ⊆ DC2 -> deriv_rule_P DC1 P r -> deriv_rule_P DC2 P r.
+  Proof.
+    intro Hincl. destruct r as [ps c]. revert c.
+    apply (deriv_prseq_P_mut_rect _ _ _ (deriv_prseq_P DC2 P ps)
+             (deriv_prseqs_P DC2 P ps)).
+    - intros c Hc HPc. apply deriv_prseq_P_prem; assumption.
+    - intros ss c r Hexr Hwfr HPc Hderss1 Hderss2.
+      apply (deriv_prseq_P_ext _ _ _ ss c r); try assumption.
+      apply Hincl. assumption.
+    - apply deriv_prseqs_P_nil.
+    - intros c cs Hderc1 Hderc2 Hdercs1 Hdercs2.
+      apply deriv_prseqs_P_cons; assumption.
+  Defined.
+
+    
 
 End Deriv_Mut_More.
     
@@ -910,35 +1149,3 @@ Ltac discriminate_Unf_list ld :=
   | ?dt :: ?ldt => discriminate_Unf dt; discriminate_Unf_list ldt
   | [] => idtac
   end.
-
-(*
-Ltac destruct_proper_dertree Hval :=
-  let Hvalup := fresh "Hvalup" in
-  pose proof (properUp Hval) as Hvalup; rewrite Forall_forall in Hvalup;
-  let Hwfb := fresh "Hwfb" in
-  let Hfrb := fresh "Hfrb" in
-  let Hprems := fresh "Hprems" in
-  let Hwfbup := fresh "Hwfbup" in
-  let Hfrbup := fresh "Hfrbup" in
-  let Hval' := fresh "Hval'" in
-  pose proof Hval as Hval';
-  destruct Hval' as (Hfrb, (Hwfb, Hprems)); rewrite allDT_Next in Hwfb, Hfrb;
-  destruct Hwfb as [Hwfb Hwfbup]; destruct Hfrb as [Hfrb Hfrbup];
-  let pfs := fresh "pfs" in
-  let Hpfs := fresh "Hpfs" in
-  destruct (ruleInst_ruleSubst Hwfb) as [pfs Hpfs];
-  injection Hpfs; intros;
-  (repeat match goal with | H : map conclDT [] = [] |- _ => clear H end);
-  match goal with
-  | [ _ : map conclDT ?l = [] |- _ ] => destruct l; try discriminate
-  | [ H : map conclDT ?l = _ |- _] =>
-      let d := fresh "d" in
-      destruct_list_easy l d; injection H; intros; unfold nextUp in Hvalup; specialize_list;
-      match goal with
-      | [ H : map conclDT ?ld = _ |- _] => discriminate_Unf_list ld
-      end
-  end; repeat
-         match goal with
-         | [ H : conclDT _ = _ |- _ ] => simpl in H; rewrite H in Hval
-         end.
-*)

@@ -23,6 +23,9 @@ Section Derivability.
   Context `{SL : STRLANG}.
   Context (DC : DISPCALC).
 
+  (* Class versions of mutually inductive definitions
+     deriv_seq, deriv_prseq, etc. *)
+
   Class Deriv (s : sequent) := {
     der_dt : dertree;
     der_proper : proper DC der_dt;
@@ -187,9 +190,8 @@ Section Derivability.
         rewrite ForallT_forall in IH. apply ForallT_forall.
         intros dt Hdt. specialize (IH dt Hdt).
         eapply deriv_prseq_weak; try eassumption.
-        clear IH. revert dt Hdt. apply Forall_forall.
-        change l with (nextUp (Der s r l)) at 2.
-        apply (premsDTUp (premsDT (Der s r l))). apply incl_refl.
+        apply (premsDTUp _ (premsDT (Der s r l)) (incl_refl _)).
+        assumption.
     - revert c.
       apply (deriv_prseq_mut_rect _ _ (fun c => DerivRule (ps, c))
                (fun lc => ForallT (fun c => DerivRule (ps, c)) lc)).
@@ -268,9 +270,8 @@ Section Derivability.
         rewrite ForallT_forall in IH. apply ForallT_forall.
         intros dt Hdt. specialize (IH dt Hdt).
         eapply deriv_cofprseq_weak; try eassumption.
-        clear IH. revert dt Hdt. apply Forall_forall.
-        change l with (nextUp (Der s r l)) at 2.
-        apply (premsDTUp (premsDT (Der s r l))). apply incl_refl.
+        apply (premsDTUp _ (premsDT (Der s r l)) (incl_refl _)).
+        assumption.
     - revert c.
       apply (deriv_cofprseq_mut_rect _ _ _ (fun c => DerivRuleNC (ps, c))
                (fun lc => ForallT (fun c => DerivRuleNC (ps, c)) lc)).
@@ -382,7 +383,7 @@ Section DerivRule.
   Proof.
     intros HDers. apply DerivRule_iff_deriv_prseq in HDer.
     apply DerivRule_iff_deriv_prseq.
-    apply (deriv_prseq_tran_afs _ _ _ _ _ HDer).
+    unshelve eapply (deriv_prseq_tran_afs _ _ _ _ _ _ HDer).
     simpl. apply ForallT_deriv_prseqs_iff. apply ForallT_map.
     apply ForallT_forall. intros s Hs.
     rewrite ForallT_forall in HDers.
@@ -591,7 +592,6 @@ Section MoreSubDisp.
 
   Theorem Extend_DerivRule_expl (DC : DISPCALC) (r : rule) :
     DerivRule DC r -> SubDer (DC ++ [r]) DC.
-(*    `{dr : @DerivRule _ _ _ SL DC r} : SubDer (DC ++ [r]) DC.*)
   Proof.
     intro dr. apply Extend_DerivDC, DerivDC_one. assumption.
   Defined.
@@ -621,13 +621,14 @@ End MoreSubDisp.
 
 (* Tactics to simplify proofs within the object logic *)
 
-(*
-Ltac in_rules_not_cut :=
-  apply in_in_remove; try (intro Hctr; discriminate); try (simpl; tauto).*)
-(*  constructor; try in_set_of_list; try (let H := fresh in intro H; inversion H). *)
-
 Ltac auto_wfr :=
   match goal with |- wfr (Der ?s ?r ?l) => now exists (rule_matchsub r (map conclDT l, s)) end.
+
+
+Ltac auto_ruleInst :=
+  match goal with
+    |- ruleInst ?r ?r' => exists (rule_matchsub r r'); simpl; reflexivity
+  end.
 
 
 Ltac rewrite_all_conclDT ldt :=
@@ -639,14 +640,14 @@ Ltac rewrite_all_conclDT ldt :=
   end.
 
 (* Automatically checks that a given dertree is a correct
-   witness of a Deriv s *)
+   witness of a DerivRule r *)
 Ltac confirm_derr dt :=
   try constructor 1 with dt; repeat split; try tauto;
     try (auto_in; fail); try (auto_wfr; fail);
     try reflexivity; try auto_incl.
 
 (* Automatically checks that a given dertree is a correct
-   witness of a DerivRule r *)
+   witness of a DerivRuleNC r *)
 Ltac confirm_derrnc dt :=
     unshelve econstructor;
     try constructor 1 with dt; repeat split; try tauto;
@@ -659,14 +660,10 @@ Ltac confirm_derrnc dt :=
 Arguments eq_rect_r /.
 
 
-Ltac simpl_Subst := simpl.
-(*  rewrite <- seqSubst_cust_ok; simpl.*)
-(*
-  unfold seq_matchsub, seq_matchsub_Atm, seq_matchsub_FV, seq_matchsub_SV;
-  simpl conclRule; cbv match;
-  unfold str_matchsub_Atm, str_matchsub_FV, str_matchsub_SV;
-  try (rewrite fml_matchsub_Atm_eq, fml_matchsub_FV_eq); simpl.
-*)
+(* Backward reasoning by applying display rules.
+   inst = rule is not in the calculus but was proved derivable before
+          (with an Instance of the relevant Class)
+   inDC = the rule is already part of the calculus *)
 
 Ltac apply_DR_inst r :=
   match goal with
@@ -675,7 +672,7 @@ Ltac apply_DR_inst r :=
         apply (DerivRule_rule_bw_Inst _ _ (premsRule r) (conclRule r)
                  (seq_matchsub (conclRule r) c));
         repeat (apply ForallT_cons); try (apply ForallT_nil);
-        simpl_Subst
+        simpl
     end.
 
 Ltac apply_DR_inDC r :=
@@ -685,7 +682,7 @@ Ltac apply_DR_inDC r :=
         apply (DerivRule_rule_bw_inDC _ _ (premsRule r) (conclRule r)
                  (seq_matchsub (conclRule r) c)); [auto_in|];
         repeat (apply ForallT_cons); try (apply ForallT_nil);
-        simpl_Subst
+        simpl
     end.
 
 Ltac apply_DRNC_inst r :=
@@ -695,7 +692,7 @@ Ltac apply_DRNC_inst r :=
         apply (DerivRuleNC_rule_bw_Inst _ _ (premsRule r) (conclRule r)
                  (seq_matchsub (conclRule r) c));
         repeat (apply ForallT_cons); try (apply ForallT_nil);
-        simpl_Subst
+        simpl
     end.
 
 Ltac apply_DRNC_inDC r :=
@@ -705,7 +702,7 @@ Ltac apply_DRNC_inDC r :=
         apply (DerivRuleNC_rule_bw_inDC _ _ (premsRule r) (conclRule r)
                  (seq_matchsub (conclRule r) c)); [discriminate|auto_in|];
         repeat (apply ForallT_cons); try (apply ForallT_nil);
-        simpl_Subst
+        simpl
     end.
 
 
@@ -717,7 +714,7 @@ Ltac apply_cof_inDC r :=
                  (seq_matchsub (conclRule r) c));
         [auto_in|left; discriminate|apply ForallT_deriv_cofseqs;
         repeat (apply ForallT_cons); try (apply ForallT_nil);
-        simpl_Subst]
+        simpl]
     end.
 
 
@@ -728,9 +725,12 @@ Ltac apply_cof_inst r :=
         apply (deriv_cofseq_rule_bw_InstNC _ _ (premsRule r) (conclRule r)
                  (seq_matchsub (conclRule r) c));
         repeat (apply ForallT_cons); try (apply ForallT_nil);
-        simpl_Subst
+        simpl
     end.
 
+
+(* Apply the cut rule when trying to prove derivability of a sequent
+   satisfying a cutOnFmls. Parameter is the cut formula *)
 
 Ltac apply_cof_CUT A :=
   match goal with

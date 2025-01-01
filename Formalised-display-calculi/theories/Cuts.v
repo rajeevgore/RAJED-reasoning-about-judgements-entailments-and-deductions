@@ -64,7 +64,7 @@ Section Cuts.
     end.
 
   (* conclusion of dt is either not obtained by cut or
- phi is principal (= non-parametric in the conclusion) in the left premisses *)
+     A is principal (= non-parametric in the conclusion) in the left premises *)
   Definition cutIsLP (A : formula) (dt : dertree) : Prop :=
     match dt with
     | Unf s     => True
@@ -73,7 +73,7 @@ Section Cuts.
     end.
 
   (* conclusion of dt is either not obtained by cut or
-phi is principal in the right premisses *)
+     A is principal in the right premises *)
   Definition cutIsRP (A : formula) (dt : dertree) : Prop :=
     match dt with
     | Unf s     => True
@@ -401,7 +401,6 @@ phi is principal in the right premisses *)
 
     Definition C3_one (r : rule) : Prop := NoDup (seqSVs (conclRule r)).
 
-    (* what about a same structure variable that is in two different premisses? *)
     Definition C4_one (r : rule) : Prop :=
       forall p b s, p ∈ premsRule r ->
                s ∈ seqSVsSgn (conclRule r) b ->
@@ -587,8 +586,6 @@ phi is principal in the right premisses *)
                            (forall t, t ∈ zip pair (zip pair (sgnips Z) (ipse Z)) l ->
                            strrep X Y (nxorb b (fst (fst t))) (snd (fst t)) (snd t)) ->
                            strrep X Y b Z (conn Z l).
-(*  | strrep_conn : forall b Z l, Forall2 (fun Z'b' W' => strrep X Y (nxorb b (snd Z'b')) (fst Z'b') W')
-                    (zip pair (ipse Z) (sgnips Z)) l -> strrep X Y b Z (conn Z l).*)
 
   Inductive seqrep (X Y : structr) (b : bool) : sequent -> sequent -> Prop :=
   | seqrep_intr : forall X0a Y0a X0s Y0s, strrep X Y (negb b) X0a Y0a -> strrep X Y b X0s Y0s ->
@@ -637,13 +634,6 @@ phi is principal in the right premisses *)
     rewrite (conn_ipse (FS A)) at 1.
     rewrite (Var_ipse FS) in H5 |- *. destruct l;
       try discriminate. reflexivity.
-(*
-    apply Forall2_length in H5.
-    rewrite zip_pair_eq_length in H5; [|now rewrite sgnips_length].
-    rewrite (conn_ipse (FS A)) at 1.
-    rewrite (Var_ipse FS) in H5 |- *. destruct l;
-      try discriminate. reflexivity.
-*)
   Qed.
 
   Lemma seqrep_same_suc [A Y UA VA UY VY] :
@@ -728,11 +718,6 @@ phi is principal in the right premisses *)
     destruct (in_dec string_dec x l); [contradiction | reflexivity].
   Qed.
 
-(*
-  Definition defSubsn (lv : list string) (ls : list sSubst) : sSubst :=
-    fun v => 
-*)
-
   Definition sSubstfor (af : afSubst) (concl conclY : sequent) :=
   {sub : sSubst | seqSubst (af, sub) concl = conclY}.
 
@@ -765,10 +750,7 @@ phi is principal in the right premisses *)
     - intros V HV. apply defSubs_agree_sub2. contradict HV. apply empty. assumption.
   Qed.
 
-  Lemma NoDupA_cons_inv {A : Type} (eqA : A -> A -> Prop) (x : A) (l : list A) :
-    NoDupA eqA (x :: l) -> ~ InA eqA x l /\ NoDupA eqA l.
-  Proof. intro H. inversion H. tauto. Qed.
-
+  (* Same thing but for an arbitrarily finite number of structures. *)
   Lemma comSubn (lXY : list (structr * structr)) (ls : list sSubst) (af : afSubst) :
     distinct_all (map (comp strSVs fst) lXY) ->
     Forall2 (fun XY s => strSubst (af, s) (fst XY) = (snd XY)) lXY ls ->

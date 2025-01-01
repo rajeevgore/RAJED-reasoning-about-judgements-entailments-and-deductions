@@ -155,7 +155,7 @@ End PL_LOG.
 
 #[export] Instance EqDec_formula : EqDec PL.formula := {| eqdec := PL_LOG.fml_eq_dec |}.
 
-#[export] Instance f_pl : @FLANG PL.formula _ := {|
+#[export] Instance f_PL : @FLANG PL.formula _ := {|
   ipse   := PL_LOG.ipse;
   ipse_rect := PL_LOG.ipse_rect;
   ipse_rect_cmp := PL_LOG.ipse_rect_cmp;
@@ -163,21 +163,21 @@ End PL_LOG.
   conn_ipse := PL_LOG.conn_ipse;
   conn_inj := PL_LOG.conn_inj |}.
 
-#[export] Instance pl_Atm : @IXEXP _ _ f_pl string PL_LOG.Atm := {|
+#[export] Instance PL_Atm : @IXEXP _ _ f_PL string PL_LOG.Atm := {|
   Var_dec := PL_LOG.Atm_dec;
   Var_inj := PL_LOG.Atm_inj;
   Var_ipse := PL_LOG.Atm_ipse; |}.
 
-#[export] Instance pl_FV : @IXEXP _ _ f_pl string PL_LOG.FV := {|
+#[export] Instance PL_FV : @IXEXP _ _ f_PL string PL_LOG.FV := {|
   Var_dec := PL_LOG.FV_dec;
   Var_inj := PL_LOG.FV_inj;
   Var_ipse := PL_LOG.FV_ipse; |}.
 
-#[export] Instance pl : @LOGLANG _ _ f_pl := {|
+#[export] Instance PL : @LOGLANG _ _ f_PL := {|
   Atm := PL.Atf;
   FV := PL.FVf;
-  ATMVAR := pl_Atm;
-  FVVAR := pl_FV;
+  ATMVAR := PL_Atm;
+  FVVAR := PL_FV;
   Atm_FV_disc := PL_LOG.Atm_FV_disc; |}.
 
 Module PLNotations.
@@ -324,7 +324,7 @@ End CPL_STR.
 
 #[export] Instance EqDec_structr : EqDec CPL.structr := {| eqdec := CPL_STR.str_eq_dec |}.
 
-#[export] Instance f_cpl : @FLANG CPL.structr _ := {|
+#[export] Instance f_CPL : @FLANG CPL.structr _ := {|
   ipse   := CPL_STR.ipse;
   ipse_rect := CPL_STR.ipse_rect;
   ipse_rect_cmp := CPL_STR.ipse_rect_cmp;
@@ -332,21 +332,21 @@ End CPL_STR.
   conn_ipse := CPL_STR.conn_ipse;
   conn_inj := CPL_STR.conn_inj |}.
 
-#[export] Instance cpl_SV : @IXEXP _ _ f_cpl string CPL_STR.SV := {|
+#[export] Instance CPL_SV : @IXEXP _ _ f_CPL string CPL_STR.SV := {|
   Var_dec := CPL_STR.SV_dec;
   Var_inj := CPL_STR.SV_inj;
   Var_ipse := CPL_STR.SV_ipse; |}.
 
-#[export] Instance cpl_FS : @IXEXP _ _ f_cpl PL.formula CPL_STR.FS := {|
+#[export] Instance CPL_FS : @IXEXP _ _ f_CPL PL.formula CPL_STR.FS := {|
   Var_dec := CPL_STR.FS_dec;
   Var_inj := CPL_STR.FS_inj;
   Var_ipse := CPL_STR.FS_ipse; |}.
 
-#[export] Instance cpl : @STRLANG _ CPL.structr _ _ pl _ f_cpl := {|
+#[export] Instance CPL : @STRLANG _ CPL.structr _ _ PL _ f_CPL := {|
   SV := CPL.SVf;
   FS := CPL.FSf;
-  SVVAR := cpl_SV;
-  FSVAR := cpl_FS;
+  SVVAR := CPL_SV;
+  FSVAR := CPL_FS;
   SV_FS_disc := CPL_STR.SV_FS_disc;
   sgnips := CPL_STR.sgnips;
   sgnips_length := CPL_STR.sgnips_length;

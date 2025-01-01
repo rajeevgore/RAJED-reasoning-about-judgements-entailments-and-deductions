@@ -21,22 +21,22 @@ Require Extraction.
 Require Import Coq.extraction.ExtrOcamlNativeString.
 
 
-Definition cpl_cutElim := cutElim cpldc cpldcBel.
+Definition cpl_cutElim := cutElim CPL_DC CPL_DC_Bel.
 
 
 
 Definition impcon_impr : rule := ([], (£(%"p" → (%"q" ∧ %"r")) ⊢ £(%"p" → %"r"))).
 
-#[export] Instance derr_impcon_impr : DerivRule cpldc impcon_impr.
+#[export] Instance derr_impcon_impr : DerivRule CPL_DC impcon_impr.
 Proof.
   Import CPLDeriv.
   set (p := %"p"). set (q := %"q"). set (r := %"r").
   apply (Extend_DerivRule_expl _ (frefl (q ∧ r))).
-  apply cpldc_derr_frefl.
+  apply CPL_DC_derr_frefl.
   unfold fmlNoFV. rewrite (noVar_iff_noVar_cpt FV).
   simpl; unfold eq_rect_r; simpl. tauto.
   apply (Extend_DerivRule_expl _ Wkl).
-  apply (SubDC_DerivRule cpldc). apply (alr_DerivRule _ _).
+  apply (SubDC_DerivRule CPL_DC). apply (alr_DerivRule _ _).
   apply incl_appl, incl_refl.
   set (d := Der (£(p → (q ∧ r)) ⊢ £(p → r)) Impr
            [Der (£(p → (q ∧ r)),, £ p ⊢ £ r) Comml

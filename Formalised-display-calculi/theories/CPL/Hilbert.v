@@ -50,7 +50,7 @@ Definition CPLHC2 : HCrule := ([], (¬ ?"A" → ¬ ?"B") → (?"B" → ?"A")).
 Definition CPLHC3 : HCrule := ([], (?"A" → (?"B" → ?"C")) →
                                      ((?"A" → ?"B") → (?"A" → ?"C"))).
 
-Definition cplHC : @HILBCALC _ _ _ pl := [MP; CPLHC1; CPLHC2; CPLHC3].
+Definition CPL_HC : @HILBCALC _ _ _ PL := [MP; CPLHC1; CPLHC2; CPLHC3].
 
 
 Section HC_TO_DC.
@@ -64,9 +64,9 @@ Section HC_TO_DC.
 
 End HC_TO_DC.
 
-Definition cplHilbComp (DC : DISPCALC) := SubDer (HCtoDC cplHC) DC.
+Definition cplHilbComp (DC : DISPCALC) := SubDer (HCtoDC CPL_HC) DC.
 
-Definition cplLr : DISPCALC := (cpldc ++ [refl]).
+Definition cplLr : DISPCALC := (CPL_DC ++ [refl]).
 
 Definition ExtraDC : DISPCALC := [Ssn; Sns; Sss; DSEl; Commr; Mlln; Mrrs; Assolinv; Wkl].
 
@@ -77,9 +77,11 @@ Proof.
   set (d := Der (I ⊢ £B) CUT
            [Unf (I ⊢ £(A → B));
             Der (£(A → B) ⊢ £B) Idell
+              [Der (£(A → B),, I ⊢ £B) Comml
               [Der (I,, £(A → B) ⊢ £B) Mrls
               [Der (£(A → B) ⊢ ∗I,, £B) Impl
-              [Unf (I ⊢ £A); Der (£B ⊢ £B) refl []]]]]).
+              [Unf (I ⊢ £A);
+               Der (£B ⊢ £B) refl []]]]]]).
   confirm_derr d.
 Defined.
 
@@ -88,7 +90,7 @@ Proof.
   Import CPLDeriv.
   intros r Hr; dec_destruct_List_In (@eqdec rule _) r;
   rewrite Heq;
-  apply (SubDC_DerivRule cpldc cplLr);
+  apply (SubDC_DerivRule CPL_DC cplLr);
   try (unfold cplLr; apply incl_appl, incl_refl);
   apply (alr_DerivRule _ _).
 Defined.
@@ -98,11 +100,12 @@ Proof.
   unfold CPLHC1. set (A := ?"A"). set (B := ?"B").
   apply (Extend_DerivDC _ _ cplLr_ExtraDC).
   confirm_derr (Der (I ⊢ £(A → (B → A))) Impr
-               [Der (I,, £A ⊢ £(B → A)) Iaddl
+               [Der (I,, £A ⊢ £(B → A)) Comml
+               [Der (£A,, I ⊢ £(B → A)) Iaddl                    
                [Der (£A ⊢ £(B → A)) Impr
                [Der (£A,, £B ⊢ £A) Comml
                [Der (£B,, £A ⊢ £A) Wkl
-               [Der (£A ⊢ £A) refl []]]]]]).
+               [Der (£A ⊢ £A) refl []]]]]]]).
 Defined.
 
 #[export] Instance cplLr_CPLHC2 : DerivRule cplLr (HCtoDC_rule CPLHC2).
@@ -110,7 +113,8 @@ Proof.
   unfold CPLHC2. set (A := ?"A"). set (B := ?"B").
   apply (Extend_DerivDC _ _ cplLr_ExtraDC).
   set (d := Der (I ⊢ £((¬ A → ¬ B) → (B → A))) Impr
-            [Der (I,, £(¬ A → ¬ B) ⊢ £(B → A)) Iaddl
+            [Der (I,, £(¬ A → ¬ B) ⊢ £(B → A)) Comml
+            [Der (£(¬ A → ¬ B),, I ⊢ £(B → A)) Iaddl
             [Der (£(¬ A → ¬ B) ⊢ £(B → A)) Impr
             [Der (£(¬ A → ¬ B),, £B ⊢ £A) DSEr
             [Der (£(¬ A → ¬ B),, £B ⊢ ∗∗£A) Mrrs
@@ -120,7 +124,7 @@ Proof.
             [Der (£A ⊢ £A) refl []]];
              Der (£(¬ B) ⊢ ∗£B) Negl
                [Der (∗£B ⊢ ∗£B) Snn
-               [Der (£B ⊢ £B) refl []]]]]]]]]).
+               [Der (£B ⊢ £B) refl []]]]]]]]]]).
   confirm_derr d.
 Defined.
 
@@ -129,7 +133,8 @@ Proof.
   unfold CPLHC3. set (A := ?"A"). set (B := ?"B"). set (C := ?"C").
   apply (Extend_DerivDC _ _ cplLr_ExtraDC).
   set (d :=  Der (I ⊢ £((A → (B → C)) → ((A → B) → (A → C)))) Impr
-            [Der (I,, £(A → (B → C)) ⊢ £((A → B) → (A → C))) Iaddl
+            [Der (I,, £(A → (B → C)) ⊢ £((A → B) → (A → C))) Comml
+            [Der (£(A → (B → C)),, I ⊢ £((A → B) → (A → C))) Iaddl
             [Der (£(A → (B → C)) ⊢ £((A → B) → (A → C))) Impr
             [Der (£(A → (B → C)),, £(A → B) ⊢ £(A → C)) Impr
             [Der ((£(A → (B → C)),, £(A → B)),, £A ⊢ £C) Comml
@@ -156,13 +161,13 @@ Proof.
                   [Der (£B,, £(B → C) ⊢ £C) Mrls
                   [Der (£(B → C) ⊢ ∗£B,, £C) Impl
                   [Der (£B ⊢ £B) refl [];
-                   Der (£C ⊢ £C) refl []]]]]]]]]]]]]]]]]]]]]]]]]]).
+                   Der (£C ⊢ £C) refl []]]]]]]]]]]]]]]]]]]]]]]]]]]).
   confirm_derr d.
   Defined.
 
-Theorem cpldcHilbComp : SubDer (HCtoDC cplHC) (cpldc ++ [refl]).
+Theorem CPL_DCHilbComp : SubDer (HCtoDC CPL_HC) (CPL_DC ++ [refl]).
 Proof.
   apply DerivDC_SubDer. intros r Hr.
-  unfold HCtoDC, cplHC, map in Hr.
+  unfold HCtoDC, CPL_HC, map in Hr.
   dec_destruct_List_In rule_eq_dec r; rewrite Heq; try apply (alr_DerivRule _ _).
 Defined.

@@ -364,11 +364,6 @@ Section Subvar.
       rewrite Forall_forall in Hall. apply noVar_intro; assumption.
   Qed.
     
-(*    rewrite noVar_eq.
-    destruct (Var_dec A) as [[V HV]|HnFV].
-    - contradict HV. apply H.
-    - rewrite <- Forall_fold_right. tauto.
-  Qed.*)
 
   Lemma not_Var_conn (A : expr) (l : list expr) :
     length l = length (ipse A) -> (forall V, A <> Var V) -> forall V, conn A l <> Var V.
