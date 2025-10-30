@@ -35,8 +35,33 @@ Fixpoint red_size (xi : nnf) : nat :=
   | next phi    => 0
   end.
 
-Theorem red_size_neg_eq {phi} : red_size (neg_nnf phi) = red_size phi.
+Lemma red_size_neg_eq {phi} : red_size (neg_nnf phi) = red_size phi.
 Proof. induction phi; try (simpl; lia). Qed.
+
+Lemma red_size_alpha1_lt {phi} :
+  nnf_isalpha phi -> red_size (nnf_alpha1 phi) < red_size phi.
+Proof.
+intro H. destruct phi; try contradiction; simpl; try lia.
+rewrite red_size_neg_eq. lia.
+Qed.
+
+Lemma red_size_alpha2_lt {phi} :
+  nnf_isalpha phi -> red_size (nnf_alpha2 phi) < red_size phi.
+Proof.
+intro H. destruct phi; try contradiction; simpl; try lia.
+Qed.
+
+Lemma red_size_beta1_lt {phi} :
+  nnf_isbeta phi -> red_size (nnf_beta1 phi) < red_size phi.
+Proof.
+intro H. destruct phi; try contradiction; simpl; try lia.
+Qed.
+
+Lemma red_size_beta2_lt {phi} :
+  nnf_isbeta phi -> red_size (nnf_beta2 phi) < red_size phi.
+Proof.
+intro H. destruct phi; try contradiction; simpl; try lia.
+Qed.
 
 Definition red_size_list := fold_right (fun phi n => red_size phi + n) 0.
 
