@@ -1,0 +1,7 @@
+-docroot ModTab
+-R theories/K Ksat
+-R theories/KT KTsat
+-R theories/S4 S4sat
+theories/K
+theories/KT
+theories/S4
